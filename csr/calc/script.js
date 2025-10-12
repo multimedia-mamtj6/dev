@@ -1,4 +1,4 @@
-// Kalkulator Petrol MAMTJ6 - Versi 3.1
+// Kalkulator Petrol MAMTJ6 - Versi 3.1 
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Tab Logic ---
