@@ -80,6 +80,15 @@ main { width: 100%; display: flex; justify-content: center; }
 .result-item .unit { font-size: 16px; font-weight: 400; color: var(--label-color); }
 .result-item .value.savings { color: var(--success-green); }
 .result-item .value.cost-increase { color: var(--warning-red); }
+/* [BARU] Gaya untuk sub-teks */
+.value-subtext {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--label-color);
+    margin-top: 8px;
+}
 .results-grid.four-items { display: flex; flex-wrap: wrap; gap: 20px; }
 .results-grid.four-items > .result-item { flex-basis: calc(50% - 10px); }
 .dynamic-note { font-style: italic; font-size: 14px; color: var(--label-color); margin-top: 20px; padding: 15px; background-color: var(--white); border-radius: 8px; line-height: 1.6; }
