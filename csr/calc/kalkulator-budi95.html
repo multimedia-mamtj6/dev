@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalkulator Petrol - MAMTJ6</title>
-    <!-- Pautan ke Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Pautan ke fail CSS anda -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -22,7 +20,7 @@
 
     <main>
         <div class="calculator-container">
-            <!-- Tab Navigation - Updated Names -->
+            <!-- Tab Navigation -->
             <nav class="tab-nav">
                 <button class="tab-btn active" data-tab="tab1">Kalkulator Petrol</button>
                 <button class="tab-btn" data-tab="tab2">Isi 'Full Tank'</button>
@@ -31,23 +29,22 @@
             <!-- Tab 1: Kalkulator Petrol -->
             <div id="tab1" class="tab-content active">
                 <header class="calculator-header">
-                    <h1>Kalkulator Petrol</h1>
+                    <h1>Kalkulator Petrol Madani</h1>
                     <p>Anggar kos dan penjimatan anda dengan harga petrol bersubsidi.</p>
                 </header>
                 <div class="calculator-body">
                     <form id="petrol-form-full">
                         <div class="form-grid">
                              <div class="form-group full-width">
-                                 <label>Pilih bentuk kiraan</label>
+                                 <label>Pilih bentuk unit kiraan</label>
                                 <div class="mode-toggle">
                                     <button type="button" class="toggle-btn active" id="mode-rm">RM</button>
                                     <button type="button" class="toggle-btn" id="mode-liter">Liter</button>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="user-input" id="user-input-label">Jumlah bayaran/liter</label>
-                                <!-- Placeholder added -->
-                                <input type="number" id="user-input" value="36" step="0.01" placeholder="Isi nilai di sini" required>
+                                <label for="user-input" id="user-input-label">Jumlah bayaran (RM)</label>
+                                <input type="number" id="user-input" step="0.01" placeholder="Isi nilai di sini" required>
                             </div>
                             <div class="form-group">
                                 <label for="old-price">Harga petrol lama (RM/liter)</label>
@@ -69,12 +66,13 @@
                     </form>
                     <section id="full-calc-results" class="results-section hidden">
                         <h2>Keputusan</h2>
-                        <div class="results-grid four-items">
-                            <div class="result-item"><span class="label">Liter yang perlu diisi</span><p class="value" id="result-liters">0.00 <span class="unit">L</span></p></div>
-                            <div class="result-item"><span class="label">Jumlah perlu dibayar</span><p class="value total" id="result-total">RM0.00</p></div>
-                            <div class="result-item savings"><span class="label">Penjimatan (vs Harga Lama)</span><p class="value" id="saving-vs-old">RM0.00</p></div>
-                            <div class="result-item savings"><span class="label">Penjimatan (vs Tanpa Subsidi)</span><p class="value" id="saving-vs-nosubsidy">RM0.00</p></div>
+                        <div id="full-results-grid" class="results-grid four-items">
+                            <div id="result-liters-item" class="result-item"><span class="label">Liter yang akan diisi</span><p class="value" id="result-liters">0.00 <span class="unit">L</span></p></div>
+                            <div id="result-total-item" class="result-item"><span class="label">Jumlah bayaran</span><p class="value total" id="result-total">RM0.00</p></div>
+                            <div id="saving-vs-old-item" class="result-item savings"><span class="label">Penjimatan (vs Harga Lama)</span><p class="value" id="saving-vs-old">RM0.00</p></div>
+                            <div id="saving-vs-nosubsidy-item" class="result-item savings"><span class="label">Penjimatan (vs Tanpa Subsidi)</span><p class="value" id="saving-vs-nosubsidy">RM0.00</p></div>
                         </div>
+                        <div id="dynamic-explanation" class="dynamic-explanation hidden"></div>
                     </section>
                 </div>
             </div>
@@ -89,7 +87,6 @@
                      <form id="petrol-form-topup">
                         <div class="form-grid">
                             <div class="form-group full-width"><label>Pilih Jenis Harga</label><div class="mode-toggle"><button type="button" class="toggle-btn active" id="mode-subsidi">Dengan Subsidi (RM 1.99)</button><button type="button" class="toggle-btn" id="mode-tanpa-subsidi">Tanpa Subsidi (RM 2.60)</button></div></div>
-                            <!-- Labels updated -->
                             <div class="form-group"><label for="tank-capacity">Kapasiti Penuh Tangki (dalam Liter)</label><input type="number" id="tank-capacity" placeholder="Contoh: 40.5" step="0.01" required></div>
                             <div class="form-group"><label for="total-bars">Jumlah Bar pada meter minyak (Penuh)</label><input type="number" id="total-bars" placeholder="Contoh: 10" required></div>
                             <div class="form-group"><label for="current-bars">Baki Bar pada meter (sekarang)</label><input type="number" id="current-bars" placeholder="Contoh: 3" required></div>
@@ -103,7 +100,6 @@
                      </div>
                      <section id="topup-calc-results" class="results-section hidden">
                         <h2>Ringkasan Penuh</h2>
-                        <!-- New structure for dynamic reordering -->
                         <div id="topup-results-grid" class="results-grid-topup">
                             <div id="topup-cost-item" class="result-item"><span class="label" id="topup-cost-label">Harga Subsidi (Bayar)</span><p class="value" id="topup-cost">RM0.00</p></div>
                             <div id="topup-liters-item" class="result-item"><span class="label">Liter Diperlukan</span><p class="value" id="topup-liters">0.00 <span class="unit">L</span></p></div>
@@ -121,7 +117,8 @@
         <p>Kalkulator ini terbina hasil daripada inspirasi beberapa individu. <a href="source.html">Lihat sini untuk senarai</a>.</p>
         <p>Ingin berinfaq kepada Mamtj6, sila <a href="https://www.mamtj6.com/infaq-wakaf" target="_blank" rel="noopener noreferrer">klik di sini</a>.</p>
         <div class="disclaimer"><p><strong>Penafian:</strong> Kalkulator ini adalah alat anggaran sahaja. Kiraan adalah berdasarkan data yang dimasukkan dan mungkin berbeza daripada jumlah sebenar.</p></div>
-        <p class="copyright">© 2025 MAMTJ6. Hak Cipta Terpelihara.</p>
+        <!-- Versi Ditambah -->
+        <p class="copyright">© 2024 MAMTJ6. Hak Cipta Terpelihara. | Versi 3.1</p>
     </footer>
 
     <script src="script.js"></script>
