@@ -1,5 +1,3 @@
-// Kalkulator Petrol MAMTJ6 - Versi 3.1 
-
 document.addEventListener('DOMContentLoaded', () => {
     // --- Tab Logic ---
     const tabs = document.querySelectorAll('.tab-btn');
@@ -20,35 +18,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInputLabel = document.getElementById('user-input-label');
     const userInput = document.getElementById('user-input');
     const resetBtnFull = document.getElementById('reset-btn-full');
+    const priceOptionSubsidy = document.getElementById('price-option-subsidy');
     const oldPriceInput = document.getElementById('old-price');
     const subsidyPriceInput = document.getElementById('subsidy-price');
     const noSubsidyPriceInput = document.getElementById('nosubsidy-price');
     const fullCalcResults = document.getElementById('full-calc-results');
-    const fullResultsGrid = document.getElementById('full-results-grid');
-    const resultLiters = document.getElementById('result-liters');
-    const resultTotal = document.getElementById('result-total');
-    const savingVsOld = document.getElementById('saving-vs-old');
-    const savingVsNoSubsidy = document.getElementById('saving-vs-nosubsidy');
-    const dynamicExplanation = document.getElementById('dynamic-explanation');
+    const resultLitersItem = document.getElementById('result-liters-item');
+    const resultTotalItem = document.getElementById('result-total-item');
+    const comparison1Item = document.getElementById('comparison-1-item');
+    const comparison2Item = document.getElementById('comparison-2-item');
+    const resultLitersValue = document.getElementById('result-liters-value');
+    const resultTotalValue = document.getElementById('result-total-value');
+    const comparison1Label = document.getElementById('comparison-1-label');
+    const comparison1Value = document.getElementById('comparison-1-value');
+    const comparison2Label = document.getElementById('comparison-2-label');
+    const comparison2Value = document.getElementById('comparison-2-value');
+    const fullCalcNote = document.getElementById('full-calc-note');
     let currentMode = 'RM';
 
     const switchModeFull = (newMode) => {
         currentMode = newMode;
         userInput.value = '';
         userInputLabel.textContent = (newMode === 'RM') ? 'Jumlah bayaran (RM)' : 'Jumlah liter (L)';
-        if (newMode === 'RM') { modeRmBtn.classList.add('active'); modeLiterBtn.classList.remove('active'); } 
-        else { modeLiterBtn.classList.add('active'); modeRmBtn.classList.remove('active'); }
+        modeRmBtn.classList.toggle('active', newMode === 'RM');
+        modeLiterBtn.classList.toggle('active', newMode === 'Liter');
         fullCalcResults.classList.add('hidden');
     };
     const resetCalculatorFull = () => {
         petrolFormFull.reset();
         userInput.value = '';
         oldPriceInput.value = '2.05'; subsidyPriceInput.value = '1.99'; noSubsidyPriceInput.value = '2.60';
+        priceOptionSubsidy.checked = true;
         switchModeFull('RM');
-        [fullCalcResults, dynamicExplanation].forEach(el => {
-            el.classList.add('hidden');
-            el.classList.remove('fade-in');
-        });
+        fullCalcResults.classList.remove('fade-in');
     };
     const calculateFull = (event) => {
         event.preventDefault();
@@ -58,44 +60,78 @@ document.addEventListener('DOMContentLoaded', () => {
         const userValue = parseFloat(userInput.value);
         if ([oldPrice, subsidyPrice, noSubsidyPrice, userValue].some(isNaN) || userValue <= 0) { alert('Sila masukkan semua nilai yang sah.'); return; }
         
-        let totalLiters, totalCost, explanationHTML;
+        const isSubsidyMode = priceOptionSubsidy.checked;
+        const basePrice = isSubsidyMode ? subsidyPrice : noSubsidyPrice;
+        let totalLiters, totalCost, noteContent;
+        
+        [resultLitersItem, resultTotalItem].forEach(el => el.classList.remove('result-item-primary'));
+
+        comparison1Item.style.order = 3;
+        comparison2Item.style.order = 4;
 
         if (currentMode === 'RM') {
             totalCost = userValue;
-            totalLiters = totalCost / subsidyPrice;
-            const litersOld = totalCost / oldPrice;
-            const litersNoSubsidy = totalCost / noSubsidyPrice;
-            explanationHTML = `<div class="dynamic-explanation-title">Dengan jumlah wang yang sama <strong>(RM${totalCost.toFixed(2)})</strong>:</div>
-                <div class="comparison-line">Pada harga tanpa subsidi (RM${noSubsidyPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersNoSubsidy.toFixed(2)} liter</strong></div>
-                <div class="comparison-line">Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersOld.toFixed(2)} liter</strong></div>`;
-            fullResultsGrid.classList.remove('mode-liter-layout');
-        } else { // Mode Liter
+            totalLiters = totalCost / basePrice;
+            if (isSubsidyMode) {
+                resultLitersItem.classList.add('result-item-primary');
+                resultLitersItem.style.order = 1; resultTotalItem.style.order = 2;
+                const litersNoSubsidy = totalCost / noSubsidyPrice; const litersOld = totalCost / oldPrice;
+                noteContent = `Dengan jumlah wang yang sama (RM${totalCost.toFixed(2)}):<ul><li>Pada harga di pam (RM${noSubsidyPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersNoSubsidy.toFixed(2)} L</strong>.</li><li>Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersOld.toFixed(2)} L</strong>.</li></ul>`;
+            } else {
+                resultLitersItem.classList.add('result-item-primary');
+                resultTotalItem.style.order = 1; resultLitersItem.style.order = 2;
+                const litersSubsidy = totalCost / subsidyPrice;
+                noteContent = `Dengan jumlah wang yang sama (RM${totalCost.toFixed(2)}):<ul><li>Pada harga bersubsidi (RM${subsidyPrice.toFixed(2)}/L), anda sebenarnya boleh memperoleh <strong>${litersSubsidy.toFixed(2)} L</strong>.</li></ul>`;
+            }
+        } else { // Liter Mode
             totalLiters = userValue;
-            totalCost = totalLiters * subsidyPrice;
-            const costOld = totalLiters * oldPrice;
-            const costNoSubsidy = totalLiters * noSubsidyPrice;
-            explanationHTML = `<div class="dynamic-explanation-title">Untuk mendapatkan jumlah petrol yang sama <strong>(${totalLiters.toFixed(2)} liter)</strong>:</div>
-                <div class="comparison-line">Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costOld.toFixed(2)}</strong></div>
-                <div class="comparison-line">Pada harga tanpa subsidi (RM${noSubsidyPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costNoSubsidy.toFixed(2)}</strong></div>`;
-            fullResultsGrid.classList.add('mode-liter-layout');
+            totalCost = totalLiters * basePrice;
+            resultTotalItem.classList.add('result-item-primary');
+            resultTotalItem.style.order = 1; resultLitersItem.style.order = 2;
+            if (isSubsidyMode) {
+                const costNoSubsidy = totalLiters * noSubsidyPrice; const costOld = totalLiters * oldPrice;
+                noteContent = `Untuk mendapatkan petrol (${totalLiters.toFixed(2)} L) yang sama:<ul><li>Pada harga di pam (RM${noSubsidyPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costNoSubsidy.toFixed(2)}</strong>.</li><li>Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costOld.toFixed(2)}</strong>.</li></ul>`;
+            } else {
+                const costSubsidy = totalLiters * subsidyPrice;
+                noteContent = `Untuk mendapatkan petrol (${totalLiters.toFixed(2)} L) yang sama:<ul><li>Pada harga bersubsidi (RM${subsidyPrice.toFixed(2)}/L), anda hanya perlu membayar <strong>RM${costSubsidy.toFixed(2)}</strong>.</li></ul>`;
+            }
         }
 
-        const savingOld = (oldPrice * totalLiters) - totalCost;
-        const savingNoSubsidy = (noSubsidyPrice * totalLiters) - totalCost;
+        resultLitersValue.innerHTML = `${totalLiters.toFixed(2)} <span class="unit">L</span>`;
+        resultTotalValue.textContent = `RM${totalCost.toFixed(2)}`;
+        fullCalcNote.innerHTML = noteContent;
 
-        resultLiters.innerHTML = `${totalLiters.toFixed(2)} <span class="unit">L</span>`;
-        resultTotal.textContent = `RM${totalCost.toFixed(2)}`;
-        savingVsOld.textContent = `RM${savingOld.toFixed(2)}`;
-        savingVsNoSubsidy.textContent = `RM${savingNoSubsidy.toFixed(2)}`;
-        dynamicExplanation.innerHTML = explanationHTML;
+        comparison1Value.classList.remove('savings', 'cost-increase');
+        comparison2Value.classList.remove('savings', 'cost-increase');
+        [comparison1Item, comparison2Item].forEach(el => el.classList.remove('hidden'));
+
+        const costAtOldPrice = totalLiters * oldPrice;
+        const costAtSubsidyPrice = totalLiters * subsidyPrice;
+
+        if (isSubsidyMode) {
+            comparison1Label.textContent = 'Penjimatan (vs Harga Lama)';
+            comparison1Value.textContent = `RM${(costAtOldPrice - totalCost).toFixed(2)}`;
+            comparison1Value.classList.add('savings');
+            
+            comparison2Label.textContent = 'Penjimatan (vs Tanpa Subsidi)';
+            comparison2Value.textContent = `RM${((totalLiters * noSubsidyPrice) - totalCost).toFixed(2)}`;
+            comparison2Value.classList.add('savings');
+        } else { // No Subsidy Mode
+            comparison1Label.textContent = 'Perbezaan Kos (vs Harga Lama)';
+            const diffOld = totalCost - costAtOldPrice;
+            comparison1Value.textContent = diffOld >= 0 ? `+ RM ${diffOld.toFixed(2)}` : `RM ${diffOld.toFixed(2)}`;
+            comparison1Value.classList.add('cost-increase');
+
+            comparison2Label.textContent = 'Perbezaan Kos (vs Harga Subsidi)';
+            const diffSubsidy = totalCost - costAtSubsidyPrice;
+            comparison2Value.textContent = diffSubsidy >= 0 ? `+ RM ${diffSubsidy.toFixed(2)}` : `RM ${diffSubsidy.toFixed(2)}`;
+            comparison2Value.classList.add('cost-increase');
+        }
         
-        [fullCalcResults, dynamicExplanation].forEach(el => {
-            el.classList.remove('hidden');
-            el.classList.add('fade-in');
-        });
+        fullCalcResults.classList.remove('hidden');
+        fullCalcResults.classList.add('fade-in');
     };
-    modeRmBtn.addEventListener('click', () => switchModeFull('RM'));
-    modeLiterBtn.addEventListener('click', () => switchModeFull('Liter'));
+    [modeRmBtn, modeLiterBtn].forEach(btn => btn.addEventListener('click', () => switchModeFull(btn.id.includes('rm') ? 'RM' : 'Liter')));
     petrolFormFull.addEventListener('submit', calculateFull);
     resetBtnFull.addEventListener('click', resetCalculatorFull);
 
@@ -122,27 +158,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const topupPumpCostValue = document.getElementById('topup-pump-cost');
     const topupSavingOldValue = document.getElementById('topup-saving-old-value');
     const topupSavingNosubsidyValue = document.getElementById('topup-saving-nosubsidy-value');
-    const OLD_PRICE_REF = 2.05;
-    const SUBSIDY_PRICE = 1.99;
-    const PUMP_PRICE = 2.60;
+    const OLD_PRICE_REF = 2.05; const SUBSIDY_PRICE = 1.99; const PUMP_PRICE = 2.60;
     let topUpMode = 'subsidi';
 
     const switchModeTopUp = (newMode) => {
         topUpMode = newMode;
-        if (newMode === 'subsidi') {
-            modeSubsidiBtn.classList.add('active'); modeTanpaSubsidiBtn.classList.remove('active');
-        } else {
-            modeTanpaSubsidiBtn.classList.add('active'); modeSubsidiBtn.classList.remove('active');
-        }
+        if (newMode === 'subsidi') { modeSubsidiBtn.classList.add('active'); modeTanpaSubsidiBtn.classList.remove('active'); } 
+        else { modeTanpaSubsidiBtn.classList.add('active'); modeSubsidiBtn.classList.remove('active'); }
         [fuelGaugeContainer, topupCalcResults].forEach(el => el.classList.add('hidden'));
     };
     const resetCalculatorTopUp = () => {
         petrolFormTopUp.reset();
         switchModeTopUp('subsidi');
-        [fuelGaugeContainer, topupCalcResults, scrollInstruction].forEach(el => {
-            el.classList.add('hidden');
-            el.classList.remove('fade-in');
-        });
+        [fuelGaugeContainer, topupCalcResults].forEach(el => { el.classList.add('hidden'); el.classList.remove('fade-in'); });
     };
     const calculateTopUp = (event) => {
         event.preventDefault();
@@ -158,8 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (topUpMode === 'subsidi') {
             topupCostLabel.textContent = 'Harga Subsidi (Bayar)';
             topupCostItem.classList.add('full-width', 'result-item-primary');
-            topupCostItem.style.order = 1; topupLitersItem.style.order = 2; topupPumpCostItem.style.order = 3;
-            topupSavingVsOldItem.style.order = 4; topupSavingVsNoSubsidyItem.style.order = 5;
+            topupLitersItem.style.order = 2; topupPumpCostItem.style.order = 3; topupSavingVsOldItem.style.order = 4; topupSavingVsNoSubsidyItem.style.order = 5;
             const totalPumpCost = totalLitersNeeded * PUMP_PRICE;
             const savingOld = (OLD_PRICE_REF - SUBSIDY_PRICE) * totalLitersNeeded;
             const savingNoSubsidy = (PUMP_PRICE - SUBSIDY_PRICE) * totalLitersNeeded;
@@ -170,12 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
             topupCostLabel.textContent = 'Harga (Perlu Bayar)';
             topupCostItem.classList.add('full-width', 'result-item-primary');
             topupLitersItem.classList.add('full-width');
-            topupCostItem.style.order = 1; topupLitersItem.style.order = 2;
+            topupLitersItem.style.order = 2;
             [topupPumpCostItem, topupSavingVsOldItem, topupSavingVsNoSubsidyItem].forEach(el => el.classList.add('hidden'));
         }
-        [fuelGaugeContainer, topupCalcResults, scrollInstruction].forEach(el => {
-            el.classList.remove('hidden'); el.classList.add('fade-in');
-        });
+        [fuelGaugeContainer, topupCalcResults, scrollInstruction].forEach(el => { el.classList.remove('hidden'); el.classList.add('fade-in'); });
         gaugeVisual.innerHTML = '';
         for (let i = 1; i <= totalBars; i++) {
             const wrapper = document.createElement('div'); wrapper.className = 'bar-wrapper'; wrapper.style.animationDelay = `${i * 0.05}s`;
