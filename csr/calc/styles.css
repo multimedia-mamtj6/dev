@@ -1,10 +1,9 @@
-/* Kalkulator Petrol MAMTJ6 - Versi 3.1 */
-
 /* --- Basic Setup & Variables --- */
 :root {
     --primary-blue: #007bff;
     --light-blue: #e7f5ff;
     --success-green: #28a745;
+    --warning-red: #dc3545;
     --text-color: #333;
     --label-color: #555;
     --border-color: #ccc;
@@ -23,23 +22,14 @@ body {
 
 /* --- Animation Classes --- */
 .hidden { display: none !important; }
-
-.fade-in {
-    animation: fadeInAnimation 0.6s ease-out forwards;
-}
-
-@keyframes fadeInAnimation {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.fade-in { animation: fadeInAnimation 0.6s ease-out forwards; }
+@keyframes fadeInAnimation { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* --- Header & Footer Styles --- */
 .page-header { padding: 20px; width: 100%; max-width: 700px; margin-bottom: 20px; }
 .header-logos { display: flex; justify-content: center; align-items: center; gap: 40px; background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 16px; }
 .logo { max-height: 50px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-
 main { width: 100%; display: flex; justify-content: center; }
-
 .page-footer { width: 100%; max-width: 700px; margin-top: 30px; padding: 20px; text-align: center; color: rgba(255, 255, 255, 0.9); }
 .page-footer p { margin-bottom: 10px; font-size: 14px; }
 .page-footer a { color: var(--white); font-weight: bold; text-decoration: underline; }
@@ -62,65 +52,39 @@ main { width: 100%; display: flex; justify-content: center; }
 .toggle-btn { flex: 1; padding: 12px; border: none; background-color: var(--white); cursor: pointer; font-size: 14px; font-weight: 500; transition: background-color 0.3s, color 0.3s; }
 .toggle-btn.active { background-color: var(--primary-blue); color: var(--white); }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-.form-group { display: flex; flex-direction: column; }
+.form-group { display: flex; flex-direction: column; width: 100%; }
 .form-group.full-width { grid-column: 1 / -1; }
 .form-group label { font-size: 14px; color: var(--label-color); margin-bottom: 8px; }
 .form-group input { padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; width: 100%; }
 .form-group input:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px var(--light-blue); }
-.action-buttons { display: flex; gap: 15px; margin-top: 20px; grid-column: 1 / -1; }
+.action-buttons { display: flex; gap: 15px; margin-top: 20px; }
 .btn { flex: 1; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; transition: background-color 0.3s, opacity 0.3s, border-color 0.3s; }
 .btn-primary { background-color: var(--primary-blue); color: var(--white); }
 .btn-primary:hover { opacity: 0.9; }
 .btn-secondary { background-color: transparent; color: var(--primary-blue); border: 1px solid var(--primary-blue); }
 .btn-secondary:hover { background-color: var(--light-blue); }
 
+/* --- Tab 1 Specific: Price Selection --- */
+.price-selection-group { margin-top: 20px; display: flex; flex-direction: column; gap: 15px; }
+.price-option-group { display: flex; align-items: center; gap: 15px; padding: 10px; border-radius: 8px; border: 1px solid #eee; transition: border-color 0.3s, background-color 0.3s; }
+.price-option-group:has(input:checked) { border-color: var(--primary-blue); background-color: var(--light-blue); }
+.price-option-group input[type="radio"] { flex-shrink: 0; transform: scale(1.2); }
+.price-reference { border-left: 3px solid #eee; padding-left: 20px; margin-left: 20px; }
+
 /* --- Results Sections --- */
 .results-section { background-color: var(--light-gray); border-radius: 16px; padding: 25px; margin-top: 30px; }
 .results-section h2, .section-title { font-size: 20px; margin-bottom: 20px; text-align: center; }
 .result-item { background-color: var(--white); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e0e0e0; }
 .result-item .label { font-size: 14px; color: var(--label-color); }
-.result-item .value { font-size: 28px; font-weight: 700; margin-top: 8px; word-wrap: break-word; transition: color 0.3s; }
+.result-item .value { font-size: 28px; font-weight: 700; margin-top: 8px; word-wrap: break-word; transition: color 0.3s, font-size 0.3s; }
 .result-item .unit { font-size: 16px; font-weight: 400; color: var(--label-color); }
-.result-item.savings .value { color: var(--success-green); }
-
-/* --- Tab 1 Specific Styles --- */
+.result-item .value.savings { color: var(--success-green); }
+.result-item .value.cost-increase { color: var(--warning-red); }
 .results-grid.four-items { display: flex; flex-wrap: wrap; gap: 20px; }
 .results-grid.four-items > .result-item { flex-basis: calc(50% - 10px); }
-
-/* Dynamic ordering for Tab 1 */
-#result-liters-item { order: 1; }
-#result-total-item { order: 2; }
-#saving-vs-old-item { order: 3; }
-#saving-vs-nosubsidy-item { order: 4; }
-
-.mode-liter-layout #result-liters-item { order: 2; }
-.mode-liter-layout #result-total-item { order: 1; }
-
-/* Dynamic explanation note style */
-.dynamic-explanation {
-    font-size: 14px;
-    color: var(--label-color);
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #e0e0e0;
-}
-.dynamic-explanation-title {
-    font-style: italic;
-    margin-bottom: 12px;
-}
-.comparison-line {
-    line-height: 1.6; 
-    margin-bottom: 8px;
-    padding-left: 15px; 
-    position: relative;
-    font-style: italic;
-}
-.comparison-line::before {
-    content: '•';
-    position: absolute;
-    left: 0;
-    color: var(--label-color);
-}
+.dynamic-note { font-style: italic; font-size: 14px; color: var(--label-color); margin-top: 20px; padding: 15px; background-color: var(--white); border-radius: 8px; line-height: 1.6; }
+.dynamic-note ul { list-style-position: inside; padding-left: 0; margin-top: 5px; }
+.dynamic-note strong { color: var(--text-color); }
 
 /* --- Tab 2 Specific Styles --- */
 .visual-section { background-color: var(--light-gray); border-radius: 16px; padding: 25px; margin-top: 30px; }
@@ -135,13 +99,11 @@ main { width: 100%; display: flex; justify-content: center; }
 .gauge-bar.current { background-color: var(--primary-blue); color: var(--white); border-color: #0056b3; }
 .gauge-bar.needed { background-color: #e9ecef; border: 1px dashed var(--border-color); color: var(--label-color); }
 .scroll-instruction { text-align: center; font-size: 12px; color: var(--label-color); margin-top: 15px; }
-
 .results-grid-topup { display: flex; flex-wrap: wrap; gap: 20px; }
 .results-grid-topup > .result-item { flex-basis: calc(50% - 10px); }
 .result-item.full-width { flex-basis: 100%; }
-
-.result-item-primary .value { font-size: 2.5em; color: var(--success-green); }
-.result-item-primary .label { font-weight: 600; }
+.result-item.result-item-primary .value { font-size: 2.5em; color: var(--success-green); }
+.result-item.result-item-primary .label { font-weight: 600; }
 
 /* --- Responsive & Other Styles --- */
 @media (max-width: 640px) {
@@ -149,7 +111,8 @@ main { width: 100%; display: flex; justify-content: center; }
     .calculator-container { padding: 20px; }
     .calculator-header h1 { font-size: 24px; }
     .toggle-btn { font-size: 12px; }
-    .results-grid.four-items > .result-item, .results-grid-topup > .result-item { flex-basis: 100%; }
+    .results-grid.four-items > .result-item, .results-grid-topup > .result-item { flex-basis: 100%; order: 0 !important; }
+    .price-reference { margin-left: 0; padding-left: 15px; }
 }
 
 /* --- Styles for source.html --- */
