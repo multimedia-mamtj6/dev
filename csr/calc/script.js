@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const comparison2Item = document.getElementById('comparison-2-item');
     const resultLitersValue = document.getElementById('result-liters-value');
     const resultTotalValue = document.getElementById('result-total-value');
+    const resultTotalSubtext = document.getElementById('result-total-subtext');
     const comparison1Label = document.getElementById('comparison-1-label');
     const comparison1Value = document.getElementById('comparison-1-value');
     const comparison2Label = document.getElementById('comparison-2-label');
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const switchModeFull = (newMode) => {
         currentMode = newMode;
         userInput.value = '';
+        userInput.step = newMode === 'Liter' ? '0.001' : '0.01'; // Tukar step
         userInputLabel.textContent = (newMode === 'RM') ? 'Jumlah bayaran (RM)' : 'Jumlah liter (L)';
         modeRmBtn.classList.toggle('active', newMode === 'RM');
         modeLiterBtn.classList.toggle('active', newMode === 'Liter');
@@ -65,23 +67,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalLiters, totalCost, noteContent;
         
         [resultLitersItem, resultTotalItem].forEach(el => el.classList.remove('result-item-primary'));
-
         comparison1Item.style.order = 3;
         comparison2Item.style.order = 4;
 
         if (currentMode === 'RM') {
             totalCost = userValue;
             totalLiters = totalCost / basePrice;
+            resultLitersItem.style.order = 1; resultTotalItem.style.order = 2;
+            resultLitersItem.classList.add('result-item-primary');
             if (isSubsidyMode) {
-                resultLitersItem.classList.add('result-item-primary');
-                resultLitersItem.style.order = 1; resultTotalItem.style.order = 2;
                 const litersNoSubsidy = totalCost / noSubsidyPrice; const litersOld = totalCost / oldPrice;
-                noteContent = `Dengan jumlah wang yang sama (RM${totalCost.toFixed(2)}):<ul><li>Pada harga di pam (RM${noSubsidyPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersNoSubsidy.toFixed(2)} L</strong>.</li><li>Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersOld.toFixed(2)} L</strong>.</li></ul>`;
+                noteContent = `Dengan jumlah wang yang sama (RM${totalCost.toFixed(2)}):<ul><li>Pada harga di pam (RM${noSubsidyPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersNoSubsidy.toFixed(3)} L</strong>.</li><li>Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda akan memperoleh <strong>${litersOld.toFixed(3)} L</strong>.</li></ul>`;
             } else {
-                resultLitersItem.classList.add('result-item-primary');
                 resultTotalItem.style.order = 1; resultLitersItem.style.order = 2;
                 const litersSubsidy = totalCost / subsidyPrice;
-                noteContent = `Dengan jumlah wang yang sama (RM${totalCost.toFixed(2)}):<ul><li>Pada harga bersubsidi (RM${subsidyPrice.toFixed(2)}/L), anda sebenarnya boleh memperoleh <strong>${litersSubsidy.toFixed(2)} L</strong>.</li></ul>`;
+                noteContent = `Dengan jumlah wang yang sama (RM${totalCost.toFixed(2)}):<ul><li>Pada harga bersubsidi (RM${subsidyPrice.toFixed(2)}/L), anda sebenarnya boleh memperoleh <strong>${litersSubsidy.toFixed(3)} L</strong>.</li></ul>`;
             }
         } else { // Liter Mode
             totalLiters = userValue;
@@ -90,38 +90,43 @@ document.addEventListener('DOMContentLoaded', () => {
             resultTotalItem.style.order = 1; resultLitersItem.style.order = 2;
             if (isSubsidyMode) {
                 const costNoSubsidy = totalLiters * noSubsidyPrice; const costOld = totalLiters * oldPrice;
-                noteContent = `Untuk mendapatkan petrol (${totalLiters.toFixed(2)} L) yang sama:<ul><li>Pada harga di pam (RM${noSubsidyPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costNoSubsidy.toFixed(2)}</strong>.</li><li>Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costOld.toFixed(2)}</strong>.</li></ul>`;
+                noteContent = `Untuk mendapatkan petrol (${totalLiters.toFixed(3)} L) yang sama:<ul><li>Pada harga di pam (RM${noSubsidyPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costNoSubsidy.toFixed(2)}</strong>.</li><li>Pada harga petrol lama (RM${oldPrice.toFixed(2)}/L), anda perlu membayar <strong>RM${costOld.toFixed(2)}</strong>.</li></ul>`;
             } else {
                 const costSubsidy = totalLiters * subsidyPrice;
-                noteContent = `Untuk mendapatkan petrol (${totalLiters.toFixed(2)} L) yang sama:<ul><li>Pada harga bersubsidi (RM${subsidyPrice.toFixed(2)}/L), anda hanya perlu membayar <strong>RM${costSubsidy.toFixed(2)}</strong>.</li></ul>`;
+                noteContent = `Untuk mendapatkan petrol (${totalLiters.toFixed(3)} L) yang sama:<ul><li>Pada harga bersubsidi (RM${subsidyPrice.toFixed(2)}/L), anda hanya perlu membayar <strong>RM${costSubsidy.toFixed(2)}</strong>.</li></ul>`;
             }
         }
 
-        resultLitersValue.innerHTML = `${totalLiters.toFixed(2)} <span class="unit">L</span>`;
+        resultLitersValue.innerHTML = `${totalLiters.toFixed(3)} <span class="unit">L</span>`;
         resultTotalValue.textContent = `RM${totalCost.toFixed(2)}`;
         fullCalcNote.innerHTML = noteContent;
 
         comparison1Value.classList.remove('savings', 'cost-increase');
         comparison2Value.classList.remove('savings', 'cost-increase');
-        [comparison1Item, comparison2Item].forEach(el => el.classList.remove('hidden'));
+        [comparison1Item, comparison2Item, resultTotalSubtext].forEach(el => el.classList.add('hidden'));
 
         const costAtOldPrice = totalLiters * oldPrice;
+        const costAtNoSubsidyPrice = totalLiters * noSubsidyPrice;
         const costAtSubsidyPrice = totalLiters * subsidyPrice;
 
         if (isSubsidyMode) {
+            resultTotalSubtext.textContent = `(Jumlah Harga Sebenar di Pam: RM${costAtNoSubsidyPrice.toFixed(2)})`;
+            resultTotalSubtext.classList.remove('hidden');
+            comparison1Item.classList.remove('hidden');
+            comparison2Item.classList.remove('hidden');
             comparison1Label.textContent = 'Penjimatan (vs Harga Lama)';
             comparison1Value.textContent = `RM${(costAtOldPrice - totalCost).toFixed(2)}`;
             comparison1Value.classList.add('savings');
-            
             comparison2Label.textContent = 'Penjimatan (vs Tanpa Subsidi)';
-            comparison2Value.textContent = `RM${((totalLiters * noSubsidyPrice) - totalCost).toFixed(2)}`;
+            comparison2Value.textContent = `RM${(costAtNoSubsidyPrice - totalCost).toFixed(2)}`;
             comparison2Value.classList.add('savings');
         } else { // No Subsidy Mode
+            comparison1Item.classList.remove('hidden');
+            comparison2Item.classList.remove('hidden');
             comparison1Label.textContent = 'Perbezaan Kos (vs Harga Lama)';
             const diffOld = totalCost - costAtOldPrice;
             comparison1Value.textContent = diffOld >= 0 ? `+ RM ${diffOld.toFixed(2)}` : `RM ${diffOld.toFixed(2)}`;
             comparison1Value.classList.add('cost-increase');
-
             comparison2Label.textContent = 'Perbezaan Kos (vs Harga Subsidi)';
             const diffSubsidy = totalCost - costAtSubsidyPrice;
             comparison2Value.textContent = diffSubsidy >= 0 ? `+ RM ${diffSubsidy.toFixed(2)}` : `RM ${diffSubsidy.toFixed(2)}`;
