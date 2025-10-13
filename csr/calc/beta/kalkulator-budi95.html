@@ -31,16 +31,113 @@
 
             <!-- Tab 1: Kalkulator Petrol -->
             <div id="tab1" class="tab-content active">
-                <div class="version-toggle-wrapper">
-                    <button id="version-toggle-btn-complete" class="version-toggle-btn">Tukar ke Versi Ringkas</button>
-                </div>
+                
+                <!-- [PEMBETULAN] Butang penukar kini berada di dalam header setiap versi -->
+
+                <!-- COMPLETE VERSION CONTAINER -->
                 <div id="complete-version-container">
-                    <header class="calculator-header"><h1>Kalkulator Petrol Madani</h1><p>Anggar kos dan penjimatan anda dengan harga petrol bersubsidi.</p></header>
-                    <div class="calculator-body"><form id="petrol-form-full"><div class="form-grid"><div class="form-group full-width"><label>Pilih unit kiraan</label><div class="mode-toggle"><button type="button" class="toggle-btn active" id="mode-rm">RM</button><button type="button" class="toggle-btn" id="mode-liter">Liter</button></div></div><div class="form-group full-width"><label for="user-input" id="user-input-label">Jumlah bayaran (RM)</label><input type="number" id="user-input" step="0.01" placeholder="Isi nilai di sini" required></div></div><div class="price-selection-group"><div class="form-group price-reference"><label for="old-price">Harga petrol lama (RM/liter)</label><input type="number" id="old-price" value="2.05" step="0.01" required></div><div class="price-option-group"><input type="radio" id="price-option-subsidy" name="price-option" value="subsidy" checked><div class="form-group"><label for="subsidy-price">Harga baru bersubsidi (RM/liter)</label><input type="number" id="subsidy-price" value="1.99" step="0.01" required></div></div><div class="price-option-group"><input type="radio" id="price-option-nosubsidy" name="price-option" value="nosubsidy"><div class="form-group"><label for="nosubsidy-price">Harga di Pam (RM/liter)</label><input type="number" id="nosubsidy-price" value="2.60" step="0.01" required></div></div></div><div class="action-buttons"><button type="submit" class="btn btn-primary">Kira</button><button type="button" id="reset-btn-full" class="btn btn-secondary">Reset</button></div></form><section id="full-calc-results" class="results-section hidden"><h2>Keputusan</h2><div class="results-grid four-items"><div id="result-liters-item" class="result-item"><span class="label">Liter yang akan diisi</span><p class="value" id="result-liters-value">0.000 <span class="unit">L</span></p></div><div id="result-total-item" class="result-item"><span class="label">Jumlah bayaran</span><p class="value" id="result-total-value">RM0.00</p><small id="result-total-subtext" class="value-subtext hidden"></small></div><div id="comparison-1-item" class="result-item"><span class="label" id="comparison-1-label"></span><p class="value" id="comparison-1-value">RM0.00</p></div><div id="comparison-2-item" class="result-item"><span class="label" id="comparison-2-label"></span><p class="value" id="comparison-2-value">RM0.00</p></div></div><div id="full-calc-note" class="dynamic-note"></div></section></div>
+                    <header class="calculator-header">
+                        <h1>Kalkulator Petrol Madani</h1>
+                        <p>Anggar kos dan penjimatan anda dengan harga petrol bersubsidi.</p>
+                        <div class="version-toggle-wrapper">
+                            <button id="version-toggle-btn-complete" class="version-toggle-btn">Tukar ke Versi Ringkas</button>
+                        </div>
+                    </header>
+                    <div class="calculator-body">
+                        <form id="petrol-form-full">
+                            <div class="form-grid">
+                                 <div class="form-group full-width">
+                                     <label>Pilih unit kiraan</label>
+                                    <div class="mode-toggle">
+                                        <button type="button" class="toggle-btn active" id="mode-rm">RM</button>
+                                        <button type="button" class="toggle-btn" id="mode-liter">Liter</button>
+                                    </div>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="user-input" id="user-input-label">Jumlah bayaran (RM)</label>
+                                    <input type="number" id="user-input" step="0.01" placeholder="Isi nilai di sini" required>
+                                </div>
+                            </div>
+                            <div class="price-selection-group">
+                                <div class="form-group price-reference">
+                                    <label for="old-price">Harga petrol lama (RM/liter)</label>
+                                    <input type="number" id="old-price" value="2.05" step="0.01" required>
+                                </div>
+                                <div class="price-option-group">
+                                    <input type="radio" id="price-option-subsidy" name="price-option" value="subsidy" checked>
+                                    <div class="form-group">
+                                        <label for="subsidy-price">Harga baru bersubsidi (RM/liter)</label>
+                                        <input type="number" id="subsidy-price" value="1.99" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="price-option-group">
+                                    <input type="radio" id="price-option-nosubsidy" name="price-option" value="nosubsidy">
+                                    <div class="form-group">
+                                        <label for="nosubsidy-price">Harga di Pam (RM/liter)</label>
+                                        <input type="number" id="nosubsidy-price" value="2.60" step="0.01" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                <button type="submit" class="btn btn-primary">Kira</button>
+                                <button type="button" id="reset-btn-full" class="btn btn-secondary">Reset</button>
+                            </div>
+                        </form>
+                        <section id="full-calc-results" class="results-section hidden">
+                            <h2>Keputusan</h2>
+                            <div class="results-grid four-items">
+                                <div id="result-liters-item" class="result-item"><span class="label">Liter yang akan diisi</span><p class="value" id="result-liters-value">0.000 <span class="unit">L</span></p></div>
+                                <div id="result-total-item" class="result-item"><span class="label">Jumlah bayaran</span><p class="value" id="result-total-value">RM0.00</p><small id="result-total-subtext" class="value-subtext hidden"></small></div>
+                                <div id="comparison-1-item" class="result-item"><span class="label" id="comparison-1-label"></span><p class="value" id="comparison-1-value">RM0.00</p></div>
+                                <div id="comparison-2-item" class="result-item"><span class="label" id="comparison-2-label"></span><p class="value" id="comparison-2-value">RM0.00</p></div>
+                            </div>
+                            <div id="full-calc-note" class="dynamic-note"></div>
+                        </section>
+                    </div>
                 </div>
+
+                <!-- SIMPLE VERSION CONTAINER -->
                 <div id="simple-version-container" class="hidden">
-                    <header class="calculator-header"><h1>Kalkulator Petrol (Ringkas)</h1><p>Kira kos dan penjimatan petrol dengan mudah.</p><div class="version-toggle-wrapper"><button id="version-toggle-btn-simple" class="version-toggle-btn">Tukar ke Versi Lengkap</button></div></header>
-                    <div class="calculator-body"><form id="petrol-form-simple"><div class="form-grid"><div class="form-group full-width"><label>Pilih unit kiraan</label><div class="mode-toggle"><button type="button" class="toggle-btn active" id="mode-rm-simple">RM</button><button type="button" class="toggle-btn" id="mode-liter-simple">Liter</button></div></div><div class="form-group"><label for="user-input-simple" id="user-input-label-simple">Jumlah bayaran (RM)</label><input type="number" id="user-input-simple" step="0.01" placeholder="Isi nilai di sini" required></div><div class="form-group"><label for="old-price-simple">Harga petrol lama (RM/liter)</label><input type="number" id="old-price-simple" value="2.05" step="0.01" required></div><div class="form-group"><label for="subsidy-price-simple">Harga baru bersubsidi (RM/liter)</label><input type="number" id="subsidy-price-simple" value="1.99" step="0.01" required></div><div class="form-group"><label for="nosubsidy-price-simple">Harga baru tanpa subsidi (RM/liter)</label><input type="number" id="nosubsidy-price-simple" value="2.60" step="0.01" required></div></div><div class="action-buttons"><button type="submit" class="btn btn-primary">Kira</button><button type="button" id="reset-btn-simple" class="btn btn-secondary">Reset</button></div></form><section id="simple-calc-results" class="results-section hidden"><h2>Keputusan</h2><div class="results-grid four-items"><div id="simple-liters-item" class="result-item"><span class="label">Liter yang akan diisi</span><p class="value" id="simple-liters-value">0.000 <span class="unit">L</span></p></div><div id="simple-total-item" class="result-item"><span class="label">Jumlah bayaran</span><p class="value" id="simple-total-value">RM0.00</p><small id="simple-total-subtext" class="value-subtext hidden"></small></div><div id="simple-saving-old-item" class="result-item"><span class="label">Penjimatan (vs Harga Lama)</span><p class="value" id="simple-saving-old-value">RM0.00</p></div><div id="simple-saving-nosubsidy-item" class="result-item"><span class="label">Penjimatan (vs Tanpa Subsidi)</span><p class="value" id="simple-saving-nosubsidy-value">RM0.00</p></div></div></section></div>
+                    <header class="calculator-header">
+                        <h1>Kalkulator Petrol (Ringkas)</h1>
+                        <p>Kira kos dan penjimatan petrol dengan mudah.</p>
+                        <div class="version-toggle-wrapper">
+                            <button id="version-toggle-btn-simple" class="version-toggle-btn">Tukar ke Versi Lengkap</button>
+                        </div>
+                    </header>
+                    <div class="calculator-body">
+                         <form id="petrol-form-simple">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                     <label>Pilih unit kiraan</label>
+                                    <div class="mode-toggle">
+                                        <button type="button" class="toggle-btn active" id="mode-rm-simple">RM</button>
+                                        <button type="button" class="toggle-btn" id="mode-liter-simple">Liter</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="user-input-simple" id="user-input-label-simple">Jumlah bayaran (RM)</label>
+                                    <input type="number" id="user-input-simple" step="0.01" placeholder="Isi nilai di sini" required>
+                                </div>
+                                <div class="form-group"><label for="old-price-simple">Harga petrol lama (RM/liter)</label><input type="number" id="old-price-simple" value="2.05" step="0.01" required></div>
+                                <div class="form-group"><label for="subsidy-price-simple">Harga baru bersubsidi (RM/liter)</label><input type="number" id="subsidy-price-simple" value="1.99" step="0.01" required></div>
+                                <div class="form-group"><label for="nosubsidy-price-simple">Harga baru tanpa subsidi (RM/liter)</label><input type="number" id="nosubsidy-price-simple" value="2.60" step="0.01" required></div>
+                            </div>
+                            <div class="action-buttons">
+                                <button type="submit" class="btn btn-primary">Kira</button>
+                                <button type="button" id="reset-btn-simple" class="btn btn-secondary">Reset</button>
+                            </div>
+                        </form>
+                        <section id="simple-calc-results" class="results-section hidden">
+                            <h2>Keputusan</h2>
+                            <div class="results-grid four-items">
+                                <div id="simple-liters-item" class="result-item"><span class="label">Liter yang akan diisi</span><p class="value" id="simple-liters-value">0.000 <span class="unit">L</span></p></div>
+                                <div id="simple-total-item" class="result-item"><span class="label">Jumlah bayaran</span><p class="value" id="simple-total-value">RM0.00</p><small id="simple-total-subtext" class="value-subtext hidden"></small></div>
+                                <div id="simple-saving-old-item" class="result-item"><span class="label">Penjimatan (vs Harga Lama)</span><p class="value" id="simple-saving-old-value">RM0.00</p></div>
+                                <div id="simple-saving-nosubsidy-item" class="result-item"><span class="label">Penjimatan (vs Tanpa Subsidi)</span><p class="value" id="simple-saving-nosubsidy-value">RM0.00</p></div>
+                            </div>
+                        </section>
+                    </div>
                 </div>
             </div>
 
