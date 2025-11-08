@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waktu & Tarikh Hijri</title>
+    <style>
+        /* Gaya Asas untuk meletakkan semua kandungan di tengah */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5; /* Latar belakang lembut */
+        }
+        
+        /* Bekas utama untuk semua kandungan */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px; /* Jarak antara jam dan tarikh */
+        }
+
+        /* Gaya baharu untuk paparan Tarikh Hijrah */
+        .hijri-date-box {
+            display: flex;
+            align-items: center; /* Jajarkan nombor dan teks secara menegak */
+            justify-content: center;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 350px; /* Menyamai lebar widget MST */
+            box-sizing: border-box; /* Memastikan padding tidak menambah lebar */
+        }
+        .hijri-day-number {
+            font-size: 80px;
+            font-weight: bold;
+            color: #212121;
+            margin-right: 20px;
+            line-height: 1;
+        }
+        .hijri-text-container {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        .hijri-month {
+            font-size: 28px;
+            font-weight: bold;
+            color: #212121;
+            white-space: nowrap; /* PEMBETULAN: Memastikan teks sentiasa dalam satu baris */
+        }
+        .hijri-year {
+            font-size: 28px;
+            font-weight: bold;
+            color: #212121;
+            margin-top: 5px;
+        }
+        
+        /* Gaya untuk mesej memuatkan/ralat */
+        .loading-text, .error-text {
+            font-size: 18px;
+            color: #616161;
+        }
+        .error-text {
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Widget Jam MST -->
+        <iframe 
+            id="mst_widget" 
+            title="MST Widget" 
+            width="350" 
+            height="120" 
+            style="-webkit-box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5);-moz-box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5);box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5);border: 0;" 
+            src="https://mst.sirim.my/widget">
+        </iframe>
+        
+        <!-- Paparan Tarikh Hijrah baharu -->
+        <div class="hijri-date-box" id="hijri-container">
+            <div class="loading-text">Memuatkan Tarikh Hijri...</div>
+        </div>
+    </div>
+
+    <script>
+        // "Kamus" untuk menukar nombor bulan Hijrah kepada nama
+        const hijriMonthNames = {
+          "01": "Muharram", "02": "Safar", "03": "Rabi'ul Awwal", "04": "Rabi'ul Akhir",
+          "05": "Jumadil Awwal", "06": "Jumadil Akhir", "07": "Rejab", "08": "Syaaban",
+          "09": "Ramadan", "10": "Syawal", "11": "Zulkaedah", "12": "Zulhijah"
+        };
+
+        async function updateHijriDate() {
+            const hijriContainer = document.getElementById('hijri-container');
+            const apiUrl = "https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=WLY01";
+            
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) { throw new Error('Ralat rangkaian'); }
+
+                const data = await response.json();
+                const todayPrayer = data.prayerTime[0];
+
+                if (todayPrayer) {
+                    const hijriDateParts = todayPrayer.hijri.split("-");
+                    const hijriYear = hijriDateParts[0];
+                    const hijriMonthNum = hijriDateParts[1];
+                    const hijriDay = hijriDateParts[2];
+                    
+                    const hijriMonthName = hijriMonthNames[hijriMonthNum] || '';
+                    
+                    hijriContainer.innerHTML = `
+                        <div class="hijri-day-number">${hijriDay}</div>
+                        <div class="hijri-text-container">
+                            <div class="hijri-month">${hijriMonthName}</div>
+                            <div class="hijri-year">${hijriYear}h</div>
+                        </div>
+                    `;
+
+                } else {
+                    hijriContainer.innerHTML = '<div class="error-text">Ralat Data</div>';
+                }
+            } catch (error) {
+                console.error("Error fetching Hijri date:", error);
+                hijriContainer.innerHTML = '<div class="error-text">Gagal memuatkan</div>';
+            }
+        }
+        
+        updateHijriDate();
+    </script>
+</body>
+</html>
