@@ -3,7 +3,7 @@
 // Versi 4.0 - Dengan Tambahan Console Log untuk Debugging
 // =================================================================
 
-const JSON_URL = 'https://multimedia.mamtj6.com/kuliah/data/jadual_lengkap.json';
+const JSON_URL = 'https://dev.mamtj6.com/kuliah/data/jadual_lengkap.json';
 
 const MESSAGES = {
     today_subuh: 'Tiada Kuliah Subuh Hari Ini',
