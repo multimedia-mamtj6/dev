@@ -139,7 +139,16 @@ main { flex-grow: 1; min-height: 0; }
     .legend-box.today-legend{
         display: none !important;
     }
-    
+
+    /* --- CRITICAL: Force desktop table view for printing even on mobile --- */
+    #mobile-view-container {
+        display: none !important;
+    }
+
+    .schedule-table {
+        display: table !important;
+    }
+
     /* --- Aturan Reka Letak Utama --- */
     .page-container {
         display: flex; flex-direction: column; height: 100vh !important;

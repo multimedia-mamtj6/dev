@@ -1,5 +1,5 @@
-// ================================================================= 
-// SCRIPT.JS - VERSI 14.0 (DENGAN FUNGSI JADUAL BULAN DEPAN)
+// =================================================================
+// SCRIPT.JS - VERSI 15.0 (DENGAN FUNGSI PDF EXPORT)
 // =================================================================
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (targetMonthParam === 'depan') {
             baseDate.setMonth(baseDate.getMonth() + 1);
         }
-        
+
+        // Check for PDF export parameter
+        const pdfExportMode = urlParams.get('file') === 'pdf';
+
         // Kemas kini pengaki (tarikh kemas kini)
         const updateInfoElement = document.getElementById('update-info');
         if (updateInfoElement && jsonData.infoJadual.tarikhKemasKini) {
@@ -23,6 +26,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hantar tarikh sasaran kepada kedua-dua fungsi render
         renderCalendarDesktop(jsonData.senaraiHari, baseDate);
         initializeMobileView(jsonData.senaraiHari, baseDate);
+
+        // --- PDF EXPORT AUTO-PRINT ---
+        if (pdfExportMode) {
+            // Wait for rendering to complete and CSS to be applied
+            // Use requestAnimationFrame twice to ensure paint cycle completes
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    // Additional small delay for mobile browsers to apply print styles
+                    setTimeout(() => {
+                        window.print();
+                    }, 250);
+                });
+            });
+        }
 
     } catch (error) {
         console.error("Gagal memuatkan data:", error);
