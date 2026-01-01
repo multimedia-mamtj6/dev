@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [15.0.1] - 2026-01-01
+
+### Added
+- **Informational note on landing page** - Added note below footer explaining PDF export availability
+  - Message: "💡 Nota: Export PDF hanya berfungsi pada desktop sahaja. Untuk mobile view, sila gunakan butang LIHAT JADUAL."
+  - Visible on both desktop and mobile views
+  - Positioned outside `.hub-container` for proper scrolling
+  - Styled with subtle gray color (#999) and small font size (0.75rem)
+  - Files modified: `index.html` (lines 72-74)
+
+### Changed
+- **Index page scrollability** - Changed container from fixed height to minimum height
+  - Changed `.hub-container` from `height: 100vh` to `min-height: 100vh`
+  - Added vertical padding (`padding: 2rem 0`) for spacing
+  - Allows page to scroll when content exceeds viewport height
+  - Fixes overflow issues on small mobile screens and landscape mode
+  - Files modified: `index.html` (line 10)
+
+- **PDF buttons hidden on mobile** - PDF export buttons now hidden on mobile devices
+  - Added CSS rule to hide `.pdf-button` at viewport width ≤ 600px
+  - Prevents Chrome Mobile crash issues with PDF export
+  - Simplifies mobile interface with only "LIHAT JADUAL" buttons visible
+  - Desktop functionality unchanged
+  - Files modified: `index.html` (line 25)
+
+### Fixed
+- **Body overflow removed** - Removed `overflow: hidden` from body element
+  - Allows page to scroll properly on all devices
+  - Fixes issue where content below viewport was inaccessible
+  - Enables visibility of footer and informational note
+  - Files modified: `style.css` (line 24)
+
+### Technical Details
+- **Mobile UX improvements**: Cleaner interface on mobile with hidden PDF buttons and explanatory note
+- **Scrolling fix**: Page now scrollable on all screen sizes and orientations
+- **Responsive design**: Maintains centered layout on large screens, scrollable on small screens
+- **Browser compatibility**: Works across Chrome, Firefox, Safari (desktop and mobile)
+
 ## [15.0] - 2025-12-30
 
 ### Added - Major Features

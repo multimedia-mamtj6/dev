@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <!-- Gaya tambahan diletakkan di sini untuk kesederhanaan -->
     <style>
-        .hub-container { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100vh; }
+        .hub-container { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 100vh; padding: 2rem 0; }
         .hub-logo { width: 200px; height: auto; margin-bottom: 2rem; }
         .hub-header { margin-bottom: 3rem; }
         .nav-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; width: 100%; max-width: 600px; }
@@ -22,6 +22,7 @@
         @media (max-width: 600px) {
             .nav-buttons { grid-template-columns: 1fr; }
             .hub-container { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .pdf-button { display: none; }
         }
     </style>
 </head>
@@ -65,9 +66,13 @@
         </div>
 
         <footer style="margin-top: 2rem; font-size: 0.9rem; color: #666;">
-            <p>Versi 15.0 • Dikemaskini 30 Disember 2025</p>
+            <p>Versi 15.0.1 • Dikemaskini 1 Januari 2026</p>
         </footer>
     </div>
+
+    <p style="display: block !important; font-size: 0.75rem; color: #999 !important; margin-top: 1rem; margin-bottom: 2rem; max-width: 400px; text-align: center; margin-left: auto; margin-right: auto; padding: 0 1.5rem; visibility: visible !important; opacity: 1 !important;">
+        💡 Nota: Export PDF hanya berfungsi pada desktop sahaja.<br>Untuk mobile view, sila gunakan butang LIHAT JADUAL.
+    </p>
 
     <script>
         // Skrip kecil untuk mengemas kini nama bulan semasa dan bulan depan pada butang
