@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [15.0.2] - 2026-01-02
+
+### Changed
+- **All buttons now open in new tabs** - All navigation buttons and links now open their destinations in new browser tabs
+  - Current month schedule button opens in new tab
+  - Current month PDF export button opens in new tab
+  - Next month schedule button opens in new tab
+  - Next month PDF export button opens in new tab
+  - Admin panel link opens in new tab with security attributes
+  - Added `target="_blank"` attribute to all 5 buttons/links
+  - Added `rel="noopener noreferrer"` to external Google Sheets link for security
+  - Allows users to keep the main page open while viewing schedules or accessing admin panel
+  - Files modified: `index.html` (lines 43, 47, 54, 58, 65)
+
+### Technical Details
+- **Security enhancement**: External links include `rel="noopener noreferrer"` to prevent potential security vulnerabilities
+- **User experience**: Main landing page remains accessible while exploring other sections
+- **Browser compatibility**: `target="_blank"` works across all modern browsers
+
 ## [15.0.1] - 2026-01-01
 
 ### Added
