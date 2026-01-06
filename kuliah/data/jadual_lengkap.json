@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN JANUARI 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 2/1/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 6/1/2026"
   },
   "senaraiHari": [
     {
@@ -65,11 +65,7 @@
     {
       "date": "2026-01-06",
       "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Shahruwardi ",
-        "tajuk_kuliah": "Tuhfah Ar-Raghibin",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/04_3.-Ust-Shahruwardi.jpg"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
