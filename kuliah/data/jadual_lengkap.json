@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN JANUARI 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 15/1/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 18/1/2026"
   },
   "senaraiHari": [
     {
@@ -197,11 +197,7 @@
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
-      "maghrib": {
-        "nama_penceramah": "Ustaz Amir",
-        "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/17_16.-Ustaz-Amir.jpg"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
