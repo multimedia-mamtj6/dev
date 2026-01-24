@@ -4,6 +4,105 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [15.2] - 2026-01-24
+
+### Added
+- **Today/Tomorrow dropdown selector** - New dropdown in mobile view to switch between today's and tomorrow's lecture schedule
+  - Dropdown options: "KULIAH HARI INI" and "KULIAH HARI ESOK"
+  - Centered text display with custom styled dropdown arrow
+  - Replaces static "Kuliah Hari Ini" label
+  - Files modified: `jadual/script.js` (lines 229-241), `jadual/style.css` (lines 96-138)
+
+- **Dynamic Hijri date for tomorrow** - Hijri date updates when switching to "Kuliah Hari Esok"
+  - Fetches from JAKIM e-Solat API using `period=month` endpoint
+  - Date format: DD-Mon-YYYY (e.g., "25-Jan-2026")
+  - Falls back to next month API if tomorrow is in a different month
+  - Both Gregorian and Hijri dates update dynamically
+  - Files modified: `jadual/script.js` (lines 279-342)
+
+- **Digital Signage iframe switching** - Poster iframes dynamically switch based on selected day
+  - Today: `today_subuh.html` and `today_maghrib.html`
+  - Tomorrow: `tomorrow_subuh.html` and `tomorrow_maghrib.html`
+  - Requires corresponding Digital Signage pages on dev.mamtj6.com
+  - Files modified: `jadual/script.js` (lines 246-256)
+
+### Changed
+- **Card re-rendering on dropdown change** - Card content re-renders when user changes dropdown selection
+  - Uses cached `senaraiHari` data for efficient re-rendering
+  - Event listener attached to dropdown for change detection
+  - Files modified: `jadual/script.js` (lines 5-6, 267-273)
+
+### Technical Details
+- **Script version**: Updated from 15.1 to 15.2
+- **New CSS properties**: `text-align-last: center` for centered dropdown text
+- **API endpoint**: Uses `period=month` instead of `period=today` for multi-day support
+- **Data caching**: Module-level `cachedSenaraiHari` variable stores schedule data for re-rendering
+
+## [15.1] - 2026-01-24
+
+### Fixed
+- **Digital Signage poster iframe URLs** - Fixed broken iframe URLs for "Kuliah Hari Ini" card in mobile view
+  - Fixed Subuh poster URL: `today_subuh.html`
+  - Fixed Maghrib poster URL: `today_maghrib.html`
+  - File modified: `jadual/script.js` (lines 227, 231)
+
+## [15.0.2] - 2026-01-02
+
+### Changed
+- **All buttons now open in new tabs** - All navigation buttons and links now open their destinations in new browser tabs
+  - Current month schedule button opens in new tab
+  - Current month PDF export button opens in new tab
+  - Next month schedule button opens in new tab
+  - Next month PDF export button opens in new tab
+  - Admin panel link opens in new tab with security attributes
+  - Added `target="_blank"` attribute to all 5 buttons/links
+  - Added `rel="noopener noreferrer"` to external Google Sheets link for security
+  - Allows users to keep the main page open while viewing schedules or accessing admin panel
+  - Files modified: `index.html` (lines 43, 47, 54, 58, 65)
+
+### Technical Details
+- **Security enhancement**: External links include `rel="noopener noreferrer"` to prevent potential security vulnerabilities
+- **User experience**: Main landing page remains accessible while exploring other sections
+- **Browser compatibility**: `target="_blank"` works across all modern browsers
+
+## [15.0.1] - 2026-01-01
+
+### Added
+- **Informational note on landing page** - Added note below footer explaining PDF export availability
+  - Message: "💡 Nota: Export PDF hanya berfungsi pada desktop sahaja. Untuk mobile view, sila gunakan butang LIHAT JADUAL."
+  - Visible on both desktop and mobile views
+  - Positioned outside `.hub-container` for proper scrolling
+  - Styled with subtle gray color (#999) and small font size (0.75rem)
+  - Files modified: `index.html` (lines 72-74)
+
+### Changed
+- **Index page scrollability** - Changed container from fixed height to minimum height
+  - Changed `.hub-container` from `height: 100vh` to `min-height: 100vh`
+  - Added vertical padding (`padding: 2rem 0`) for spacing
+  - Allows page to scroll when content exceeds viewport height
+  - Fixes overflow issues on small mobile screens and landscape mode
+  - Files modified: `index.html` (line 10)
+
+- **PDF buttons hidden on mobile** - PDF export buttons now hidden on mobile devices
+  - Added CSS rule to hide `.pdf-button` at viewport width ≤ 600px
+  - Prevents Chrome Mobile crash issues with PDF export
+  - Simplifies mobile interface with only "LIHAT JADUAL" buttons visible
+  - Desktop functionality unchanged
+  - Files modified: `index.html` (line 25)
+
+### Fixed
+- **Body overflow removed** - Removed `overflow: hidden` from body element
+  - Allows page to scroll properly on all devices
+  - Fixes issue where content below viewport was inaccessible
+  - Enables visibility of footer and informational note
+  - Files modified: `style.css` (line 24)
+
+### Technical Details
+- **Mobile UX improvements**: Cleaner interface on mobile with hidden PDF buttons and explanatory note
+- **Scrolling fix**: Page now scrollable on all screen sizes and orientations
+- **Responsive design**: Maintains centered layout on large screens, scrollable on small screens
+- **Browser compatibility**: Works across Chrome, Firefox, Safari (desktop and mobile)
+
 ## [15.0] - 2025-12-30
 
 ### Added - Major Features
