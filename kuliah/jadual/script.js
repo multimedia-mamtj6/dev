@@ -224,11 +224,11 @@ async function renderTodayCard(senaraiHari) {
     if (todayData && (todayData.subuh || todayData.maghrib)) {
         if (todayData.subuh) {
             cardBody += createLectureBlock('Subuh', todayData.subuh);
-            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://multimedia.mamtj6.com/kuliah/paparan/today_subuh.html" loading="lazy" scrolling="no"></iframe></div>`;
+            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/today_subuh.html" loading="lazy" scrolling="no"></iframe></div>`;
         }
         if (todayData.maghrib) {
             cardBody += createLectureBlock('Maghrib', todayData.maghrib);
-            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://multimedia.mamtj6.com/kuliah/paparan/today_maghrib.html" loading="lazy" scrolling="no"></iframe></div>`;
+            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/today_maghrib.html" loading="lazy" scrolling="no"></iframe></div>`;
         }
     } else {
         cardBody += `<div class="no-kuliah-today">Tiada kuliah dijadualkan hari ini.</div>`;

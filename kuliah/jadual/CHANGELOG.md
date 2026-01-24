@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [15.1] - 2026-01-24
+
+### Fixed
+- **Digital Signage poster iframe URLs** - Fixed broken iframe URLs for "Kuliah Hari Ini" card in mobile view
+  - Fixed Subuh poster URL: `today_subuh.html`
+  - Fixed Maghrib poster URL: `today_maghrib.html`
+  - File modified: `jadual/script.js` (lines 227, 231)
+
 ## [15.0.2] - 2026-01-02
 
 ### Changed
