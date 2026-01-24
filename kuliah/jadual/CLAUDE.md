@@ -92,7 +92,7 @@ Key characteristics:
 Key characteristics:
 - Special "Kuliah Hari Ini" card only displays when viewing current month (script.js:142-146)
 - Integrates Hijri date from JAKIM e-Solat API (zone: WLY01) (script.js:235)
-- Embeds live Digital Signage posters via iframe from `multimedia.mamtj6.com` (script.js:210-214)
+- Embeds live Digital Signage posters via iframe from `dev.mamtj6.com` (script.js:210-214)
 - Uses responsive `em`/`rem` units for font sizes
 - Cards use `aspect-ratio: 16 / 9` for poster wrapper responsive sizing
 
@@ -129,7 +129,8 @@ The system distinguishes between:
 
 ### External API Integration
 - JAKIM e-Solat API: `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=WLY01`
-- Digital Signage: `https://multimedia.mamtj6.com/kuliah/paparan/today_subuh.html` and `today_maghrib.html`
+- Digital Signage (Today): `https://dev.mamtj6.com/kuliah/paparan/today_subuh.html` and `today_maghrib.html`
+- Digital Signage (Tomorrow): `https://dev.mamtj6.com/kuliah/paparan/tomorrow_subuh.html` and `tomorrow_maghrib.html`
 
 ### Responsive Breakpoint
 The critical breakpoint is **768px**. All media queries use `@media (max-width: 768px)` to switch from desktop to mobile view.
