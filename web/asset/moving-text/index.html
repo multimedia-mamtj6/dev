@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* Ticker Container */
+        .ticker-wrap {
+            width: 100%;
+            background: #222;
+            padding: 10px 0;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* The Moving Text */
+        .ticker {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scroll-left 20s linear infinite;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .ticker-item {
+            display: inline-block;
+            padding: 0 50px;
+        }
+
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="ticker-wrap">
+    <div class="ticker" id="ticker-content">Loading messages...</div>
+</div>
+
+<script>
+    async function loadTicker() {
+        // Replace with your GitHub Pages URL or Raw URL
+        const url = 'data.json?t=' + new Date().getTime(); // ?t= prevents caching
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const container = document.getElementById('ticker-content');
+            
+            // Join all rows from Google Sheet with a separator
+            container.innerHTML = data.map(item => 
+                `<span class="ticker-item">${item.text}</span>`
+            ).join(" • ");
+            
+        } catch (e) {
+            console.error("Failed to load ticker data");
+        }
+    }
+
+    loadTicker();
+    // Auto-refresh the ticker every 5 minutes
+    setInterval(loadTicker, 300000);
+</script>
+
+</body>
+</html>
