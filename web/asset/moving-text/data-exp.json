@@ -1,10 +1,10 @@
 {
    "moving-text": [
-      { "text": "testing 1" },
-      { "text": "testing 2" },
-      { "text": "testing 3" },
-      { "text": "testing 4" },
-      { "text": "testing 5" },
-      { "text": "pengunguman: ini adalah percubaan" }
+      { "Col1": "testing 1" },
+      { "Col1": "testing 2" },
+      { "Col1": "testing 3" },
+      { "Col1": "testing 4" },
+      { "Col1": "testing 5" },
+      { "Col1": "pengunguman: ini adalah percubaan" }
    ]
 }
