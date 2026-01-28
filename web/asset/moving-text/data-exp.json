@@ -1,7 +1,7 @@
 {
-    "my_data": {
-        "Item 1": "testing 1",
-        "Item 2": "testing 2",
-        "Item 3": "testing 3"
-    }
+   "moving-text": [
+      { "text": "testing 1" },
+      { "text": "testing 2" },
+      { "text": "testing 3" }
+   ]
 }
