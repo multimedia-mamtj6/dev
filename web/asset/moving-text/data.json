@@ -1,11 +1,13 @@
-[
-  {
-    "text": "testing 1"
-  },
-  {
-    "text": "testing 2"
-  },
-  {
-    "text": "testing 3"
-  }
-]
+{
+  "moving-text": [
+    {
+      "Col1": "testing 1"
+    },
+    {
+      "Col1": "testing 2"
+    },
+    {
+      "Col1": "testing 3"
+    }
+  ]
+}
