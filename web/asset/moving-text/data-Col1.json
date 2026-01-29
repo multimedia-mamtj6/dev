@@ -1,10 +1,9 @@
 {
    "moving-text": [
-      { "Col1": "testing 1" },
-      { "Col1": "testing 2" },
-      { "Col1": "testing 3" },
-      { "Col1": "testing 4" },
-      { "Col1": "testing 5" },
-      { "Col1": "pengunguman: ini adalah percubaan" }
+      { "Col1": "Sila pastikan anak-anak anda tidak membuat bising di dalam ruang solat" },
+      { "Col1": "Jangan lupa berniat iktikaf." },
+      { "Col1": "Untuk info berkenaan masjid, sila layari: mamtj6.com" },
+      { "Col1": "Sila nyahaktif telefon pintar anda atau memastikan ia berada dalam mod senyap" },
+      { "Col1": "Khutbah Jumaat Minggu Ini: Keutamaan Nisfu Syaaban" }
    ]
 }
