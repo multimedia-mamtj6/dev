@@ -16,7 +16,7 @@
         "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/17_16.-Ustaz-Amir.jpg"
       },
-      "cuti_umum": "Tahun Baru"
+      "cuti_umum": null
     },
     {
       "date": "2026-02-02",
@@ -188,29 +188,21 @@
         "tajuk_kuliah": "Tuhfah Ar-Raghibin",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/04_3.-Ust-Shahruwardi.jpg"
       },
-      "cuti_umum": null
+      "cuti_umum": "Tahun Baru Cina"
     },
     {
       "date": "2026-02-18",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
       },
-      "cuti_umum": null
+      "cuti_umum": "Tahun Baru Cina"
     },
     {
       "date": "2026-02-19",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -220,11 +212,7 @@
     },
     {
       "date": "2026-02-20",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -234,11 +222,7 @@
     },
     {
       "date": "2026-02-21",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -248,11 +232,7 @@
     },
     {
       "date": "2026-02-22",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -262,11 +242,7 @@
     },
     {
       "date": "2026-02-23",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -276,11 +252,7 @@
     },
     {
       "date": "2026-02-24",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -290,11 +262,7 @@
     },
     {
       "date": "2026-02-25",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -304,11 +272,7 @@
     },
     {
       "date": "2026-02-26",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -318,11 +282,7 @@
     },
     {
       "date": "2026-02-27",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -332,11 +292,7 @@
     },
     {
       "date": "2026-02-28",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -346,11 +302,7 @@
     },
     {
       "date": "",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -360,11 +312,7 @@
     },
     {
       "date": "",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -374,11 +322,7 @@
     },
     {
       "date": "",
-      "subuh": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
@@ -394,118 +338,190 @@
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
       "maghrib": {
-        "nama_penceramah": "Ustaz Amir",
-        "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/17_16.-Ustaz-Amir.jpg"
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
       },
       "cuti_umum": null
     },
     {
       "date": "2026-03-02",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-03",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-04",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-05",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-06",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-07",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-08",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-09",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-10",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-11",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-12",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-13",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-14",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-15",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-16",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-17",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-18",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
       "date": "2026-03-19",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Pegawai masjid",
+        "tajuk_kuliah": "Tazkirah Terawih",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      },
       "cuti_umum": null
     },
     {
