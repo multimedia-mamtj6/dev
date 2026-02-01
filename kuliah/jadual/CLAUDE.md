@@ -4,146 +4,226 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a responsive web application for displaying the monthly lecture (kuliah) schedule for Masjid Al-Mukhlisin. The application features a dual-view architecture with a traditional calendar table for desktop and a modern card-based layout for mobile devices. All data is managed through a single JSON file that is automatically updated from a Google Sheet via Google Apps Script.
+This is a responsive web application for displaying the monthly lecture (kuliah) schedule for Masjid Al-Mukhlisin. The system features a dual-view architecture: a traditional calendar table for desktop and a card-based layout for mobile devices. All schedule data is managed through a Google Sheet and automatically synchronized to a JSON file via Google Apps Script.
 
 ## Running the Application
 
-**Important:** Because the application fetches a JSON file via JavaScript, it must be run through a local web server (not directly via file://).
+The application must be served through a local web server (not `file://`) because it fetches JSON data via JavaScript.
 
 ```bash
-# Navigate to the project root
-cd "H:\My Drive\Kuliah Ilmu Mamtj6\new page v3 (mobile view and force refresh)\new page"
+# Navigate to project root
+cd "K:\My Drive\Kuliah Ilmu Mamtj6\version 15.0.1"
 
-# Start local server (Python 3)
+# Start local server
 python -m http.server
 
-# Or Python 2
+# Or using Python 2
 python -m SimpleHTTPServer
 ```
 
-Then open `http://localhost:8000/jadual/jadual.html` in your browser.
+Then open `http://localhost:8000/kuliah(beta)/jadual/index.html` in your browser.
 
 ## Project Structure
 
 ```
-new page/
-├── jadual/
-│   ├── index.html          # Hub/landing page
-│   ├── jadual.html         # Main schedule page (renders both desktop & mobile views)
-│   ├── script.js           # Core rendering logic for both views
-│   └── style.css           # Responsive styles with @media queries
-└── data/
-    └── jadual_lengkap.json # Single source of truth for all schedule data
+version 15.0.1/
+├── kuliah(beta)/
+│   ├── jadual/
+│   │   ├── index.html              # Landing page with navigation buttons
+│   │   ├── jadual.html             # Main schedule page (dual-view)
+│   │   ├── script.js               # Rendering logic (v15.0)
+│   │   ├── style.css               # Responsive styles with print media queries
+│   │   └── google-app-script/
+│   │       ├── code.gs             # Google Apps Script sync logic (v6.0)
+│   │       ├── config.json         # Configuration template (SENSITIVE - do not commit)
+│   │       └── index.html          # Web app control panel
+│   └── data/
+│       └── jadual_lengkap.json     # Single source of truth for all data
 ```
 
 ## Architecture & Key Concepts
 
-### Dual View System
+### Dual-View Rendering System
 
-The application renders **two complete, separate layouts simultaneously** in `jadual.html`:
-1. **Desktop View:** A `<table id="calendar-body">` with absolute-positioned content inside cells
-2. **Mobile View:** A `<div id="mobile-view-container">` with card-based layout
+The application renders **two complete layouts simultaneously** in `jadual.html`:
 
-CSS `@media` queries control which view is displayed:
-- Desktop (> 768px): Shows `.schedule-table`, hides `#mobile-view-container`
-- Mobile (≤ 768px): Hides `.schedule-table`, shows `#mobile-view-container`
+1. **Desktop View** (`<table id="calendar-body">`):
+   - 5-week grid calendar with absolute-positioned content
+   - Vertical week labels (MINGGU 1-5)
+   - Date numbers in top-right corner
+   - Lecture content positioned in bottom portion of cells
+   - Uses `vmin` units for responsive sizing
 
-### Data Structure
+2. **Mobile View** (`<div id="mobile-view-container">`):
+   - Card-based layout with chronological listing
+   - Special "Kuliah Hari Ini" (Today's Lecture) card with:
+     - Hijri date from JAKIM e-Solat API
+     - Embedded Digital Signage posters via iframe
+   - Uses `em`/`rem` units for text sizing
 
-`data/jadual_lengkap.json` uses a nested object structure:
+**Display control:** CSS `@media (max-width: 768px)` query toggles visibility between views.
+
+### Data Structure & Management
+
+`data/jadual_lengkap.json` structure:
 ```json
 {
   "infoJadual": {
-    "tajukBulan": "BULAN NOVEMBER 2025",
+    "tajukBulan": "BULAN JANUARI 2026",
     "tarikhKemasKini": "*Dikemaskini oleh..."
   },
   "senaraiHari": [
     {
-      "date": "2025-11-01",
-      "subuh": { "nama_penceramah": "...", "tajuk_kuliah": "...", "poster_url": "..." },
+      "date": "2026-01-01",
+      "subuh": {
+        "nama_penceramah": "...",
+        "tajuk_kuliah": "...",
+        "poster_url": "https://..."
+      },
       "maghrib": { ... },
-      "cuti_umum": null
+      "cuti_umum": "Tahun Baru"
     }
   ]
 }
 ```
 
-**Critical:** When accessing data, always use `jsonData.senaraiHari`, not `jsonData` directly.
+**Critical:** Always access data via `jsonData.senaraiHari`, not `jsonData` directly.
+
+**Data workflow:**
+1. Admin updates Google Sheet (tabs: `Schedule` and `Posters`)
+2. Google Apps Script reads sheets and constructs JSON
+3. Script pushes JSON to GitHub repository via API
+4. Web app fetches JSON with cache-busting: `?v=${new Date().getTime()}`
 
 ### Month Navigation
 
-The application supports viewing current and next month via URL parameter:
+URL parameter controls which month to display:
 - Current month: `jadual.html`
 - Next month: `jadual.html?bulan=depan`
 
-The script checks `URLSearchParams` and adjusts the target date accordingly (script.js:9-15).
+Logic in `script.js:9-15` adjusts the base date for rendering.
 
-### Desktop View Implementation
+### PDF Export Functionality
 
-Key characteristics:
-- Uses `position: absolute` for `.date-number` and `.lecture-content` within `.day-cell`
-- Cells have `position: relative` to create positioning context
-- Desktop units use `vmin` for responsive sizing
-- "Hari Ini" (today) highlighting is achieved by adding class `is-today` to `.day-cell` (script.js:90-92)
-- Public holidays use a special `.date-header` structure to prevent date number misalignment (script.js:79-86)
+Version 15.0 introduced URL-based PDF export:
+- Current month PDF: `jadual.html?file=pdf`
+- Next month PDF: `jadual.html?file=pdf&bulan=depan`
 
-### Mobile View Implementation
+**Implementation details:**
+- Auto-triggers `window.print()` when `?file=pdf` parameter detected
+- Uses double `requestAnimationFrame` + 250ms delay for reliable rendering
+- Print media queries force desktop table view on mobile devices
+- Converts all units to `pt` for print consistency
+- A4 landscape orientation enforced
 
-Key characteristics:
-- Special "Kuliah Hari Ini" card only displays when viewing current month (script.js:142-146)
-- Integrates Hijri date from JAKIM e-Solat API (zone: WLY01) (script.js:235)
-- Embeds live Digital Signage posters via iframe from `dev.mamtj6.com` (script.js:210-214)
-- Uses responsive `em`/`rem` units for font sizes
-- Cards use `aspect-ratio: 16 / 9` for poster wrapper responsive sizing
+## Desktop View Implementation Details
 
-### Print Stylesheet
+**Positioning strategy:**
+- `.day-cell` has `position: relative` (positioning context)
+- `.date-number` uses `position: absolute; top: 2pt; right: 4pt`
+- `.lecture-content` uses `position: absolute; top: 16pt; bottom: 0`
 
-Print functionality is included via `@media print` (see style.css for full implementation):
-- Enforces A4 landscape orientation
-- Uses Flexbox layout to prevent footer overflow
-- Converts all font sizes and positioning to `pt` units for consistency
+**Today highlighting:**
+- Script adds `.is-today` class to current day's `.day-cell` (script.js:106-109)
+- CSS applies yellow background to `.day-cell.is-today`
+
+**Public holidays:**
+- Uses special `.date-header` with `.holiday-label` child (script.js:96-104)
+- Dark blue background (#2c3e50) with white text
+- Print styles include `print-color-adjust: exact` to preserve colors
+
+**Week labels:**
+- Vertical text using `writing-mode: vertical-lr`
+- 180° rotation with vendor prefixes for Edge compatibility (style.css:45)
+
+**Empty slots:**
+- Gray background with "Slot Kosong" text
+- Detected when both `subuh` and `maghrib` are `null` (script.js:114-118)
+- Weekend-specific empty slots handled separately (script.js:126-127)
+
+## Mobile View Implementation Details
+
+**"Kuliah Hari Ini" card:**
+- Only displays when viewing current month (script.js:158-164)
+- Fetches Hijri date from JAKIM API (zone: WLY01) (script.js:252)
+- Embeds Digital Signage posters from `dev.mamtj6.com`:
+  - Subuh: `today_subuh.html` (script.js:227)
+  - Maghrib: `today_maghrib.html` (script.js:231)
+- Poster wrapper uses `aspect-ratio: 16 / 9` for responsive sizing
+
+**Date parsing:**
+- Append timezone offset to avoid timezone issues: `new Date(dayData.date + 'T00:00:00')` (script.js:174, 178)
+
+**Yasiin & Tahlil detection:**
+- Special case when lecturer name includes "Yasiin" (script.js:119-120)
+- Renders Arabic text (باچاءن يسٓ دان تهليل) with RTL direction
+
+## Google Apps Script Integration
+
+**Configuration (google-app-script/config.json):**
+- Contains GitHub credentials, repository info, image base URL, secret key
+- **CRITICAL: Never commit this file to version control**
+- Multi-environment support (production, development, staging)
+
+**Script Properties required:**
+- `GITHUB_USERNAME`: GitHub username/organization
+- `GITHUB_REPO`: Repository name
+- `GITHUB_TOKEN`: Personal Access Token with `repo` scope
+- `IMAGE_BASE_URL`: Base URL for poster images
+- `SECRET_KEY`: Authentication for web app endpoint
+
+**Sync workflow:**
+1. Run from menu: `📤 Export Files` → `Update Live Schedule (JSON)`
+2. Script reads `Schedule` and `Posters` sheets
+3. Constructs structured JSON with metadata
+4. Pushes to GitHub via API to path: `kuliah/data/jadual_lengkap.json`
+5. Web app fetches updated JSON with cache-busting
+
+## Print Stylesheet
+
+**Key techniques (style.css @media print):**
+- `@page { size: A4 landscape; margin: 0; }`
+- Flexbox layout on `.page-container` prevents footer overflow
+- All font sizes and positions converted to `pt` units
+- `box-shadow` technique preserves background colors
+- `print-color-adjust: exact` forces color printing
 - Hides interactive elements (links, "today" legend)
-- Maintains `position: absolute` layout for content fidelity
+- Maintains `position: absolute` layout for visual fidelity
 
-## Data Management Workflow
+## Common Development Tasks
 
-**Note:** Schedule updates are managed externally via Google Sheets and Google Apps Script.
+### Updating Schedule Data
+Edit the Google Sheet, then run the Apps Script sync from the custom menu. Do NOT manually edit `jadual_lengkap.json`.
 
-1. Content is maintained in a Google Sheet with two tabs: `Schedule` and `Posters`
-2. A Google Apps Script reads the sheets and generates `jadual_lengkap.json`
-3. The script automatically pushes the updated JSON to this repository
-4. The web application fetches the JSON with cache-busting: `?v=${new Date().getTime()}` (script.js:6)
+### Changing e-Solat Zone
+Modify zone code in `script.js:252` (currently `WLY01` for Kuala Lumpur).
 
-## Important Implementation Details
+### Changing Digital Signage URLs
+Update iframe sources in `script.js:227` (Subuh) and `script.js:231` (Maghrib).
 
-### Date String Format
-Always use ISO format `YYYY-MM-DD` when working with dates (e.g., `2025-11-01`). When parsing for mobile view, append timezone offset: `new Date(dayData.date + 'T00:00:00')` to avoid timezone issues (script.js:157).
+### Adding New Month Navigation
+The script automatically handles next month via `?bulan=depan`. For additional months, extend the logic in `script.js:9-15`.
 
-### Yasiin & Tahlil Detection
-Special handling for Yasiin & Tahlil sessions: script checks if lecturer name includes "Yasiin" (script.js:102-103) and renders Arabic text with special formatting.
+### Modifying Responsive Breakpoint
+Change the `768px` value in `@media (max-width: 768px)` queries throughout `style.css`.
 
-### Empty Slots
-The system distinguishes between:
-- **Empty days:** Both `subuh` and `maghrib` are `null` (script.js:97-101)
-- **Weekend empty slots:** Individual time slot is empty on weekend (script.js:108-110)
+## Important Constants & Configuration
 
-### External API Integration
-- JAKIM e-Solat API: `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=WLY01`
-- Digital Signage (Today): `https://dev.mamtj6.com/kuliah/paparan/today_subuh.html` and `today_maghrib.html`
-- Digital Signage (Tomorrow): `https://dev.mamtj6.com/kuliah/paparan/tomorrow_subuh.html` and `tomorrow_maghrib.html`
+- **Responsive breakpoint:** 768px
+- **e-Solat API zone:** WLY01
+- **Date format:** ISO 8601 (`YYYY-MM-DD`)
+- **GitHub file path:** `kuliah/data/jadual_lengkap.json`
+- **Google Sheets:** `Schedule` and `Posters` tabs
+- **No lecture marker:** `-- TIADA KULIAH --`
+- **Script version:** 15.2 (script.js)
+- **Apps Script version:** 6.0 (code.gs)
 
-### Responsive Breakpoint
-The critical breakpoint is **768px**. All media queries use `@media (max-width: 768px)` to switch from desktop to mobile view.
+## Version History
 
-## Customization Points
-
-- **e-Solat Zone:** Change zone code at script.js:235 (currently `WLY01`)
-- **Digital Signage URLs:** Hardcoded at script.js:210, 214
-- **Month Navigation:** Link structure in index.html:30-32
-- **Calendar Grid:** Desktop view uses fixed 5-week grid with overflow handling (script.js:51-58)
-- **Force Refresh:** JSON fetching includes cache-busting timestamp to ensure fresh data (script.js:6)
-
-## Version Information
-
-- Script Version: 14.0 (with next month functionality)
-- Last verified: November 2025
+- **15.2** (2026-01-24): Added Today/Tomorrow dropdown selector in mobile view with dynamic Hijri date, Digital Signage iframe switching for tomorrow_subuh.html and tomorrow_maghrib.html
+- **15.1** (2026-01-24): Fixed Digital Signage poster iframe URLs
+- **15.0.2** (2026-01-02): All buttons open in new tabs
+- **15.0.1** (2026-01-01): PDF buttons hidden on mobile, scrollability improvements
+- **15.0** (2025-12-30): URL-based PDF export, mobile PDF support, landing page redesign
+- **14.1** (2025-12-01): Holiday labels in print, Edge rotation fix, print styles
+- **14.0** (2025-11-01): Next month navigation, dual-view architecture, API integrations

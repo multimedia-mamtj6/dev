@@ -1,6 +1,10 @@
 // =================================================================
-// SCRIPT.JS - VERSI 15.0 (DENGAN FUNGSI PDF EXPORT)
+// SCRIPT.JS - VERSI 15.2 (DENGAN DROPDOWN HARI INI/ESOK)
 // =================================================================
+
+// Cache data untuk re-rendering kad hari ini/esok
+let cachedSenaraiHari = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const jsonData = await fetch(`../data/jadual_lengkap.json?v=${new Date().getTime()}`).then(res => res.json());
@@ -203,58 +207,129 @@ async function initializeMobileView(senaraiHari, targetDate) {
     });
 }
 
-async function renderTodayCard(senaraiHari) {
+async function renderTodayCard(senaraiHari, selectedDay = 'today') {
     const todayContainer = document.getElementById('today-kuliah-card');
     if (!todayContainer) return;
 
-    todayContainer.classList.add('is-today-card');
-    const today = new Date();
-    const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const todayData = senaraiHari.find(d => d.date === todayDateString);
+    // Cache data untuk event handler
+    cachedSenaraiHari = senaraiHari;
 
+    todayContainer.classList.add('is-today-card');
+
+    // Kira tarikh sasaran berdasarkan pilihan
+    const today = new Date();
+    const targetDate = new Date(today);
+    if (selectedDay === 'tomorrow') {
+        targetDate.setDate(targetDate.getDate() + 1);
+    }
+
+    const targetDateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+    const targetData = senaraiHari.find(d => d.date === targetDateString);
+
+    // Bina header dengan dropdown
     let cardHeader = `
         <div class="today-card-header">
-            <div class="label">Kuliah Hari Ini</div>
+            <div class="day-selector-wrapper">
+                <select id="day-selector" class="day-selector-dropdown">
+                    <option value="today" ${selectedDay === 'today' ? 'selected' : ''}>Kuliah Hari Ini</option>
+                    <option value="tomorrow" ${selectedDay === 'tomorrow' ? 'selected' : ''}>Kuliah Hari Esok</option>
+                </select>
+            </div>
             <div class="date-string" id="today-miladi-date">Memuatkan tarikh...</div>
             <div class="hijri-date-string" id="today-hijri-date"></div>
-            ${todayData && todayData.cuti_umum ? `<span class="holiday-label">${todayData.cuti_umum}</span>` : ''}
+            ${targetData && targetData.cuti_umum ? `<span class="holiday-label">${targetData.cuti_umum}</span>` : ''}
         </div>`;
 
+    // Bina body dengan URL iframe yang dinamik
     let cardBody = `<div class="today-card-body">`;
-    if (todayData && (todayData.subuh || todayData.maghrib)) {
-        if (todayData.subuh) {
-            cardBody += createLectureBlock('Subuh', todayData.subuh);
-            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/today_subuh.html" loading="lazy" scrolling="no"></iframe></div>`;
+    const iframeSuffix = selectedDay === 'tomorrow' ? 'tomorrow' : 'today';
+
+    if (targetData && (targetData.subuh || targetData.maghrib)) {
+        if (targetData.subuh) {
+            cardBody += createLectureBlock('Subuh', targetData.subuh);
+            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_subuh.html" loading="lazy" scrolling="no"></iframe></div>`;
         }
-        if (todayData.maghrib) {
-            cardBody += createLectureBlock('Maghrib', todayData.maghrib);
-            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/today_maghrib.html" loading="lazy" scrolling="no"></iframe></div>`;
+        if (targetData.maghrib) {
+            cardBody += createLectureBlock('Maghrib', targetData.maghrib);
+            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_maghrib.html" loading="lazy" scrolling="no"></iframe></div>`;
         }
+    } else if (selectedDay === 'tomorrow' && !targetData) {
+        cardBody += `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
     } else {
-        cardBody += `<div class="no-kuliah-today">Tiada kuliah dijadualkan hari ini.</div>`;
+        const dayLabel = selectedDay === 'tomorrow' ? 'esok' : 'hari ini';
+        cardBody += `<div class="no-kuliah-today">Tiada kuliah dijadualkan ${dayLabel}.</div>`;
     }
     cardBody += `</div>`;
-    
+
     todayContainer.innerHTML = cardHeader + cardBody;
-    
-    await loadHijriDate();
+
+    // Pasang event listener pada dropdown
+    const daySelector = document.getElementById('day-selector');
+    if (daySelector) {
+        daySelector.addEventListener('change', async (e) => {
+            await renderTodayCard(cachedSenaraiHari, e.target.value);
+        });
+    }
+
+    // Muatkan tarikh Hijri untuk tarikh sasaran
+    await loadHijriDate(targetDate);
 }
 
-async function loadHijriDate() {
+async function loadHijriDate(targetDate = new Date()) {
     const miladiContainer = document.getElementById('today-miladi-date');
     const hijriContainer = document.getElementById('today-hijri-date');
-    if (!miladiContainer) return; 
-    
-    const today = new Date();
+    if (!miladiContainer) return;
+
     const daysInMalay = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
-    miladiContainer.textContent = `${daysInMalay[today.getDay()]}, ${today.getDate()} ${today.toLocaleString('ms-MY', { month: 'long' })} ${today.getFullYear()}`;
-    
-    const solatApiUrl = 'https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=WLY01';
+
+    // Paparkan tarikh Gregorian untuk tarikh sasaran
+    miladiContainer.textContent = `${daysInMalay[targetDate.getDay()]}, ${targetDate.getDate()} ${targetDate.toLocaleString('ms-MY', { month: 'long' })} ${targetDate.getFullYear()}`;
+
+    // Semak sama ada tarikh sasaran adalah hari ini atau esok
+    const today = new Date();
+    const isToday = targetDate.toDateString() === today.toDateString();
+
+    // Gunakan period=month untuk mendapatkan semua data bulan ini
+    const solatApiUrl = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01`;
+
     try {
         const response = await fetch(solatApiUrl);
         if (!response.ok) throw new Error('API request failed');
         const data = await response.json();
-        const prayerInfo = data.prayerTime[0];
+
+        // Format tarikh sasaran: DD-Mon-YYYY (format API JAKIM, cth: "24-Jan-2026")
+        const day = String(targetDate.getDate()).padStart(2, '0');
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthStr = monthNames[targetDate.getMonth()];
+        const year = targetDate.getFullYear();
+        const targetDateStr = `${day}-${monthStr}-${year}`;
+
+        // Cari tarikh sasaran dalam data bulanan
+        let prayerInfo = data.prayerTime.find(p => p.date === targetDateStr);
+
+        // Jika tidak jumpa (mungkin esok di bulan depan), cuba dapatkan data bulan depan
+        if (!prayerInfo && !isToday) {
+            try {
+                // Bina URL untuk bulan seterusnya
+                const nextMonth = targetDate.getMonth() + 1; // 1-12 untuk API
+                const nextYear = nextMonth > 12 ? year + 1 : year;
+                const adjustedMonth = nextMonth > 12 ? 1 : nextMonth;
+                const nextMonthUrl = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${nextYear}`;
+
+                const nextResponse = await fetch(nextMonthUrl);
+                if (nextResponse.ok) {
+                    const nextData = await nextResponse.json();
+                    prayerInfo = nextData.prayerTime.find(p => p.date === targetDateStr);
+                }
+            } catch (e) {
+                console.log('Could not fetch next month data');
+            }
+        }
+
+        if (!prayerInfo) {
+            throw new Error('Data for target date not found');
+        }
+
         const hijriMonthNames = { "01": "Muharam", "02": "Safar", "03": "Rabi'ul Awwal", "04": "Rabi'ul Akhir", "05": "Jamadil Awal", "06": "Jamadil Akhir", "07": "Rejab", "08": "Syaaban", "09": "Ramadan", "10": "Syawal", "11": "Zulkaedah", "12": "Zulhijah" };
         const hijriParts = prayerInfo.hijri.split('-');
         const hijriStr = `${parseInt(hijriParts[2], 10)} ${hijriMonthNames[hijriParts[1]]} ${hijriParts[0]}`;

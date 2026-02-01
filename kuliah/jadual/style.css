@@ -92,6 +92,51 @@ main { flex-grow: 1; min-height: 0; }
     #today-kuliah-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 25px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .today-card-header { text-align: center; margin-bottom: 15px; }
     .today-card-header .label { font-size: 2em; font-weight: bold; text-transform: uppercase; color: #2c3e50; }
+
+    /* Gaya dropdown pemilih hari */
+    .day-selector-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+    .day-selector-dropdown {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.6em;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #2c3e50;
+        background-color: #fff;
+        border: 2px solid var(--date-number-color);
+        border-radius: 8px;
+        padding: 8px 40px 8px 15px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232E5A88' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 20px;
+        transition: all 0.2s ease;
+        text-align: center;
+        text-align-last: center;
+        -moz-text-align-last: center;
+    }
+    .day-selector-dropdown:hover {
+        border-color: #2c3e50;
+        background-color: #f8f9fa;
+    }
+    .day-selector-dropdown:focus {
+        outline: none;
+        border-color: #2c3e50;
+        box-shadow: 0 0 0 3px rgba(46, 90, 136, 0.2);
+    }
+    .day-selector-dropdown option {
+        font-weight: bold;
+        padding: 10px;
+    }
+
     .today-card-header .date-string { font-size: 1.2em; font-weight: 600; }
     .today-card-header .hijri-date-string { font-size: 1em; color: #555; margin-top: -5px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; }
     .today-card-header .holiday-label { margin-top: 10px; display: inline-block; font-size: 1em; padding: 5px 12px; }

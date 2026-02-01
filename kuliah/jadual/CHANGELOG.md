@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [15.2] - 2026-01-24
+
+### Added
+- **Today/Tomorrow dropdown selector** - New dropdown in mobile view to switch between today's and tomorrow's lecture schedule
+  - Dropdown options: "KULIAH HARI INI" and "KULIAH HARI ESOK"
+  - Centered text display with custom styled dropdown arrow
+  - Replaces static "Kuliah Hari Ini" label
+  - Files modified: `jadual/script.js` (lines 229-241), `jadual/style.css` (lines 96-138)
+
+- **Dynamic Hijri date for tomorrow** - Hijri date updates when switching to "Kuliah Hari Esok"
+  - Fetches from JAKIM e-Solat API using `period=month` endpoint
+  - Date format: DD-Mon-YYYY (e.g., "25-Jan-2026")
+  - Falls back to next month API if tomorrow is in a different month
+  - Both Gregorian and Hijri dates update dynamically
+  - Files modified: `jadual/script.js` (lines 279-342)
+
+- **Digital Signage iframe switching** - Poster iframes dynamically switch based on selected day
+  - Today: `today_subuh.html` and `today_maghrib.html`
+  - Tomorrow: `tomorrow_subuh.html` and `tomorrow_maghrib.html`
+  - Requires corresponding Digital Signage pages on dev.mamtj6.com
+  - Files modified: `jadual/script.js` (lines 246-256)
+
+### Changed
+- **Card re-rendering on dropdown change** - Card content re-renders when user changes dropdown selection
+  - Uses cached `senaraiHari` data for efficient re-rendering
+  - Event listener attached to dropdown for change detection
+  - Files modified: `jadual/script.js` (lines 5-6, 267-273)
+
+### Technical Details
+- **Script version**: Updated from 15.1 to 15.2
+- **New CSS properties**: `text-align-last: center` for centered dropdown text
+- **API endpoint**: Uses `period=month` instead of `period=today` for multi-day support
+- **Data caching**: Module-level `cachedSenaraiHari` variable stores schedule data for re-rendering
+
 ## [15.1] - 2026-01-24
 
 ### Fixed
