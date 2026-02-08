@@ -1,0 +1,113 @@
+/* ============================================
+   style.css
+   Kalendar Tarikh Penting Islam Malaysia
+
+   Fail ini mengandungi gaya khas (custom styles)
+   yang tidak boleh dicapai dengan Tailwind CSS
+   utility classes sahaja.
+
+   Kebanyakan gaya dikendalikan oleh Tailwind CSS
+   secara langsung dalam HTML dan JavaScript.
+   ============================================ */
+
+/* --- Layout Jadual ke Kad untuk Skrin Kecil (Mobile) --- */
+
+@media screen and (max-width: 767px) {
+
+  /* Sembunyikan header jadual pada mobile */
+  #events-table thead {
+    display: none;
+  }
+
+  /* Pembalut jadual (card wrapper) hilang pada mobile */
+  .table-card-wrapper {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Setiap baris jadual menjadi kad tersendiri (flex wrap) */
+  #events-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e4e4e7; /* zinc-200 */
+    background-color: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+  }
+
+  /* Setiap sel menjadi blok */
+  #events-table tbody td {
+    border-bottom: none;
+  }
+
+  /* Sel nama peristiwa - header kad (baris penuh) */
+  #events-table tbody td.mobile-event-name {
+    width: 100%;
+    background-color: #fafafa; /* zinc-50 */
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-bottom: 1px solid #f4f4f5; /* zinc-100 */
+  }
+
+  /* Sel maklumat tarikh (sebelah kiri) */
+  #events-table tbody td.mobile-date-info {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: #52525b; /* zinc-600 */
+    display: flex;
+    align-items: center;
+  }
+
+  /* Sel countdown (sebelah kanan, sebaris dengan tarikh) */
+  #events-table tbody td.mobile-countdown-info {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Kad peristiwa seterusnya - diserlahkan */
+  #events-table tbody tr.is-next-event {
+    border: 2px solid #34d399 !important; /* emerald-400 */
+  }
+
+  #events-table tbody tr.is-next-event td.mobile-event-name {
+    background-color: #ecfdf5; /* emerald-50 */
+  }
+
+  /* Kad peristiwa lepas - dimalapkan */
+  #events-table tbody tr.is-passed {
+    opacity: 0.5;
+  }
+
+  /* --- Mod Gelap (Dark Mode) untuk Mobile --- */
+
+  .dark #events-table tbody tr {
+    border-color: #3f3f46; /* zinc-700 */
+    background-color: #18181b; /* zinc-900 */
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  }
+
+  .dark #events-table tbody td.mobile-event-name {
+    background-color: #27272a; /* zinc-800 */
+    border-bottom-color: #3f3f46; /* zinc-700 */
+  }
+
+  .dark #events-table tbody td.mobile-date-info {
+    color: #a1a1aa; /* zinc-400 */
+  }
+
+  .dark #events-table tbody tr.is-next-event {
+    border-color: #047857 !important; /* emerald-700 */
+  }
+
+  .dark #events-table tbody tr.is-next-event td.mobile-event-name {
+    background-color: rgba(6, 78, 59, 0.2); /* emerald-950/20 */
+  }
+}
