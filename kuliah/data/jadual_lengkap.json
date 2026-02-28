@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN FEBRUARI 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 21/2/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 28/2/2026"
   },
   "senaraiHari": [
     {
@@ -324,11 +324,7 @@
     },
     {
       "date": "2026-03-01",
-      "subuh": {
-        "nama_penceramah": "Ustaz Badrul Hisham",
-        "tajuk_kuliah": "Fadilat Sedekah",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
