@@ -458,7 +458,11 @@
     },
     {
       "date": "2026-03-14",
-      "subuh": null,
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
+      },
       "maghrib": {
         "nama_penceramah": "Pegawai masjid",
         "tajuk_kuliah": "Tazkirah Terawih",
