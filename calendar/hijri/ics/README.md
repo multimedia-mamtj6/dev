@@ -12,7 +12,7 @@ Projek automatik sepenuhnya yang mengambil data Takwim Hijri rasmi daripada **e-
 ### 👥 Cara Melanggan
 1. Buka **Google Calendar** di komputer.
 2. Klik **"+"** bersebelahan **"Other calendars"** > **"From URL"**.
-3. Tampalkan pautan ini: `https://raw.githubusercontent.com/multimedia-mamtj6/dev/main/calendar/hijri/ics/jakim_hijri.ics`
+3. Tampalkan pautan ini: `https://dev.mamtj6.com/calendar/hijri/ics/jakim_hijri.ics`
 4. Klik **Add calendar**.
 
 ### 🛠 Untuk Pembangun & Penyelenggaraan
