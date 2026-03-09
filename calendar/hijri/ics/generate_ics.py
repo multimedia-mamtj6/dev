@@ -2,41 +2,51 @@ import requests
 from datetime import datetime, timedelta
 import os
 
-# 1. Dictionary to translate Hijri month numbers to names
+# Dictionary to translate Hijri month numbers to exact Malay names
 HIJRI_MONTHS = {
     "01": "Muharram", "02": "Safar", "03": "Rabiulawal", "04": "Rabiulakhir",
     "05": "Jamadilawal", "06": "Jamadilakhir", "07": "Rejab", "08": "Syaaban",
     "09": "Ramadhan", "10": "Syawal", "11": "Zulkaedah", "12": "Zulhijjah"
 }
 
-def fetch_jakim_data():
-    url = "https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=year&zone=WLY01"
+def fetch_waktusolat_data():
+    # Fetch data for this year AND next year so your calendar always has future dates
+    current_year = datetime.now().year
+    years_to_fetch =[current_year, current_year + 1]
     
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
     
-    try:
-        print("Attempting direct connection to JAKIM e-Solat API...")
-        # Added a 10-second timeout so it doesn't get stuck waiting
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status() 
-        return response.json()
+    all_prayer_times =[]
+    
+    for year in years_to_fetch:
+        print(f"Fetching data from api.waktusolat.app for the year {year}...")
         
-    except requests.exceptions.RequestException as e:
-        print("Direct connection failed (Likely geo-blocked by JAKIM firewall).")
-        print("Switching to proxy server to bypass the block...")
-        
-        # We use a free proxy (AllOrigins) to bypass the government IP block.
-        # Passing 'url' into 'params' ensures the special characters (&) don't break the link.
-        proxy_response = requests.get("https://api.allorigins.win/raw", params={"url": url}, timeout=20)
-        proxy_response.raise_for_status()
-        return proxy_response.json()
+        # We loop through all 12 months to guarantee we securely get the full year's data
+        for month in range(1, 13):
+            # Using the V1 endpoint which perfectly mimics JAKIM's data structure
+            url = f"https://api.waktusolat.app/solat/WLY01?year={year}&month={month}"
+            
+            try:
+                response = requests.get(url, headers=headers, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'prayerTime' in data:
+                        all_prayer_times.extend(data['prayerTime'])
+            except requests.exceptions.RequestException as e:
+                print(f"Failed to fetch data for {year}-{month}: {e}")
+                
+    return all_prayer_times
 
 def generate_calendar():
-    data = fetch_jakim_data()
+    prayer_times = fetch_waktusolat_data()
     
-    # 2. Setup the main ICS Calendar headers
+    if not prayer_times:
+        print("Error: No data fetched from API.")
+        return
+        
+    # Setup the main ICS Calendar headers
     ics_lines =[
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -47,24 +57,23 @@ def generate_calendar():
         "X-WR-TIMEZONE:Asia/Kuala_Lumpur"
     ]
 
-    print("Processing dates...")
+    print(f"Processing {len(prayer_times)} days of data into ICS format...")
     
-    # 3. Loop through every day of the year from the API
-    for day in data.get('prayerTime',[]):
-        # API Gregorian format: "09-Mar-2026"
-        gregorian_date = datetime.strptime(day['date'], "%d-%b-%Y")
-        
-        # All-day events in ICS format require the End Date to be the *next* day
+    for day in prayer_times:
+        # Flexible date parsing: Handles both JAKIM's 'dd-MMM-yyyy' and standard 'YYYY-MM-DD'
+        try:
+            gregorian_date = datetime.strptime(day['date'], "%d-%b-%Y")
+        except ValueError:
+            gregorian_date = datetime.strptime(day['date'], "%Y-%m-%d")
+            
         next_day = gregorian_date + timedelta(days=1)
         
         dtstart = gregorian_date.strftime("%Y%m%d")
         dtend = next_day.strftime("%Y%m%d")
         
-        # API Hijri format: "1447-09-19"
         hijri_raw = day['hijri'] 
         parts = hijri_raw.split('-')
         
-        # Format the title nicely (e.g., "19 Ramadhan 1447H")
         if len(parts) == 3:
             h_year, h_month, h_day = parts
             month_name = HIJRI_MONTHS.get(h_month, h_month)
@@ -72,7 +81,6 @@ def generate_calendar():
         else:
             summary = f"{hijri_raw}H"
 
-        # 4. Add the daily event
         ics_lines.extend([
             "BEGIN:VEVENT",
             f"DTSTART;VALUE=DATE:{dtstart}",
@@ -85,7 +93,7 @@ def generate_calendar():
 
     ics_lines.append("END:VCALENDAR")
 
-    # 5. Save the file
+    # Save the file
     os.makedirs("calendar/hijri/ics", exist_ok=True)
     output_path = "calendar/hijri/ics/jakim_hijri.ics"
     
