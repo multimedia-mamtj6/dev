@@ -10,18 +10,28 @@ HIJRI_MONTHS = {
 }
 
 def fetch_jakim_data():
-    # We use WLY01 (Kuala Lumpur) as the standard reference for Malaysia's Takwim
     url = "https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=year&zone=WLY01"
     
-    # Adding a User-Agent so the API doesn't block our automated request
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
     
-    print("Fetching data from JAKIM e-Solat API...")
-    response = requests.get(url, headers=headers)
-    response.raise_for_status() # Will raise an error if the website is down
-    return response.json()
+    try:
+        print("Attempting direct connection to JAKIM e-Solat API...")
+        # Added a 10-second timeout so it doesn't get stuck waiting
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status() 
+        return response.json()
+        
+    except requests.exceptions.RequestException as e:
+        print("Direct connection failed (Likely geo-blocked by JAKIM firewall).")
+        print("Switching to proxy server to bypass the block...")
+        
+        # We use a free proxy (AllOrigins) to bypass the government IP block.
+        # Passing 'url' into 'params' ensures the special characters (&) don't break the link.
+        proxy_response = requests.get("https://api.allorigins.win/raw", params={"url": url}, timeout=20)
+        proxy_response.raise_for_status()
+        return proxy_response.json()
 
 def generate_calendar():
     data = fetch_jakim_data()
@@ -33,7 +43,7 @@ def generate_calendar():
         "PRODID:-//My Custom JAKIM Calendar//MY",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
-        "X-WR-CALNAME:Takwim Hijri JAKIM", # The name that will appear in Google Calendar
+        "X-WR-CALNAME:Takwim Hijri JAKIM", 
         "X-WR-TIMEZONE:Asia/Kuala_Lumpur"
     ]
 
@@ -58,10 +68,8 @@ def generate_calendar():
         if len(parts) == 3:
             h_year, h_month, h_day = parts
             month_name = HIJRI_MONTHS.get(h_month, h_month)
-            # int(h_day) removes leading zeros (e.g., "09" becomes "9")
             summary = f"{int(h_day)} {month_name} {h_year}H"
         else:
-            # Fallback just in case JAKIM changes their format
             summary = f"{hijri_raw}H"
 
         # 4. Add the daily event
@@ -70,16 +78,14 @@ def generate_calendar():
             f"DTSTART;VALUE=DATE:{dtstart}",
             f"DTEND;VALUE=DATE:{dtend}",
             f"SUMMARY:{summary}",
-            "TRANSP:TRANSPARENT", # Crucial: Ensures it shows as "Free" not "Busy"
-            f"UID:jakim-hijri-{dtstart}@github.com", # Must be a unique ID
+            "TRANSP:TRANSPARENT", 
+            f"UID:jakim-hijri-{dtstart}@github.com",
             "END:VEVENT"
         ])
 
-    # Close the calendar tag
     ics_lines.append("END:VCALENDAR")
 
     # 5. Save the file
-    # We ensure the folder exists (GitHub Actions runs from the root repo folder)
     os.makedirs("calendar/hijri/ics", exist_ok=True)
     output_path = "calendar/hijri/ics/jakim_hijri.ics"
     
