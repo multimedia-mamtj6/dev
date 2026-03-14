@@ -1,0 +1,45 @@
+name: Generate JAKIM ICS
+
+on:
+  schedule:
+    # Runs automatically at 00:00 UTC on the 1st of every month
+    - cron: '0 0 1 * *'
+  workflow_dispatch: 
+    # This is a VERY important line! It adds a "Run workflow" button 
+    # in GitHub so you can test it immediately without waiting for the 1st of the month.
+
+jobs:
+  update-calendar:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Run Python Script
+      # This path perfectly matches where we put your Python file
+      run: python calendar/hijri/ics/generate_ics.py
+
+    - name: Commit and Push changes
+      run: |
+        # Tell GitHub who is making the commit (a bot)
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Add the specifically generated calendar file
+        git add calendar/hijri/ics/jakim_hijri.ics
+        
+        # This clever line checks if the calendar actually changed. 
+        # If there are new dates, it commits and pushes them. 
+        # If the dates are the same, it does nothing (which prevents crash errors).
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update JAKIM Hijri Calendar" && git push)
