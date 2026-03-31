@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Harga bahan api — dikemas kini daripada data.gov.my
+    let SUBSIDY_PRICE = 1.99;
+    let PUMP_PRICE = 3.27;
+    const OLD_PRICE_REF = 2.05;
+
     // --- Tab Logic ---
     const tabs = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -71,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetCalculatorFull = () => {
         petrolFormFull.reset();
         userInput.value = '';
-        oldPriceInput.value = '2.05'; subsidyPriceInput.value = '1.99'; noSubsidyPriceInput.value = '2.60';
+        oldPriceInput.value = OLD_PRICE_REF.toFixed(2); subsidyPriceInput.value = SUBSIDY_PRICE.toFixed(2); noSubsidyPriceInput.value = PUMP_PRICE.toFixed(2);
         priceOptionSubsidy.checked = true;
         switchModeFull('RM');
         fullCalcResults.classList.remove('fade-in');
@@ -182,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetCalculatorSimple = () => {
         petrolFormSimple.reset();
         userInputSimple.value = '';
-        oldPriceInputSimple.value = '2.05'; subsidyPriceInputSimple.value = '1.99'; noSubsidyPriceInputSimple.value = '2.60';
+        oldPriceInputSimple.value = OLD_PRICE_REF.toFixed(2); subsidyPriceInputSimple.value = SUBSIDY_PRICE.toFixed(2); noSubsidyPriceInputSimple.value = PUMP_PRICE.toFixed(2);
         switchModeSimple('RM');
         simpleCalcResults.classList.remove('fade-in');
     };
@@ -240,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const topupPumpCostValue = document.getElementById('topup-pump-cost');
     const topupSavingOldValue = document.getElementById('topup-saving-old-value');
     const topupSavingNosubsidyValue = document.getElementById('topup-saving-nosubsidy-value');
-    const OLD_PRICE_REF = 2.05; const SUBSIDY_PRICE = 1.99; const PUMP_PRICE = 2.60;
     let topUpMode = 'subsidi';
 
     const switchModeTopUp = (newMode) => {
@@ -321,10 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dvsExplanation = document.getElementById('dvs-explanation');
     let currentModeDvs = 'RM';
 
-    const OLD_PRICE_DVS = 2.05;
-    const NEW_SUBSIDY_PRICE_DVS = 1.99;
-    const NEW_PUMP_PRICE_DVS = 2.60;
-
     const switchModeDvs = (newMode) => {
         currentModeDvs = newMode;
         userInputDvs.value = '';
@@ -346,17 +346,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let originalLiters, originalCost, explanation;
         if (currentModeDvs === 'RM') {
             originalCost = userValue;
-            originalLiters = originalCost / OLD_PRICE_DVS;
+            originalLiters = originalCost / OLD_PRICE_REF;
             dvsOriginalLabel.textContent = 'Dulu Anda Dapat';
             dvsOriginalValue.innerHTML = `${originalLiters.toFixed(3)} <span class="unit">L</span>`;
         } else {
             originalLiters = userValue;
-            originalCost = originalLiters * OLD_PRICE_DVS;
+            originalCost = originalLiters * OLD_PRICE_REF;
             dvsOriginalLabel.textContent = 'Kos Dulu';
             dvsOriginalValue.textContent = `RM${originalCost.toFixed(2)}`;
         }
-        const newSubsidyCost = originalLiters * NEW_SUBSIDY_PRICE_DVS;
-        const newPumpCost = originalLiters * NEW_PUMP_PRICE_DVS;
+        const newSubsidyCost = originalLiters * SUBSIDY_PRICE;
+        const newPumpCost = originalLiters * PUMP_PRICE;
         const subsidySaving = originalCost - newSubsidyCost;
         const pumpExtra = newPumpCost - originalCost;
         dvsSubsidyCost.textContent = `RM${newSubsidyCost.toFixed(2)}`;
@@ -364,9 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
         dvsPumpCost.textContent = `RM${newPumpCost.toFixed(2)}`;
         dvsPumpExtra.textContent = pumpExtra >= 0 ? `Lebih: RM${pumpExtra.toFixed(2)}` : `Jimat: RM${Math.abs(pumpExtra).toFixed(2)}`;
         if (currentModeDvs === 'RM') {
-            explanation = `Berdasarkan bayaran lama anda sebanyak <strong>RM${originalCost.toFixed(2)}</strong>, anda mendapat <strong>${originalLiters.toFixed(3)} liter</strong> petrol. Untuk mendapatkan jumlah liter yang sama sekarang, anda perlu membayar <strong>RM${newSubsidyCost.toFixed(2)}</strong> (subsidi) atau <strong>RM${newPumpCost.toFixed(2)}</strong> (harga pam).`;
+            explanation = `Berdasarkan bayaran lama anda sebanyak <strong>RM${originalCost.toFixed(2)}</strong>, anda mendapat <strong>${originalLiters.toFixed(3)} liter</strong> petrol. Untuk mendapatkan jumlah liter yang sama sekarang, anda perlu membayar <strong>RM${newSubsidyCost.toFixed(2)}</strong> (subsidi) atau <strong>RM${newPumpCost.toFixed(2)}</strong> (harga pam semasa).`;
         } else {
-            explanation = `Dulu, untuk mengisi <strong>${originalLiters.toFixed(3)} liter</strong> petrol, anda membayar <strong>RM${originalCost.toFixed(2)}</strong>. Untuk jumlah liter yang sama sekarang, kosnya ialah <strong>RM${newSubsidyCost.toFixed(2)}</strong> (subsidi) atau <strong>RM${newPumpCost.toFixed(2)}</strong> (harga pam).`;
+            explanation = `Dulu, untuk mengisi <strong>${originalLiters.toFixed(3)} liter</strong> petrol, anda membayar <strong>RM${originalCost.toFixed(2)}</strong>. Untuk jumlah liter yang sama sekarang, kosnya ialah <strong>RM${newSubsidyCost.toFixed(2)}</strong> (subsidi) atau <strong>RM${newPumpCost.toFixed(2)}</strong> (harga pam semasa).`;
         }
         dvsExplanation.innerHTML = explanation;
         dvsResults.classList.remove('hidden');
@@ -379,4 +379,45 @@ document.addEventListener('DOMContentLoaded', () => {
     [modeRmDvs, modeLiterDvs].forEach(btn => btn.addEventListener('click', () => switchModeDvs(btn.id.includes('rm') ? 'RM' : 'Liter')));
     formDvs.addEventListener('submit', calculateDvs);
     resetBtnDvs.addEventListener('click', resetCalculatorDvs);
+
+    // --- Kemaskini Harga Bahan Api dari data.gov.my ---
+    async function fetchFuelPrices() {
+        try {
+            const res = await fetch('https://api.data.gov.my/data-catalogue?id=fuelprice&limit=5&sort=-date');
+            const data = await res.json();
+            const latest = data.find(d => d.series_type === 'level');
+            if (!latest) return;
+
+            SUBSIDY_PRICE = latest.ron95_budi95;
+            PUMP_PRICE = latest.ron95;
+
+            // Kemaskini input Tab 1 (Lengkap & Ringkas)
+            ['subsidy-price', 'subsidy-price-simple'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = SUBSIDY_PRICE.toFixed(2);
+            });
+            ['nosubsidy-price', 'nosubsidy-price-simple'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = PUMP_PRICE.toFixed(2);
+            });
+
+            // Kemaskini butang Tab 2
+            const subsidyBtn = document.getElementById('mode-subsidi');
+            const pumpBtn = document.getElementById('mode-tanpa-subsidi');
+            if (subsidyBtn) subsidyBtn.textContent = `Dengan Subsidi (RM ${SUBSIDY_PRICE.toFixed(2)})`;
+            if (pumpBtn) pumpBtn.textContent = `Tanpa Subsidi (RM ${PUMP_PRICE.toFixed(2)})`;
+
+            // Kemaskini label Tab 2 (penjimatan vs tanpa subsidi)
+            const savingLabel = document.getElementById('topup-saving-nosubsidy-label');
+            if (savingLabel) savingLabel.textContent = `Penjimatan (vs Tanpa Subsidi: RM${PUMP_PRICE.toFixed(2)}/L)`;
+
+            // Kemaskini banner harga (semua tab)
+            const dateStr = new Date(latest.date + 'T00:00:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+            const bannerText = `Harga Rujukan: Dulu (RM${OLD_PRICE_REF.toFixed(2)}/L) | Subsidi Baru (RM${SUBSIDY_PRICE.toFixed(2)}/L) | Pam Baru (RM${PUMP_PRICE.toFixed(2)}/L) — Dikemas kini: ${dateStr}`;
+            document.querySelectorAll('.price-info-banner').forEach(el => { el.textContent = bannerText; });
+        } catch (e) {
+            console.warn('Gagal mendapatkan harga bahan api terkini. Menggunakan harga lalai.');
+        }
+    }
+    fetchFuelPrices();
 });

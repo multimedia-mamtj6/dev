@@ -35,6 +35,10 @@ calendar/hijri/
     widgets2.html         ← Embeddable countdown widget v2 (better mobile)
   hari-ini/
     index.html            ← MST time & current Hijri date widget
+  ics/
+    generate_ics.py       ← Python script to generate Hijri ICS calendar
+    jakim_hijri.ics       ← Generated ICS file (committed, served statically)
+    README.md             ← Subscription instructions for end users
   CLAUDE.md
   readme.md
 ```
@@ -49,6 +53,9 @@ data/events.json ──→ tarikh-penting/index.html + app.js + style.css  (main
 
 e-Solat API ──→ tarikh-penting/index.html, info2.html, hari-ini/index.html (current Hijri date)
 SIRIM MST  ──→ hari-ini/index.html (live Malaysia time widget via iframe)
+
+api.waktusolat.app ──→ ics/generate_ics.py ──→ ics/jakim_hijri.ics  (subscribable ICS calendar)
+GitHub Actions (monthly cron) ──→ generate_ics.py ──→ commit jakim_hijri.ics
 ```
 
 ### tarikh-penting/ (main page — 3-file architecture)
@@ -73,6 +80,13 @@ SIRIM MST  ──→ hari-ini/index.html (live Malaysia time widget via iframe)
 - **Date format**: Table shows `Hijri / Masihi (Hari)` e.g. `27 Rejab 1446 H / 17 Januari 2026 (Sabtu)`
 - **Special events** (`Aidiladha`, `Aidilfitri`, `Ramadan`) are hardcoded in `app.js` and marked with `*` asterisk
 - **Event status**: Events are classified as passed (opacity 0.5), upcoming, or next (emerald highlight). Countdown uses `Math.ceil` on day difference
+
+### ics/ (ICS Calendar Generator)
+- **generate_ics.py**: Python 3 script. Fetches full-year prayer time data (current + next year) from `api.waktusolat.app` for zone `WLY01`, then generates `jakim_hijri.ics` — a Hijri date calendar with one all-day event per day showing the Hijri date in Malay (e.g. `27 Rejab 1446H`).
+- **jakim_hijri.ics**: The generated output. Committed to the repo and served statically so users can subscribe via Google Calendar URL.
+- **Running locally**: Must run from the **repository root** (two levels above `ics/`), not from within `ics/`, because the output path is hardcoded as `calendar/hijri/ics/jakim_hijri.ics`. Prerequisite: `pip install requests`. Command: `python calendar/hijri/ics/generate_ics.py`.
+- **Automation**: GitHub Actions runs the script on the 1st of every month and commits the updated `.ics` file. If the action fails with 403, enable "Read and write permissions" under *Settings > Actions > General > Workflow permissions*.
+- **Hijri month names**: `HIJRI_MONTHS` dict in `generate_ics.py` maps `"01"`–`"12"` to Malay names (note: uses `Muharram`/`Ramadhan` spelling, differing slightly from `HIJRI_MONTHS` in the web pages which use `Muharam`/`Ramadan`).
 
 ## Annual Update Process
 

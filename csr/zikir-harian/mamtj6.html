@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zikir Harian - Smart Solah</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            /* CHANGED: 0.4s makes it much faster than 1.5s */
+            transition: opacity 0.3s ease-out; 
+        }
+
+        img.visible {
+            opacity: 1;
+        }
+
+        .error-message {
+            color: #555;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="image-container"></div>
+
+    <script>
+        function loadDailyImage() {
+            const msiaTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Kuala_Lumpur"});
+            const today = new Date(msiaTime);
+            const dayIndex = today.getDay(); 
+
+            const dailyImages = [
+                "7.AHAD.jpg",   // 0
+                "1.ISNIN.jpg",  // 1
+                "2.SELASA.jpg", // 2
+                "3.RABU.jpg",   // 3
+                "4.KHAMIS.jpg", // 4
+                "5.JUMAAT.jpg", // 5
+                "6.SABTU.jpg"   // 6
+            ];
+
+            const baseUrl = "https://dev.mamtj6.com/media/img/zikir-harian/mamtj6/";
+            const imageUrl = baseUrl + dailyImages[dayIndex];
+
+            const container = document.getElementById('image-container');
+            const img = document.createElement('img');
+            
+            img.src = imageUrl;
+            img.alt = "Zikir Harian";
+
+            // When the image finishes downloading, it appears quickly
+            img.onload = function() {
+                img.classList.add('visible');
+            };
+
+            img.onerror = function() {
+                container.innerHTML = `<p class="error-message">Image not found.</p>`;
+            };
+
+            container.appendChild(img);
+        }
+
+        loadDailyImage();
+    </script>
+</body>
+</html>
