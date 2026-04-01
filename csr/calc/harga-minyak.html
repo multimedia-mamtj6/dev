@@ -298,6 +298,8 @@
       flex: 1;
       padding: 12px 14px;
       border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
     }
     .region-col + .region-col {
       border-left: 1px solid var(--border);
@@ -308,7 +310,7 @@
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      margin-bottom: 10px;
+      margin-bottom: auto;
     }
     .price-group {
       margin-bottom: 10px;
@@ -376,6 +378,7 @@
         sub: 'Petrol',
         tdClass: 'fuel-ron95',
         cardBg: 'linear-gradient(to right, #d4a800, #e8b800, #fef3c7)',
+        labelColor: '#92400e',
         semPam:   d => d.ron95,
         semBudi:  d => d.ron95_budi95,
         eMyPam:   d => d.ron95,
@@ -390,6 +393,7 @@
         sub: 'Petrol',
         tdClass: 'fuel-ron97',
         cardBg: 'linear-gradient(to right, #15803d, #1a9e4e, #dcfce7)',
+        labelColor: '#15803d',
         semPam:   d => d.ron97,
         semBudi:  null,
         eMyPam:   d => d.ron97,
@@ -404,6 +408,7 @@
         sub: 'B10/B20',
         tdClass: 'fuel-diesel',
         cardBg: 'linear-gradient(to right, #111827, #374151, #9ca3af)',
+        labelColor: '#374151',
         semPam:   d => d.diesel,
         semBudi:  null,
         eMyPam:   d => d.diesel_eastmsia,
@@ -484,7 +489,7 @@
       document.getElementById('btn-next').disabled = activeIdx <= currentWeekIdx - 1;
 
       // Next week with no data yet → empty state
-      if (isNextWeek) {
+      if (isNextWeek && !allWeeks[activeIdx]) {
         // Compute the upcoming Thursday date for display
         const lastWeek = allWeeks[currentWeekIdx];
         const lastDate = parseLocalDate(lastWeek.date);
@@ -569,12 +574,12 @@
             </div>
             <div class="fuel-card-body">
               <div class="region-col">
-                <div class="region-label">Semenanjung Malaysia</div>
+                <div class="region-label" style="color:${f.labelColor}">Semenanjung Malaysia</div>
                 ${priceGroup('Harga Pam', false, semPam2, cSemPam2)}
                 ${f.semBudi !== null ? priceGroup('Harga Budi95', true, semBudi2, cSemBudi2) : ''}
               </div>
               <div class="region-col">
-                <div class="region-label">Sabah &amp; Sarawak</div>
+                <div class="region-label" style="color:${f.labelColor}">Sabah &amp; Sarawak</div>
                 ${priceGroup('Harga Pam', false, eMyPam2, cEMyPam2)}
                 ${f.eMyBudi !== null ? priceGroup('Harga Budi95', true, eMyBudi2, cEMyBudi2) : ''}
               </div>
