@@ -414,7 +414,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Kemaskini banner harga (semua tab)
             const dateStr = new Date(latest.date + 'T00:00:00').toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
             const bannerText = `Harga Rujukan: Dulu (RM${OLD_PRICE_REF.toFixed(2)}/L) | Subsidi Baru (RM${SUBSIDY_PRICE.toFixed(2)}/L) | Pam Baru (RM${PUMP_PRICE.toFixed(2)}/L) — Dikemas kini: ${dateStr}`;
-            document.querySelectorAll('.price-info-banner').forEach(el => { el.textContent = bannerText; });
+            document.querySelectorAll('.price-info-banner').forEach(el => {
+                el.innerHTML = `${bannerText}<br><a href="harga-minyak.html" style="font-size:13px;color:var(--primary-blue);text-decoration:none;font-weight:600;">Lihat dengan lebih jelas →</a>`;
+            });
         } catch (e) {
             console.warn('Gagal mendapatkan harga bahan api terkini. Menggunakan harga lalai.');
         }
