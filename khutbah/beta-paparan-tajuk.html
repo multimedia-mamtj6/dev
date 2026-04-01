@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimbar Jumaat Siri 2 | 2025</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevents scrollbars in Google Sites */
+            background: url('https://multimedia.mamtj6.com/media/img/mimbar-jumaat-bg.webp') no-repeat center center/cover;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly; /* Spreads elements evenly vertically */
+            height: 100vh;
+            width: 100vw;
+            padding: 2vh 2vw;
+            text-align: center;
+        }
+        
+        /* Logo sizes based on Viewport Height (vh) to stay proportional */
+        .logo-small { 
+            max-height: 12vh; 
+            width: auto; 
+            max-width: 80%;
+            object-fit: contain;
+        }
+        
+        .logo-big { 
+            max-height: 22vh; 
+            width: auto; 
+            max-width: 90%;
+            object-fit: contain;
+        }
+        
+        .info-section {
+            width: 100%;
+        }
+
+        .title { 
+            font-size: clamp(1rem, 4vh, 2.5rem); 
+            font-weight: bold; 
+            color: #000;
+            margin-bottom: 0.5vh;
+        }
+        
+        .date { 
+            font-size: clamp(0.8rem, 3vh, 2rem); 
+            font-weight: 400; 
+            color: #555;
+        }
+        
+        /* This container holds the sermon title and controls its bounds */
+        .main-text-wrapper {
+            flex-grow: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            max-height: 40vh; /* Limits the sermon title to 40% of height */
+            margin-top: 1vh;
+        }
+        
+        .main-text {
+            font-weight: 800;
+            color: #0000FF;
+            line-height: 1.1;
+            width: 100%;
+            word-wrap: break-word;
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid blue;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="spinner" id="spinner"></div>
+    
+    <div class="container">
+        <img class="logo-small" src="https://multimedia.mamtj6.com/media/logo/mamtj6-mufti.webp" alt="Logo Jabatan">
+        <img class="logo-big" src="https://multimedia.mamtj6.com/media/img/khat/mimbar-jumaat.webp" alt="Mimbar Jumaat">
+        
+        <div class="info-section">
+            <h1 class="title" id="title"></h1>
+            <p class="date" id="date"></p>
+        </div>
+
+        <div class="main-text-wrapper" id="text-wrapper">
+            <h2 class="main-text" id="main-text"></h2>
+        </div>
+    </div>
+
+    <script>
+        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDFOdEOVKqjeS1mErtCrV-Z1-dvArp3wteWAEyRM6KKzXN90yggh0Bc7Nq3yhYKdAEo1NkAiV3lZGd/pub?gid=0&single=true&output=csv";
+        let lastFetchedData = "";
+
+        async function fetchSheetData() {
+            const spinner = document.getElementById("spinner");
+            spinner.style.display = "block";
+            
+            try {
+                const response = await fetch(sheetURL, { cache: "no-store" });
+                const text = await response.text();
+                const rows = text.split("\n").map(row => row.split(","));
+                
+                if (rows.length <= 1) return;
+                
+                const newData = rows[1].map(cell => cell.trim()).join("|");
+                if (newData === lastFetchedData) {
+                    spinner.style.display = "none";
+                    return;
+                }
+                lastFetchedData = newData;
+
+                document.getElementById("title").innerText = rows[1][1] || "";
+                document.getElementById("date").innerText = rows[1][2] || "";
+                document.getElementById("main-text").innerText = rows[1][3] || "";
+                
+                // Wait for text to render then adjust size
+                setTimeout(autoSizeText, 50);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                spinner.style.display = "none";
+            }
+        }
+
+        function autoSizeText() {
+            const el = document.getElementById("main-text");
+            const wrapper = document.getElementById("text-wrapper");
+            
+            if (!el || !wrapper) return;
+
+            let maxHeight = wrapper.clientHeight;
+            let maxWidth = wrapper.clientWidth;
+            
+            // Start with a large font size
+            let fontSize = 150; 
+            el.style.fontSize = fontSize + "px";
+
+            // Loop to shrink text until it fits within the wrapper's dimensions
+            while ((el.scrollHeight > maxHeight || el.scrollWidth > maxWidth) && fontSize > 20) {
+                fontSize -= 2;
+                el.style.fontSize = fontSize + "px";
+            }
+        }
+
+        // Run fetch on load
+        fetchSheetData();
+
+        // Re-adjust text size when the Google Sites embed box is resized
+        window.addEventListener('resize', autoSizeText);
+
+        // Refresh data every 60 seconds
+        setInterval(fetchSheetData, 60000);
+    </script>
+</body>
+</html>
