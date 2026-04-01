@@ -226,9 +226,11 @@
     }
 
     /* Fuel gradient backgrounds */
+    /* Desktop td: fade to white */
     td.fuel-ron95  { background: linear-gradient(to right, #d4a800 0%, #e8b800 40%, rgba(255,255,255,0) 100%), #ffffff; }
     td.fuel-ron97  { background: linear-gradient(to right, #15803d 0%, #1a9e4e 40%, rgba(255,255,255,0) 100%), #ffffff; }
     td.fuel-diesel { background: linear-gradient(to right, #111827 0%, #374151 45%, rgba(255,255,255,0) 100%), #ffffff; }
+
 
     /* Price cell */
     .price-cell {
@@ -373,6 +375,7 @@
         name: 'RON95',
         sub: 'Petrol',
         tdClass: 'fuel-ron95',
+        cardBg: 'linear-gradient(to right, #d4a800, #e8b800, #fef3c7)',
         semPam:   d => d.ron95,
         semBudi:  d => d.ron95_budi95,
         eMyPam:   d => d.ron95,
@@ -386,6 +389,7 @@
         name: 'RON97',
         sub: 'Petrol',
         tdClass: 'fuel-ron97',
+        cardBg: 'linear-gradient(to right, #15803d, #1a9e4e, #dcfce7)',
         semPam:   d => d.ron97,
         semBudi:  null,
         eMyPam:   d => d.ron97,
@@ -399,6 +403,7 @@
         name: 'Diesel',
         sub: 'B10/B20',
         tdClass: 'fuel-diesel',
+        cardBg: 'linear-gradient(to right, #111827, #374151, #9ca3af)',
         semPam:   d => d.diesel,
         semBudi:  null,
         eMyPam:   d => d.diesel_eastmsia,
@@ -558,7 +563,7 @@
 
         return `
           <div class="fuel-card">
-            <div class="fuel-card-header ${f.tdClass}">
+            <div class="fuel-card-header" style="background:${f.cardBg}">
               <span class="fuel-name">${f.name}</span>
               <span class="fuel-sub">${f.sub}</span>
             </div>
