@@ -85,7 +85,11 @@
     {
       "date": "2026-04-10",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Muhammad Fathmi",
+        "tajuk_kuliah": "Syarah Hadis 40 Imam Nawawi",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/11_10.-Ustaz-Fathmi.jpg"
+      },
       "cuti_umum": null
     },
     {
