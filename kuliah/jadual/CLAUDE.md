@@ -11,34 +11,27 @@ This is a responsive web application for displaying the monthly lecture (kuliah)
 The application must be served through a local web server (not `file://`) because it fetches JSON data via JavaScript.
 
 ```bash
-# Navigate to project root
-cd "K:\My Drive\Kuliah Ilmu Mamtj6\version 15.0.1"
-
-# Start local server
+# From the repo root
 python -m http.server
-
-# Or using Python 2
-python -m SimpleHTTPServer
 ```
 
-Then open `http://localhost:8000/kuliah(beta)/jadual/index.html` in your browser.
+Then open `http://localhost:8000/kuliah/jadual/` in your browser.
 
 ## Project Structure
 
 ```
-version 15.0.1/
-├── kuliah(beta)/
-│   ├── jadual/
-│   │   ├── index.html              # Landing page with navigation buttons
-│   │   ├── jadual.html             # Main schedule page (dual-view)
-│   │   ├── script.js               # Rendering logic (v15.0)
-│   │   ├── style.css               # Responsive styles with print media queries
-│   │   └── google-app-script/
-│   │       ├── code.gs             # Google Apps Script sync logic (v6.0)
-│   │       ├── config.json         # Configuration template (SENSITIVE - do not commit)
-│   │       └── index.html          # Web app control panel
-│   └── data/
-│       └── jadual_lengkap.json     # Single source of truth for all data
+kuliah/jadual/
+├── index.html              # Landing page with navigation buttons
+├── jadual.html             # Main schedule page (dual-view)
+├── script.js               # Rendering logic (v15.2)
+├── style.css               # Responsive styles with print media queries
+└── google-app-script/
+    ├── code.gs             # Google Apps Script sync logic (v6.0)
+    ├── config.json         # Configuration template (SENSITIVE - do not commit)
+    └── index.html          # Web app control panel
+
+kuliah/data/
+└── jadual_lengkap.json     # Single source of truth (auto-synced — never edit manually)
 ```
 
 ## Architecture & Key Concepts
@@ -190,6 +183,29 @@ Version 15.0 introduced URL-based PDF export:
 - Hides interactive elements (links, "today" legend)
 - Maintains `position: absolute` layout for visual fidelity
 
+## Vercel Deployment Notes
+
+The site is deployed with `cleanUrls: true` and `trailingSlash: false` in `vercel.json` (repo root). This combination means:
+
+- URLs are served without `.html` extensions (e.g. `/kuliah/jadual/jadual` not `/kuliah/jadual/jadual.html`)
+- Without a trailing slash, relative paths like `href="style.css"` resolve from the wrong base directory
+
+**Rule:** All asset references (`<link href>`, `<script src>`) and all internal `<a href>` links in files under `kuliah/jadual/` must use **absolute root-relative paths**:
+
+```html
+<!-- Correct — works on Vercel and locally -->
+<link rel="stylesheet" href="/kuliah/jadual/style.css">
+<script src="/kuliah/jadual/script.js"></script>
+<a href="/kuliah/jadual/jadual">...</a>
+<a href="/kuliah/jadual/jadual?bulan=depan">...</a>
+
+<!-- Wrong — breaks on Vercel with cleanUrls -->
+<link rel="stylesheet" href="style.css">
+<a href="jadual.html">...</a>
+```
+
+Note: Omit `.html` in `<a href>` values since Vercel serves clean URLs — the browser will request `/kuliah/jadual/jadual` and Vercel maps it to `jadual.html`.
+
 ## Common Development Tasks
 
 ### Updating Schedule Data
@@ -220,6 +236,7 @@ Change the `768px` value in `@media (max-width: 768px)` queries throughout `styl
 
 ## Version History
 
+- **15.2.1** (2026-04-02): Fixed Vercel asset loading — switched all asset refs and nav links to absolute root-relative paths; set `trailingSlash: false` in `vercel.json`
 - **15.2** (2026-01-24): Added Today/Tomorrow dropdown selector in mobile view with dynamic Hijri date, Digital Signage iframe switching for tomorrow_subuh.html and tomorrow_maghrib.html
 - **15.1** (2026-01-24): Fixed Digital Signage poster iframe URLs
 - **15.0.2** (2026-01-02): All buttons open in new tabs
