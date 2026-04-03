@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN APRIL 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 2/4/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 3/4/2026"
   },
   "senaraiHari": [
     {
@@ -69,7 +69,11 @@
     {
       "date": "2026-04-08",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "YAA Dato' Sri Haji Abdul Rahman",
+        "tajuk_kuliah": "Fekah Kesihatan Dalam Ibadah Dan Sunnah Nabi",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/18_17.-YAA-Dato-Seri-Haji-Abdul-Rahman-bin-Md-Yunos.jpg"
+      },
       "cuti_umum": null
     },
     {
