@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN APRIL 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 4/4/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 5/4/2026"
   },
   "senaraiHari": [
     {
@@ -57,7 +57,11 @@
     {
       "date": "2026-04-06",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Hisyamuddin",
+        "tajuk_kuliah": "Nasihat Agama dan Wasiat Iman",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/03_2.-Ustaz-Hisyamuddin.jpg"
+      },
       "cuti_umum": null
     },
     {
