@@ -12,7 +12,7 @@
         "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/12_11.-Ustaz-Nazir.jpg"
       },
-      "cuti_umum": null
+      "cuti_umum": "Hari Pekerja"
     },
     {
       "date": "2026-05-02",
@@ -222,7 +222,7 @@
         "tajuk_kuliah": "Umum & Semasa",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/13_12.-Ustaz-Wahid-Ghaffar.jpg"
       },
-      "cuti_umum": null
+      "cuti_umum": "Hari Hol Pahang"
     },
     {
       "date": "2026-05-23",
@@ -272,7 +272,7 @@
         "tajuk_kuliah": "Pedoman Sembahyang Berjemaah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/08_7.-Ustaz-Fikri.jpg"
       },
-      "cuti_umum": null
+      "cuti_umum": "Aidiladha 1"
     },
     {
       "date": "2026-05-28",
@@ -282,7 +282,7 @@
         "tajuk_kuliah": "-",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/01_0.-bacaan-yasin.png"
       },
-      "cuti_umum": null
+      "cuti_umum": "Aidiladha 2"
     },
     {
       "date": "2026-05-29",
@@ -311,6 +311,12 @@
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "",
+      "subuh": null,
       "maghrib": null,
       "cuti_umum": null
     },
