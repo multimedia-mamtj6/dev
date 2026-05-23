@@ -1,6 +1,6 @@
 // =================================================================
 // SCRIPT.JS UNTUK DIGITAL SIGNAGE
-// Versi 4.0 - Dengan Tambahan Console Log untuk Debugging
+// Versi 4.1 - Paparan imej sebagai <img> (sokong klik kanan/muat turun)
 // =================================================================
 
 const JSON_URL = 'https://dev.mamtj6.com/kuliah/data/jadual_lengkap.json';
@@ -27,14 +27,16 @@ function getTargetDate(target) {
 function setDisplay(imageUrl, message) {
     const container = document.getElementById('display-container');
     const messageBox = document.getElementById('message');
+    const existingImg = container.querySelector('img');
+    if (existingImg) existingImg.remove();
 
     if (imageUrl) {
         messageBox.style.display = 'none';
-        container.style.backgroundImage = `url('${imageUrl}')`;
-        container.style.backgroundColor = 'transparent';
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = 'Poster Kuliah';
+        container.appendChild(img);
     } else {
-        container.style.backgroundImage = 'none';
-        container.style.backgroundColor = '#ffffff';
         messageBox.style.display = 'flex';
         messageBox.querySelector('h1').textContent = message;
     }

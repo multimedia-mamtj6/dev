@@ -232,10 +232,11 @@ Change the `768px` value in `@media (max-width: 768px)` queries throughout `styl
 - **Google Sheets:** `Schedule` and `Posters` tabs
 - **No lecture marker:** `-- TIADA KULIAH --`
 - **Script version:** 15.2.2 (script.js)
-- **Apps Script version:** 6.0 (code.gs)
+- **Apps Script version:** 6.1 (code.gs)
 
 ## Version History
 
+- **15.3** (2026-05-24): Expanded page container to 98vw; fixed Apps Script skipping empty rows in Schedule sheet (code.gs v6.1); beta mobile v2 — replaced pill tab switcher with `<select>` dropdown, reduced today-card padding
 - **15.2.2** (2026-05-23): Fixed Hijri date not loading in mobile view — added `gregorianToHijri()` JS fallback calculator, fixed next-month API URL missing `&month=` param, replaced error throw with silent fallback
 - **15.2.1** (2026-04-02): Fixed Vercel asset loading — switched all asset refs and nav links to absolute root-relative paths; set `trailingSlash: false` in `vercel.json`
 - **15.2** (2026-01-24): Added Today/Tomorrow dropdown selector in mobile view with dynamic Hijri date, Digital Signage iframe switching for tomorrow_subuh.html and tomorrow_maghrib.html
