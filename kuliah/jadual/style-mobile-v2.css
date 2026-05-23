@@ -228,14 +228,14 @@
     /* Centre lecture info inside today card only */
     #today-kuliah-card .lecture-block-v2 {
         text-align: center;
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
+        padding-top: 0.1rem;
+        padding-bottom: 0.1rem;
         border-bottom: none;
     }
 
     /* ── Poster section (padding container) ── */
     .poster-section {
-        padding: 0.25rem 0.5rem 0.5rem;
+        padding: 0.1rem 0.5rem 0.2rem;
     }
 
     /* ── Poster wrapper (rounded frame) ── */

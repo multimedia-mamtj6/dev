@@ -151,7 +151,7 @@ function updateJsonToGithub() {
       };
     };
 
-    const senaraiHari = scheduleData.map(row => {
+    const senaraiHari = scheduleData.filter(row => row[dateIndex]).map(row => {
       const dateValue = row[dateIndex];
       const subuhShortName = row[subuhIndex];
       const maghribShortName = row[maghribIndex];
