@@ -131,19 +131,19 @@
         todayContainer.innerHTML = `
             <div class="today-card-top-bar"></div>
             <div class="today-card-header">
-                <div class="day-tab-switcher">
-                    <button class="day-tab ${selectedDay === 'today' ? 'active' : ''}" data-day="today">Hari Ini</button>
-                    <button class="day-tab ${selectedDay === 'tomorrow' ? 'active' : ''}" data-day="tomorrow">Hari Esok</button>
+                <div class="day-select-wrapper">
+                    <select class="day-select">
+                        <option value="today" ${selectedDay === 'today' ? 'selected' : ''}>Hari Ini</option>
+                        <option value="tomorrow" ${selectedDay === 'tomorrow' ? 'selected' : ''}>Hari Esok</option>
+                    </select>
                 </div>
                 <div id="today-date-combined">Memuatkan tarikh...</div>
                 ${holidayHtml}
             </div>
             <div class="today-card-body">${cardBody}</div>`;
 
-        todayContainer.querySelectorAll('.day-tab').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                await renderTodayCard(cachedSenaraiHari, btn.dataset.day);
-            });
+        todayContainer.querySelector('.day-select').addEventListener('change', async function () {
+            await renderTodayCard(cachedSenaraiHari, this.value);
         });
 
         await loadHijriDate(targetDate);

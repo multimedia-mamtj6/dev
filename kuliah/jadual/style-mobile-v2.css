@@ -93,50 +93,50 @@
         border-bottom-color: #334155;
     }
 
-    /* Pill tab switcher */
-    .day-tab-switcher {
+    /* Day select dropdown */
+    .day-select-wrapper {
         display: flex;
-        background: #f1f5f9;
-        border-radius: 10px;
-        padding: 3px;
-        gap: 3px;
-        margin-bottom: 0.75rem;
+        justify-content: center;
+        margin-bottom: 0.5rem;
     }
 
-    html.dark .day-tab-switcher {
-        background: #0f172a;
-    }
-
-    .day-tab {
-        flex: 1;
-        padding: 0.4rem 0.5rem;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        background: transparent;
-        color: #94a3b8;
+    .day-select {
+        appearance: none;
+        -webkit-appearance: none;
         font-family: inherit;
-    }
-
-    .day-tab.active {
-        background: #ffffff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
         color: #16a34a;
-        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+        background-color: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 0.35rem 2rem 0.35rem 0.75rem;
+        cursor: pointer;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316a34a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 14px;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    html.dark .day-tab {
-        color: #475569;
+    .day-select:focus {
+        border-color: #16a34a;
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
     }
 
-    html.dark .day-tab.active {
-        background: #1e293b;
+    html.dark .day-select {
         color: #4ade80;
-        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+        background-color: #052e16;
+        border-color: #166534;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234ade80' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    }
+
+    html.dark .day-select option {
+        background-color: #1e293b;
+        color: #f1f5f9;
     }
 
     /* Combined date line in today card */
