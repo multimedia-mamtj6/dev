@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [15.2.2] - 2026-05-23
+
+### Fixed
+- **Hijri date not loading in mobile view** — Mobile "Kuliah Hari Ini/Esok" card was showing an uncaught error (`Data for target date not found`) when the JAKIM e-Solat API response did not contain the expected date entry
+  - Root cause 1: Next-month fallback URL was missing the `&month=` parameter — `adjustedMonth` was calculated but never used, so the fallback re-fetched the current month instead of the correct next month
+  - Root cause 2: No resilience when either API call returned data without the target date — the function threw immediately with no fallback
+  - Fixed fallback URL: added `&month=${adjustedMonth}` to the next-month JAKIM API request
+  - Added `gregorianToHijri()` — pure-JS tabular Islamic calendar converter (Julian Day Number algorithm) used as fallback when API data is missing or inaccessible
+  - When `prayerInfo` is not found after both API attempts, Hijri date is now calculated locally and displayed silently (no error thrown)
+  - Outer `catch` block also uses `gregorianToHijri()` — any network/CORS/API failure now displays a calculated Hijri date instead of the error text "Tidak dapat memuatkan tarikh Hijri."
+  - Files modified: `script.js` (added `gregorianToHijri()` before `loadHijriDate`; line 334 URL fix; lines 346–353 fallback; lines 357–361 catch block)
+
 ## [15.2.1] - 2026-04-02
 
 ### Fixed

@@ -19,7 +19,7 @@ All schedule data is managed via a single Google Sheet, automatically synced to 
 kuliah/jadual/
 ├── index.html              # Landing page with navigation buttons
 ├── jadual.html             # Main schedule page (dual-view: table + cards)
-├── script.js               # Core rendering logic (v15.2)
+├── script.js               # Core rendering logic (v15.2.2)
 ├── style.css               # Responsive + print styles
 ├── google-app-script/
 │   ├── code.gs             # Google Apps Script sync logic (v6.0)
