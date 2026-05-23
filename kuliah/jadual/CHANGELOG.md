@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — Beta Mobile UI (`jadual-test.html` + `style-mobile-v2.css`)
+
+> Work in progress. Changes isolated to `jadual-test.html` and `style-mobile-v2.css` only. Production `jadual.html` and `script.js` are unaffected.
+
+### Added
+- **`jadual-test.html`** — new beta test page that loads `style-mobile-v2.css` after `style.css` and overrides mobile rendering functions inline
+- **`style-mobile-v2.css`** — dedicated mobile override stylesheet scoped to `@media (max-width: 768px)`
+- **Today card redesign** — replaces the existing mobile "Kuliah Hari Ini" section with a new card component:
+  - Green gradient accent bar (`today-card-top-bar`) at the card top
+  - Pill tab switcher ("Hari Ini" / "Hari Esok") replacing the dropdown selector
+  - Combined Miladi + Hijri date on a single line: `Sabtu, 23 Mei 2026 / 15 Zulkaedah 1447H` (`#today-date-combined`)
+  - Session pill badges (SUBUH in blue, MAGHRIB in amber) above each lecture info block
+  - Lecture info (ustaz name + tajuk) centred inside the today card
+  - Poster iframes wrapped in `.poster-section` > `.poster-wrapper` for inset rounded-rectangle display
+- **Day list cards redesign** — new `.mobile-card-v2` component with compact date header, session badges, and empty-slot toggle
+
+### Changed
+- Removed duplicate month header injection from `initializeMobileView` (page `<header>` already shows the month name)
+- Poster `aspect-ratio` reduced from `16/9` to allow more content to fit on-screen without scrolling
+- Card header padding tightened (`0.5rem 1rem 0.375rem`) to reduce wasted vertical space
+- Logo width on mobile reduced to save header height
+- Removed `border-bottom` separator between lecture info block and poster within the today card
+- Poster wrapper `margin-top` overridden to `0` (removes default 15px from `style.css`)
+
+---
+
 ## [15.2.2] - 2026-05-23
 
 ### Fixed

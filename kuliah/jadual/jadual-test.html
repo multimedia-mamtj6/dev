@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadual Kuliah - Masjid Al-Mukhlisin</title>
+    <link rel="stylesheet" href="/kuliah/jadual/style.css">
+    <link rel="stylesheet" href="/kuliah/jadual/style-mobile-v2.css">
+</head>
+<body>
+    <div class="page-container">
+        <header class="page-header">
+            <div class="logo-container">
+                <img src="https://multimedia.mamtj6.com/media/logo/mamtj6-black.webp" alt="Logo Masjid Al-Mukhlisin">
+            </div>
+            <div class="title-container">
+                <p class="title-main">JADUAL PENYAMPAI KULIAH MAGHRIB DAN SUBUH</p>
+                <h1 class="title-month" id="schedule-title">MEMUATKAN JADUAL...</h1>
+            </div>
+        </header>
+
+        <main>
+            <!-- =============================================== -->
+            <!-- BEKAS INI HANYA AKAN KELIHATAN PADA PAPARAN MUDAH ALIH -->
+            <!-- =============================================== -->
+            <div id="mobile-view-container">
+                <div id="today-kuliah-card">
+                    <!-- Kad Kuliah Hari Ini akan dijana di sini oleh JavaScript -->
+                </div>
+                <div id="mobile-card-list">
+                    <!-- Senarai kad utama akan dijana di sini oleh JavaScript -->
+                </div>
+            </div>
+            
+            <!-- =============================================== -->
+            <!-- JADUAL INI HANYA AKAN KELIHATAN PADA PAPARAN DESKTOP -->
+            <!-- =============================================== -->
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th class="week-header-title"></th>
+                        <th>AHAD</th>
+                        <th>ISNIN</th>
+                        <th>SELASA</th>
+                        <th>RABU</th>
+                        <th>KHAMIS</th>
+                        <th>JUMAAT</th>
+                        <th>SABTU</th>
+                    </tr>
+                </thead>
+                <tbody id="calendar-body">
+                    <!-- Kandungan jadual desktop akan dijana di sini -->
+                </tbody>
+            </table>
+        </main>
+        
+        <footer class="page-footer">
+            <p class="update-info" id="update-info">*Memuatkan tarikh kemas kini...</p>
+            <div class="legend">
+                <span>Petunjuk:</span>
+                <div class="legend-box empty-slot-legend">SLOT KOSONG/ TERBUKA</div>
+                <div class="legend-box public-holiday-legend">CUTI UMUM</div>
+                <div class="legend-box today-legend">KULIAH HARI INI</div>
+            </div>
+            <p class="footer-link">
+                Jadual ini juga boleh diakses melalui pautan: <a href="https://www.mamtj6.com/kuliah/info">https://www.mamtj6.com/kuliah/info</a>
+            </p>
+        </footer>
+    </div>
+    <script src="/kuliah/jadual/script.js"></script>
+    <script>
+    // ================================================================
+    // MOBILE VIEW V2 OVERRIDES
+    // Redefines mobile functions from script.js with new UI classes.
+    // Placed after script.js so DOMContentLoaded calls these versions.
+    // ================================================================
+
+    function createLectureBlock(time, lecture) {
+        const badgeClass = time.toLowerCase();
+        const isYasin = lecture.nama_penceramah && lecture.nama_penceramah.includes('Yasiin');
+        if (isYasin) {
+            return `<div class="lecture-block-v2">
+                <span class="session-badge ${badgeClass}">${time}</span>
+                <div class="lecture-ustaz" lang="ar" dir="rtl" style="font-size:1.1rem;text-align:right;">باچاءن يسٓ دان تهليل</div>
+                <div class="lecture-tajuk">BACAAN YASIIN &amp; TAHLIL</div>
+            </div>`;
+        }
+        return `<div class="lecture-block-v2">
+            <span class="session-badge ${badgeClass}">${time}</span>
+            <div class="lecture-ustaz">${lecture.nama_penceramah}</div>
+            <div class="lecture-tajuk">${lecture.tajuk_kuliah}</div>
+        </div>`;
+    }
+
+    async function renderTodayCard(senaraiHari, selectedDay = 'today') {
+        const todayContainer = document.getElementById('today-kuliah-card');
+        if (!todayContainer) return;
+
+        cachedSenaraiHari = senaraiHari;
+        todayContainer.classList.add('is-today-card');
+
+        const today = new Date();
+        const targetDate = new Date(today);
+        if (selectedDay === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1);
+
+        const targetDateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+        const targetData = senaraiHari.find(d => d.date === targetDateString);
+
+        const iframeSuffix = selectedDay === 'tomorrow' ? 'tomorrow' : 'today';
+
+        let cardBody = '';
+        if (targetData && (targetData.subuh || targetData.maghrib)) {
+            if (targetData.subuh) {
+                cardBody += createLectureBlock('Subuh', targetData.subuh);
+                cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_subuh.html" loading="lazy" scrolling="no"></iframe></div></div>`;
+            }
+            if (targetData.maghrib) {
+                cardBody += createLectureBlock('Maghrib', targetData.maghrib);
+                cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_maghrib.html" loading="lazy" scrolling="no"></iframe></div></div>`;
+            }
+        } else if (selectedDay === 'tomorrow' && !targetData) {
+            cardBody = `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
+        } else {
+            const dayLabel = selectedDay === 'tomorrow' ? 'esok' : 'hari ini';
+            cardBody = `<div class="no-kuliah-today">Tiada kuliah dijadualkan ${dayLabel}.</div>`;
+        }
+
+        const holidayHtml = targetData && targetData.cuti_umum
+            ? `<span class="mobile-holiday-label">${targetData.cuti_umum}</span>` : '';
+
+        todayContainer.innerHTML = `
+            <div class="today-card-top-bar"></div>
+            <div class="today-card-header">
+                <div class="day-tab-switcher">
+                    <button class="day-tab ${selectedDay === 'today' ? 'active' : ''}" data-day="today">Hari Ini</button>
+                    <button class="day-tab ${selectedDay === 'tomorrow' ? 'active' : ''}" data-day="tomorrow">Hari Esok</button>
+                </div>
+                <div id="today-date-combined">Memuatkan tarikh...</div>
+                ${holidayHtml}
+            </div>
+            <div class="today-card-body">${cardBody}</div>`;
+
+        todayContainer.querySelectorAll('.day-tab').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                await renderTodayCard(cachedSenaraiHari, btn.dataset.day);
+            });
+        });
+
+        await loadHijriDate(targetDate);
+    }
+
+    async function initializeMobileView(senaraiHari, targetDate) {
+        const mobileContainer = document.getElementById('mobile-view-container');
+        if (!mobileContainer) return;
+        const mobileListContainer = document.getElementById('mobile-card-list');
+        if (!mobileListContainer) return;
+
+        // Today card
+        const today = new Date();
+        const isCurrentMonth = targetDate.getMonth() === today.getMonth() && targetDate.getFullYear() === today.getFullYear();
+        if (isCurrentMonth) {
+            await renderTodayCard(senaraiHari);
+        } else {
+            const todayCard = document.getElementById('today-kuliah-card');
+            if (todayCard) todayCard.style.display = 'none';
+        }
+
+        const daysInMalay = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+        const monthNames = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
+        const targetMonth = targetDate.getMonth();
+        const targetYear = targetDate.getFullYear();
+
+        const days = senaraiHari.filter(d => {
+            const date = new Date(d.date + 'T00:00:00');
+            return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+        });
+
+        const emptyCards = [];
+
+        days.forEach(dayData => {
+            const currentDate = new Date(dayData.date + 'T00:00:00');
+            if (isCurrentMonth && currentDate.toDateString() === today.toDateString()) return;
+
+            const isEmpty = !dayData.subuh && !dayData.maghrib;
+            const card = document.createElement('div');
+            card.className = 'mobile-card-v2' + (dayData.cuti_umum ? ' is-holiday' : '');
+
+            const dayName = daysInMalay[currentDate.getDay()];
+            const dateNum = `${currentDate.getDate()} ${monthNames[currentDate.getMonth()]}`;
+            const holidayPill = dayData.cuti_umum
+                ? `<span class="mobile-holiday-label">${dayData.cuti_umum}</span>` : '';
+
+            let bodyHtml = '';
+            if (isEmpty) {
+                bodyHtml = `<div class="empty-slot-v2">Tiada kuliah</div>`;
+            } else {
+                if (dayData.subuh) bodyHtml += createLectureBlock('Subuh', dayData.subuh);
+                if (dayData.maghrib) bodyHtml += createLectureBlock('Maghrib', dayData.maghrib);
+            }
+
+            card.innerHTML = `
+                <div class="card-date-header-v2">
+                    <span class="card-day-label">${dayName}${holidayPill}</span>
+                    <span class="card-date-number">${dateNum}</span>
+                </div>
+                <div class="card-body-v2">${bodyHtml}</div>`;
+
+            if (isEmpty) {
+                emptyCards.push(card);
+            } else {
+                mobileListContainer.appendChild(card);
+            }
+        });
+
+        // Empty slot toggle
+        if (emptyCards.length > 0) {
+            const toggle = document.createElement('button');
+            toggle.className = 'show-empty-toggle';
+            toggle.textContent = `Tunjuk ${emptyCards.length} hari tiada kuliah ▾`;
+            toggle.addEventListener('click', () => {
+                emptyCards.forEach(c => mobileListContainer.appendChild(c));
+                toggle.remove();
+            });
+            mobileListContainer.appendChild(toggle);
+        }
+    }
+    async function loadHijriDate(targetDate = new Date()) {
+        const el = document.getElementById('today-date-combined');
+        if (!el) return;
+
+        const daysInMalay = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+        const miladi = `${daysInMalay[targetDate.getDay()]}, ${targetDate.getDate()} ${targetDate.toLocaleString('ms-MY',{month:'long'})} ${targetDate.getFullYear()}`;
+        el.textContent = miladi;
+
+        const hijriMonthNames = {"01":"Muharam","02":"Safar","03":"Rabi'ul Awwal","04":"Rabi'ul Akhir","05":"Jamadil Awal","06":"Jamadil Akhir","07":"Rejab","08":"Syaaban","09":"Ramadan","10":"Syawal","11":"Zulkaedah","12":"Zulhijah"};
+
+        const calcFallback = () => {
+            const h = gregorianToHijri(targetDate);
+            const mp = String(h.month).padStart(2,'0');
+            el.textContent = `${miladi} / ${h.day} ${hijriMonthNames[mp]} ${h.year}H`;
+        };
+
+        try {
+            const isToday = targetDate.toDateString() === new Date().toDateString();
+            const resp = await fetch('https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01');
+            if (!resp.ok) throw new Error('API failed');
+            const data = await resp.json();
+
+            const day = String(targetDate.getDate()).padStart(2,'0');
+            const mNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const targetStr = `${day}-${mNames[targetDate.getMonth()]}-${targetDate.getFullYear()}`;
+            let info = data.prayerTime.find(p => p.date === targetStr);
+
+            if (!info && !isToday) {
+                try {
+                    const nm = targetDate.getMonth() + 1, ny = nm > 12 ? targetDate.getFullYear() + 1 : targetDate.getFullYear(), am = nm > 12 ? 1 : nm;
+                    const nr = await fetch(`https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${ny}&month=${am}`);
+                    if (nr.ok) { const nd = await nr.json(); info = nd.prayerTime.find(p => p.date === targetStr); }
+                } catch(e) {}
+            }
+
+            if (!info) { calcFallback(); return; }
+            const hp = info.hijri.split('-');
+            el.textContent = `${miladi} / ${parseInt(hp[2],10)} ${hijriMonthNames[hp[1]]} ${hp[0]}H`;
+        } catch(e) {
+            calcFallback();
+        }
+    }
+    </script>
+</body>
+</html>
