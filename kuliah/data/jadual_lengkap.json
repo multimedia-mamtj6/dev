@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN MEI 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 26/5/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 27/5/2026"
   },
   "senaraiHari": [
     {
@@ -263,11 +263,7 @@
     {
       "date": "2026-05-27",
       "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Mohd Fikri",
-        "tajuk_kuliah": "Pedoman Sembahyang Berjemaah",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/08_7.-Ustaz-Fikri.jpg"
-      },
+      "maghrib": null,
       "cuti_umum": "Aidiladha 1"
     },
     {
