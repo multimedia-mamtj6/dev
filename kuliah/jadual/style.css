@@ -221,7 +221,7 @@ main { flex-grow: 1; min-height: 0; }
         border: 1.5px solid #bbf7d0;
         box-shadow: 0 4px 20px rgba(22, 163, 74, 0.1);
         overflow: hidden;
-        padding: 0;
+        padding: 0 0.5rem;
     }
 
     #today-kuliah-card.is-today-card {
@@ -242,7 +242,11 @@ main { flex-grow: 1; min-height: 0; }
 
     .today-card-header {
         padding: 0.5rem 1rem 0.375rem;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        text-align: left;
         border-bottom: 1px solid #f1f5f9;
         margin-bottom: 0;
     }
@@ -254,7 +258,8 @@ main { flex-grow: 1; min-height: 0; }
     .day-select-wrapper {
         display: flex;
         justify-content: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
     }
 
     .day-select {
@@ -307,8 +312,30 @@ main { flex-grow: 1; min-height: 0; }
         color: #e2e8f0;
     }
 
+    .today-date-right {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #today-date-gregorian {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.4;
+    }
+
+    #today-date-hijri {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #16a34a;
+        line-height: 1.4;
+    }
+
+    html.dark #today-date-gregorian { color: #e2e8f0; }
+    html.dark #today-date-hijri     { color: #4ade80; }
+
     .today-card-body {
-        padding: 0;
+        padding-bottom: 1rem;
     }
 
     .lecture-block-v2 {
@@ -386,18 +413,16 @@ main { flex-grow: 1; min-height: 0; }
     }
 
     .poster-section {
-        padding: 0.1rem 0.5rem 0.2rem;
+        padding: 0.1rem 0 0.03rem;
     }
 
     .poster-wrapper {
-        aspect-ratio: 12.9 / 6.8;
+        width: 100%;
+        aspect-ratio: 16 / 9;
         overflow: hidden;
         border-radius: 10px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        margin-top: 0;
-        margin-bottom: 0;
-        width: auto;
     }
 
     html.dark .poster-wrapper {

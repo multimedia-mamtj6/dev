@@ -270,7 +270,10 @@ async function renderTodayCard(senaraiHari, selectedDay = 'today') {
                     <option value="tomorrow" ${selectedDay === 'tomorrow' ? 'selected' : ''}>Hari Esok</option>
                 </select>
             </div>
-            <div id="today-date-combined">Memuatkan tarikh...</div>
+            <div class="today-date-right">
+                <div id="today-date-gregorian">Memuatkan tarikh...</div>
+                <div id="today-date-hijri"></div>
+            </div>
             ${holidayHtml}
         </div>
         <div class="today-card-body">${cardBody}</div>`;
@@ -300,19 +303,20 @@ function gregorianToHijri(date) {
 }
 
 async function loadHijriDate(targetDate = new Date()) {
-    const el = document.getElementById('today-date-combined');
-    if (!el) return;
+    const elGreg = document.getElementById('today-date-gregorian');
+    const elHijri = document.getElementById('today-date-hijri');
+    if (!elGreg) return;
 
     const daysInMalay = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
     const miladi = `${daysInMalay[targetDate.getDay()]}, ${targetDate.getDate()} ${targetDate.toLocaleString('ms-MY',{month:'long'})} ${targetDate.getFullYear()}`;
-    el.textContent = miladi;
+    elGreg.textContent = miladi;
 
     const hijriMonthNames = {"01":"Muharam","02":"Safar","03":"Rabi'ul Awwal","04":"Rabi'ul Akhir","05":"Jamadil Awal","06":"Jamadil Akhir","07":"Rejab","08":"Syaaban","09":"Ramadan","10":"Syawal","11":"Zulkaedah","12":"Zulhijah"};
 
     const calcFallback = () => {
         const h = gregorianToHijri(targetDate);
         const mp = String(h.month).padStart(2,'0');
-        el.textContent = `${miladi} / ${h.day} ${hijriMonthNames[mp]} ${h.year}H`;
+        if (elHijri) elHijri.textContent = `${h.day} ${hijriMonthNames[mp]} ${h.year}H`;
     };
 
     try {
@@ -336,7 +340,7 @@ async function loadHijriDate(targetDate = new Date()) {
 
         if (!info) { calcFallback(); return; }
         const hp = info.hijri.split('-');
-        el.textContent = `${miladi} / ${parseInt(hp[2],10)} ${hijriMonthNames[hp[1]]} ${hp[0]}H`;
+        if (elHijri) elHijri.textContent = `${parseInt(hp[2],10)} ${hijriMonthNames[hp[1]]} ${hp[0]}H`;
     } catch(e) {
         calcFallback();
     }
