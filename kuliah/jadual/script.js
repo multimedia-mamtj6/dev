@@ -127,11 +127,11 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
                         const dayOfWeek = currentDate.getDay();
                         const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                         if (isWeekend) {
-                            if (dayData.subuh) { lectureWrapper.innerHTML += createLectureBlock('Subuh', dayData.subuh); } else { lectureWrapper.innerHTML += createEmptyLectureBlock(); }
-                            if (dayData.maghrib) { lectureWrapper.innerHTML += createLectureBlock('Maghrib', dayData.maghrib); } else { lectureWrapper.innerHTML += createEmptyLectureBlock(); }
+                            if (dayData.subuh) { lectureWrapper.innerHTML += createDesktopLectureBlock('Subuh', dayData.subuh); } else { lectureWrapper.innerHTML += createEmptyLectureBlock(); }
+                            if (dayData.maghrib) { lectureWrapper.innerHTML += createDesktopLectureBlock('Maghrib', dayData.maghrib); } else { lectureWrapper.innerHTML += createEmptyLectureBlock(); }
                         } else {
-                            if (dayData.subuh) { lectureWrapper.innerHTML += createLectureBlock('Subuh', dayData.subuh); }
-                            if (dayData.maghrib) { lectureWrapper.innerHTML += createLectureBlock('Maghrib', dayData.maghrib); }
+                            if (dayData.subuh) { lectureWrapper.innerHTML += createDesktopLectureBlock('Subuh', dayData.subuh); }
+                            if (dayData.maghrib) { lectureWrapper.innerHTML += createDesktopLectureBlock('Maghrib', dayData.maghrib); }
                         }
                     }
                 }
@@ -149,129 +149,136 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
 }
 
 // =================================================================
-// BAHAGIAN 2: FUNGSI-FUNGSI UNTUK PAPARAN MUDAH ALIH (DIKEMAS KINI)
+// BAHAGIAN 2: FUNGSI-FUNGSI UNTUK PAPARAN MUDAH ALIH (V2)
 // =================================================================
 async function initializeMobileView(senaraiHari, targetDate) {
     const mobileContainer = document.getElementById('mobile-view-container');
     if (!mobileContainer) return;
-
     const mobileListContainer = document.getElementById('mobile-card-list');
     if (!mobileListContainer) return;
-    
-    // Hanya paparkan kad "Hari Ini" jika kita melihat bulan semasa
+
     const today = new Date();
-    if (targetDate.getMonth() === today.getMonth() && targetDate.getFullYear() === today.getFullYear()) {
+    const isCurrentMonth = targetDate.getMonth() === today.getMonth() && targetDate.getFullYear() === today.getFullYear();
+    if (isCurrentMonth) {
         await renderTodayCard(senaraiHari);
     } else {
         const todayCard = document.getElementById('today-kuliah-card');
-        if (todayCard) todayCard.style.display = 'none'; // Sembunyikan kad
+        if (todayCard) todayCard.style.display = 'none';
     }
-    
+
     const daysInMalay = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
     const monthNames = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
-
     const targetMonth = targetDate.getMonth();
     const targetYear = targetDate.getFullYear();
-    
-    senaraiHari
-      .filter(dayData => {
-          const date = new Date(dayData.date + 'T00:00:00');
-          return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
-      })
-      .forEach(dayData => {
-        const currentDate = new Date(dayData.date + 'T00:00:00');
-        // Jangan render hari ini dalam senarai utama (kerana ia sudah ada kad sendiri)
-        if (currentDate.toDateString() === today.toDateString()) return;
 
-        const card = document.createElement('div');
-        card.className = 'mobile-card';
-        
-        const cardHeaderHTML = `
-            <div class="card-header">
-                <span class="date-string">${daysInMalay[currentDate.getDay()]}, ${currentDate.getDate()} ${monthNames[currentDate.getMonth()]}</span>
-                ${dayData.cuti_umum ? `<span class="holiday-label">${dayData.cuti_umum}</span>` : ''}
-            </div>`;
-        
-        let cardBodyContent = '';
-        const tiadaKuliah = !dayData.subuh && !dayData.maghrib;
-        if (tiadaKuliah) {
-            cardBodyContent = `<div class="card-body is-empty-slot"><div class="empty-slot-text">Slot Kosong</div></div>`;
-        } else {
-            if (dayData.subuh) cardBodyContent += createLectureBlock('Subuh', dayData.subuh);
-            if (dayData.maghrib) cardBodyContent += createLectureBlock('Maghrib', dayData.maghrib);
-            cardBodyContent = `<div class="card-body">${cardBodyContent}</div>`;
-        }
-        
-        card.innerHTML = cardHeaderHTML + cardBodyContent;
-        mobileListContainer.appendChild(card);
+    const days = senaraiHari.filter(d => {
+        const date = new Date(d.date + 'T00:00:00');
+        return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
     });
+
+    const emptyCards = [];
+
+    days.forEach(dayData => {
+        const currentDate = new Date(dayData.date + 'T00:00:00');
+        if (isCurrentMonth && currentDate.toDateString() === today.toDateString()) return;
+
+        const isEmpty = !dayData.subuh && !dayData.maghrib;
+        const card = document.createElement('div');
+        card.className = 'mobile-card-v2' + (dayData.cuti_umum ? ' is-holiday' : '');
+
+        const dayName = daysInMalay[currentDate.getDay()];
+        const dateNum = `${currentDate.getDate()} ${monthNames[currentDate.getMonth()]}`;
+        const holidayPill = dayData.cuti_umum
+            ? `<span class="mobile-holiday-label">${dayData.cuti_umum}</span>` : '';
+
+        let bodyHtml = '';
+        if (isEmpty) {
+            bodyHtml = `<div class="empty-slot-v2">Tiada kuliah</div>`;
+        } else {
+            if (dayData.subuh) bodyHtml += createLectureBlock('Subuh', dayData.subuh);
+            if (dayData.maghrib) bodyHtml += createLectureBlock('Maghrib', dayData.maghrib);
+        }
+
+        card.innerHTML = `
+            <div class="card-date-header-v2">
+                <span class="card-day-label">${dayName}${holidayPill}</span>
+                <span class="card-date-number">${dateNum}</span>
+            </div>
+            <div class="card-body-v2">${bodyHtml}</div>`;
+
+        if (isEmpty) {
+            emptyCards.push(card);
+        } else {
+            mobileListContainer.appendChild(card);
+        }
+    });
+
+    if (emptyCards.length > 0) {
+        const toggle = document.createElement('button');
+        toggle.className = 'show-empty-toggle';
+        toggle.textContent = `Tunjuk ${emptyCards.length} hari tiada kuliah ▾`;
+        toggle.addEventListener('click', () => {
+            emptyCards.forEach(c => mobileListContainer.appendChild(c));
+            toggle.remove();
+        });
+        mobileListContainer.appendChild(toggle);
+    }
 }
 
 async function renderTodayCard(senaraiHari, selectedDay = 'today') {
     const todayContainer = document.getElementById('today-kuliah-card');
     if (!todayContainer) return;
 
-    // Cache data untuk event handler
     cachedSenaraiHari = senaraiHari;
-
     todayContainer.classList.add('is-today-card');
 
-    // Kira tarikh sasaran berdasarkan pilihan
     const today = new Date();
     const targetDate = new Date(today);
-    if (selectedDay === 'tomorrow') {
-        targetDate.setDate(targetDate.getDate() + 1);
-    }
+    if (selectedDay === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1);
 
     const targetDateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
     const targetData = senaraiHari.find(d => d.date === targetDateString);
 
-    // Bina header dengan dropdown
-    let cardHeader = `
-        <div class="today-card-header">
-            <div class="day-selector-wrapper">
-                <select id="day-selector" class="day-selector-dropdown">
-                    <option value="today" ${selectedDay === 'today' ? 'selected' : ''}>Kuliah Hari Ini</option>
-                    <option value="tomorrow" ${selectedDay === 'tomorrow' ? 'selected' : ''}>Kuliah Hari Esok</option>
-                </select>
-            </div>
-            <div class="date-string" id="today-miladi-date">Memuatkan tarikh...</div>
-            <div class="hijri-date-string" id="today-hijri-date"></div>
-            ${targetData && targetData.cuti_umum ? `<span class="holiday-label">${targetData.cuti_umum}</span>` : ''}
-        </div>`;
-
-    // Bina body dengan URL iframe yang dinamik
-    let cardBody = `<div class="today-card-body">`;
     const iframeSuffix = selectedDay === 'tomorrow' ? 'tomorrow' : 'today';
 
+    let cardBody = '';
     if (targetData && (targetData.subuh || targetData.maghrib)) {
         if (targetData.subuh) {
             cardBody += createLectureBlock('Subuh', targetData.subuh);
-            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_subuh.html" loading="lazy" scrolling="no"></iframe></div>`;
+            cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_subuh.html" loading="lazy" scrolling="no"></iframe></div></div>`;
         }
         if (targetData.maghrib) {
             cardBody += createLectureBlock('Maghrib', targetData.maghrib);
-            cardBody += `<div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_maghrib.html" loading="lazy" scrolling="no"></iframe></div>`;
+            cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_maghrib.html" loading="lazy" scrolling="no"></iframe></div></div>`;
         }
     } else if (selectedDay === 'tomorrow' && !targetData) {
-        cardBody += `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
+        cardBody = `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
     } else {
         const dayLabel = selectedDay === 'tomorrow' ? 'esok' : 'hari ini';
-        cardBody += `<div class="no-kuliah-today">Tiada kuliah dijadualkan ${dayLabel}.</div>`;
-    }
-    cardBody += `</div>`;
-
-    todayContainer.innerHTML = cardHeader + cardBody;
-
-    // Pasang event listener pada dropdown
-    const daySelector = document.getElementById('day-selector');
-    if (daySelector) {
-        daySelector.addEventListener('change', async (e) => {
-            await renderTodayCard(cachedSenaraiHari, e.target.value);
-        });
+        cardBody = `<div class="no-kuliah-today">Tiada kuliah dijadualkan ${dayLabel}.</div>`;
     }
 
-    // Muatkan tarikh Hijri untuk tarikh sasaran
+    const holidayHtml = targetData && targetData.cuti_umum
+        ? `<span class="mobile-holiday-label">${targetData.cuti_umum}</span>` : '';
+
+    todayContainer.innerHTML = `
+        <div class="today-card-top-bar"></div>
+        <div class="today-card-header">
+            <div class="day-select-wrapper">
+                <select class="day-select">
+                    <option value="today" ${selectedDay === 'today' ? 'selected' : ''}>Hari Ini</option>
+                    <option value="tomorrow" ${selectedDay === 'tomorrow' ? 'selected' : ''}>Hari Esok</option>
+                </select>
+            </div>
+            <div id="today-date-combined">Memuatkan tarikh...</div>
+            ${holidayHtml}
+        </div>
+        <div class="today-card-body">${cardBody}</div>`;
+
+    todayContainer.querySelector('.day-select').addEventListener('change', async function () {
+        await renderTodayCard(cachedSenaraiHari, this.value);
+    });
+
     await loadHijriDate(targetDate);
 }
 
@@ -293,84 +300,73 @@ function gregorianToHijri(date) {
 }
 
 async function loadHijriDate(targetDate = new Date()) {
-    const miladiContainer = document.getElementById('today-miladi-date');
-    const hijriContainer = document.getElementById('today-hijri-date');
-    if (!miladiContainer) return;
+    const el = document.getElementById('today-date-combined');
+    if (!el) return;
 
-    const daysInMalay = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+    const daysInMalay = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+    const miladi = `${daysInMalay[targetDate.getDay()]}, ${targetDate.getDate()} ${targetDate.toLocaleString('ms-MY',{month:'long'})} ${targetDate.getFullYear()}`;
+    el.textContent = miladi;
 
-    // Paparkan tarikh Gregorian untuk tarikh sasaran
-    miladiContainer.textContent = `${daysInMalay[targetDate.getDay()]}, ${targetDate.getDate()} ${targetDate.toLocaleString('ms-MY', { month: 'long' })} ${targetDate.getFullYear()}`;
+    const hijriMonthNames = {"01":"Muharam","02":"Safar","03":"Rabi'ul Awwal","04":"Rabi'ul Akhir","05":"Jamadil Awal","06":"Jamadil Akhir","07":"Rejab","08":"Syaaban","09":"Ramadan","10":"Syawal","11":"Zulkaedah","12":"Zulhijah"};
 
-    // Semak sama ada tarikh sasaran adalah hari ini atau esok
-    const today = new Date();
-    const isToday = targetDate.toDateString() === today.toDateString();
-
-    // Gunakan period=month untuk mendapatkan semua data bulan ini
-    const solatApiUrl = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01`;
+    const calcFallback = () => {
+        const h = gregorianToHijri(targetDate);
+        const mp = String(h.month).padStart(2,'0');
+        el.textContent = `${miladi} / ${h.day} ${hijriMonthNames[mp]} ${h.year}H`;
+    };
 
     try {
-        const response = await fetch(solatApiUrl);
-        if (!response.ok) throw new Error('API request failed');
-        const data = await response.json();
+        const isToday = targetDate.toDateString() === new Date().toDateString();
+        const resp = await fetch('https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01');
+        if (!resp.ok) throw new Error('API failed');
+        const data = await resp.json();
 
-        // Format tarikh sasaran: DD-Mon-YYYY (format API JAKIM, cth: "24-Jan-2026")
-        const day = String(targetDate.getDate()).padStart(2, '0');
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const monthStr = monthNames[targetDate.getMonth()];
-        const year = targetDate.getFullYear();
-        const targetDateStr = `${day}-${monthStr}-${year}`;
+        const day = String(targetDate.getDate()).padStart(2,'0');
+        const mNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const targetStr = `${day}-${mNames[targetDate.getMonth()]}-${targetDate.getFullYear()}`;
+        let info = data.prayerTime.find(p => p.date === targetStr);
 
-        // Cari tarikh sasaran dalam data bulanan
-        let prayerInfo = data.prayerTime.find(p => p.date === targetDateStr);
-
-        // Jika tidak jumpa (mungkin esok di bulan depan), cuba dapatkan data bulan depan
-        if (!prayerInfo && !isToday) {
+        if (!info && !isToday) {
             try {
-                // Bina URL untuk bulan seterusnya
-                const nextMonth = targetDate.getMonth() + 1; // 1-12 untuk API
-                const nextYear = nextMonth > 12 ? year + 1 : year;
-                const adjustedMonth = nextMonth > 12 ? 1 : nextMonth;
-                const nextMonthUrl = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${nextYear}&month=${adjustedMonth}`;
-
-                const nextResponse = await fetch(nextMonthUrl);
-                if (nextResponse.ok) {
-                    const nextData = await nextResponse.json();
-                    prayerInfo = nextData.prayerTime.find(p => p.date === targetDateStr);
-                }
-            } catch (e) {
-                console.log('Could not fetch next month data');
-            }
+                const nm = targetDate.getMonth() + 1, ny = nm > 12 ? targetDate.getFullYear() + 1 : targetDate.getFullYear(), am = nm > 12 ? 1 : nm;
+                const nr = await fetch(`https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${ny}&month=${am}`);
+                if (nr.ok) { const nd = await nr.json(); info = nd.prayerTime.find(p => p.date === targetStr); }
+            } catch(e) {}
         }
 
-        const hijriMonthNames = { "01": "Muharam", "02": "Safar", "03": "Rabi'ul Awwal", "04": "Rabi'ul Akhir", "05": "Jamadil Awal", "06": "Jamadil Akhir", "07": "Rejab", "08": "Syaaban", "09": "Ramadan", "10": "Syawal", "11": "Zulkaedah", "12": "Zulhijah" };
-
-        if (!prayerInfo) {
-            const h = gregorianToHijri(targetDate);
-            const monthPad = String(h.month).padStart(2, '0');
-            if (hijriContainer) hijriContainer.textContent = `${h.day} ${hijriMonthNames[monthPad]} ${h.year}`;
-            return;
-        }
-        const hijriParts = prayerInfo.hijri.split('-');
-        const hijriStr = `${parseInt(hijriParts[2], 10)} ${hijriMonthNames[hijriParts[1]]} ${hijriParts[0]}`;
-        if (hijriContainer) hijriContainer.textContent = hijriStr;
-    } catch (error) {
-        console.warn('Gagal memuatkan tarikh Hijri dari API, menggunakan pengiraan tempatan:', error);
-        const hijriMonthNames = { "01": "Muharam", "02": "Safar", "03": "Rabi'ul Awwal", "04": "Rabi'ul Akhir", "05": "Jamadil Awal", "06": "Jamadil Akhir", "07": "Rejab", "08": "Syaaban", "09": "Ramadan", "10": "Syawal", "11": "Zulkaedah", "12": "Zulhijah" };
-        const h = gregorianToHijri(targetDate);
-        const monthPad = String(h.month).padStart(2, '0');
-        if (hijriContainer) hijriContainer.textContent = `${h.day} ${hijriMonthNames[monthPad]} ${h.year}`;
+        if (!info) { calcFallback(); return; }
+        const hp = info.hijri.split('-');
+        el.textContent = `${miladi} / ${parseInt(hp[2],10)} ${hijriMonthNames[hp[1]]} ${hp[0]}H`;
+    } catch(e) {
+        calcFallback();
     }
 }
 
 // =================================================================
 // BAHAGIAN 3: FUNGSI-FUNGSI SOKONGAN
 // =================================================================
-function createLectureBlock(time, lecture) {
+function createDesktopLectureBlock(time, lecture) {
     const timeClass = time.toLowerCase();
     return `<div class="lecture-block"><div class="lecture-time ${timeClass}">${time}</div><div class="ustaz-name">${lecture.nama_penceramah}</div><div class="lecture-title">${lecture.tajuk_kuliah}</div></div>`;
 }
 
 function createEmptyLectureBlock() {
     return `<div class="lecture-block is-weekend-empty"><div class="empty-slot-text">Slot Kosong</div></div>`;
+}
+
+function createLectureBlock(time, lecture) {
+    const badgeClass = time.toLowerCase();
+    const isYasin = lecture.nama_penceramah && lecture.nama_penceramah.includes('Yasiin');
+    if (isYasin) {
+        return `<div class="lecture-block-v2">
+            <span class="session-badge ${badgeClass}">${time}</span>
+            <div class="lecture-ustaz" lang="ar" dir="rtl" style="font-size:1.1rem;text-align:right;">باچاءن يسٓ دان تهليل</div>
+            <div class="lecture-tajuk">BACAAN YASIIN &amp; TAHLIL</div>
+        </div>`;
+    }
+    return `<div class="lecture-block-v2">
+        <span class="session-badge ${badgeClass}">${time}</span>
+        <div class="lecture-ustaz">${lecture.nama_penceramah}</div>
+        <div class="lecture-tajuk">${lecture.tajuk_kuliah}</div>
+    </div>`;
 }
