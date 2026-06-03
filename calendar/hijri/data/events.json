@@ -27,6 +27,11 @@
       "hijriDate": "1 Syawal 1447 H"
     },
     {
+      "eventName": "Hari Arafah",
+      "eventDate": "2026-05-26",
+      "hijriDate": "9 Zulhijah 1447 H"
+    },
+    {
       "eventName": "Hari Raya Aidiladha",
       "eventDate": "2026-05-27",
       "hijriDate": "10 Zulhijah 1447 H"
@@ -35,11 +40,6 @@
       "eventName": "Awal Muharram (Maal Hijrah)",
       "eventDate": "2026-06-17",
       "hijriDate": "1 Muharam 1448 H"
-    },
-    {
-      "eventName": "Hari Arafah",
-      "eventDate": "2026-06-25",
-      "hijriDate": "9 Zulhijah 1447 H"
     },
     {
       "eventName": "Hari Asyura",

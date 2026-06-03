@@ -27,7 +27,7 @@ body {
 /* BAHAGIAN 1: GAYA ASAS & PAPARAN DESKTOP (> 768px)       */
 /* ======================================================= */
 
-.page-container { display: flex; flex-direction: column; height: 100vh; width: 95vw; max-width: 1800px; margin: 0 auto; padding: 1.5vmin; }
+.page-container { display: flex; flex-direction: column; height: 100vh; width: 98vw; max-width: 1800px; margin: 0 auto; padding: 1.5vmin; }
 .page-header { display: flex; align-items: center; justify-content: center; text-align: left; flex-shrink: 0; padding-bottom: 1.5vmin; }
 .logo-container { width: 20vmin; margin-right: 2vmin; flex-shrink: 0; }
 .logo-container img { max-width: 100%; }
@@ -41,7 +41,7 @@ main { flex-grow: 1; min-height: 0; }
 .schedule-table th, .schedule-table td { border: 1px solid var(--border-color); vertical-align: top; padding: 0.5vmin; }
 .schedule-table thead th { background-color: var(--week-bg); font-size: 1.6vmin; text-align: center; vertical-align: middle; }
 .week-header-title { background-color: var(--week-col-bg) !important; width: 2%; }
-.week-number-cell { background-color: var(--week-col-bg); font-weight: bold; font-size: 1.6vmin; text-align: center; vertical-align: middle; writing-mode: vertical-lr; -webkit-writing-mode: vertical-lr; -ms-writing-mode: tb-rl; transform-origin: center center; -webkit-transform: rotate(180deg); -moz-transform: rotate(180deg); -ms-transform: rotate(180deg); -o-transform: rotate(180deg); transform: rotate(180deg); }
+.week-number-cell { background-color: var(--week-col-bg); font-weight: bold; font-size: 1.6vmin; text-align: center; vertical-align: middle; writing-mode: vertical-lr; -webkit-writing-mode: vertical-lr; transform-origin: center center; -webkit-transform: rotate(180deg); -moz-transform: rotate(180deg); -ms-transform: rotate(180deg); -o-transform: rotate(180deg); transform: rotate(180deg); }
 
 .day-cell { position: relative; background-color: var(--date-header-bg); }
 .day-cell.empty-cell { background-color: var(--empty-cell-bg); }
@@ -81,7 +81,7 @@ main { flex-grow: 1; min-height: 0; }
 /* ======================================================= */
 @media (max-width: 768px) {
     body { overflow-y: auto; }
-    .page-container { padding: 15px; height: auto; }
+    .page-container { padding: 15px; height: auto; width: 98vw; }
     .schedule-table { display: none; }
     #mobile-view-container { display: block; }
     .page-header { flex-direction: column; text-align: center; }

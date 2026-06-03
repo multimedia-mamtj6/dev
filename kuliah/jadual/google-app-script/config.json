@@ -6,7 +6,7 @@
     "production": {
       "GITHUB_USERNAME": "multimedia-mamtj6",
       "GITHUB_REPO": "dev",
-      "GITHUB_TOKEN": "ghp_eZH0cWr0f8Ha2cVkcevDMI44q1xjWk0",
+      "GITHUB_TOKEN": "-",
       "IMAGE_BASE_URL": "https://multimedia.mamtj6.com/kuliah/asse",
       "SECRET_KEY": "update"
     },
@@ -195,6 +195,3 @@
         "Added validation rules for all properties",
         "Added troubleshooting guide"
       ]
-    }
-  }
-}

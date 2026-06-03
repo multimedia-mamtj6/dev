@@ -4,6 +4,74 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — Beta Mobile UI (`jadual-test.html` + `style-mobile-v2.css`)
+
+> Work in progress. Changes isolated to `jadual-test.html` and `style-mobile-v2.css` only. Production `jadual.html` and `script.js` are unaffected.
+
+### Added
+- **`jadual-test.html`** — new beta test page that loads `style-mobile-v2.css` after `style.css` and overrides mobile rendering functions inline
+- **`style-mobile-v2.css`** — dedicated mobile override stylesheet scoped to `@media (max-width: 768px)`
+- **Today card redesign** — replaces the existing mobile "Kuliah Hari Ini" section with a new card component:
+  - Green gradient accent bar (`today-card-top-bar`) at the card top
+  - Pill tab switcher ("Hari Ini" / "Hari Esok") replacing the dropdown selector
+  - Combined Miladi + Hijri date on a single line: `Sabtu, 23 Mei 2026 / 15 Zulkaedah 1447H` (`#today-date-combined`)
+  - Session pill badges (SUBUH in blue, MAGHRIB in amber) above each lecture info block
+  - Lecture info (ustaz name + tajuk) centred inside the today card
+  - Poster iframes wrapped in `.poster-section` > `.poster-wrapper` for inset rounded-rectangle display
+- **Day list cards redesign** — new `.mobile-card-v2` component with compact date header, session badges, and empty-slot toggle
+
+### Changed
+- Removed duplicate month header injection from `initializeMobileView` (page `<header>` already shows the month name)
+- Poster `aspect-ratio` reduced from `16/9` to allow more content to fit on-screen without scrolling
+- Card header padding tightened (`0.5rem 1rem 0.375rem`) to reduce wasted vertical space
+- Logo width on mobile reduced to save header height
+- Removed `border-bottom` separator between lecture info block and poster within the today card
+- Poster wrapper `margin-top` overridden to `0` (removes default 15px from `style.css`)
+
+---
+
+## [15.2.2] - 2026-05-23
+
+### Fixed
+- **Hijri date not loading in mobile view** — Mobile "Kuliah Hari Ini/Esok" card was showing an uncaught error (`Data for target date not found`) when the JAKIM e-Solat API response did not contain the expected date entry
+  - Root cause 1: Next-month fallback URL was missing the `&month=` parameter — `adjustedMonth` was calculated but never used, so the fallback re-fetched the current month instead of the correct next month
+  - Root cause 2: No resilience when either API call returned data without the target date — the function threw immediately with no fallback
+  - Fixed fallback URL: added `&month=${adjustedMonth}` to the next-month JAKIM API request
+  - Added `gregorianToHijri()` — pure-JS tabular Islamic calendar converter (Julian Day Number algorithm) used as fallback when API data is missing or inaccessible
+  - When `prayerInfo` is not found after both API attempts, Hijri date is now calculated locally and displayed silently (no error thrown)
+  - Outer `catch` block also uses `gregorianToHijri()` — any network/CORS/API failure now displays a calculated Hijri date instead of the error text "Tidak dapat memuatkan tarikh Hijri."
+  - Files modified: `script.js` (added `gregorianToHijri()` before `loadHijriDate`; line 334 URL fix; lines 346–353 fallback; lines 357–361 catch block)
+
+## [15.2.1] - 2026-04-02
+
+### Fixed
+- **Vercel stylesheet and script not loading** - All relative asset paths in `index.html` and `jadual.html` were broken on Vercel due to `cleanUrls: true` + `trailingSlash: false` combination
+  - With `cleanUrls`, Vercel strips `.html` extensions from URLs (e.g. `/kuliah/jadual/jadual` instead of `/kuliah/jadual/jadual.html`)
+  - Without a trailing slash, relative paths like `style.css` resolve one directory level too high (e.g. `/kuliah/style.css` instead of `/kuliah/jadual/style.css`)
+  - Fixed by switching all asset references to absolute root-relative paths
+  - `index.html`: `href="style.css"` → `href="/kuliah/jadual/style.css"`
+  - `jadual.html`: `href="style.css"` → `href="/kuliah/jadual/style.css"`, `src="script.js"` → `src="/kuliah/jadual/script.js"`
+  - Files modified: `index.html` (line 7), `jadual.html` (lines 7, 69)
+
+- **Navigation links broken on Vercel** - All `href="jadual.html"` links in `index.html` resolved to the wrong URL on Vercel
+  - With `cleanUrls: true` and no trailing slash on `/kuliah/jadual`, the relative `jadual.html` resolved to `/kuliah/jadual.html` (404) instead of `/kuliah/jadual/jadual`
+  - Fixed by switching all nav links to absolute root-relative paths without `.html` extension (Vercel handles extension-less clean URLs)
+  - `jadual.html` → `/kuliah/jadual/jadual`
+  - `jadual.html?file=pdf` → `/kuliah/jadual/jadual?file=pdf`
+  - `jadual.html?bulan=depan` → `/kuliah/jadual/jadual?bulan=depan`
+  - `jadual.html?file=pdf&bulan=depan` → `/kuliah/jadual/jadual?file=pdf&bulan=depan`
+  - Files modified: `index.html` (lines 43, 47, 54, 58)
+
+- **`vercel.json` trailing slash** - Changed `trailingSlash` from `true` to `false`
+  - `trailingSlash: true` caused Vercel to redirect `/kuliah/jadual/jadual` → `/kuliah/jadual/jadual/`, making relative `style.css` resolve to `/kuliah/jadual/jadual/style.css` (404)
+  - Correct combination is `trailingSlash: false` + `cleanUrls: true`
+  - File modified: `vercel.json`
+
+### Technical Details
+- **Root cause**: `cleanUrls` removes `.html` from served URLs, making the browser treat the URL path as a directory segment rather than a file — which breaks relative asset resolution
+- **Fix strategy**: Use absolute root-relative paths (`/kuliah/jadual/...`) for all assets and internal links in files affected by `cleanUrls`
+- **Local development unaffected**: Absolute paths resolve correctly on both `http://127.0.0.1:5500` and `http://localhost:8000` as long as the project root is the server root
+
 ## [15.2] - 2026-01-24
 
 ### Added

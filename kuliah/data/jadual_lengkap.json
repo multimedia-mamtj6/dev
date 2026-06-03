@@ -1,11 +1,31 @@
 {
   "infoJadual": {
-    "tajukBulan": "BULAN FEBRUARI 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 8/3/2026"
+    "tajukBulan": "BULAN MEI 2026",
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 3/6/2026"
   },
   "senaraiHari": [
     {
-      "date": "2026-02-01",
+      "date": "2026-05-01",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Nazir",
+        "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/12_11.-Ustaz-Nazir.jpg"
+      },
+      "cuti_umum": "Hari Pekerja"
+    },
+    {
+      "date": "2026-05-02",
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
+      },
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-03",
       "subuh": {
         "nama_penceramah": "Ustaz Badrul Hisham",
         "tajuk_kuliah": "Fadilat Sedekah",
@@ -19,19 +39,19 @@
       "cuti_umum": null
     },
     {
-      "date": "2026-02-02",
+      "date": "2026-05-04",
       "subuh": null,
       "maghrib": null,
       "cuti_umum": null
     },
     {
-      "date": "2026-02-03",
+      "date": "2026-05-05",
       "subuh": null,
       "maghrib": null,
       "cuti_umum": null
     },
     {
-      "date": "2026-02-04",
+      "date": "2026-05-06",
       "subuh": null,
       "maghrib": {
         "nama_penceramah": "Ustaz Hairul Azam",
@@ -41,77 +61,7 @@
       "cuti_umum": null
     },
     {
-      "date": "2026-02-05",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Mohd Firdaus Azmy",
-        "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Anfal",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/09_8.-Ustaz-Mohd-Firdaus-Azmy.jpg"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-06",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Nazir",
-        "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/12_11.-Ustaz-Nazir.jpg"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-07",
-      "subuh": {
-        "nama_penceramah": "Ustaz Badrul Hisham",
-        "tajuk_kuliah": "Fadilat Sedekah",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
-      },
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-08",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Amir",
-        "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/17_16.-Ustaz-Amir.jpg"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-09",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Hisyamuddin",
-        "tajuk_kuliah": "Nasihat Agama dan Wasiat Iman",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/03_2.-Ustaz-Hisyamuddin.jpg"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-10",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Anuar Suhaimi ",
-        "tajuk_kuliah": "132 Langkah Penyucian Jiwa",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/06_5.-Ustaz-Anuar.jpg"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-11",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "YAA Dato' Sri Haji Abdul Rahman",
-        "tajuk_kuliah": "Fekah Kesihatan Dalam Ibadah Dan Sunnah Nabi",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/18_17.-YAA-Dato-Seri-Haji-Abdul-Rahman-bin-Md-Yunos.jpg"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-12",
+      "date": "2026-05-07",
       "subuh": null,
       "maghrib": {
         "nama_penceramah": "Bacaan Yasiin & Tahlil",
@@ -121,7 +71,7 @@
       "cuti_umum": null
     },
     {
-      "date": "2026-02-13",
+      "date": "2026-05-08",
       "subuh": null,
       "maghrib": {
         "nama_penceramah": "Ustaz Muhammad Fathmi",
@@ -131,13 +81,21 @@
       "cuti_umum": null
     },
     {
-      "date": "2026-02-14",
-      "subuh": null,
-      "maghrib": null,
+      "date": "2026-05-09",
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
+      },
+      "maghrib": {
+        "nama_penceramah": "Ustaz Nawawi",
+        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
+      },
       "cuti_umum": null
     },
     {
-      "date": "2026-02-15",
+      "date": "2026-05-10",
       "subuh": {
         "nama_penceramah": "Ustaz Badrul Hisham",
         "tajuk_kuliah": "Fadilat Sedekah",
@@ -151,7 +109,73 @@
       "cuti_umum": null
     },
     {
-      "date": "2026-02-16",
+      "date": "2026-05-11",
+      "subuh": null,
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-12",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Anuar Suhaimi ",
+        "tajuk_kuliah": "132 Langkah Penyucian Jiwa",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/06_5.-Ustaz-Anuar.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-13",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "YAA Dato' Sri Haji Abdul Rahman",
+        "tajuk_kuliah": "Fekah Kesihatan Dalam Ibadah Dan Sunnah Nabi",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/18_17.-YAA-Dato-Seri-Haji-Abdul-Rahman-bin-Md-Yunos.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-14",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Mohd Firdaus Azmy",
+        "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Anfal",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/09_8.-Ustaz-Mohd-Firdaus-Azmy.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-15",
+      "subuh": null,
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-16",
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
+      },
+      "maghrib": {
+        "nama_penceramah": "Ustaz Nawawi",
+        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-17",
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
+      },
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-18",
       "subuh": null,
       "maghrib": {
         "nama_penceramah": "Ustaz Ahmad Termizi",
@@ -161,437 +185,437 @@
       "cuti_umum": null
     },
     {
-      "date": "2026-02-17",
+      "date": "2026-05-19",
       "subuh": null,
       "maghrib": {
         "nama_penceramah": "Ustaz Shahruwardi ",
         "tajuk_kuliah": "Tuhfah Ar-Raghibin",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/04_3.-Ust-Shahruwardi.jpg"
       },
-      "cuti_umum": "Tahun Baru Cina"
+      "cuti_umum": null
     },
     {
-      "date": "2026-02-18",
+      "date": "2026-05-20",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": "Tahun Baru Cina"
-    },
-    {
-      "date": "2026-02-19",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Hairul Azam",
+        "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/07_6.-Ustaz-Hairul-Azam.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-02-20",
+      "date": "2026-05-21",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Muhammad Nazri",
+        "tajuk_kuliah": "Penghayatan Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/10_9.-Ustaz-Muhammad-Nazri.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-02-21",
+      "date": "2026-05-22",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Wahid",
+        "tajuk_kuliah": "Umum & Semasa",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/13_12.-Ustaz-Wahid-Ghaffar.jpg"
+      },
+      "cuti_umum": "Hari Hol Pahang"
+    },
+    {
+      "date": "2026-05-23",
+      "subuh": {
+        "nama_penceramah": "Ustaz Abd Maarof",
+        "tajuk_kuliah": "Penawar Hati",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/14_13.-Ustaz-Abd-Maarof.jpg"
+      },
+      "maghrib": {
+        "nama_penceramah": "Ustaz Nawawi",
+        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-24",
+      "subuh": null,
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-25",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Ahmad Termizi",
+        "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-26",
+      "subuh": null,
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-27",
+      "subuh": null,
+      "maghrib": null,
+      "cuti_umum": "Aidiladha 1"
+    },
+    {
+      "date": "2026-05-28",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Bacaan Yasiin & Tahlil",
+        "tajuk_kuliah": "-",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/01_0.-bacaan-yasin.png"
+      },
+      "cuti_umum": "Aidiladha 2"
+    },
+    {
+      "date": "2026-05-29",
+      "subuh": null,
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-05-30",
       "subuh": {
         "nama_penceramah": "Ustaz Badrul Hisham",
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
-      "date": "2026-02-22",
+      "date": "2026-05-31",
       "subuh": {
         "nama_penceramah": "Ustaz Badrul Hisham",
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-23",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-24",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-25",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-26",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-27",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-02-28",
-      "subuh": {
-        "nama_penceramah": "Ustaz Badrul Hisham",
-        "tajuk_kuliah": "Fadilat Sedekah",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
-      },
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
       "date": "",
       "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
-      "date": "",
+      "date": "2026-06-01",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Hisyamuddin",
+        "tajuk_kuliah": "Nasihat Agama dan Wasiat Iman",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/03_2.-Ustaz-Hisyamuddin.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "",
+      "date": "2026-06-02",
+      "subuh": null,
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-03",
+      "subuh": {
+        "nama_penceramah": "Ustaz Ahmad Termizi",
+        "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
+      },
+      "maghrib": {
+        "nama_penceramah": "Ustaz Hairul Azam",
+        "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/07_6.-Ustaz-Hairul-Azam.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-04",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Mohd Firdaus Azmy",
+        "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Anfal",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/09_8.-Ustaz-Mohd-Firdaus-Azmy.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-01",
+      "date": "2026-06-05",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Nazir",
+        "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/12_11.-Ustaz-Nazir.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-02",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+      "date": "2026-06-06",
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
-      "date": "2026-03-03",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-04",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-05",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-06",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-07",
+      "date": "2026-06-07",
       "subuh": {
         "nama_penceramah": "Ustaz Badrul Hisham",
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Amir",
+        "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/17_16.-Ustaz-Amir.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-08",
+      "date": "2026-06-08",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Hisyamuddin",
+        "tajuk_kuliah": "Nasihat Agama dan Wasiat Iman",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/03_2.-Ustaz-Hisyamuddin.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-09",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Anuar Suhaimi ",
+        "tajuk_kuliah": "132 Langkah Penyucian Jiwa",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/06_5.-Ustaz-Anuar.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-10",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "YAA Dato' Sri Haji Abdul Rahman",
+        "tajuk_kuliah": "Fekah Kesihatan Dalam Ibadah Dan Sunnah Nabi",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/18_17.-YAA-Dato-Seri-Haji-Abdul-Rahman-bin-Md-Yunos.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-11",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Tuan Haji Hazarudin",
+        "tajuk_kuliah": "Perkongsian Ilmu",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/19_18.-Tuan-Haji-Hazarudin-bin-Haji-Baharudin.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-12",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Muhammad Fathmi",
+        "tajuk_kuliah": "Syarah Hadis 40 Imam Nawawi",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/11_10.-Ustaz-Fathmi.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-13",
       "subuh": {
         "nama_penceramah": "Ustaz Badrul Hisham",
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Nawawi",
+        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-09",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-10",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-11",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-12",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-13",
-      "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
-      },
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-14",
+      "date": "2026-06-14",
       "subuh": {
         "nama_penceramah": "Ustaz Badrul Hisham",
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Amir",
+        "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/17_16.-Ustaz-Amir.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-15",
+      "date": "2026-06-15",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Ahmad Termizi",
+        "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-16",
+      "date": "2026-06-16",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Shahruwardi ",
+        "tajuk_kuliah": "Tuhfah Ar-Raghibin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/04_3.-Ust-Shahruwardi.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-17",
+      "date": "2026-06-17",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Hairul Azam",
+        "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/07_6.-Ustaz-Hairul-Azam.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-18",
+      "date": "2026-06-18",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Muhammad Nazri",
+        "tajuk_kuliah": "Penghayatan Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/10_9.-Ustaz-Muhammad-Nazri.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-19",
+      "date": "2026-06-19",
       "subuh": null,
       "maghrib": {
-        "nama_penceramah": "Pegawai masjid",
-        "tajuk_kuliah": "Tazkirah Terawih",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/-"
+        "nama_penceramah": "Ustaz Anuar Suhaimi ",
+        "tajuk_kuliah": "132 Langkah Penyucian Jiwa",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/06_5.-Ustaz-Anuar.jpg"
       },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-20",
+      "date": "2026-06-20",
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
+      },
+      "maghrib": {
+        "nama_penceramah": "Ustaz Nawawi",
+        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-21",
+      "subuh": {
+        "nama_penceramah": "Ustaz Badrul Hisham",
+        "tajuk_kuliah": "Fadilat Sedekah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
+      },
+      "maghrib": null,
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-22",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Ahmad Termizi",
+        "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-23",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Abdul Aziz",
+        "tajuk_kuliah": "Terjemahan Al-Azkar Imam An-Nawawi",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/05_4.-Ustaz-Abdul-Aziz.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-24",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Mohd Fikri",
+        "tajuk_kuliah": "Pedoman Sembahyang Berjemaah",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/08_7.-Ustaz-Fikri.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-25",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Bacaan Yasiin & Tahlil",
+        "tajuk_kuliah": "-",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/01_0.-bacaan-yasin.png"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-26",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Wahid",
+        "tajuk_kuliah": "Umum & Semasa",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/13_12.-Ustaz-Wahid-Ghaffar.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-27",
+      "subuh": {
+        "nama_penceramah": "Ustaz Abd Maarof",
+        "tajuk_kuliah": "Penawar Hati",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/14_13.-Ustaz-Abd-Maarof.jpg"
+      },
+      "maghrib": {
+        "nama_penceramah": "Ustaz Nawawi",
+        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
+      },
+      "cuti_umum": null
+    },
+    {
+      "date": "2026-06-28",
       "subuh": null,
       "maghrib": null,
       "cuti_umum": null
     },
     {
-      "date": "2026-03-21",
+      "date": "2026-06-29",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Ahmad Termizi",
+        "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
+      },
       "cuti_umum": null
     },
     {
-      "date": "2026-03-22",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-23",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-24",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-25",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-26",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-27",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-28",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-29",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-30",
-      "subuh": null,
-      "maghrib": null,
-      "cuti_umum": null
-    },
-    {
-      "date": "2026-03-31",
+      "date": "2026-06-30",
       "subuh": null,
       "maghrib": null,
       "cuti_umum": null

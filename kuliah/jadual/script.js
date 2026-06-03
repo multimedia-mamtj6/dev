@@ -1,5 +1,5 @@
 // =================================================================
-// SCRIPT.JS - VERSI 15.2 (DENGAN DROPDOWN HARI INI/ESOK)
+// SCRIPT.JS - VERSI 15.2.2 (DENGAN DROPDOWN HARI INI/ESOK)
 // =================================================================
 
 // Cache data untuk re-rendering kad hari ini/esok
@@ -275,6 +275,23 @@ async function renderTodayCard(senaraiHari, selectedDay = 'today') {
     await loadHijriDate(targetDate);
 }
 
+function gregorianToHijri(date) {
+    const d = date.getDate(), m = date.getMonth() + 1, y = date.getFullYear();
+    const a = Math.floor((14 - m) / 12);
+    const yj = y + 4800 - a, mj = m + 12 * a - 3;
+    const jd = d + Math.floor((153 * mj + 2) / 5) + 365 * yj +
+               Math.floor(yj / 4) - Math.floor(yj / 100) + Math.floor(yj / 400) - 32045;
+    const l = jd - 1948440 + 10632;
+    const n = Math.floor((l - 1) / 10631);
+    const l2 = l - 10631 * n + 354;
+    const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
+              Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
+    const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+               Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+    const hMonth = Math.floor((24 * l3) / 709);
+    return { day: l3 - Math.floor((709 * hMonth) / 24), month: hMonth, year: 30 * n + j - 30 };
+}
+
 async function loadHijriDate(targetDate = new Date()) {
     const miladiContainer = document.getElementById('today-miladi-date');
     const hijriContainer = document.getElementById('today-hijri-date');
@@ -314,7 +331,7 @@ async function loadHijriDate(targetDate = new Date()) {
                 const nextMonth = targetDate.getMonth() + 1; // 1-12 untuk API
                 const nextYear = nextMonth > 12 ? year + 1 : year;
                 const adjustedMonth = nextMonth > 12 ? 1 : nextMonth;
-                const nextMonthUrl = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${nextYear}`;
+                const nextMonthUrl = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${nextYear}&month=${adjustedMonth}`;
 
                 const nextResponse = await fetch(nextMonthUrl);
                 if (nextResponse.ok) {
@@ -326,17 +343,23 @@ async function loadHijriDate(targetDate = new Date()) {
             }
         }
 
-        if (!prayerInfo) {
-            throw new Error('Data for target date not found');
-        }
-
         const hijriMonthNames = { "01": "Muharam", "02": "Safar", "03": "Rabi'ul Awwal", "04": "Rabi'ul Akhir", "05": "Jamadil Awal", "06": "Jamadil Akhir", "07": "Rejab", "08": "Syaaban", "09": "Ramadan", "10": "Syawal", "11": "Zulkaedah", "12": "Zulhijah" };
+
+        if (!prayerInfo) {
+            const h = gregorianToHijri(targetDate);
+            const monthPad = String(h.month).padStart(2, '0');
+            if (hijriContainer) hijriContainer.textContent = `${h.day} ${hijriMonthNames[monthPad]} ${h.year}`;
+            return;
+        }
         const hijriParts = prayerInfo.hijri.split('-');
         const hijriStr = `${parseInt(hijriParts[2], 10)} ${hijriMonthNames[hijriParts[1]]} ${hijriParts[0]}`;
         if (hijriContainer) hijriContainer.textContent = hijriStr;
     } catch (error) {
-        console.error('Gagal memuatkan tarikh Hijri:', error);
-        if (hijriContainer) hijriContainer.textContent = 'Tidak dapat memuatkan tarikh Hijri.';
+        console.warn('Gagal memuatkan tarikh Hijri dari API, menggunakan pengiraan tempatan:', error);
+        const hijriMonthNames = { "01": "Muharam", "02": "Safar", "03": "Rabi'ul Awwal", "04": "Rabi'ul Akhir", "05": "Jamadil Awal", "06": "Jamadil Akhir", "07": "Rejab", "08": "Syaaban", "09": "Ramadan", "10": "Syawal", "11": "Zulkaedah", "12": "Zulhijah" };
+        const h = gregorianToHijri(targetDate);
+        const monthPad = String(h.month).padStart(2, '0');
+        if (hijriContainer) hijriContainer.textContent = `${h.day} ${hijriMonthNames[monthPad]} ${h.year}`;
     }
 }
 

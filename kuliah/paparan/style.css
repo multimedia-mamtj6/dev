@@ -14,21 +14,17 @@ This container holds the background image.
 #display-container {
     height: 100%;
     width: 100%;
-    
-    /* --- CHANGE #1: Use 'contain' instead of 'cover' --- */
-    /* This ensures the entire image is always visible. */
-    background-size: contain;
-    
-    background-position: center;
-    background-repeat: no-repeat;
-    
-    /* --- CHANGE #2: Set a background color --- */
-    /* This color (white) will show in the empty bars (letterboxing). */
     background-color: #ffffff;
-    
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+#display-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
 /* 
