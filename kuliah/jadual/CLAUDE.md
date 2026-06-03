@@ -142,7 +142,14 @@ Version 15.0 introduced URL-based PDF export:
 - Embeds Digital Signage posters from `dev.mamtj6.com`:
   - Subuh: `today_subuh.html` (script.js:227)
   - Maghrib: `today_maghrib.html` (script.js:231)
-- Poster wrapper uses `aspect-ratio: 16 / 9` for responsive sizing
+- Poster wrapper uses `aspect-ratio: 16 / 9` with `margin: 0` for responsive sizing
+
+**Today card header layout (v15.4):**
+- Side-by-side flex row: dropdown (`day-select`) on the left, date block on the right
+- Date block (`.today-date-right`) stacks two elements:
+  - `#today-date-gregorian` — bold dark text, e.g. "Rabu, 4 Jun 2026"
+  - `#today-date-hijri` — green smaller text, e.g. "7 Zulhijah 1447H"
+- `loadHijriDate()` writes each part separately (previously wrote combined string to `#today-date-combined`)
 
 **Date parsing:**
 - Append timezone offset to avoid timezone issues: `new Date(dayData.date + 'T00:00:00')` (script.js:174, 178)
@@ -231,11 +238,12 @@ Change the `768px` value in `@media (max-width: 768px)` queries throughout `styl
 - **GitHub file path:** `kuliah/data/jadual_lengkap.json`
 - **Google Sheets:** `Schedule` and `Posters` tabs
 - **No lecture marker:** `-- TIADA KULIAH --`
-- **Script version:** 15.2.2 (script.js)
+- **Script version:** 15.4 (script.js)
 - **Apps Script version:** 6.1 (code.gs)
 
 ## Version History
 
+- **15.4** (2026-06-03): Merged mobile v2 into production (script.js + style.css); redesigned today card header — side-by-side flex layout with dropdown left and two-line date right (`#today-date-gregorian` + `#today-date-hijri`); fixed poster wrapper to true 16:9 with `margin: 0`; added `0.5rem` left/right padding to `#today-kuliah-card`
 - **15.3** (2026-05-24): Expanded page container to 98vw; fixed Apps Script skipping empty rows in Schedule sheet (code.gs v6.1); beta mobile v2 — replaced pill tab switcher with `<select>` dropdown, reduced today-card padding
 - **15.2.2** (2026-05-23): Fixed Hijri date not loading in mobile view — added `gregorianToHijri()` JS fallback calculator, fixed next-month API URL missing `&month=` param, replaced error throw with silent fallback
 - **15.2.1** (2026-04-02): Fixed Vercel asset loading — switched all asset refs and nav links to absolute root-relative paths; set `trailingSlash: false` in `vercel.json`

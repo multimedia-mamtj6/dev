@@ -33,7 +33,7 @@ index.html                          ← Hub/landing page (ticker, links to sub-p
 
 kuliah/
   data/jadual_lengkap.json          ← Monthly schedule (single source of truth, auto-synced)
-  jadual/                           ← Schedule system v15.3 (dual-view: desktop table + mobile cards)
+  jadual/                           ← Schedule system v15.4 (dual-view: desktop table + mobile cards)
   kuliah(beta)/                     ← Beta mirror of jadual/ for testing
   paparan/                          ← Digital signage (4 pages: today/tomorrow × subuh/maghrib)
 
@@ -63,7 +63,7 @@ Manual edit → calendar/hijri/data/events.json (updated annually with new Islam
 
 Each major sub-project has its own CLAUDE.md with detailed architecture:
 - `calendar/hijri/CLAUDE.md` — Calendar system specifics
-- `kuliah/jadual/CLAUDE.md` — Schedule system v15.3 internals (dual-view, print, Apps Script)
+- `kuliah/jadual/CLAUDE.md` — Schedule system v15.4 internals (dual-view, print, Apps Script)
 
 ## Key Patterns
 
