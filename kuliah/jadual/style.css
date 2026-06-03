@@ -413,12 +413,13 @@ main { flex-grow: 1; min-height: 0; }
     }
 
     .poster-section {
-        padding: 0.1rem 0 0.03rem;
+        padding: 0;
     }
 
     .poster-wrapper {
         width: 100%;
         aspect-ratio: 16 / 9;
+        margin: 0;
         overflow: hidden;
         border-radius: 10px;
         border: 1px solid #e2e8f0;
