@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN MEI 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 2/6/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 3/6/2026"
   },
   "senaraiHari": [
     {
@@ -326,7 +326,11 @@
     },
     {
       "date": "2026-06-03",
-      "subuh": null,
+      "subuh": {
+        "nama_penceramah": "Ustaz Ahmad Termizi",
+        "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
+      },
       "maghrib": {
         "nama_penceramah": "Ustaz Hairul Azam",
         "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah",
