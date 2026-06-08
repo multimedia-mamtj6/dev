@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 295.09 78.09">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: GoogleSansFlex-Medium, 'Google Sans Flex';
+        font-size: 22.75px;
+        font-variation-settings: 'opsz' 18, 'wdth' 100, 'wght' 500, 'GRAD' 0, 'ROND' 0, 'slnt' 0;
+        font-weight: 500;
+      }
+
+      .cls-2 {
+        letter-spacing: -.02em;
+      }
+
+      .cls-3 {
+        letter-spacing: -.01em;
+      }
+
+      .cls-4 {
+        font-family: GoogleSansFlex-SemiBold, 'Google Sans Flex';
+        font-size: 42.23px;
+        font-variation-settings: 'opsz' 18, 'wdth' 100, 'wght' 600, 'GRAD' 0, 'ROND' 0, 'slnt' 0;
+        font-weight: 600;
+      }
+
+      .cls-5 {
+        clip-path: url(#clippath);
+      }
+    </style>
+    <clipPath id="clippath">
+      <rect x="4.12" y="4.12" width="66.89" height="66.89" rx="3.76" ry="3.76"/>
+    </clipPath>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <text class="cls-4" transform="translate(85.57 65.36)"><tspan class="cls-2" x="0" y="0">P</tspan><tspan x="25.09" y="0">ahangGo</tspan></text>
+      <text class="cls-1" transform="translate(88.78 26.58)"><tspan x="0" y="0">Apli</tspan><tspan class="cls-3" x="40.44" y="0">k</tspan><tspan x="52.31" y="0">asi</tspan></text>
+      <g>
+        <rect x="4.12" y="4.12" width="66.89" height="66.89" rx="3.76" ry="3.76"/>
+        <g class="cls-5">
+          <image width="240" height="240" transform="scale(.31)" xlink:href="../d1d3943d-fbc6-4228-89c0-fda2067b82d4.png"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
