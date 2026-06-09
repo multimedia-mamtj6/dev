@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN JUN 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 7/6/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 9/6/2026"
   },
   "senaraiHari": [
     {
@@ -87,11 +87,7 @@
     {
       "date": "2026-06-09",
       "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Anuar Suhaimi ",
-        "tajuk_kuliah": "132 Langkah Penyucian Jiwa",
-        "poster_url": "https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/06_5.-Ustaz-Anuar.jpg"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
