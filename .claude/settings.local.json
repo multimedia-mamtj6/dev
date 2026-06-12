@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:ui.shadcn.com)"
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:mufti.pahang.gov.my)",
+      "Bash(curl -s \"https://mufti.pahang.gov.my/khutbah/2026/12-jun-2026m-26-zulhijjah-1447h\")",
+      "Bash(grep -o '<span class=\"el-image\" uk-icon=\"icon:[^\"]*\"></span>.\\\\{0,200\\\\}')",
+      "Bash(grep -o '<span class=\"el-image\" uk-icon=\"icon: calendar;\"[^/]*/></span>.\\\\{0,300\\\\}\\\\|<span class=\"el-image\" uk-icon=\"icon: calendar;\".\\\\{0,300\\\\}')",
+      "Bash(grep -o '<h1 class=\"uk-h2 uk-heading-divider uk-margin-small\"[^>]*>.\\\\{0,150\\\\}')"
     ]
   }
 }

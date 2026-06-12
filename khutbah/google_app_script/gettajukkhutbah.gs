@@ -16,6 +16,17 @@ function onEditTrigger(e) {
   }
 }
 
+// Converts an h1's inner HTML (which may contain <br /> line breaks) into
+// a single-line, trimmed text string, e.g.
+// "Puasa Sunat Bulan Muharam<br />(Tasua' dan Asyura)" -> "Puasa Sunat Bulan Muharam (Tasua' dan Asyura)"
+function cleanTitleHtml(innerHtml) {
+  return innerHtml
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function extractKhutbahData() {
   Logger.log("Starting extraction...");
   
@@ -54,8 +65,8 @@ function extractKhutbahData() {
     // Look for the calendar icon followed by the date span
     var dateRegex = /<span class="el-image" uk-icon="icon:\s*calendar[^"]*"><\/span>\s*<span class="uk-text-middle uk-margin-remove-last-child">([^<]+)<\/span>/;
     
-    // More flexible title regex to handle attributes and whitespace
-    var titleRegex = /<h1 class="uk-h2 uk-heading-divider uk-margin-small"[^>]*>\s*([^<]+?)\s*<\/h1>/;
+    // More flexible title regex to handle attributes, whitespace, and <br /> line breaks
+    var titleRegex = /<h1 class="uk-h2 uk-heading-divider uk-margin-small"[^>]*>([\s\S]*?)<\/h1>/;
     
     var dateMatch = html.match(dateRegex);
     var titleMatch = html.match(titleRegex);
@@ -80,15 +91,15 @@ function extractKhutbahData() {
 
     var titleText = "ERROR: Could not extract title";
     if (titleMatch) {
-      titleText = titleMatch[1].trim();
+      titleText = cleanTitleHtml(titleMatch[1]);
       Logger.log("Extracted title: " + titleText);
     } else {
       Logger.log("No title match found - trying alternative pattern");
       // Alternative pattern for title
-      var altTitleRegex = /<h1[^>]*uk-h2[^>]*>\s*([^<]+?)\s*<\/h1>/;
+      var altTitleRegex = /<h1[^>]*uk-h2[^>]*>([\s\S]*?)<\/h1>/;
       var altTitleMatch = html.match(altTitleRegex);
       if (altTitleMatch) {
-        titleText = altTitleMatch[1].trim();
+        titleText = cleanTitleHtml(altTitleMatch[1]);
         Logger.log("Extracted title (alternative): " + titleText);
       }
     }
