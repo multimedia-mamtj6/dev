@@ -43,6 +43,7 @@ calendar/hijri/
   widgets/                          ← Embeddable countdown widgets for iframe
   hari-ini/                         ← Current Hijri date & MST time widget
 
+khutbah/                             ← Friday sermon (khutbah) title display, polls Google Sheet CSV
 csr/calc/                           ← Calculator tool
 web/asset/moving-text/              ← Scrolling text ticker
 media/                              ← Images, logos (SVG variants: black/white for dark mode)
@@ -64,6 +65,7 @@ Manual edit → calendar/hijri/data/events.json (updated annually with new Islam
 Each major sub-project has its own CLAUDE.md with detailed architecture:
 - `calendar/hijri/CLAUDE.md` — Calendar system specifics
 - `kuliah/jadual/CLAUDE.md` — Schedule system v15.4 internals (dual-view, print, Apps Script)
+- `khutbah/CLAUDE.md` — Mimbar Jumaat sermon display specifics
 
 ## Key Patterns
 
