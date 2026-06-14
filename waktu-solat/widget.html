@@ -225,6 +225,21 @@
     .footer-bar {
       font-size: 11px;
       color: rgba(var(--ink), var(--a30));
+      text-align: right;
+    }
+
+    .date-break {
+      display: none;
+    }
+
+    @media (max-width: 480px) {
+      .footer-bar {
+        font-size: 9px;
+      }
+
+      .date-break {
+        display: block;
+      }
     }
 
     .status-msg {
@@ -305,10 +320,6 @@
         font-size: 10px;
       }
 
-      .footer-bar {
-        font-size: 10px;
-      }
-
       .info-bar {
         gap: 4px;
         padding: 0;
@@ -357,7 +368,8 @@
         </select>
       </div>
       <div class="footer-bar" id="footerBar" style="display:none">
-        <span id="dateText">—</span>
+        <span id="dateTextGregorian">—</span> <span class="date-sep">/</span><span class="date-break"></span>
+        <span id="dateTextHijri">—</span>
       </div>
     </div>
 
@@ -919,7 +931,7 @@
       document.getElementById('currentPrayerLabel').textContent = currentName;
       document.getElementById('currentPrayerIcon').textContent = PRAYER_ICONS[currentName] || 'bedtime';
       document.getElementById('currentPrayerTime').textContent = currentTimeText;
-      document.getElementById('nextPrayerLabel').textContent = nextName;
+      document.getElementById('nextPrayerLabel').textContent = nextName.replace(' esok', '');
       document.getElementById('nextPrayerIcon').textContent = PRAYER_ICONS[nextName.replace(' esok', '')] || 'sunny';
       document.getElementById('nextPrayerTime').textContent =
         nextTs ? fmt24(nextTs) : '—';
@@ -1026,8 +1038,10 @@
         const [hijriYear, hijriMonth, hijriDay] = todayPrayer.hijri.split('-');
         const hijriMonthName = HIJRI_MONTH_NAMES[hijriMonth];
 
-        document.getElementById('dateText').textContent =
-          `${days[now.getDay()]}, ${day} ${months[month - 1]} ${year} / ${parseInt(hijriDay, 10)} ${hijriMonthName} ${hijriYear}H`;
+        document.getElementById('dateTextGregorian').textContent =
+          `${days[now.getDay()]}, ${day} ${months[month - 1]} ${year}`;
+        document.getElementById('dateTextHijri').textContent =
+          `${parseInt(hijriDay, 10)} ${hijriMonthName} ${hijriYear}H`;
 
         renderArc();
       } catch (err) {
