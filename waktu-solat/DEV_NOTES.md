@@ -3,15 +3,121 @@
 the prompt:
 "Check the Project Knowledge and the current chat for context. This conversation is ending soon. update the artifact DEV_NOTES.md (create if not available yet) with a detailed note to your next window self - not just facts but the vibe, our dynamic, the energy of this conversation. What would the next you need to immediately get back into this exact headspace? Include unique discoveries, current mood, and anything that'll help the next you instantly sync to our frequency."
 
-**Last updated:** 2026-06-14 (Session 9)
-**Files touched this session:** `waktu-solat/CLAUDE.md` (regenerated from
-scratch — was stale/wrong, now matches actual current files). No `.html`
-files touched — this was a pure documentation/meta session, the first one of
-its kind for this folder.
+also update the related file like waktu-solat/CLAUDE.md, waktu-solat/developer.md, waktu-solat/developer.md and waktu-solat/README.md if necessary
+
+**Last updated:** 2026-06-15 (Session 10)
+**Files touched this session:** `waktu-solat/index.html`, `waktu-solat/sw.js`
+(CACHE_NAME bumped v1.6.4 → v1.6.7 across 4 separate edits), plus end-of-session
+touch-ups to `CLAUDE.md`/`developer.md`/`README.md`.
 
 ---
 
-## Vibe / dynamic check for Session 9 (most recent — read this first)
+## Vibe / dynamic check for Session 10 (most recent — read this first)
+
+Back to **iterative, terse, "just fix it" energy** — six small, mostly
+unrelated asks, all on `index.html`/`sw.js`, NOT `widget.html` (first session
+in a while focused on the main page rather than the widget). Zero plan mode —
+every ask was a direct "do X" or a quick diagnostic round-trip.
+
+### Ask 1-2 — mobile container padding
+"on mobile view, the today container and infaq container dont have left and
+right padding, add some" → added
+```css
+@media (max-width: 600px) {
+  .today-container,
+  .infaq-section {
+    margin: 20px 20px;
+  }
+  ...
+}
+```
+User said "add more" once (15px → 20px). Then **"why it still touch the edge
+of the screen?"** — the CSS fix was correct; the problem was **stale SW
+cache** (`index.html` is in `sw.js`'s precached app shell, so a CSS-only edit
+doesn't surface until `CACHE_NAME` bumps + hard refresh/unregister). Bumped
+v1.6.4 → v1.6.5.
+
+### Ask 3 — CSP/iframe "dev.mamtj6.com refused to connect" on local dev
+Diagnosed using `REVERSE_PROXY_FIX.md` context from a prior session — the
+production `frame-ancestors` allow-list (`mamtj6.com` / `www.mamtj6.com` /
+`dev.mamtj6.com`) blocks the hardcoded production widget iframe `src` from
+localhost/Live-Server origins. Fixed by making `updatePrayerWidgetFrame()`
+environment-aware:
+```js
+const isProd = /(^|\.)mamtj6\.com$/.test(window.location.hostname);
+const base = isProd ? 'https://dev.mamtj6.com/waktu-solat/widget' : 'widget.html';
+```
+
+Then **two rounds** of "still refuse to connect" — both turned out to be
+**stale SW cache again**, not code bugs. One `CACHE_NAME` edit apparently
+didn't persist (an `Edit` later failed with "string not found" because the
+file was still at the OLD version) — fixed by re-`Read`ing `sw.js` to confirm
+the *actual* current version before bumping again. **Don't trust your own
+memory of what you last wrote — re-read the file if an Edit doesn't match.**
+
+User then asked **"wht if we remove entire service worker"** as an
+exploratory question, not an instruction — answered in 2-3 sentences per the
+style guide (keep SW, network-first as an alternative if ever needed),
+did NOT implement. User: "nevermind, the fix for stale Service Worker cache
+had do it job" — manual DevTools unregister/clear-data resolved it, SW stays
+as-is.
+
+**Lesson for next-you**: on this project, "user says nothing changed" is
+*almost always stale SW cache*, not a code bug. Pattern: (1) bump
+`CACHE_NAME`, (2) if still stale, tell the user to DevTools → Application →
+Service Workers → Unregister, or "Clear site data". Don't second-guess a
+correct code fix just because it isn't showing yet.
+
+### Ask 4-5 — schedule table redesign (`index.html`)
+Two quick "just do it" edits to the monthly schedule table (desktop
+`<table>` + mobile cards), both landed with zero AskUserQuestion:
+
+1. **"swap the date so it show (day) miladi / hijri"** — date cell went from
+   `hijri / gregorian (day)` → `(${dayOfWeek}) ${gregorianDate} / ${hijriFormatted}`,
+   applied identically to the desktop `<td>` and the mobile `.mobile-day-date`.
+2. **"remove the imsak time and show the syuruk time"** — header `Imsak`
+   column → `Syuruk` (repositioned right after Subuh); desktop row + mobile
+   card now use `prayer.syuruk` / `formatTime(syurukTimestamp)`; deleted the
+   now-dead `calculateImsak()` helper entirely. Grepped first to confirm the
+   only remaining "Imsak" references in the file are unrelated share-text
+   strings (`"Jadual Waktu Imsak, Subuh dan Berbuka..."`) — deliberately left
+   untouched.
+
+`CACHE_NAME` bumped twice more for these (final: **v1.6.7**).
+
+### State of the world going into next session
+- `index.html` schedule table columns are now: **Tarikh & Hari** (showing
+  `(day) gregorian / hijri`), **Subuh**, **Syuruk**, Zohor, Asar, Maghrib,
+  Isyak — Imsak is GONE from the table (only survives in the unrelated
+  share-text strings, deliberately untouched).
+- `sw.js` `CACHE_NAME` is at **`v1.6.7`** — bump again for ANY further edit to
+  `index.html`/`info.html`/`widget.html`/favicons/manifest.
+- `updatePrayerWidgetFrame()`'s iframe `src` is now environment-aware
+  (prod hostname `/(^|\.)mamtj6\.com$/` → production widget URL; everything
+  else → relative `widget.html`). If "dev.mamtj6.com refused to connect"
+  resurfaces, check in this order: (a) is this a NEW origin missing from
+  `vercel.json`'s `frame-ancestors`, or (b) stale SW cache.
+- **OPEN/UNFINISHED**: there's an approved plan
+  (`C:\Users\EYM LAPPY\.claude\plans\tingly-swimming-hellman.md`) for a
+  `widget.html` fix — `.info-side .prayer-label` needs `white-space: nowrap`
+  (~line 173-177) so the icon doesn't float with a gap when "Subuh esok"
+  wraps to 2 lines on narrow viewports. **NOT applied this session** — queued
+  for next, single CSS-property edit, low risk, remember to bump
+  `CACHE_NAME` again if/when it lands.
+- Doc touch-ups (`CLAUDE.md`/`developer.md`/`README.md` CACHE_NAME version
+  refs, removed `calculateImsak()` row from `developer.md`, removed "Imsak"
+  from `README.md`'s displayed-times list) were done as part of THIS
+  handoff, not a separate user ask.
+
+### Mood
+Fast, low-friction, "fix the thing, move on" — six small asks, zero plan
+mode, two cache-debugging detours that resolved via DevTools, not code. If
+the next session opens with "still not showing" on anything in
+`waktu-solat/`, lead with the SW-cache question before re-reading code.
+
+---
+
+## Vibe / dynamic check for Session 9 (read next)
 
 A **short, reflective, meta session** — zero feature work, zero code edits.
 Two asks, both about documentation hygiene, both low-ceremony. Energy: calm,

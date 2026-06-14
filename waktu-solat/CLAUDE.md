@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 This is a static, year-round prayer times (waktu solat) suite for Malaysian
-zones, sourced from JAKIM via the Waktu Solat API. Despite the `sw.js`
-`CACHE_NAME` still saying `mamtj6-jadual-waktu-ramadan-v1.6.4` (a historical
-artifact from when this was Ramadan-specific), the app is no longer tied to
-Ramadan — `info.html` was de-branded to "Jadual Waktu Solat" in Session 8.
+zones, sourced from JAKIM via the Waktu Solat API. The `sw.js` `CACHE_NAME`
+prefix (`mamtj6-jadual-waktu-ramadan-`) is a historical artifact from when
+this was Ramadan-specific, but the app is no longer tied to Ramadan —
+`info.html` was de-branded to "Jadual Waktu Solat" in Session 8.
 
 No build step — pure HTML5/CSS3/vanilla JS, Malay (`lang="ms"`).
 
@@ -89,7 +89,7 @@ to be embedded standalone elsewhere (e.g. Google Sites — see
 ### `sw.js` — service worker
 
 Cache-first strategy. Current `CACHE_NAME`:
-`mamtj6-jadual-waktu-ramadan-v1.6.4`. Caches the app shell (`index.html`,
+`mamtj6-jadual-waktu-ramadan-v1.6.7`. Caches the app shell (`index.html`,
 `info.html`, favicons, logo assets) only — prayer data from the API is never
 cached, always fetched fresh. Old caches matching the
 `mamtj6-jadual-waktu-ramadan-` prefix are purged on activate.

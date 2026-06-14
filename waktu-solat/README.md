@@ -1,7 +1,7 @@
 # Jadual Waktu Solat
 
-Aplikasi web untuk memaparkan jadual waktu solat (Imsak, Subuh, Syuruk,
-Zohor, Asar, Maghrib, Isyak) bagi semua 61 zon di Malaysia, sepanjang tahun
+Aplikasi web untuk memaparkan jadual waktu solat (Subuh, Syuruk, Zohor,
+Asar, Maghrib, Isyak) bagi semua 61 zon di Malaysia, sepanjang tahun
 — bukan terhad kepada bulan Ramadan.
 
 ## Ciri-ciri

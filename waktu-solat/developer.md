@@ -147,10 +147,9 @@ Example: `https://api.waktusolat.app/v2/solat/PHG03?year=2026&month=2`
 | `shareLink()` | `navigator.share()` on mobile / clipboard fallback on desktop; includes zone info |
 | `detectZoneByGPS()` | `navigator.geolocation` → GPS zone-lookup API, returns zone code or null |
 | `triggerGPSDetection()` | Manual GPS button handler — `.loading` pulse, re-detects, reloads data |
-| `updatePrayerWidgetFrame(zoneCode)` | Builds `#prayerWidgetFrame` iframe `src`: `widget.html?embed=1&selector=hide&date=hide&zone={zone}` (+ `testTime` passthrough) |
+| `updatePrayerWidgetFrame(zoneCode)` | Builds `#prayerWidgetFrame` iframe `src` with `?embed=1&selector=hide&date=hide&zone={zone}` (+ `testTime` passthrough). Environment-aware: on `*.mamtj6.com` uses the production `https://dev.mamtj6.com/waktu-solat/widget` (covered by the deployed CSP `frame-ancestors`); elsewhere (localhost, Live Server) uses relative `widget.html` |
 | `showSimpleToast(message, type)` | Self-dismissing (3s) toast; `type='error'` → red |
 | `isToday(day, month, year)` | Checks date against `getTestDate()` |
-| `calculateImsak(fajrTimestamp)` | Returns `fajrTimestamp - 600` (10 min before Subuh) |
 | `getDayOfWeek(timestamp)` | Malay day name |
 | `formatTime(timestamp)` | 12-hour AM/PM format |
 | `formatMalayDate(day, month)` | e.g. `"19 Feb"` |
@@ -314,7 +313,7 @@ For standalone embedding (Google Sites etc.), see
 
 ## Service Worker (`sw.js`)
 
-- `CACHE_NAME = mamtj6-jadual-waktu-ramadan-v1.6.4` (legacy naming, see
+- `CACHE_NAME = mamtj6-jadual-waktu-ramadan-v1.6.7` (legacy naming, see
   Known Issues)
 - Cache-first strategy; old caches matching the
   `mamtj6-jadual-waktu-ramadan-` prefix purged on activate

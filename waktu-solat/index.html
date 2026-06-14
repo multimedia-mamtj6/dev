@@ -619,8 +619,8 @@
     <thead>
       <tr>
         <th>Tarikh & Hari</th>
-        <th>Imsak</th>
         <th>Subuh</th>
+        <th>Syuruk</th>
         <th>Zohor</th>
         <th>Asar</th>
         <th>Maghrib</th>
@@ -810,7 +810,12 @@
       const frame = document.getElementById('prayerWidgetFrame');
       if (!frame) return;
       const params = new URLSearchParams(window.location.search);
-      const url = new URL('https://dev.mamtj6.com/waktu-solat/widget');
+      // On mamtj6.com / dev.mamtj6.com, use the production widget so it's
+      // covered by the deployed CSP frame-ancestors allow-list. Otherwise
+      // (local dev server, etc.) load widget.html relative to this page.
+      const isProd = /(^|\.)mamtj6\.com$/.test(window.location.hostname);
+      const base = isProd ? 'https://dev.mamtj6.com/waktu-solat/widget' : 'widget.html';
+      const url = new URL(base, window.location.href);
       url.searchParams.set('embed', '1');
       url.searchParams.set('selector', 'hide');
       url.searchParams.set('date', 'hide');
@@ -846,11 +851,6 @@
       const minutesStr = minutes < 10 ? '0' + minutes : minutes;
 
       return `${hours}:${minutesStr} ${ampm}`;
-    }
-
-    // Calculate Imsak time (10 minutes before Fajr)
-    function calculateImsak(fajrTimestamp) {
-      return fajrTimestamp - 600; // Subtract 10 minutes (600 seconds)
     }
 
     // Get the day of the week from a timestamp
@@ -931,14 +931,14 @@
 
           // Calculate necessary timestamps
           const fajrTimestamp = prayer.fajr;
-          const imsakTimestamp = calculateImsak(fajrTimestamp);
+          const syurukTimestamp = prayer.syuruk;
           const dhuhrTimestamp = prayer.dhuhr;
           const asrTimestamp = prayer.asr;
           const maghribTimestamp = prayer.maghrib;
           const ishaTimestamp = prayer.isha;
 
           // Format times
-          const imsakFormatted = formatTime(imsakTimestamp);
+          const syurukFormatted = formatTime(syurukTimestamp);
           const fajrFormatted = formatTime(fajrTimestamp);
           const dhuhrFormatted = formatTime(dhuhrTimestamp);
           const asrFormatted = formatTime(asrTimestamp);
@@ -964,9 +964,9 @@
           }
 
           tr.innerHTML = `
-            <td>${hijriFormatted} / ${gregorianDate} (${dayOfWeek})</td>
-            <td>${imsakFormatted}</td>
+            <td>(${dayOfWeek}) ${gregorianDate} / ${hijriFormatted}</td>
             <td>${fajrFormatted}</td>
+            <td>${syurukFormatted}</td>
             <td>${dhuhrFormatted}</td>
             <td>${asrFormatted}</td>
             <td>${maghribFormatted}</td>
@@ -978,16 +978,16 @@
           mobileDay.className = "mobile-day-entry";
           mobileDay.innerHTML = `
             <div class="mobile-day-header ${isCurrentDay ? 'mobile-day-today' : ''}">
-              <div class="mobile-day-date">${hijriFormatted} / ${gregorianDate} (${dayOfWeek})</div>
+              <div class="mobile-day-date">(${dayOfWeek}) ${gregorianDate} / ${hijriFormatted}</div>
             </div>
             <div class="mobile-day-times">
               <div class="mobile-time-item">
-                <div class="mobile-time-label">Imsak</div>
-                <div class="mobile-time-value">${imsakFormatted}</div>
-              </div>
-              <div class="mobile-time-item">
                 <div class="mobile-time-label">Subuh</div>
                 <div class="mobile-time-value">${fajrFormatted}</div>
+              </div>
+              <div class="mobile-time-item">
+                <div class="mobile-time-label">Syuruk</div>
+                <div class="mobile-time-value">${syurukFormatted}</div>
               </div>
               <div class="mobile-time-item">
                 <div class="mobile-time-label">Zohor</div>
