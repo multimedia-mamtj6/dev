@@ -486,7 +486,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/waktu-solat/sw.js').then(reg => {
+        navigator.serviceWorker.register(window.location.origin + '/waktu-solat/sw.js').then(reg => {
           if (reg.waiting) {
             newWorker = reg.waiting;
             showUpdateToast();

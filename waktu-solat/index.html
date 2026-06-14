@@ -1205,7 +1205,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/waktu-solat/sw.js').then(reg => {
+        navigator.serviceWorker.register(window.location.origin + '/waktu-solat/sw.js').then(reg => {
           console.log('Service Worker registered:', reg.scope);
 
           // 1. Check if there is already a worker waiting (from previous ignored update)
