@@ -3,6 +3,13 @@
   "cleanUrls": true,
   "headers": [
     {
+      "source": "/waktu-solat",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "https://mamtj6.com" },
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self' https://mamtj6.com https://dev.mamtj6.com" }
+      ]
+    },
+    {
       "source": "/waktu-solat/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "https://mamtj6.com" },
