@@ -11,15 +11,15 @@
     sizes="any">
 
   <!-- 2. Recent Browsers: Try the PNG if SVG fails -->
-  <link rel="icon" type="image/png" href="/jadual-waktu/favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="https://dev.mamtj6.com/waktu-solat/favicon/favicon-96x96.png" sizes="96x96">
 
   <!-- 3. Apple: Specific requirements for iOS -->
-  <link rel="apple-touch-icon" sizes="180x180" href="/jadual-waktu/favicon/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://dev.mamtj6.com/waktu-solat/favicon/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="WAKTU SOLAT" />
   <meta name="theme-color" content="#ffffff" />
 
   <!-- 4. PWA: The manifest handles the installed app icon -->
-  <link rel="manifest" href="/jadual-waktu/favicon/site.webmanifest" />
+  <link rel="manifest" href="https://dev.mamtj6.com/waktu-solat/favicon/site.webmanifest" />
 
   <!-- Open Graph Meta Tags (for Facebook, LinkedIn, etc.) -->
   <meta property="og:title" content="Jadual Waktu Solat" />
@@ -805,7 +805,7 @@
       const frame = document.getElementById('prayerWidgetFrame');
       if (!frame) return;
       const params = new URLSearchParams(window.location.search);
-      const url = new URL('/waktu-solat/widget.html', window.location.origin);
+      const url = new URL('https://dev.mamtj6.com/waktu-solat/widget.html');
       url.searchParams.set('embed', '1');
       url.searchParams.set('selector', 'hide');
       url.searchParams.set('date', 'hide');
@@ -1205,7 +1205,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/jadual-waktu/sw.js').then(reg => {
+        navigator.serviceWorker.register('/waktu-solat/sw.js').then(reg => {
           console.log('Service Worker registered:', reg.scope);
 
           // 1. Check if there is already a worker waiting (from previous ignored update)
@@ -1226,7 +1226,7 @@
               }
             });
           });
-        });
+        }).catch(err => console.warn('SW registration failed:', err));
 
         // 3. Handle the reload after SW activates
         let refreshing;

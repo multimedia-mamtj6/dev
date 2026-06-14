@@ -6,11 +6,11 @@
   <title>Maklumat - Jadual Waktu Solat</title>
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="https://dev.mamtj6.com/media/logo-mamtj6/SVG/mamtj6_single.svg" sizes="any">
-  <link rel="icon" type="image/png" href="/jadual-waktu/favicon/favicon-96x96.png" sizes="96x96">
-  <link rel="apple-touch-icon" sizes="180x180" href="/jadual-waktu/favicon/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="https://dev.mamtj6.com/waktu-solat/favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://dev.mamtj6.com/waktu-solat/favicon/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="JADUAL WAKTU SOLAT" />
   <meta name="theme-color" content="#ffffff" />
-  <link rel="manifest" href="/jadual-waktu/favicon/site.webmanifest" />
+  <link rel="manifest" href="https://dev.mamtj6.com/waktu-solat/favicon/site.webmanifest" />
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="Maklumat Jadual Waktu Solat" />
   <meta property="og:description" content="Maklumat tentang sumber data, ketepatan dan panduan penggunaan jadual waktu solat" />
@@ -486,7 +486,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/jadual-waktu/sw.js').then(reg => {
+        navigator.serviceWorker.register('/waktu-solat/sw.js').then(reg => {
           if (reg.waiting) {
             newWorker = reg.waiting;
             showUpdateToast();
@@ -499,7 +499,7 @@
               }
             });
           });
-        });
+        }).catch(err => console.warn('SW registration failed:', err));
 
         let refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
