@@ -1066,17 +1066,33 @@
       const hasUrlZone = params.get('location');
       const hasSavedZone = localStorage.getItem('selectedZone');
 
+      // Render immediately with the default/saved zone — don't block on GPS permission
+      await loadZones();
+      fetchData();
+
+      // First-time visitor: detect zone via GPS in the background and upgrade silently
       if (!hasUrlZone && !hasSavedZone) {
-        const select = document.getElementById('zone-select');
-        select.innerHTML = '<option value="">Mengesan lokasi...</option>';
+        const gpsBtn = document.getElementById('gps-btn');
+        gpsBtn.classList.add('loading');
         const detectedZone = await detectZoneByGPS();
-        if (detectedZone) {
+        gpsBtn.classList.remove('loading');
+
+        if (detectedZone && detectedZone !== getSavedZone()) {
+          saveZone(detectedZone);
+          const select = document.getElementById('zone-select');
+          select.value = detectedZone;
+          Array.from(select.options).forEach(opt => {
+            if (opt.dataset.full) {
+              opt.textContent = opt.selected ? opt.value : opt.dataset.full;
+            }
+          });
+          updateZoneHeader(cachedZones.find(z => z.jakimCode === detectedZone));
+          updatePrayerWidgetFrame(detectedZone);
+          fetchData();
+        } else if (detectedZone) {
           saveZone(detectedZone);
         }
       }
-
-      await loadZones();
-      fetchData();
     });
 
     // === UPDATE TOAST CSS ===
