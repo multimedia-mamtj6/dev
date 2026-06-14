@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN JUN 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 10/6/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 14/6/2026"
   },
   "senaraiHari": [
     {
@@ -136,11 +136,7 @@
     },
     {
       "date": "2026-06-14",
-      "subuh": {
-        "nama_penceramah": "Ustaz Badrul Hisham",
-        "tajuk_kuliah": "Fadilat Sedekah",
-        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
-      },
+      "subuh": null,
       "maghrib": {
         "nama_penceramah": "Ustaz Amir",
         "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
@@ -205,11 +201,7 @@
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
-      "maghrib": {
-        "nama_penceramah": "Ustaz Nawawi",
-        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
-        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
