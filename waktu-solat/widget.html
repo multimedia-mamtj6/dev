@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waktu Solat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0&display=block"
+    rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f3f7f5;
+      --card-bg: #ffffff;
+      --ink: 16, 61, 41;
+      --error: #dc2626;
+      --dropdown-bg: #ffffff;
+      --dropdown-text: #103d29;
+      --card-shadow: 0 8px 40px rgba(16, 61, 41, 0.08);
+      --a15: 0.18;
+      --a30: 0.55;
+      --a35: 0.6;
+      --a40: 0.6;
+      --a50: 0.7;
+      --a55: 0.72;
+      --a65: 0.8;
+      --a75: 0.85;
+      --a85: 0.9;
+      --a95: 1;
+    }
+
+    body.dark-mode {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --ink: 255, 255, 255;
+      --error: rgba(255, 80, 80, 0.75);
+      --dropdown-bg: #1c2128;
+      --dropdown-text: #e6edf3;
+      --card-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+      --a15: 0.15;
+      --a30: 0.3;
+      --a35: 0.35;
+      --a40: 0.4;
+      --a50: 0.5;
+      --a55: 0.55;
+      --a65: 0.65;
+      --a75: 0.75;
+      --a85: 0.85;
+      --a95: 0.95;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .widget {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 22px 20px 16px;
+      width: 100%;
+      max-width: 480px;
+      color: rgba(var(--ink), 1);
+      box-shadow: var(--card-shadow);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .location-bar {
+      font-size: 11px;
+      color: rgba(var(--ink), var(--a40));
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    body.hide-selector .location-bar {
+      display: none;
+    }
+
+    body.hide-selector .top-bar {
+      justify-content: center;
+    }
+
+    body.hide-date .footer-bar {
+      display: none !important;
+    }
+
+    body.hide-date .top-bar {
+      justify-content: center;
+    }
+
+    #arcContainer svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .info-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding: 0 2px;
+      gap: 8px;
+    }
+
+    .info-side {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: rgba(var(--ink), var(--a55));
+      min-width: 60px;
+    }
+
+    .info-side.left {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+    }
+
+    .info-side.left .side-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .info-side.right {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .info-side.right .side-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .side-label {
+      font-size: 10px;
+      color: rgba(var(--ink), var(--a35));
+      letter-spacing: 0.2px;
+    }
+
+    .info-side.right .side-label {
+      width: 100%;
+      text-align: right;
+    }
+
+    .info-side .prayer-label {
+      font-weight: 600;
+      font-size: 13px;
+      color: rgba(var(--ink), var(--a85));
+    }
+
+    .info-side .icon {
+      font-family: 'Material Symbols Rounded';
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .countdown-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .countdown-label {
+      font-size: 10px;
+      color: rgba(var(--ink), var(--a35));
+      letter-spacing: 0.2px;
+    }
+
+    .countdown-display {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(var(--ink), 1);
+      text-align: center;
+    }
+
+    @keyframes pulse-warning {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .countdown-display.warning {
+      color: var(--error);
+      animation: pulse-warning 1s ease-in-out infinite;
+    }
+
+    .side-time {
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(var(--ink), var(--a50));
+    }
+
+    .footer-bar {
+      font-size: 11px;
+      color: rgba(var(--ink), var(--a30));
+    }
+
+    .status-msg {
+      text-align: center;
+      color: rgba(var(--ink), var(--a35));
+      font-size: 13px;
+      padding: 48px 0;
+    }
+
+    .status-msg.error {
+      color: var(--error);
+    }
+
+    #zoneSelect {
+      background: transparent;
+      border: none;
+      color: rgba(var(--ink), var(--a55));
+      font-size: 11px;
+      font-family: 'Inter', system-ui, sans-serif;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      outline: none;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    #zoneSelect option,
+    #zoneSelect optgroup {
+      background: var(--dropdown-bg);
+      color: var(--dropdown-text);
+    }
+
+    body.embed-mode {
+      background: transparent;
+      display: block;
+      justify-content: initial;
+      align-items: initial;
+      height: 100vh;
+      padding: 0;
+    }
+
+    body.embed-mode .widget {
+      border-radius: 20px;
+      box-shadow: none;
+      max-width: none;
+      width: 100%;
+      transform-origin: top left;
+    }
+
+    /* Large viewport (desktop browser, or 1920x1080 signage) — allow the
+       widget to scale UP via scaleWidgetToFit(), anchored centered so
+       leftover space is distributed evenly. Excludes embed-mode: there,
+       `top left` (set above) already works correctly for scale-up too —
+       the box grows from (0,0) and stays within the iframe by construction,
+       whereas `center center` there would push half the content off-screen
+       and get clipped by `overflow: hidden`. */
+    body.large-viewport:not(.embed-mode) .widget {
+      max-width: none;
+      transform-origin: center center;
+    }
+
+    @media (max-width: 360px) {
+      .widget {
+        padding: 16px 12px 12px;
+      }
+
+      .top-bar {
+        gap: 6px;
+      }
+
+      .location-bar {
+        font-size: 10px;
+        gap: 3px;
+      }
+
+      #zoneSelect {
+        font-size: 10px;
+      }
+
+      .footer-bar {
+        font-size: 10px;
+      }
+
+      .info-bar {
+        gap: 4px;
+        padding: 0;
+      }
+
+      .info-side {
+        min-width: 0;
+        font-size: 11px;
+      }
+
+      .info-side .prayer-label {
+        font-size: 12px;
+      }
+
+      .side-label {
+        font-size: 9px;
+      }
+
+      .side-time {
+        font-size: 10px;
+      }
+
+      .info-side .icon {
+        font-size: 1.05rem;
+      }
+
+      .countdown-display {
+        font-size: 1.6rem;
+        letter-spacing: 1px;
+      }
+
+      .countdown-label {
+        font-size: 9px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="widget">
+    <div class="top-bar">
+      <div class="location-bar">
+        <span>📍</span>
+        <select id="zoneSelect">
+          <option value="">Memuat zon...</option>
+        </select>
+      </div>
+      <div class="footer-bar" id="footerBar" style="display:none">
+        <span id="dateText">—</span>
+      </div>
+    </div>
+
+    <div id="arcContainer">
+      <div class="status-msg">Memuat waktu solat...</div>
+    </div>
+
+    <div class="info-bar" id="infoBar" style="display:none">
+      <div class="info-side left">
+        <span class="side-label">Waktu Sekarang:</span>
+        <div class="side-row">
+          <span class="icon" id="currentPrayerIcon">bedtime</span>
+          <span class="prayer-label" id="currentPrayerLabel">—</span>
+        </div>
+        <span class="side-time" id="currentPrayerTime">—</span>
+      </div>
+      <div class="countdown-block">
+        <span class="countdown-label">Masa Berbaki</span>
+        <div class="countdown-display" id="countdown">00:00:00</div>
+      </div>
+      <div class="info-side right">
+        <span class="side-label">Waktu Seterusnya:</span>
+        <div class="side-row">
+          <span class="prayer-label" id="nextPrayerLabel">—</span>
+          <span class="icon" id="nextPrayerIcon">sunny</span>
+        </div>
+        <span class="side-time" id="nextPrayerTime">—</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    let currentZone = 'PHG03';
+    let cachedZones = [];
+    let timeOffset = 0;
+
+    (function initTestTime() {
+      const params = new URLSearchParams(window.location.search);
+      const testTime = params.get('testTime');
+      if (!testTime) return;
+      const today = new Date();
+      const [h, m] = testTime.split(':').map(Number);
+      today.setHours(h, m, 0, 0);
+      timeOffset = today.getTime() - Date.now();
+    })();
+
+    (function initEmbedMode() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('embed') === '1') {
+        document.body.classList.add('embed-mode');
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
+    })();
+
+    (function initThemeMode() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+    })();
+
+    (function initSelectorMode() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('selector') === 'hide') {
+        document.body.classList.add('hide-selector');
+      }
+    })();
+
+    (function initDateMode() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('date') === 'hide') {
+        document.body.classList.add('hide-date');
+      }
+    })();
+
+    // Palette for inline SVG colors (CSS handles page/card/text via custom
+    // properties; the SVG arc is built/updated imperatively, so it needs its
+    // own lookup). Gold/amber is the "active/now" accent in both themes.
+    const THEME = document.body.classList.contains('dark-mode')
+      ? { ink: '255,255,255', gold: '245,166,35', cardBg: '#161b22', errorRgb: '255,80,80' }
+      : { ink: '16,61,41', gold: '245,166,35', cardBg: '#ffffff', errorRgb: '220,38,38' };
+
+    function themeColor(triplet, alpha) { return `rgba(${triplet},${alpha})`; }
+
+    // Per-theme alpha tiers for "muted ink" text/nodes in the SVG arc. The same
+    // alpha value reads very differently against a near-black card (dark mode)
+    // vs. a white card (light mode), so light mode uses higher alphas to keep
+    // equivalent contrast. Keys are named after the original (dark-mode) alpha.
+    const ALPHA = document.body.classList.contains('dark-mode')
+      ? { a15: 0.15, a30: 0.3, a35: 0.35, a40: 0.4, a50: 0.5, a55: 0.55, a65: 0.65, a75: 0.75, a95: 0.95 }
+      : { a15: 0.18, a30: 0.55, a35: 0.6, a40: 0.6, a50: 0.7, a55: 0.72, a65: 0.8, a75: 0.85, a95: 1 };
+
+    function inkAlpha(key) { return themeColor(THEME.ink, ALPHA[key]); }
+
+    // Above this viewport size, the widget is allowed to scale UP (desktop
+    // browser, large desktop embed area, or 1920x1080 signage) rather than
+    // sitting at its small base size. Below it, behavior is unchanged.
+    const LARGE_VIEWPORT_MIN_W = 768;
+    const LARGE_VIEWPORT_MIN_H = 480;
+    const MAX_SCALE = 3; // upper bound for scale-up; tune against 1920x1080 testing
+
+    function updateViewportMode() {
+      const isLarge = window.innerWidth >= LARGE_VIEWPORT_MIN_W && window.innerHeight >= LARGE_VIEWPORT_MIN_H;
+      document.body.classList.toggle('large-viewport', isLarge);
+    }
+
+    // Shrinks OR grows .widget (via transform: scale) so its full height fits
+    // the viewport with no scroll, while widening/narrowing it first so the
+    // scaled result still fills the container's width (no empty side margins).
+    // - embed mode (small viewport): shrink-only, scale <= 1 (Session 6 behavior).
+    // - embed mode or standalone (large viewport): scale-up allowed, capped at MAX_SCALE.
+    // - standalone (small viewport): no scaling — natural centered card.
+    function scaleWidgetToFit() {
+      updateViewportMode();
+      const embed = document.body.classList.contains('embed-mode');
+      const large = document.body.classList.contains('large-viewport');
+      const widget = document.querySelector('.widget');
+
+      if (!embed && !large) {
+        widget.style.transform = '';
+        widget.style.width = '';
+        return;
+      }
+
+      const pad = embed ? 0 : 32; // account for body padding (16px each side) in standalone mode
+      const containerWidth = window.innerWidth - pad;
+      const containerHeight = window.innerHeight - pad;
+      const upperBound = large ? MAX_SCALE : 1;
+
+      let scale = 1;
+      for (let i = 0; i < 8; i++) {
+        widget.style.transform = 'none';
+        widget.style.width = (containerWidth / scale) + 'px';
+        const naturalHeight = widget.offsetHeight;
+        const next = Math.min(upperBound, containerHeight / naturalHeight);
+        if (Math.abs(next - scale) < 0.005) { scale = next; break; }
+        scale = next;
+      }
+
+      // Re-apply width for the final scale so the rendered width is exactly
+      // containerWidth even if the loop above exited without converging.
+      widget.style.transform = 'none';
+      widget.style.width = (containerWidth / scale) + 'px';
+      widget.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener('resize', scaleWidgetToFit);
+
+    function getNow() { return Date.now() + timeOffset; }
+
+    const _sizeCanvas = document.createElement('canvas');
+    const _sizeCtx = _sizeCanvas.getContext('2d');
+    function sizeSelect() {
+      const sel = document.getElementById('zoneSelect');
+      if (!sel) return;
+      const text = sel.options[sel.selectedIndex]?.textContent || '';
+      _sizeCtx.font = '11px Inter, system-ui, sans-serif';
+      sel.style.width = (Math.ceil(_sizeCtx.measureText(text).width) + 32) + 'px';
+    }
+
+    function getSavedZone() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('zone') || localStorage.getItem('selectedZone') || 'PHG03';
+    }
+
+    function saveZone(code) {
+      localStorage.setItem('selectedZone', code);
+      const url = new URL(window.location.href);
+      url.searchParams.set('zone', code);
+      window.history.replaceState(null, '', url);
+    }
+
+    async function loadZones() {
+      const select = document.getElementById('zoneSelect');
+      try {
+        const res = await fetch('https://api.waktusolat.app/zones');
+        cachedZones = await res.json();
+
+        const grouped = {};
+        cachedZones.forEach(z => {
+          if (!grouped[z.negeri]) grouped[z.negeri] = [];
+          grouped[z.negeri].push(z);
+        });
+
+        select.innerHTML = '';
+        const saved = getSavedZone();
+
+        Object.keys(grouped).sort().forEach(state => {
+          const og = document.createElement('optgroup');
+          og.label = state;
+          grouped[state].forEach(z => {
+            const opt = document.createElement('option');
+            opt.value = z.jakimCode;
+            opt.dataset.compact = `${z.negeri} - ${z.jakimCode}`;
+            opt.dataset.full = `${z.jakimCode} — ${z.daerah}`;
+            opt.textContent = opt.dataset.full;
+            if (z.jakimCode === saved) opt.selected = true;
+            og.appendChild(opt);
+          });
+          select.appendChild(og);
+        });
+
+        const selectedOpt = select.options[select.selectedIndex];
+        if (selectedOpt && selectedOpt.dataset.compact) {
+          selectedOpt.textContent = selectedOpt.dataset.compact;
+        }
+        sizeSelect();
+
+        select.addEventListener('focus', function () {
+          Array.from(this.options).forEach(opt => {
+            if (opt.dataset.full) opt.textContent = opt.dataset.full;
+          });
+        });
+
+        select.addEventListener('blur', function () {
+          Array.from(this.options).forEach(opt => {
+            if (opt.dataset.compact)
+              opt.textContent = opt.selected ? opt.dataset.compact : opt.dataset.full;
+          });
+          sizeSelect();
+        });
+
+        select.addEventListener('change', function () {
+          currentZone = this.value;
+          saveZone(currentZone);
+          Array.from(this.options).forEach(opt => {
+            if (opt.dataset.compact)
+              opt.textContent = opt.selected ? opt.dataset.compact : opt.dataset.full;
+          });
+          sizeSelect();
+          prayerList = [];
+          tomorrowFajr = null;
+          document.getElementById('arcContainer').innerHTML =
+            '<div class="status-msg">Memuat waktu solat...</div>';
+          document.getElementById('infoBar').style.display = 'none';
+          document.getElementById('footerBar').style.display = 'none';
+          fetchPrayerTimes();
+        });
+
+      } catch (err) {
+        console.error('Gagal memuat senarai zon:', err);
+        select.innerHTML = `<option value="${currentZone}">${currentZone}</option>`;
+      }
+    }
+
+    // ── Arc geometry ──────────────────────────────────────────────────────────
+    // Arc path spans ARC_PAD_X … ARC_W-ARC_PAD_X (wider than the dot range).
+    // Dots span DOT_PAD_X … ARC_W-DOT_PAD_X (inset, so all dots sit inside the arc).
+    //
+    // IMPORTANT: controlY = 2·ARC_TOP_Y − ARC_BOT_Y
+    // This is required so that arcY(x) — which uses ARC_TOP_Y as the peak —
+    // produces y values that exactly match the SVG quadratic bezier path.
+    // The two are the same formula only when this relationship holds.
+    const ARC_W = 360;
+    const ARC_PAD_X = 20;   // arc left/right x endpoints
+    const DOT_PAD_X = ARC_PAD_X; // Subuh at arc left end, Isyak at arc right end
+    const ARC_TOP_Y = 14;   // arc peak y (smaller = higher on screen)
+    const ARC_BOT_Y = 70;   // arc endpoint y
+    const CTRL_Y = 2 * ARC_TOP_Y - ARC_BOT_Y; // = -42  (bezier control point)
+    const VIEW_H = 120;
+
+    const PRAYER_ICONS = {
+      Subuh: 'wb_twilight_2',
+      Syuruk: 'wb_twilight',
+      Duha: 'wb_twilight',
+      Zohor: 'sunny',
+      Asar: 'partly_cloudy_day',
+      Maghrib: 'wb_twilight',
+      Isyak: 'bedtime',
+    };
+
+    const HIJRI_MONTH_NAMES = {
+      '01': 'Muharram',
+      '02': 'Safar',
+      '03': "Rabi'ul Awwal",
+      '04': "Rabi'ul Akhir",
+      '05': 'Jumadil Awwal',
+      '06': 'Jumadil Akhir',
+      '07': 'Rejab',
+      '08': 'Syaaban',
+      '09': 'Ramadan',
+      '10': 'Syawal',
+      '11': 'Zulkaedah',
+      '12': 'Zulhijjah',
+    };
+
+    let prayerList = [];
+    let tomorrowFajr = null;
+    let duhaStart = null;
+    let duhaEnd = null;
+    let countdownTimer = null;
+    let pulseAnimId = null;
+
+    // ── helpers ───────────────────────────────────────────────────────────────
+    function svgEl(tag) { return document.createElementNS(SVG_NS, tag); }
+
+    function fmt24(tsMs) {
+      const d = new Date(tsMs);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // Map prayer timestamp to SVG x within the dot range.
+    function timeToX(tsMs) {
+      const fajr = prayerList[0].ts;
+      const isha = prayerList[prayerList.length - 1].ts;
+      return DOT_PAD_X + ((tsMs - fajr) / (isha - fajr)) * (ARC_W - 2 * DOT_PAD_X);
+    }
+
+    // Compute the y position on the bezier arc for a given x.
+    // Derivation: for symmetric bezier M(P0x,BOT) Q(W/2,CTRL) (P2x,BOT),
+    //   x(t) = P0x + (P2x−P0x)·t  →  t = (x−P0x)/(P2x−P0x)
+    //   y(t) = BOT − 2t(1−t)·(BOT−CTRL) = BOT − 4t(1−t)·(BOT−TOP)
+    //   (the last equality holds only when CTRL = 2·TOP − BOT)
+    function arcY(x) {
+      const t = (x - ARC_PAD_X) / (ARC_W - 2 * ARC_PAD_X);
+      return ARC_BOT_Y - (ARC_BOT_Y - ARC_TOP_Y) * 4 * t * (1 - t);
+    }
+
+    // Compute the SVG path for the elapsed portion of the arc using de Casteljau subdivision.
+    // progressT is clamped [0,1]: 0 = Subuh, 1 = Isyak.
+    function progressArcPath(progressT) {
+      const t = Math.max(0, Math.min(1, progressT));
+      const P0 = { x: ARC_PAD_X, y: ARC_BOT_Y };
+      const P1 = { x: ARC_W / 2, y: CTRL_Y };
+      const P2 = { x: ARC_W - ARC_PAD_X, y: ARC_BOT_Y };
+      if (t === 0) return '';
+      if (t === 1) return `M ${P0.x},${P0.y} Q ${P1.x},${P1.y} ${P2.x},${P2.y}`;
+      const P01 = { x: P0.x + (P1.x - P0.x) * t, y: P0.y + (P1.y - P0.y) * t };
+      const P12 = { x: P1.x + (P2.x - P1.x) * t, y: P1.y + (P2.y - P1.y) * t };
+      const Pmid = { x: P01.x + (P12.x - P01.x) * t, y: P01.y + (P12.y - P01.y) * t };
+      return `M ${P0.x},${P0.y} Q ${P01.x.toFixed(2)},${P01.y.toFixed(2)} ${Pmid.x.toFixed(2)},${Pmid.y.toFixed(2)}`;
+    }
+
+    // Point on the arc at progress t (clamped [0,1]) — used to place the progress tip indicator.
+    function arcPointAtT(rawT) {
+      const t = Math.max(0, Math.min(1, rawT));
+      const x = ARC_PAD_X + (ARC_W - 2 * ARC_PAD_X) * t;
+      return { x, y: arcY(x) };
+    }
+
+    function startPulseAnimation() {
+      if (pulseAnimId) cancelAnimationFrame(pulseAnimId);
+      const BASE = 6, MAX = 17, DUR = 1800;
+      function frame(ts) {
+        const el = document.getElementById('pulseRing');
+        const nextEl = document.getElementById('pulseRingNext');
+        if (!el && !nextEl) { pulseAnimId = null; return; }
+        const t = (ts % DUR) / DUR;
+        const r = (BASE + (MAX - BASE) * t).toFixed(1);
+        const opacity = (0.7 * (1 - t)).toFixed(3);
+        if (el && el.style.display !== 'none') {
+          el.setAttribute('r', r);
+          el.setAttribute('opacity', opacity);
+        }
+        if (nextEl && nextEl.style.display !== 'none') {
+          nextEl.setAttribute('r', r);
+          nextEl.setAttribute('opacity', opacity);
+        }
+        pulseAnimId = requestAnimationFrame(frame);
+      }
+      pulseAnimId = requestAnimationFrame(frame);
+    }
+
+    // ── SVG build ─────────────────────────────────────────────────────────────
+    function buildArcSvg() {
+      const now = getNow();
+
+      let currentIdx = -1;
+      prayerList.forEach((p, i) => { if (now >= p.ts) currentIdx = i; });
+      const nextIdx = currentIdx + 1;
+      // Post-midnight before Subuh: no prayer has passed today, but we're still in Isyak period
+      const displayCurrentIdx = currentIdx >= 0 ? currentIdx : prayerList.length - 1;
+
+      const svg = svgEl('svg');
+      svg.setAttribute('viewBox', `0 0 ${ARC_W} ${VIEW_H}`);
+
+      // Background arc — full path, dim
+      const bgArc = svgEl('path');
+      bgArc.setAttribute('d',
+        `M ${ARC_PAD_X},${ARC_BOT_Y} Q ${ARC_W / 2},${CTRL_Y} ${ARC_W - ARC_PAD_X},${ARC_BOT_Y}`);
+      bgArc.setAttribute('stroke', inkAlpha('a15'));
+      bgArc.setAttribute('fill', 'none');
+      bgArc.setAttribute('stroke-width', '2');
+      bgArc.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(bgArc);
+
+      // Progress arc — elapsed portion, bright; updated every second by tick()
+      const fajrTs = prayerList[0].ts;
+      const ishaTs = prayerList[prayerList.length - 1].ts;
+      const rawInitT = (now - fajrTs) / (ishaTs - fajrTs);
+      // Post-midnight before Subuh: all prayers done, show full arc
+      const initT = rawInitT < 0 ? 1 : rawInitT;
+      const progArc = svgEl('path');
+      progArc.setAttribute('id', 'progressArc');
+      progArc.setAttribute('d', progressArcPath(initT));
+      progArc.setAttribute('stroke', themeColor(THEME.gold, 0.85));
+      progArc.setAttribute('fill', 'none');
+      progArc.setAttribute('stroke-width', '4');
+      progArc.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(progArc);
+
+      // Progress tip — glowing "playhead" dot at the current time position; updated every second by tick()
+      const tipPos = arcPointAtT(initT);
+      const tipGlow = svgEl('circle');
+      tipGlow.setAttribute('id', 'progressTipGlow');
+      tipGlow.setAttribute('cx', tipPos.x);
+      tipGlow.setAttribute('cy', tipPos.y);
+      tipGlow.setAttribute('r', '5');
+      tipGlow.setAttribute('fill', themeColor(THEME.gold, 0.25));
+      svg.appendChild(tipGlow);
+
+      const tip = svgEl('circle');
+      tip.setAttribute('id', 'progressTip');
+      tip.setAttribute('cx', tipPos.x);
+      tip.setAttribute('cy', tipPos.y);
+      tip.setAttribute('r', '3');
+      tip.setAttribute('fill', themeColor(THEME.gold, 1));
+      svg.appendChild(tip);
+
+      // Nodes
+      const xPositions = prayerList.map(p => timeToX(p.ts));
+      prayerList.forEach((prayer, i) => {
+        const x = timeToX(prayer.ts);
+        const y = arcY(x);           // dot center sits exactly on the arc
+
+        const isCurrent = i === displayCurrentIdx && prayer.name !== 'Syuruk';
+        const isNext = i === nextIdx && currentIdx >= 0;
+        const isPast = now >= prayer.ts;
+        const isFirst = i === 0;
+        const isLast = i === prayerList.length - 1;
+        const r = isCurrent ? 6 : 4;
+
+        // Pulse ring for current prayer — r and opacity driven by startPulseAnimation()
+        if (isCurrent) {
+          const ring = svgEl('circle');
+          ring.setAttribute('cx', x);
+          ring.setAttribute('cy', y);
+          ring.setAttribute('r', '6');
+          ring.setAttribute('id', 'pulseRing');
+          ring.setAttribute('fill', 'none');
+          ring.setAttribute('stroke', themeColor(THEME.gold, 0.65));
+          ring.setAttribute('stroke-width', '1.5');
+          svg.appendChild(ring);
+        }
+
+        // Warning pulse ring for next prayer — shown only in its last 10 minutes,
+        // toggled by tick(); r/opacity driven by startPulseAnimation()
+        if (isNext) {
+          const warnRing = svgEl('circle');
+          warnRing.setAttribute('cx', x);
+          warnRing.setAttribute('cy', y);
+          warnRing.setAttribute('r', '6');
+          warnRing.setAttribute('id', 'pulseRingNext');
+          warnRing.setAttribute('fill', 'none');
+          warnRing.setAttribute('stroke', themeColor(THEME.errorRgb, 0.65));
+          warnRing.setAttribute('stroke-width', '1.5');
+          warnRing.style.display = 'none';
+          svg.appendChild(warnRing);
+        }
+
+        // Circle
+        const circle = svgEl('circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', r);
+
+        if (isCurrent) {
+          circle.setAttribute('fill', THEME.cardBg);
+          circle.setAttribute('stroke', themeColor(THEME.gold, 1));
+          circle.setAttribute('stroke-width', '2.5');
+        } else if (isPast) {
+          circle.setAttribute('fill', inkAlpha('a15'));
+          circle.setAttribute('stroke', inkAlpha('a40'));
+          circle.setAttribute('stroke-width', '1.5');
+        } else if (isNext) {
+          circle.setAttribute('fill', inkAlpha('a95'));
+          circle.setAttribute('stroke', themeColor(THEME.ink, 1));
+          circle.setAttribute('stroke-width', '1.5');
+        } else {
+          circle.setAttribute('fill', inkAlpha('a50'));
+          circle.setAttribute('stroke', inkAlpha('a65'));
+          circle.setAttribute('stroke-width', '1.5');
+        }
+        svg.appendChild(circle);
+
+        // Labels — shift text-anchor horizontally for close pairs.
+        // Arc geometry naturally places endpoint dots (y=70) ~17px lower than nearby inner dots
+        // (y≈53), so no y-bump is needed — horizontal anchor divergence is enough.
+        const isCloseToPrev = i > 0 && (x - xPositions[i - 1]) < 50 && !isLast;
+        const isCloseToNext = i < prayerList.length - 1 && (xPositions[i + 1] - x) < 50 && !isFirst && !isLast;
+        const anchor = isFirst ? 'start' : isLast ? 'end' :
+          isCloseToPrev ? 'start' : isCloseToNext ? 'end' : 'middle';
+        const labelAlphaKey = (isCurrent || isNext) ? 'a95' : isPast ? 'a35' : 'a55';
+        const labelWeight = (isCurrent || isNext) ? '600' : '400';
+        const timeOffset = r + 13;
+        const nameOffset = timeOffset + 11;
+
+        const labelX = isFirst ? x - 10 : isLast ? x + 10 : x;
+
+        const timeText = svgEl('text');
+        timeText.setAttribute('x', labelX);
+        timeText.setAttribute('y', y + timeOffset);
+        timeText.setAttribute('text-anchor', anchor);
+        timeText.setAttribute('font-size', isCurrent ? '10' : '9');
+        timeText.setAttribute('font-weight', labelWeight);
+        timeText.setAttribute('fill', inkAlpha(labelAlphaKey));
+        timeText.setAttribute('font-family', "'Inter',system-ui,sans-serif");
+        timeText.textContent = fmt24(prayer.ts);
+        svg.appendChild(timeText);
+
+        const nameText = svgEl('text');
+        nameText.setAttribute('x', labelX);
+        nameText.setAttribute('y', y + nameOffset);
+        nameText.setAttribute('text-anchor', anchor);
+        nameText.setAttribute('font-size', '8');
+        nameText.setAttribute('font-weight', labelWeight);
+        nameText.setAttribute('fill', inkAlpha(isCurrent ? 'a75' : 'a30'));
+        nameText.setAttribute('font-family', "'Inter',system-ui,sans-serif");
+        nameText.textContent = prayer.name;
+        svg.appendChild(nameText);
+      });
+
+      return { svg, currentIdx, displayCurrentIdx, nextIdx };
+    }
+
+    // ── render ────────────────────────────────────────────────────────────────
+    function renderArc() {
+      const { svg, currentIdx, displayCurrentIdx, nextIdx } = buildArcSvg();
+
+      if (pulseAnimId) { cancelAnimationFrame(pulseAnimId); pulseAnimId = null; }
+      document.getElementById('arcContainer').innerHTML = '';
+      document.getElementById('arcContainer').appendChild(svg);
+      startPulseAnimation();
+
+      const now = getNow();
+      const inDuha = duhaStart && duhaEnd && now >= duhaStart && now < duhaEnd;
+      const currentName = inDuha ? 'Duha' : (currentIdx >= 0 ? prayerList[currentIdx].name : 'Isyak');
+      let nextName, nextTs;
+      if (nextIdx < prayerList.length) {
+        nextName = prayerList[nextIdx].name;
+        nextTs = prayerList[nextIdx].ts;
+      } else {
+        nextName = 'Subuh esok';
+        nextTs = tomorrowFajr;
+      }
+
+      let currentTimeText;
+      if (inDuha) {
+        currentTimeText = `${fmt24(duhaStart)}-${fmt24(duhaEnd)}`;
+      } else if (currentIdx >= 0) {
+        currentTimeText = fmt24(prayerList[currentIdx].ts);
+      } else {
+        currentTimeText = fmt24(prayerList[prayerList.length - 1].ts);
+      }
+
+      document.getElementById('currentPrayerLabel').textContent = currentName;
+      document.getElementById('currentPrayerIcon').textContent = PRAYER_ICONS[currentName] || 'bedtime';
+      document.getElementById('currentPrayerTime').textContent = currentTimeText;
+      document.getElementById('nextPrayerLabel').textContent = nextName;
+      document.getElementById('nextPrayerIcon').textContent = PRAYER_ICONS[nextName.replace(' esok', '')] || 'sunny';
+      document.getElementById('nextPrayerTime').textContent =
+        nextTs ? fmt24(nextTs) : '—';
+
+      document.getElementById('infoBar').style.display = 'flex';
+      document.getElementById('footerBar').style.display = 'flex';
+      scaleWidgetToFit();
+
+      if (countdownTimer) clearInterval(countdownTimer);
+
+      function tick() {
+        const nowMs = getNow();
+        const diff = Math.max(0, (nextTs || 0) - nowMs);
+        const hh = String(Math.floor(diff / 3600000)).padStart(2, '0');
+        const mm = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+        const ss = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+        const countdownEl = document.getElementById('countdown');
+        countdownEl.textContent = `${hh}:${mm}:${ss}`;
+
+        // Last-10-minute warning: pulse the countdown and the next-prayer dot,
+        // and drop the current-prayer dot's pulse so focus shifts to the next prayer
+        const isWarning = diff > 0 && diff <= 10 * 60 * 1000;
+        countdownEl.classList.toggle('warning', isWarning);
+        const nextRing = document.getElementById('pulseRingNext');
+        if (nextRing) nextRing.style.display = isWarning ? '' : 'none';
+        const currentRing = document.getElementById('pulseRing');
+        if (currentRing) currentRing.style.display = isWarning ? 'none' : '';
+
+        // Advance progress arc
+        const progEl = document.getElementById('progressArc');
+        if (progEl && prayerList.length >= 2) {
+          const fajr = prayerList[0].ts;
+          const isha = prayerList[prayerList.length - 1].ts;
+          const rawT = (nowMs - fajr) / (isha - fajr);
+          progEl.setAttribute('d', progressArcPath(rawT < 0 ? 1 : rawT));
+
+          const tipPos = arcPointAtT(rawT < 0 ? 1 : rawT);
+          const tipEl = document.getElementById('progressTip');
+          const tipGlowEl = document.getElementById('progressTipGlow');
+          if (tipEl) { tipEl.setAttribute('cx', tipPos.x); tipEl.setAttribute('cy', tipPos.y); }
+          if (tipGlowEl) { tipGlowEl.setAttribute('cx', tipPos.x); tipGlowEl.setAttribute('cy', tipPos.y); }
+        }
+
+        if (diff === 0) {
+          clearInterval(countdownTimer);
+          setTimeout(renderArc, 1000); // re-render after prayer transition
+        }
+      }
+      tick();
+      countdownTimer = setInterval(tick, 1000);
+    }
+
+    // ── data fetch ────────────────────────────────────────────────────────────
+    async function fetchPrayerTimes() {
+      const now = new Date(getNow());
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const day = now.getDate();
+
+      const nextMonth = month === 12 ? 1 : month + 1;
+      const nextYear = month === 12 ? year + 1 : year;
+
+      try {
+        const [res, resNext] = await Promise.all([
+          fetch(`https://api.waktusolat.app/v2/solat/${currentZone}?year=${year}&month=${month}`),
+          fetch(`https://api.waktusolat.app/v2/solat/${currentZone}?year=${nextYear}&month=${nextMonth}`)
+        ]);
+        const data = await res.json();
+        const dataNext = await resNext.json();
+
+        if (!data?.prayers) { showError('Data tidak tersedia dari API.'); return; }
+
+        const todayPrayer = data.prayers.find(p => p.day === day);
+        if (!todayPrayer) {
+          showError('Tiada waktu solat untuk hari ini.');
+          return;
+        }
+
+        // Tomorrow's fajr for post-Isha countdown
+        const tomorrow = new Date(now); tomorrow.setDate(day + 1);
+        const tmDay = tomorrow.getDate();
+        const tmMonth = tomorrow.getMonth() + 1;
+        const tmPool = tmMonth === month ? data.prayers : dataNext.prayers;
+        const tmPrayer = tmPool.find(p => p.day === tmDay);
+        tomorrowFajr = tmPrayer ? tmPrayer.fajr * 1000 : null;
+
+        const raw = [
+          { name: 'Subuh', ts: todayPrayer.fajr },
+          { name: 'Syuruk', ts: todayPrayer.syuruk },
+          { name: 'Zohor', ts: todayPrayer.dhuhr },
+          { name: 'Asar', ts: todayPrayer.asr },
+          { name: 'Maghrib', ts: todayPrayer.maghrib },
+          { name: 'Isyak', ts: todayPrayer.isha },
+        ];
+        prayerList = raw.filter(p => p.ts).map(p => ({ name: p.name, ts: p.ts * 1000 }));
+
+        duhaStart = todayPrayer.syuruk ? (todayPrayer.syuruk + 28 * 60) * 1000 : null;
+        duhaEnd = todayPrayer.dhuhr ? (todayPrayer.dhuhr - 10 * 60) * 1000 : null;
+
+        if (prayerList.length < 2) { showError('Data waktu solat tidak lengkap.'); return; }
+
+        const days = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+        const months = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogs', 'Sep', 'Okt', 'Nov', 'Dis'];
+        const [hijriYear, hijriMonth, hijriDay] = todayPrayer.hijri.split('-');
+        const hijriMonthName = HIJRI_MONTH_NAMES[hijriMonth];
+
+        document.getElementById('dateText').textContent =
+          `${days[now.getDay()]}, ${day} ${months[month - 1]} ${year} / ${parseInt(hijriDay, 10)} ${hijriMonthName} ${hijriYear}H`;
+
+        renderArc();
+      } catch (err) {
+        console.error(err);
+        showError('Tidak dapat memuat waktu solat.');
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('arcContainer').innerHTML =
+        `<div class="status-msg error">${msg}</div>`;
+    }
+
+    currentZone = getSavedZone();
+    Promise.all([loadZones(), fetchPrayerTimes()]);
+  </script>
+</body>
+
+</html>

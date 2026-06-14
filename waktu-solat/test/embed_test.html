@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      margin: 0;
+      background: #eee;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    p {
+      color: #333;
+    }
+
+    iframe {
+      display: block;
+      border: 2px solid red;
+      width: 360px;
+      height: 240px;
+      /* deliberately shorter than the widget's natural height */
+    }
+  </style>
+</head>
+
+<body>
+  <p>Red box = iframe (360x400). Widget should shrink to fit inside it, no scrollbar, no clipping.</p>
+  <iframe src="widget.html?embed=1&testTime=18:30"></iframe>
+</body>
+
+</html>

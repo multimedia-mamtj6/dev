@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jadual Waktu Solat</title>
+  <!-- Favicon -->
+  <!-- 1. Modern Browsers: Try the SVG first -->
+  <link rel="icon" type="image/svg+xml" href="https://dev.mamtj6.com/media/logo-mamtj6/SVG/mamtj6_single.svg"
+    sizes="any">
+
+  <!-- 2. Recent Browsers: Try the PNG if SVG fails -->
+  <link rel="icon" type="image/png" href="/jadual-waktu/favicon/favicon-96x96.png" sizes="96x96">
+
+  <!-- 3. Apple: Specific requirements for iOS -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/jadual-waktu/favicon/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="WAKTU SOLAT" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- 4. PWA: The manifest handles the installed app icon -->
+  <link rel="manifest" href="/jadual-waktu/favicon/site.webmanifest" />
+
+  <!-- Open Graph Meta Tags (for Facebook, LinkedIn, etc.) -->
+  <meta property="og:title" content="Jadual Waktu Solat" />
+  <meta property="og:description" content="Jadual waktu solat lengkap bagi semua zon di Malaysia" />
+  <meta property="og:image" content="https://ramadan.mamtj6.com/jadual-waktu/asset/image/link-preview.jpg" />
+  <meta property="og:url" content="https://ramadan.mamtj6.com/jadual-waktu" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card (for Twitter link preview) -->
+  <meta name="twitter:card" content="Jadual Waktu Solat" />
+  <meta name="twitter:title" content="Jadual Waktu Solat" />
+  <meta name="twitter:description" content="Jadual waktu solat lengkap bagi semua zon di Malaysia" />
+  <meta name="twitter:image" content="https://ramadan.mamtj6.com/jadual-waktu/asset/image/link-preview.jpg" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <style>
+    /* Custom CSS */
+    body {
+      font-family: 'Google Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      width: 150px;
+      height: auto;
+      margin: 0 auto 10px;
+    }
+
+    h1 {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 700;
+      /* Google Sans Bold */
+      font-size: 32px;
+      /* Biggest size for desktop */
+      margin: 0;
+      padding: 0 20px;
+      /* Add padding for mobile */
+    }
+
+    h2 {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 600;
+      /* Google Sans SemiBold */
+      font-size: 24px;
+      /* 2nd biggest size for desktop */
+      margin: 0;
+      padding: 20px 0px 0px 0px;
+      /* Add padding for mobile */
+    }
+
+    h3 {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 400;
+      /* Google Sans Regular */
+      font-style: italic;
+      /* Italic */
+      font-size: 18px;
+      /* Small size for desktop */
+      margin: 0;
+      padding: 0 20px;
+      /* Add padding for mobile */
+    }
+
+    /* GPS button */
+    .gps-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 36px;
+      padding: 0 10px;
+      background-color: transparent;
+      border: 1px solid #bdc3c7;
+      border-radius: 18px;
+      color: #7f8c8d;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .gps-btn:hover {
+      background-color: #27ae60;
+      border-color: #27ae60;
+      color: #fff;
+    }
+
+    .gps-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .gps-btn.loading {
+      animation: gpsPulse 1s ease-in-out infinite;
+      pointer-events: none;
+      background-color: transparent;
+      border-color: #27ae60;
+      color: #27ae60;
+    }
+
+    @keyframes gpsPulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    /* Share button */
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background-color: transparent;
+      border: 1px solid #bdc3c7;
+      border-radius: 20px;
+      color: #7f8c8d;
+      font-family: 'Google Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .share-btn:hover {
+      background-color: #27ae60;
+      border-color: #27ae60;
+      color: #fff;
+    }
+
+    .share-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Zone selector dropdown */
+    .zone-selector {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .zone-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .zone-selector label {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+
+    #zone-select {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-family: 'Google Sans', sans-serif;
+      border-radius: 20px;
+      border: 1px solid #bdc3c7;
+      background-color: #fff;
+      cursor: pointer;
+      width: 110px;
+      color: #7f8c8d;
+      transition: all 0.2s ease;
+    }
+
+    #zone-select:hover {
+      border-color: #27ae60;
+      color: #27ae60;
+    }
+
+    #zone-select:focus {
+      outline: none;
+      border-color: #27ae60;
+      box-shadow: 0 0 5px rgba(39, 174, 96, 0.3);
+      color: #27ae60;
+    }
+
+    #zone-select option {
+      color: #333;
+    }
+
+    /* Container for the embedded prayer widget */
+    .today-container {
+      background: #fff;
+      margin: 20px auto;
+      max-width: 650px;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+    }
+
+    .today-container-title {
+      text-align: center;
+      font-size: 30px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .today-date-display {
+      text-align: center;
+      font-size: 15px;
+      color: #7f8c8d;
+      margin-bottom: 10px;
+    }
+
+    .prayer-widget-embed {
+      max-width: 480px;
+      margin: 0 auto;
+      aspect-ratio: 550 / 300;
+    }
+
+    @media (min-width: 601px) {
+      .prayer-widget-embed {
+        max-width: 600px;
+      }
+    }
+
+    .prayer-widget-embed iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      border-radius: 20px;
+    }
+
+    /* Infaq & Wakaf Button */
+    .infaq-section {
+      text-align: center;
+      padding: 20px;
+      background-color: #f9faf9;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      margin: 20px auto;
+      max-width: 600px;
+    }
+
+    .infaq-description {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .infaq-qr {
+      display: none;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 15px;
+      border-radius: 10px;
+      border: 1px solid #eee;
+    }
+
+    .infaq-button {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: white;
+      border-radius: 30px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(46, 204, 113, 0.25);
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .infaq-button-subtitle {
+      display: block;
+      font-size: 12px;
+      font-weight: 400;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .infaq-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.35);
+    }
+
+    .infaq-button:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
+    }
+
+    .infaq-trust {
+      font-size: 12px;
+      color: #999;
+      margin-top: 12px;
+    }
+
+    /* Desktop: reveal QR code for scanning */
+    @media (min-width: 601px) {
+      .infaq-qr {
+        display: block;
+      }
+    }
+
+    /* Desktop: place infaq box to the right of the prayer widget */
+    @media (min-width: 601px) {
+      .today-row {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        gap: 20px;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .today-row .today-container {
+        flex: 1 1 600px;
+        margin: 20px 0;
+      }
+
+      .today-row .infaq-section {
+        flex: 1 1 300px;
+        max-width: 320px;
+        margin: 20px 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+    }
+
+    /* Schedule section title */
+    .schedule-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 30px auto 10px;
+      padding: 0 20px;
+    }
+
+    table {
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    th,
+    td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #2c3e50;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr.today {
+      background-color: #e8f5e9 !important;
+      font-weight: 700;
+      border: 2px solid #2ecc71 !important;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #2c3e50;
+      color: #fff;
+      margin-top: 40px;
+    }
+
+    footer a {
+      color: #3498db;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Mobile Schedule Entry */
+    .mobile-day-entry {
+      background-color: #fff;
+      margin: 10px auto;
+      width: 90%;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .mobile-day-header {
+      padding: 10px;
+      background-color: #e6ffe1;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
+
+    .mobile-day-today {
+      background-color: #27ae60;
+    }
+
+    .mobile-day-today .mobile-day-date {
+      color: #ffffff;
+    }
+
+    .mobile-day-date {
+      font-weight: 700;
+      font-size: 16px;
+      /* Adjust font size as needed */
+      color: #2c3e50;
+      /* Dark color for better readability */
+    }
+
+    .mobile-day-gregorian {
+      font-size: 14px;
+      /* Slightly smaller than the Hijri date */
+      color: #777;
+      /* Lighter color for the Gregorian date */
+      margin-top: 3px;
+      /* Add some spacing between the two lines */
+    }
+
+    .mobile-day-times {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 10px;
+    }
+
+    .mobile-time-item {
+      text-align: center;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 8px 4px;
+    }
+
+    .mobile-time-label {
+      font-size: 0.85em;
+      color: #555;
+      margin-bottom: 3px;
+    }
+
+    .mobile-time-value {
+      font-weight: 600;
+      color: #27ae60;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 25px;
+        /* Slightly smaller for mobile */
+        padding: 0 15px;
+        /* Adjust padding for mobile */
+      }
+
+      h2 {
+        font-size: 20px;
+        /* Slightly smaller for mobile */
+        padding: 20px 0px 0px 0px;
+        /* Adjust padding for mobile */
+      }
+
+      h3 {
+        font-size: 16px;
+        /* Slightly smaller for mobile */
+        padding: 0 15px;
+        /* Adjust padding for mobile */
+      }
+
+      .infaq-button {
+        padding: 10px 20px;
+        font-size: 15px;
+      }
+
+      table {
+        width: 90%;
+        margin: 20px auto;
+      }
+
+      th,
+      td {
+        padding: 8px 5px;
+        font-size: 14px;
+      }
+
+      #desktop-schedule-table {
+        display: none;
+      }
+
+      .zone-selector {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+
+    @media (min-width: 601px) {
+      #mobile-schedule-table {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <!-- Logo -->
+    <img src="https://multimedia.mamtj6.com/media/logo/mamtj6-black.webp" alt="Logo" class="logo">
+    <h1>Jadual Waktu Solat</h1>
+    <h2>Negeri Pahang (Zon 3)</h2>
+    <h3>Daerah Jerantut, Temerloh, Maran, Bera, Chenor, Jengka & Kawasan sekitarnya</h3>
+    <div class="zone-selector">
+      <div class="zone-row">
+        <label for="zone-select">Pilih Zon:</label>
+        <select id="zone-select">
+          <option value="">Memuat...</option>
+        </select>
+        <button id="gps-btn" class="gps-btn" onclick="triggerGPSDetection()" title="Kesan lokasi automatik">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+          </svg>
+          GPS
+        </button>
+      </div>
+      <button id="share-btn" class="share-btn" onclick="shareLink()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path
+            d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
+        </svg>
+        Share info lokasi ini
+      </button>
+    </div>
+  </header>
+
+  <div class="today-row">
+    <!-- New container for the embedded prayer widget -->
+    <div class="today-container">
+      <div class="today-container-title">Info Hari Ini</div>
+      <div id="today-date-display" class="today-date-display"></div>
+      <div class="prayer-widget-embed">
+        <iframe id="prayerWidgetFrame" title="Waktu Solat" loading="lazy"></iframe>
+      </div>
+    </div>
+
+    <!-- Infaq & Wakaf Section -->
+    <div class="infaq-section">
+      <div class="infaq-description">
+        Ingin menyumbang kepada masjid? Imbas QR atau lawati Infaq Center kami.
+      </div>
+      <img class="infaq-qr" src="https://quickchart.io/qr?size=600&dark=ee3167&ecLevel=H&centerImageSizeRatio=0.15&text=00020201021126580014A000000615000101065887340212MBBQR1865093031000000000005204000053034585802MY5920MASJID%20AL-MUKHLISIN%206006PAHANG6304F062&centerImageUrl=https://dev.mamtj6.com/media/logo-mamtj6/PNG/mamtj6_single.png" alt="QR Kod DuitNow Infaq MAMTJ6" loading="lazy">
+      <a href="https://infaq.mamtj6.com/" class="infaq-button">
+        MAMTJ6 Infaq Center
+        <span class="infaq-button-subtitle">Klik Di Sini &middot; Jazakumullah Khairan</span>
+      </a>
+      <div class="infaq-trust">
+        Disahkan oleh Masjid Al-Mukhlisin Taman Jaya 6 (MAMTJ6) &middot; DuitNow QR
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Section Title -->
+  <h2 id="schedule-title" class="schedule-title">Jadual Waktu Solat</h2>
+
+  <!-- Desktop Table View -->
+  <table id="desktop-schedule-table">
+    <thead>
+      <tr>
+        <th>Tarikh & Hari</th>
+        <th>Imsak</th>
+        <th>Subuh</th>
+        <th>Zohor</th>
+        <th>Asar</th>
+        <th>Maghrib</th>
+        <th>Isyak</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Data will be populated here dynamically -->
+    </tbody>
+  </table>
+
+  <!-- Mobile View -->
+  <div id="mobile-schedule-table">
+    <!-- Mobile data will be populated here -->
+  </div>
+
+  <footer>
+    <p>Data dalam jadual ini diperolehi dari <a href="https://www.e-solat.gov.my/">JAKIM</a> melalui <a
+        href="https://api.waktusolat.app/">Waktu Solat API</a> </p>
+    <p>&copy; 2026 <a href="https://mamtj6.com">MAMTJ6</a> | <a href="info.html">Maklumat</a> | <a
+        href="https://wa.me/601156828198">Hubungi Kami</a></p>
+  </footer>
+
+  <script>
+    // Millisecond offset for test time simulation (testTime URL param)
+    let timeOffset = 0;
+
+    // Get current date (or test date/time from URL parameters)
+    function getTestDate() {
+      const params = new URLSearchParams(window.location.search);
+      const testDate = params.get('testDate');
+      const testTime = params.get('testTime');
+      if (testDate && testTime) {
+        const simulated = new Date(testDate + 'T' + testTime + ':00');
+        timeOffset = simulated.getTime() - Date.now();
+        return simulated;
+      }
+      if (testDate) {
+        return new Date(testDate + 'T12:00:00');
+      }
+      if (testTime) {
+        const today = new Date();
+        const [h, m] = testTime.split(':').map(Number);
+        today.setHours(h, m, 0, 0);
+        timeOffset = today.getTime() - Date.now();
+        return today;
+      }
+      return new Date();
+    }
+
+    // Get offset-adjusted current time in milliseconds
+    function getNow() {
+      return Date.now() + timeOffset;
+    }
+
+    // Cache for zones data
+    let cachedZones = [];
+
+    // Get zone from URL parameter, localStorage, or default to PHG03
+    function getSavedZone() {
+      // Check URL parameter first
+      const params = new URLSearchParams(window.location.search);
+      const urlZone = params.get('location');
+      if (urlZone) return urlZone;
+
+      // Fall back to localStorage or default
+      return localStorage.getItem('selectedZone') || 'PHG03';
+    }
+
+    // Save zone to localStorage and update URL
+    function saveZone(zoneCode) {
+      localStorage.setItem('selectedZone', zoneCode);
+
+      // Update URL with location parameter
+      const url = new URL(window.location);
+      url.searchParams.set('location', zoneCode);
+      history.replaceState({}, '', url);
+    }
+
+    // Share link function
+    function shareLink() {
+      const zoneCode = document.getElementById('zone-select').value;
+      const zone = cachedZones.find(z => z.jakimCode === zoneCode);
+
+      // Build URL explicitly from zone code so it always includes ?location= even on first load
+      const shareUrl = `${window.location.origin}${window.location.pathname}?location=${zoneCode}`;
+
+      const zoneNumber = zone ? parseInt(zone.jakimCode.slice(-2), 10) : null;
+      const shareText = zone
+        ? `Jadual Waktu Imsak, Subuh dan Berbuka\nNegeri ${zone.negeri} (Zon ${zoneNumber}): ${zone.daerah}\n\n${shareUrl}`
+        : `Jadual Waktu Imsak, Subuh dan Berbuka\n\n${shareUrl}`;
+
+      // Try native share API first (mobile)
+      if (navigator.share) {
+        navigator.share({ text: shareText });
+      } else {
+        // Fallback: copy full formatted text to clipboard
+        navigator.clipboard.writeText(shareText).then(() => {
+          const btn = document.getElementById('share-btn');
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '✓ Disalin!';
+          setTimeout(() => btn.innerHTML = originalHTML, 2000);
+        });
+      }
+    }
+
+    // Fetch and populate zone dropdown
+    async function loadZones() {
+      const select = document.getElementById('zone-select');
+      try {
+        const response = await fetch('https://api.waktusolat.app/zones');
+        const zones = await response.json();
+        cachedZones = zones;
+
+        // Group zones by state
+        const grouped = {};
+        zones.forEach(zone => {
+          if (!grouped[zone.negeri]) grouped[zone.negeri] = [];
+          grouped[zone.negeri].push(zone);
+        });
+
+        // Build dropdown with optgroups
+        select.innerHTML = '';
+        const savedZone = getSavedZone();
+
+        Object.keys(grouped).sort().forEach(state => {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = state;
+          grouped[state].forEach(zone => {
+            const option = document.createElement('option');
+            option.value = zone.jakimCode;
+            option.dataset.full = `${zone.jakimCode} - ${zone.daerah}`;
+            // Always use full text initially
+            option.textContent = option.dataset.full;
+            if (zone.jakimCode === savedZone) option.selected = true;
+            optgroup.appendChild(option);
+          });
+          select.appendChild(optgroup);
+        });
+
+        // Compact selected option for closed state
+        const selectedOpt = select.options[select.selectedIndex];
+        if (selectedOpt && selectedOpt.dataset.full) {
+          selectedOpt.textContent = selectedOpt.value;
+        }
+
+        // Update header with current zone info
+        updateZoneHeader(zones.find(z => z.jakimCode === savedZone));
+
+        // Initialize the embedded prayer widget for the current zone
+        updatePrayerWidgetFrame(savedZone);
+
+        // Add change event listener
+        select.addEventListener('change', function () {
+          saveZone(this.value);
+          updateZoneHeader(cachedZones.find(z => z.jakimCode === this.value));
+          updatePrayerWidgetFrame(this.value);
+          fetchData();
+        });
+
+        // On focus (dropdown opens): show full details for all options
+        select.addEventListener('focus', function () {
+          Array.from(this.options).forEach(opt => {
+            if (opt.dataset.full) {
+              opt.textContent = opt.dataset.full;
+            }
+          });
+        });
+
+        // On blur (dropdown closes): compact the selected option
+        select.addEventListener('blur', function () {
+          Array.from(this.options).forEach(opt => {
+            if (opt.dataset.full) {
+              opt.textContent = opt.selected ? opt.value : opt.dataset.full;
+            }
+          });
+        });
+
+      } catch (error) {
+        console.error('Failed to load zones:', error);
+        select.innerHTML = '<option value="PHG03">PHG03 (Default)</option>';
+      }
+    }
+
+    // Build/update the embedded widget.html widget's iframe src for the given zone
+    function updatePrayerWidgetFrame(zoneCode) {
+      const frame = document.getElementById('prayerWidgetFrame');
+      if (!frame) return;
+      const params = new URLSearchParams(window.location.search);
+      const url = new URL('widget.html', window.location.href);
+      url.searchParams.set('embed', '1');
+      url.searchParams.set('selector', 'hide');
+      url.searchParams.set('date', 'hide');
+      url.searchParams.set('zone', zoneCode);
+      const testTime = params.get('testTime');
+      if (testTime) url.searchParams.set('testTime', testTime);
+      frame.src = url.toString();
+    }
+
+    // Update header to show selected zone info
+    function updateZoneHeader(zone) {
+      if (zone) {
+        // Extract zone number from jakimCode (e.g., "PHG03" → "3")
+        const zoneNumber = parseInt(zone.jakimCode.slice(-2), 10);
+        document.querySelector('h2').textContent = `Negeri ${zone.negeri}`;
+        document.querySelector('h3').textContent = `Zon ${zoneNumber}: ${zone.daerah}`;
+      }
+    }
+
+    // Function to format a timestamp to Malaysia time (12-hour format)
+    function formatTime(timestamp) {
+      const date = new Date(timestamp * 1000); // Convert from seconds to milliseconds
+
+      let hours = date.getHours();
+      const minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+
+      // Convert to 12-hour format
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+
+      // Format minutes with leading zero if needed
+      const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+
+      return `${hours}:${minutesStr} ${ampm}`;
+    }
+
+    // Calculate Imsak time (10 minutes before Fajr)
+    function calculateImsak(fajrTimestamp) {
+      return fajrTimestamp - 600; // Subtract 10 minutes (600 seconds)
+    }
+
+    // Get the day of the week from a timestamp
+    function getDayOfWeek(timestamp) {
+      const date = new Date(timestamp * 1000);
+      const days = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+      return days[date.getDay()];
+    }
+
+    // Format a Gregorian date in Malay format (e.g., "3 Jun" or "19 Feb")
+    function formatMalayDate(day, month) {
+      const months = ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ogs", "Sep", "Okt", "Nov", "Dis"];
+      return `${day} ${months[month - 1] || month}`;
+    }
+
+    // Check if a given date is today
+    function isToday(day, month, year) {
+      const today = getTestDate();
+      return today.getDate() === day && today.getMonth() === (month - 1) && today.getFullYear() === year;
+    }
+
+    // Format a Hijri date for any month
+    function formatHijri(hijri) {
+      const [, monthStr, dayStr] = hijri.split('-');
+      const hijriMonths = [
+        "Muharram", "Safar", "Rabiulawal", "Rabiulakhir",
+        "Jamadilawal", "Jamadilakhir", "Rejab", "Syaaban",
+        "Ramadan", "Syawal", "Zulkaedah", "Zulhijjah"
+      ];
+      const monthIndex = parseInt(monthStr) - 1;
+      return `${parseInt(dayStr)} ${hijriMonths[monthIndex] || monthStr}`;
+    }
+
+    // Get the Hijri year from a "YYYY-MM-DD" string
+    function getHijriYear(hijri) {
+      return parseInt(hijri.split('-')[0]);
+    }
+
+    // Fetch data from API and populate the table
+    async function fetchData() {
+      const zone = getSavedZone();
+      const nowDate = getTestDate();
+      const year = nowDate.getFullYear();
+      const month = nowDate.getMonth() + 1;
+
+      const currentUrl = `https://api.waktusolat.app/v2/solat/${zone}?year=${year}&month=${month}`;
+
+      try {
+        const currentResponse = await fetch(currentUrl);
+
+        if (!currentResponse.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const currentData = await currentResponse.json();
+
+        // Tag each prayer with its month and year for date comparisons
+        const currentPrayers = currentData.prayers.map(p => ({ ...p, month, year }));
+
+        if (currentPrayers.length === 0) {
+          throw new Error("Prayer data not found");
+        }
+
+        // Update schedule section title to show current month/year
+        const malayMonths = ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ogs", "Sep", "Okt", "Nov", "Dis"];
+        document.getElementById('schedule-title').textContent = `Jadual Waktu Solat ${malayMonths[month - 1]} ${year}`;
+
+        // Populate desktop table
+        const desktopTbody = document.querySelector("#desktop-schedule-table tbody");
+        desktopTbody.innerHTML = ""; // Clear existing rows
+
+        // Prepare mobile container
+        const mobileContainer = document.getElementById("mobile-schedule-table");
+        mobileContainer.innerHTML = ""; // Clear existing content
+
+        currentPrayers.forEach(prayer => {
+          const hijriFormatted = formatHijri(prayer.hijri);
+
+          // Calculate necessary timestamps
+          const fajrTimestamp = prayer.fajr;
+          const imsakTimestamp = calculateImsak(fajrTimestamp);
+          const dhuhrTimestamp = prayer.dhuhr;
+          const asrTimestamp = prayer.asr;
+          const maghribTimestamp = prayer.maghrib;
+          const ishaTimestamp = prayer.isha;
+
+          // Format times
+          const imsakFormatted = formatTime(imsakTimestamp);
+          const fajrFormatted = formatTime(fajrTimestamp);
+          const dhuhrFormatted = formatTime(dhuhrTimestamp);
+          const asrFormatted = formatTime(asrTimestamp);
+          const maghribFormatted = formatTime(maghribTimestamp);
+          const ishaFormatted = formatTime(ishaTimestamp);
+
+          // Get day of week
+          const dayOfWeek = getDayOfWeek(fajrTimestamp);
+
+          // Format Gregorian date in Malay
+          const gregorianDate = formatMalayDate(prayer.day, prayer.month);
+
+          // Check if this prayer time is for today
+          const isCurrentDay = isToday(prayer.day, prayer.month, prayer.year);
+
+          const tr = document.createElement("tr");
+          if (isCurrentDay) {
+            tr.classList.add("today");
+            const todayDateDisplay = document.getElementById('today-date-display');
+            if (todayDateDisplay) {
+              todayDateDisplay.textContent = `${dayOfWeek}, ${gregorianDate} ${prayer.year} / ${hijriFormatted} ${getHijriYear(prayer.hijri)}H`;
+            }
+          }
+
+          tr.innerHTML = `
+            <td>${hijriFormatted} / ${gregorianDate} (${dayOfWeek})</td>
+            <td>${imsakFormatted}</td>
+            <td>${fajrFormatted}</td>
+            <td>${dhuhrFormatted}</td>
+            <td>${asrFormatted}</td>
+            <td>${maghribFormatted}</td>
+            <td>${ishaFormatted}</td>
+          `;
+          desktopTbody.appendChild(tr);
+
+          const mobileDay = document.createElement("div");
+          mobileDay.className = "mobile-day-entry";
+          mobileDay.innerHTML = `
+            <div class="mobile-day-header ${isCurrentDay ? 'mobile-day-today' : ''}">
+              <div class="mobile-day-date">${hijriFormatted} / ${gregorianDate} (${dayOfWeek})</div>
+            </div>
+            <div class="mobile-day-times">
+              <div class="mobile-time-item">
+                <div class="mobile-time-label">Imsak</div>
+                <div class="mobile-time-value">${imsakFormatted}</div>
+              </div>
+              <div class="mobile-time-item">
+                <div class="mobile-time-label">Subuh</div>
+                <div class="mobile-time-value">${fajrFormatted}</div>
+              </div>
+              <div class="mobile-time-item">
+                <div class="mobile-time-label">Zohor</div>
+                <div class="mobile-time-value">${dhuhrFormatted}</div>
+              </div>
+              <div class="mobile-time-item">
+                <div class="mobile-time-label">Asar</div>
+                <div class="mobile-time-value">${asrFormatted}</div>
+              </div>
+              <div class="mobile-time-item">
+                <div class="mobile-time-label">Maghrib</div>
+                <div class="mobile-time-value">${maghribFormatted}</div>
+              </div>
+              <div class="mobile-time-item">
+                <div class="mobile-time-label">Isyak</div>
+                <div class="mobile-time-value">${ishaFormatted}</div>
+              </div>
+            </div>
+          `;
+          mobileContainer.appendChild(mobileDay);
+        });
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        document.getElementById('schedule-title').textContent =
+          `Tiada data untuk hari ini. Ralat: ${error.message}`;
+      }
+    }
+
+    // Detect zone from GPS coordinates (first visit only)
+    async function detectZoneByGPS() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) { resolve(null); return; }
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+              const res = await fetch(`https://api.waktusolat.app/v2/solat/gps/${latitude}/${longitude}`);
+              const data = await res.json();
+              resolve(data.zone || null);
+            } catch { resolve(null); }
+          },
+          () => resolve(null),
+          { timeout: 10000 }
+        );
+      });
+    }
+
+    function showSimpleToast(message, type = 'error') {
+      const toast = document.createElement('div');
+      toast.className = `simple-toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 400);
+      }, 3000);
+    }
+
+    // Manually trigger GPS detection from button click
+    async function triggerGPSDetection() {
+      const btn = document.getElementById('gps-btn');
+      btn.classList.add('loading');
+      const detectedZone = await detectZoneByGPS();
+      btn.classList.remove('loading');
+      if (detectedZone) {
+        saveZone(detectedZone);
+        const select = document.getElementById('zone-select');
+        select.value = detectedZone;
+        updateZoneHeader(cachedZones.find(z => z.jakimCode === detectedZone));
+        updatePrayerWidgetFrame(detectedZone);
+        fetchData();
+      } else {
+        showSimpleToast('Lokasi tidak dapat dikesan. Sila pilih zon secara manual.');
+      }
+    }
+
+    // Fetch data on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const hasUrlZone = params.get('location');
+      const hasSavedZone = localStorage.getItem('selectedZone');
+
+      if (!hasUrlZone && !hasSavedZone) {
+        const select = document.getElementById('zone-select');
+        select.innerHTML = '<option value="">Mengesan lokasi...</option>';
+        const detectedZone = await detectZoneByGPS();
+        if (detectedZone) {
+          saveZone(detectedZone);
+        }
+      }
+
+      await loadZones();
+      fetchData();
+    });
+
+    // === UPDATE TOAST CSS ===
+    const toastStyle = document.createElement('style');
+    toastStyle.textContent = `
+      .update-toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #27ae60;
+        color: #ffffff;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 2000;
+        width: 90%;
+        max-width: 400px;
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        font-family: 'Google Sans', sans-serif;
+      }
+      .update-toast.hidden {
+        transform: translate(-50%, 150%);
+        opacity: 0;
+        pointer-events: none;
+      }
+      .toast-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .toast-message {
+        font-weight: 700;
+        font-size: 1rem;
+      }
+      .toast-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .toast-btn {
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: 'Google Sans', sans-serif;
+      }
+      .toast-btn.reload {
+        background-color: #fff;
+        color: #27ae60;
+      }
+      .toast-btn.dismiss {
+        background-color: transparent;
+        color: #fff;
+        border: 1px solid #fff;
+      }
+      .simple-toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #ffffff;
+        padding: 12px 18px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 2001;
+        max-width: 360px;
+        width: 90%;
+        font-family: 'Google Sans', sans-serif;
+        font-size: 0.9rem;
+        text-align: center;
+        transition: opacity 0.4s ease;
+      }
+      .simple-toast.error { background-color: #e74c3c; }
+      .simple-toast.fade-out { opacity: 0; }
+    `;
+    document.head.appendChild(toastStyle);
+
+    // Auto-refresh data at midnight to transition to the next day
+    function scheduleMiddnightRefresh() {
+      const now = new Date(getNow());
+      const midnight = new Date(now);
+      midnight.setDate(midnight.getDate() + 1);
+      midnight.setHours(0, 0, 5, 0); // 5 seconds past midnight to ensure date has changed
+      const msUntilMidnight = midnight.getTime() - now.getTime();
+      setTimeout(() => {
+        fetchData();
+        scheduleMiddnightRefresh(); // schedule the next one
+      }, msUntilMidnight);
+    }
+    scheduleMiddnightRefresh();
+
+  </script>
+
+  <!-- === UPDATE NOTIFICATION TOAST === -->
+  <div id="update-toast" class="update-toast hidden">
+    <div class="toast-content">
+      <span class="toast-message">Versi baharu tersedia!</span>
+      <div class="toast-actions">
+        <button id="reload-btn" class="toast-btn reload">Kemaskini</button>
+        <button id="dismiss-btn" class="toast-btn dismiss">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- === PENDAFTARAN SERVICE WORKER & UPDATE LOGIC === -->
+  <script>
+    let newWorker;
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/jadual-waktu/sw.js').then(reg => {
+          console.log('Service Worker registered:', reg.scope);
+
+          // 1. Check if there is already a worker waiting (from previous ignored update)
+          if (reg.waiting) {
+            newWorker = reg.waiting;
+            showUpdateToast();
+          }
+
+          // 2. Listen for new updates being found
+          reg.addEventListener('updatefound', () => {
+            newWorker = reg.installing;
+
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  showUpdateToast();
+                }
+              }
+            });
+          });
+        });
+
+        // 3. Handle the reload after SW activates
+        let refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          window.location.reload();
+          refreshing = true;
+        });
+      });
+    }
+
+    function showUpdateToast() {
+      document.getElementById('update-toast').classList.remove('hidden');
+    }
+
+    document.getElementById('reload-btn').addEventListener('click', () => {
+      if (newWorker) {
+        newWorker.postMessage({ type: 'SKIP_WAITING' });
+      }
+    });
+
+    document.getElementById('dismiss-btn').addEventListener('click', () => {
+      document.getElementById('update-toast').classList.add('hidden');
+    });
+  </script>
+</body>
+
+</html>

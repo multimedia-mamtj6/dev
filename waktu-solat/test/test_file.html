@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimbar Jumaat Siri 2 | 2025</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://multimedia.mamtj6.com/media/img/mimbar-jumaat-bg.webp') no-repeat center center/cover;
+        }
+
+        .container {
+            text-align: center;
+            width: 1000px;
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transform-origin: center center;
+        }
+
+        .logo-small {
+            width: 250px;
+            margin-bottom: 10px;
+        }
+
+        .logo-big {
+            width: 320px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 36px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 5px;
+        }
+
+        .date {
+            font-size: 28px;
+            font-weight: 400;
+            color: gray;
+            margin-bottom: 20px;
+        }
+
+        .main-text-container {
+            width: 100%;
+            height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-align: center;
+            margin: 0 auto;
+        }
+
+        .main-text {
+            font-weight: bold;
+            color: blue;
+            text-align: center;
+            display: block;
+            width: 100%;
+            line-height: 1.2;
+            font-size: 120px;
+            word-wrap: break-word;
+            margin: 0 auto;
+        }
+
+        .spinner {
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top: 5px solid blue;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img class="logo-small" src="https://multimedia.mamtj6.com/media/logo/mamtj6-mufti.webp" alt="Small Logo">
+        <img class="logo-big" src="https://multimedia.mamtj6.com/media/img/khat/mimbar-jumaat.webp" alt="Big Logo">
+        <div class="spinner" id="spinner"></div>
+        <h1 class="title" id="title">Loading...</h1>
+        <p class="date" id="date">Loading...</p>
+        <div class="main-text-container">
+            <h2 class="main-text" id="main-text">Loading...</h2>
+        </div>
+    </div>
+
+    <script>
+        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDFOdEOVKqjeS1mErtCrV-Z1-dvArp3wteWAEyRM6KKzXN90yggh0Bc7Nq3yhYKdAEo1NkAiV3lZGd/pub?gid=0&single=true&output=csv";
+        let lastFetchedData = "";
+
+        async function fetchSheetData() {
+            document.getElementById("spinner").style.display = "block";
+            try {
+                const response = await fetch(sheetURL, { cache: "no-store" });
+                if (!response.ok) throw new Error("Network response was not ok");
+                const text = await response.text();
+
+                const rows = text.split("\n").map(row => row.split(","));
+                if (rows.length <= 1) return showError("TIADA DATA");
+
+                const newData = rows[1].map(cell => cell.trim()).join("|");
+                if (newData === lastFetchedData) return;
+                lastFetchedData = newData;
+
+                document.getElementById("title").innerText = rows[1][1] || "TIADA DATA";
+                document.getElementById("date").innerText = rows[1][2] || "TIADA DATA";
+                document.getElementById("main-text").innerText = rows[1][3] || "TIADA DATA";
+
+                adjustFontSize();
+                scaleToFit();
+            } catch (error) {
+                console.error("Error fetching Google Sheets data:", error);
+                showError("ERROR");
+            } finally {
+                document.getElementById("spinner").style.display = "none";
+            }
+        }
+
+        function showError(message) {
+            document.getElementById("title").innerText = message;
+            document.getElementById("date").innerText = "";
+            document.getElementById("main-text").innerText = "";
+        }
+
+        function adjustFontSize() {
+            const mainText = document.getElementById("main-text");
+            const mainTextContainer = document.querySelector(".main-text-container");
+
+            let fontSize = 150;
+            const minFontSize = 14;
+
+            mainText.style.fontSize = fontSize + "px";
+
+            // Shrink-to-fit: decrease font size until the text fits within its container
+            while (
+                (mainText.scrollWidth > mainTextContainer.clientWidth ||
+                    mainText.scrollHeight > mainTextContainer.clientHeight) &&
+                fontSize > minFontSize
+            ) {
+                fontSize -= 2;
+                mainText.style.fontSize = fontSize + "px";
+            }
+        }
+
+        // Scale the fixed-size container down (or up) to fit the actual
+        // viewport, since vh/% sizing is unreliable inside Google Sites iframes.
+        function scaleToFit() {
+            const container = document.querySelector(".container");
+
+            container.style.transform = "none";
+            const naturalWidth = container.offsetWidth;
+            const naturalHeight = container.offsetHeight;
+
+            const scale = Math.min(
+                window.innerWidth / naturalWidth,
+                window.innerHeight / naturalHeight
+            );
+
+            container.style.transform = `scale(${scale})`;
+        }
+
+        // Run on load and resize
+        fetchSheetData();
+        window.addEventListener('resize', () => {
+            adjustFontSize();
+            scaleToFit();
+        });
+        setInterval(fetchSheetData, 60000);
+    </script>
+</body>
+
+</html>

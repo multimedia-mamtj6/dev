@@ -1,0 +1,49 @@
+{
+  "id": "/jadual-waktu/",
+  "name": "Jadual Waktu Ramadan 2026",
+  "short_name": "Ramadan 2026",
+  "description": "Info tentang Waktu Imsak, Subuh dan Berbuka bagi semua zon waktu solat di Malaysia",
+  "start_url": "/jadual-waktu/",
+  "scope": "/jadual-waktu/",
+  "icons": [
+    {
+      "src": "/jadual-waktu/favicon/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/jadual-waktu/favicon/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/jadual-waktu/favicon/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/jadual-waktu/favicon/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://dev.mamtj6.com/media/logo-mamtj6/SVG/mamtj6_single.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "categories": ["education", "utilities"],
+  "version": "1.5.4"
+}
+
+
+  
