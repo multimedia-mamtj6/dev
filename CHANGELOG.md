@@ -9,6 +9,13 @@ Sub-project changelogs:
 
 ---
 
+## [Unreleased] - 2026-06-15
+
+### Added — root `index.html`
+- Footer "Last updated" date now auto-updates from the latest GitHub commit to `index.html` (via GitHub REST API), with the static date kept as a fallback if the fetch fails
+
+---
+
 ## [15.2.2] - 2026-05-23
 
 ### Fixed — `kuliah/jadual`
