@@ -310,6 +310,10 @@ For standalone embedding (Google Sites etc.), see
 | Key | Value | Used by |
 |---|---|---|
 | `selectedZone` | Zone code, e.g. `"PHG03"` | `index.html`, `widget.html` |
+| `zones_cache` | `{ ts: <epoch ms>, data: [...zones] }` — full zones array, 24h TTL | `widget.html` |
+| `prayers_{zone}_{year}_{month}` | Full month prayer response from API (e.g. `prayers_TRG01_2026_6`) | `widget.html` |
+
+`widget.html` caches zones and prayer times on first load. Both keys must be present for the cache path to be taken in `fetchPrayerTimes()` — if either is missing, both are re-fetched. Old month keys (`prayers_*`) accumulate but are small (~3KB each) and do not expire; they're naturally bypassed once the month changes (different key). Clear via DevTools → Application → Local Storage to force a fresh fetch.
 
 ## Service Worker (`sw.js`)
 

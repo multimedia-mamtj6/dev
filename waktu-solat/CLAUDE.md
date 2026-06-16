@@ -82,6 +82,12 @@ iframes), `?selector=hide` (hide zone dropdown, independent of embed),
 `?date=hide` (hide date footer), `?testTime=HH:MM`, `?testDate=YYYY-MM-DD`,
 `?mode=dark` (force dark theme)
 
+localStorage caching (Session 11): zones cached 24h under `zones_cache`;
+prayer times cached per zone+month under `prayers_{zone}_{year}_{month}`.
+On return visits the widget renders immediately with zero API calls.
+`widget.html` is NOT in the SW precache shell — no `CACHE_NAME` bump
+needed when editing it.
+
 Relationship to `index.html`: iframed by it (see above), but also designed
 to be embedded standalone elsewhere (e.g. Google Sites — see
 `gsites_embeded_guide.md`).
@@ -154,6 +160,5 @@ JSON fetches require an HTTP server (CORS) — `file://` won't work.
 
 - Color theming — arc is white-on-dark only; no light variant
 - GPS auto-detection in `widget.html` not implemented (only in `index.html`)
-- `sw.js` `CACHE_NAME` and `vercel.json`/`developer.md`/`README.md` still
-  carry "ramadan"/jadual-waktu naming from before the de-branding pass —
-  cosmetic, not functional, but worth cleaning up eventually
+- `sw.js` `CACHE_NAME` and `vercel.json` still carry "ramadan"/jadual-waktu
+  naming from before the de-branding pass — cosmetic, not functional

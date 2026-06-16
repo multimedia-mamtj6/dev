@@ -5,10 +5,170 @@ the prompt:
 
 also update the related file like waktu-solat/CLAUDE.md, waktu-solat/developer.md, waktu-solat/developer.md and waktu-solat/README.md if necessary
 
-**Last updated:** 2026-06-15 (Session 10)
-**Files touched this session:** `waktu-solat/index.html`, `waktu-solat/sw.js`
-(CACHE_NAME bumped v1.6.4 → v1.6.7 across 4 separate edits), plus end-of-session
-touch-ups to `CLAUDE.md`/`developer.md`/`README.md`.
+**Last updated:** 2026-06-16 (Session 11)
+**Files touched this session:** `waktu-solat/widget.html` (font + localStorage cache optimizations),
+root `index.html` (auto "Last updated" footer from GitHub API), root `CHANGELOG.md`.
+
+---
+
+## Vibe / dynamic check for Session 11 (most recent — read this first)
+
+This was a **"zoom out to performance" session** — the widget itself wasn't
+broken or missing features; the user just started asking "can this run
+locally?" and "how do we make it faster?" and we went from zero to shipped
+optimizations in three exchanges. Energy: calm, consultative, high-trust.
+No plan mode, no AskUserQuestion — just a clean "here's what I see, here's
+why, do you want it?" → "yes, proceed" cycle.
+
+### Context — how the session opened
+User had `widget.html` open in the IDE. First ask: **"can this code run
+locally?"** — not a feature ask, a sanity check. The answer was yes but
+only via HTTP server (not `file://`), because of CORS on the
+`api.waktusolat.app` fetches. Explained in one sentence. That framing
+("we need a server for the API calls") naturally led into...
+
+### Ask 1 — root `index.html` footer (separate file, session opener)
+
+Before the widget optimizations, there was a footer ask for the ROOT
+`index.html` (not the `waktu-solat/` one). The footer had a hardcoded
+"Last updated: 12 September, 2025". User wanted it to auto-update from
+the last GitHub commit date of `index.html`.
+
+**Solution**: small client-side JS fetch to GitHub REST API:
+```
+https://api.github.com/repos/multimedia-mamtj6/dev/commits?path=index.html&page=1&per_page=1
+```
+Parse `data[0].commit.committer.date`, format with `toLocaleDateString('ms-MY', ...)`,
+inject into `<strong id="last-updated">`. Static date kept as fallback on
+fetch failure. Confirmed via `curl` that the API returns the correct
+commit date (`2026-03-28T04:43:39Z`).
+
+**NOTE**: this is in root `index.html`, NOT `waktu-solat/index.html`. Keep
+them separate in your head. Also updated root `CHANGELOG.md` with an
+"[Unreleased]" entry for this change.
+
+Rate limit awareness: unauthenticated GitHub API is 60 req/hr per IP —
+fine for a mosque site with low traffic.
+
+### Ask 2 — "what can we do to optimize loading for the widget?"
+
+User asked this as an open-ended question. Classic exploratory prompt.
+Gave a direct 4-point answer (didn't implement yet — waited for
+confirmation): localStorage caching for zones + prayer times (biggest
+impact), Material Symbols `display=block` → `display=swap`, combine two
+Google Fonts requests into one, add `preconnect` for `api.waktusolat.app`.
+
+User then asked: **"explain your plan and what this changes will impact
+the code"** — wanted depth before committing, not just a bullet list.
+Explained each change, the exact functions affected, and drew out a
+before/after loading table.
+
+Then: **"so it high good impact and low performance?"** — user's way of
+asking "high reward, low effort?" (the word "performance" here means
+effort/cost, not page performance). Confirmed yes. User: **"proceed"**.
+
+### Ask 3 — implementation (all 5 changes, all in parallel)
+
+Three Edit calls simultaneously:
+
+**1. `<head>` — two font links + one preconnect → two links total**
+- Removed: `<link href="...Inter...display=swap">` + `<link href="...Material+Symbols...display=block">`
+- Added: `<link rel="preconnect" href="https://api.waktusolat.app">` (new)
+- Added: single combined font URL with `&family=` joining Inter + Material
+  Symbols, and `display=swap` on both (was `display=block` for symbols)
+
+**2. `loadZones()` — localStorage cache (24h TTL)**
+```js
+const ZONES_TTL = 24 * 60 * 60 * 1000;
+const zonesRaw = localStorage.getItem('zones_cache');
+if (zonesRaw) {
+  const { ts, data } = JSON.parse(zonesRaw);
+  if (Date.now() - ts < ZONES_TTL) cachedZones = data;
+}
+if (!cachedZones.length) {
+  // fetch as before, then:
+  localStorage.setItem('zones_cache', JSON.stringify({ ts: Date.now(), data: cachedZones }));
+}
+```
+Cache key: `zones_cache`. Structure: `{ ts: <epoch ms>, data: [...] }`.
+
+**3. `fetchPrayerTimes()` — localStorage cache (per zone+month)**
+Cache keys: `prayers_{zone}_{year}_{month}` for current month,
+`prayers_{zone}_{nextYear}_{nextMonth}` for next month. Both must be
+present to skip fetch — if only one exists, refetch both to stay atomic.
+On successful fetch, writes both keys to localStorage.
+
+No TTL needed here — the key encodes zone+month, so last month's data
+is naturally superseded (different key). Old keys accumulate but are
+small (~3KB each) and harmless; no pruning implemented (kept simple).
+
+### Discovery — localStorage screenshot confirmed working
+
+User shared a DevTools screenshot showing:
+```
+prayers_TRG01_2026_6   → {zone: "TRG01", year: 2026, month: "JUN"...}
+prayers_TRG01_2026_7   → {zone: "TRG01", year: 2026, month: "JUL"...}
+selectedZone           → TRG01
+theme                  → light
+zones_cache            → {ts: 1781587464915, data: [{jakimCode: "JHR01"...
+```
+
+Two things to note:
+1. **`ldcsv`** — there's a key `ldcsv: 1773730133313` in localStorage that
+   we didn't put there. Likely from the service worker or a prior version.
+   Don't touch it, don't worry about it — just flag if user asks.
+2. **`theme`** — there's already a `theme: light` key. This is from the
+   root index.html or another page in the project, NOT from widget.html
+   (widget.html uses `?mode=dark` URL param, not localStorage for theme).
+   Don't confuse these.
+
+### Ask 4 — "is this suitable for digital signage (Xibo)?"
+
+Quick consultation, no code change. Confirmed yes — the widget was
+designed with signage in mind (explicit 1920x1080 comment in the code,
+`MAX_SCALE = 3`, `scaleWidgetToFit()` handles large viewports). For Xibo:
+
+```
+widget.html?embed=1&selector=hide&date=hide&zone=TRG01&mode=dark
+```
+
+- `embed=1` — transparent page, scale to fill the region
+- `selector=hide` — no dropdown on a display screen
+- `date=hide` — optional, cleaner look
+- `zone=XXX` — lock the zone (no localStorage dependency)
+- `mode=dark` — most signage screens look better dark
+
+**Caveat**: if the Xibo player has no internet on first boot and no
+localStorage cache, the widget shows "Tidak dapat memuat waktu solat."
+Once loaded once with internet, it's fine for the whole month.
+This was surfaced to the user as-is — no fix implemented, accepted as-is
+for typical mosque deployments with stable internet.
+
+### State of the world going into next session
+
+- `widget.html` now caches zones (24h) and prayer times (per zone+month)
+  in localStorage. On return visits / zone re-selects within the same
+  month, the arc renders immediately with zero API calls.
+- Google Fonts in `widget.html` is now a single `<link>` with
+  `display=swap` for both Inter and Material Symbols. This is a subtle
+  but real improvement for slow connections — icons no longer block render.
+- Root `index.html` footer date is now live from GitHub API. Check it via
+  DevTools Network tab if the date looks wrong — it should show the
+  committer date from the most recent commit touching `index.html`.
+- `sw.js` CACHE_NAME is still at `v1.6.7` — `widget.html` is NOT in the
+  precached app shell (confirmed: only `index.html`, `info.html`, favicons,
+  manifest are cached). So the widget.html optimizations do NOT require a
+  CACHE_NAME bump.
+- **No open items from this session**. Clean handoff.
+
+### Mood
+
+Efficient, collaborative, no friction. The user has a very clear
+"consult → confirm → proceed" pattern in this session: open with a
+question, get an explanation, get a recommendation, give one word
+approval. Don't over-explain before they ask — they'll ask if they
+want depth (and they did, explicitly: "explain your plan and what this
+changes will impact the code"). Match their precision.
 
 ---
 
