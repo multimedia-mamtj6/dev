@@ -6,10 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Waktu Solat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0&display=block"
-    rel="stylesheet" />
+  <link rel="preconnect" href="https://api.waktusolat.app" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0&display=swap" rel="stylesheet" />
   <style>
     * {
       box-sizing: border-box;
@@ -548,8 +546,17 @@
     async function loadZones() {
       const select = document.getElementById('zoneSelect');
       try {
-        const res = await fetch('https://api.waktusolat.app/zones');
-        cachedZones = await res.json();
+        const ZONES_TTL = 24 * 60 * 60 * 1000;
+        const zonesRaw = localStorage.getItem('zones_cache');
+        if (zonesRaw) {
+          const { ts, data } = JSON.parse(zonesRaw);
+          if (Date.now() - ts < ZONES_TTL) cachedZones = data;
+        }
+        if (!cachedZones.length) {
+          const res = await fetch('https://api.waktusolat.app/zones');
+          cachedZones = await res.json();
+          localStorage.setItem('zones_cache', JSON.stringify({ ts: Date.now(), data: cachedZones }));
+        }
 
         const grouped = {};
         cachedZones.forEach(z => {
@@ -994,13 +1001,26 @@
       const nextMonth = month === 12 ? 1 : month + 1;
       const nextYear = month === 12 ? year + 1 : year;
 
+      const cacheKey = `prayers_${currentZone}_${year}_${month}`;
+      const cacheKeyNext = `prayers_${currentZone}_${nextYear}_${nextMonth}`;
+
       try {
-        const [res, resNext] = await Promise.all([
-          fetch(`https://api.waktusolat.app/v2/solat/${currentZone}?year=${year}&month=${month}`),
-          fetch(`https://api.waktusolat.app/v2/solat/${currentZone}?year=${nextYear}&month=${nextMonth}`)
-        ]);
-        const data = await res.json();
-        const dataNext = await resNext.json();
+        let data, dataNext;
+        const cached = localStorage.getItem(cacheKey);
+        const cachedNext = localStorage.getItem(cacheKeyNext);
+        if (cached && cachedNext) {
+          data = JSON.parse(cached);
+          dataNext = JSON.parse(cachedNext);
+        } else {
+          const [res, resNext] = await Promise.all([
+            fetch(`https://api.waktusolat.app/v2/solat/${currentZone}?year=${year}&month=${month}`),
+            fetch(`https://api.waktusolat.app/v2/solat/${currentZone}?year=${nextYear}&month=${nextMonth}`)
+          ]);
+          data = await res.json();
+          dataNext = await resNext.json();
+          if (data?.prayers) localStorage.setItem(cacheKey, JSON.stringify(data));
+          if (dataNext?.prayers) localStorage.setItem(cacheKeyNext, JSON.stringify(dataNext));
+        }
 
         if (!data?.prayers) { showError('Data tidak tersedia dari API.'); return; }
 
