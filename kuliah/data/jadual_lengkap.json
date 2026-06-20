@@ -206,11 +206,7 @@
     },
     {
       "date": "2026-06-21",
-      "subuh": {
-        "nama_penceramah": "Ustaz Badrul Hisham",
-        "tajuk_kuliah": "Fadilat Sedekah",
-        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
-      },
+      "subuh": null,
       "maghrib": null,
       "cuti_umum": null
     },
