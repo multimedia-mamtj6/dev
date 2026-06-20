@@ -105,8 +105,16 @@ cached, always fetched fresh. Old caches matching the
 
 ### `vercel.json`
 
-Rewrites `/` → `/api/og` when `?location=` is present, in preparation for
-dynamic OG-image generation (backend not yet implemented).
+`waktu-solat/vercel.json` is **empty (`{}`)** — no rewrites, no headers active here.
+
+CORS and embed-permission headers for `/waktu-solat` and `/waktu-solat/(.*)` live in
+the **root `vercel.json`**, not this file. Current state (as of Session 12):
+- `Access-Control-Allow-Origin: *` — widget is embeddable from any origin
+- No `Content-Security-Policy: frame-ancestors` restriction
+
+If embedding breaks ("Can't embed due to provider site permissions"), look at root
+`vercel.json` → `/waktu-solat` header blocks, not here. See `REVERSE_PROXY_FIX.md`
+for the full history of why those headers exist.
 
 ### `archive/`
 

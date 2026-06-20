@@ -5,9 +5,78 @@ the prompt:
 
 also update the related file like waktu-solat/CLAUDE.md, waktu-solat/developer.md, waktu-solat/developer.md and waktu-solat/README.md if necessary
 
-**Last updated:** 2026-06-16 (Session 11)
-**Files touched this session:** `waktu-solat/widget.html` (font + localStorage cache optimizations),
-root `index.html` (auto "Last updated" footer from GitHub API), root `CHANGELOG.md`.
+**Last updated:** 2026-06-20 (Session 12)
+**Files touched this session:** root `vercel.json` only — CORS/CSP header change for `/waktu-solat` paths.
+
+---
+
+## Vibe / dynamic check for Session 12 (most recent — read this first)
+
+Short, frustration-driven debugging session. The user hit an embed blocker when trying to
+embed the widget using "Embed from the web" in an external platform (screenshot: Google Sites-style
+dialog saying "Can't embed due to provider site permissions" for `https://dev.mamtj6.com/waktu-solat/widget?zone=PHG03`).
+Their first instinct was to blame Cloudflare and revert to Squarespace — but the actual
+cause had nothing to do with Cloudflare.
+
+### What actually happened
+
+The `Content-Security-Policy: frame-ancestors` in the **ROOT `vercel.json`** (not
+`waktu-solat/vercel.json`, which is `{}`) was locking the widget to only three specific
+parent origins: `mamtj6.com`, `www.mamtj6.com`, `dev.mamtj6.com`. That CSP was added
+during the REVERSE_PROXY_FIX session to solve the Cloudflare Worker + `www.mamtj6.com`
+embedding issue. It fixed THAT problem but silently blocked every OTHER embedding
+context (Google Sites, Squarespace, Xibo, etc.).
+
+The Cloudflare Worker setup is unrelated — the widget's canonical URL is
+`https://dev.mamtj6.com/waktu-solat/widget`, served directly by Vercel, and it was
+Vercel's own response headers doing the blocking.
+
+### Fix
+
+Removed `frame-ancestors` CSP entirely and opened `Access-Control-Allow-Origin` from
+`https://www.mamtj6.com` → `*` in root `vercel.json`. Widget is now embeddable anywhere.
+
+```json
+{
+  "source": "/waktu-solat",
+  "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
+},
+{
+  "source": "/waktu-solat/(.*)",
+  "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
+}
+```
+
+The user confirmed intent with `AskUserQuestion` → selected **"Both / anywhere"** without
+hesitation. No reason to restrict a mosque prayer widget to specific parent origins.
+
+### Key architectural note for next-you
+
+**Two `vercel.json` files exist in this repo:**
+- `waktu-solat/vercel.json` → `{}` (empty — no rewrites, no headers, nothing active)
+- ROOT `vercel.json` → controls `cleanUrls`, `trailingSlash`, AND the `/waktu-solat`
+  CORS/CSP headers
+
+If embedding breaks again, go straight to ROOT `vercel.json`. The REVERSE_PROXY_FIX.md
+explains the full history but the TL;DR is: that doc's CSP was correct for `www.mamtj6.com`
+only; it was too narrow for a widget meant to be embedded anywhere.
+
+### State of the world going into next session
+
+- ROOT `vercel.json` `/waktu-solat` + `/waktu-solat/(.*)` headers: `Access-Control-Allow-Origin: *`,
+  NO `frame-ancestors`. Widget is embeddable from any site.
+- Cloudflare Worker (`www.mamtj6.com/waktu-solat` → proxies `dev.mamtj6.com/waktu-solat`) — **UNCHANGED**.
+- No HTML/JS/CSS edits. SW CACHE_NAME stays at `v1.6.7`. No cache bump needed.
+- Deploy to Vercel to activate.
+
+### Mood
+
+Mild user frustration ("it make so much problem when using cloudflare") that turned out
+to be a misdirected diagnosis — Cloudflare was innocent, the overly narrow CSP from a
+prior session was the culprit. One `AskUserQuestion`, one file edit, done in under five
+minutes of actual work. Low ceremony throughout. Match this energy if someone comes in
+hot about an embed not working — diagnose the CSP/CORS headers in root `vercel.json`
+before touching anything else.
 
 ---
 
