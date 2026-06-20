@@ -5,15 +5,13 @@
     {
       "source": "/waktu-solat",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://www.mamtj6.com" },
-        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self' https://mamtj6.com https://www.mamtj6.com https://dev.mamtj6.com" }
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     },
     {
       "source": "/waktu-solat/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://www.mamtj6.com" },
-        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self' https://mamtj6.com https://www.mamtj6.com https://dev.mamtj6.com" }
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
   ]

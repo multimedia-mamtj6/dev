@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      background-color: #f4f5f7;
+      color: #172b4d;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      margin: 0;
+      padding: 2em 1em;
+    }
+
+    .container {
+      background: white;
+      padding: 2em;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h2 { margin-top: 0; font-size: 1.6em; }
+
+    p { color: #5e6c84; font-size: 1em; line-height: 1.5; }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1em;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      margin-bottom: 1.2em;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1em;
+      font-weight: bold;
+      color: white;
+      background-color: #0052cc;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover { background-color: #0065ff; }
+    button:disabled { background-color: #a5adba; cursor: not-allowed; }
+
+    #status {
+      margin-top: 1.2em;
+      font-weight: bold;
+      min-height: 22px;
+    }
+
+    #progressLog {
+      margin-top: 1em;
+      text-align: left;
+      background: #f4f5f7;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 0.8em 1em;
+      font-family: monospace;
+      font-size: 0.85em;
+      line-height: 1.7;
+      max-height: 280px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 4px solid #0052cc;
+      width: 22px;
+      height: 22px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>GitHub Sync Control Panel (Poster 1920×1080)</h2>
+    <p>Enter your secret key to start the sync process from Google Drive to GitHub.</p>
+
+    <form id="syncForm" onsubmit="event.preventDefault(); handleFormSubmit();">
+      <input type="password" id="secretKey" placeholder="Enter your secret key" required>
+      <button type="submit" id="syncButton">Sync Files Now</button>
+    </form>
+
+    <div id="status"></div>
+    <div id="progressLog"></div>
+  </div>
+
+  <script>
+    let pollInterval = null;
+
+    function handleFormSubmit() {
+      const key = document.getElementById('secretKey').value;
+      const button = document.getElementById('syncButton');
+      const statusDiv = document.getElementById('status');
+      const logDiv = document.getElementById('progressLog');
+
+      button.disabled = true;
+      statusDiv.innerHTML = '<div class="loader"></div>Syncing...';
+      logDiv.style.display = 'block';
+      logDiv.innerHTML = '';
+
+      startPolling();
+
+      google.script.run
+        .withSuccessHandler(onSuccess)
+        .withFailureHandler(onFailure)
+        .runSyncWithKey(key);
+    }
+
+    function startPolling() {
+      pollInterval = setInterval(function () {
+        google.script.run
+          .withSuccessHandler(updateLog)
+          .withFailureHandler(function (err) {
+            clearInterval(pollInterval);
+            document.getElementById('progressLog').innerHTML += '<div>⚠️ Progress unavailable: ' + err.message + '</div>';
+          })
+          .getProgress();
+      }, 1500);
+    }
+
+    function updateLog(messages) {
+      if (!messages || !messages.length) return;
+      const logDiv = document.getElementById('progressLog');
+      logDiv.innerHTML = messages.map(function (m) {
+        return '<div>' + m + '</div>';
+      }).join('');
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function onSuccess(message) {
+      clearInterval(pollInterval);
+      // Final poll to flush remaining log messages before showing the done status
+      google.script.run
+        .withSuccessHandler(function (messages) {
+          updateLog(messages);
+          document.getElementById('status').innerHTML = message;
+          document.getElementById('syncButton').disabled = false;
+        })
+        .withFailureHandler(function () {
+          // Final poll failed — still show the result and re-enable the button
+          document.getElementById('status').innerHTML = message;
+          document.getElementById('syncButton').disabled = false;
+        })
+        .getProgress();
+    }
+
+    function onFailure(error) {
+      clearInterval(pollInterval);
+      google.script.run
+        .withSuccessHandler(function (messages) {
+          updateLog(messages);
+          document.getElementById('status').innerHTML = '❌ Error: ' + error.message;
+          document.getElementById('syncButton').disabled = false;
+        })
+        .withFailureHandler(function () {
+          // Final poll failed — still show the error and re-enable the button
+          document.getElementById('status').innerHTML = '❌ Error: ' + error.message;
+          document.getElementById('syncButton').disabled = false;
+        })
+        .getProgress();
+    }
+  </script>
+</body>
+
+</html>

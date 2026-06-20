@@ -1,6 +1,7 @@
 /**
  * @OnlyCurrentDoc
- * VERSION 6.0: Public Holiday Feature & Full Automation
+ * VERSION 6.1: Empty Row Filtering
+ * - Skips rows in Schedule sheet where the Date column is empty.
  * - Reads a 'Cuti Umum' column from the Schedule sheet.
  * - Automatically generates month/year title and last-updated date.
  * - Creates a structured JSON object with metadata and the schedule list.
@@ -15,7 +16,7 @@ const SCRIPT_PROP_KEYS = {
     username: 'GITHUB_USERNAME', //multimedia-mamtj6 
     repo: 'GITHUB_REPO', //dev
     token: 'GITHUB_TOKEN',
-    baseUrl: 'IMAGE_BASE_URL', //https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/
+    baseUrl: 'IMAGE_BASE_URL', //https://multimedia.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/
     secretKey: 'SECRET_KEY' // update
   };
   
@@ -151,7 +152,7 @@ const SCRIPT_PROP_KEYS = {
         };
       };
   
-      const senaraiHari = scheduleData.map(row => {
+      const senaraiHari = scheduleData.filter(row => row[dateIndex]).map(row => {
         const dateValue = row[dateIndex];
         const subuhShortName = row[subuhIndex];
         const maghribShortName = row[maghribIndex];
