@@ -1,5 +1,12 @@
 # developer.md — handoff notes for next-window me
 
+> **Update**: a newer, shorter session happened after everything below — see
+> `khutbah/DEV_NOTES.md` for that one. Short version: `index.html` now exists
+> (copy of `paparan-tajuk.html`, made by the user) and is the new
+> live/primary page; a CSV-quoting bug that truncated sermon titles at
+> embedded commas was found and fixed there only. Everything below is still
+> valid history/context, just predates `index.html` existing.
+
 ## Where we are right now
 
 We've been heads-down in `khutbah/` for this whole session — the Mimbar Jumaat

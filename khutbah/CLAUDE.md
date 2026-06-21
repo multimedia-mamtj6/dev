@@ -16,8 +16,9 @@ Same as the parent project: pure static HTML, no build tools. Each page is fully
 
 ## Files
 
-- `paparan-tajuk.html` — Standalone full-screen display (centered card layout, spinner shown while loading, "Loading..."/"TIADA DATA"/"ERROR" states).
-- `beta-paparan-tajuk.html` — Variant tuned for embedding inside a Google Sites iframe (`height: 100vh`/`100vw`, `overflow: hidden`, no scrollbars, no loading/error text states).
+- `index.html` — **Current/primary display page.** Copy of `paparan-tajuk.html` with a CSV-quoting fix (see Key Patterns below); this is the one actively maintained going forward.
+- `paparan-tajuk.html` — Legacy standalone full-screen display (centered card layout, spinner shown while loading, "Loading..."/"TIADA DATA"/"ERROR" states). Kept as-is; superseded by `index.html`. Still has the unfixed CSV-quoting bug.
+- `beta-paparan-tajuk.html` — Variant tuned for embedding inside a Google Sites iframe (`height: 100vh`/`100vw`, `overflow: hidden`, no scrollbars, no loading/error text states). Likely has the same unfixed CSV-quoting bug (not yet verified).
 - `google_app_script/` — Placeholder `.gs` files (`gettajukkhutbah.gs`, `KhutbahLinkGenerator.gs`, `refresh.gs`) for future Apps Script automation; currently empty.
 
 ## Data Format
@@ -33,5 +34,6 @@ The CSV URL is hardcoded as `sheetURL` in each file's `<script>`. To change the 
 ## Key Patterns
 
 - **Auto font-sizing**: `.main-text` font size is adjusted based on text length (and, in the beta version, by shrinking the font in a loop until it fits its container) so long sermon titles don't overflow.
+- **CSV parsing**: `index.html` uses a quote-aware `parseCSVRow(line)` helper instead of a plain `row.split(",")`. Google Sheets' CSV export wraps any field containing a comma in double quotes — a naive `split(",")` truncates those fields at the embedded comma (e.g. a title like `Ibadah Zakat, Wakaf dan Sedekah...` would render as just `Ibadah Zakat`). `paparan-tajuk.html`/`beta-paparan-tajuk.html` still use the naive split and have this bug; if porting fixes, copy `parseCSVRow()` verbatim from `index.html`.
 - **Polling**: data is re-fetched every 60s; if the fetched row is identical to the last one (`lastFetchedData`), the DOM is left unchanged to avoid unnecessary re-renders/flicker.
 - **Responsive**: `paparan-tajuk.html` has a `@media (max-width: 768px)` block for mobile sizing; `beta-paparan-tajuk.html` instead uses viewport-relative units (`vh`/`vw`/`clamp()`) throughout, so no separate mobile breakpoint is needed.
