@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN JUN 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 20/6/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 23/6/2026"
   },
   "senaraiHari": [
     {
@@ -253,11 +253,7 @@
     {
       "date": "2026-06-26",
       "subuh": null,
-      "maghrib": {
-        "nama_penceramah": "Ustaz Wahid",
-        "tajuk_kuliah": "Umum & Semasa",
-        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/13_12.-Ustaz-Wahid-Ghaffar.jpg"
-      },
+      "maghrib": null,
       "cuti_umum": null
     },
     {
