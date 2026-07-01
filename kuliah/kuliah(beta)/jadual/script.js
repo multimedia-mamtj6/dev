@@ -82,7 +82,20 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
         const row = document.createElement('tr');
         const weekCell = document.createElement('td');
         weekCell.className = 'week-number-cell';
-        weekCell.textContent = `MINGGU ${i + 1}`;
+        const weekLabel = document.createElement('div');
+        weekLabel.className = 'week-label';
+        [...'MINGGU'].forEach(ch => {
+            const span = document.createElement('span');
+            span.textContent = ch;
+            weekLabel.appendChild(span);
+        });
+        const spacer = document.createElement('span');
+        spacer.innerHTML = '&nbsp;';
+        weekLabel.appendChild(spacer);
+        const numSpan = document.createElement('span');
+        numSpan.textContent = String(i + 1);
+        weekLabel.appendChild(numSpan);
+        weekCell.appendChild(weekLabel);
         row.appendChild(weekCell);
 
         for (let j = 0; j < 7; j++) {
