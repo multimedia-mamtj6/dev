@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&display=swap');
 
 /* =========================================================
    Masjid Al-Mukhlisin — Jadual Kuliah
@@ -51,7 +52,7 @@ body {
     flex-direction: column;
     height: 100vh;
     width: 100%;
-    padding: 1.2vmin 1.6vmin;
+    padding: 1.2vmin 2.08vmin;
 }
 
 /* =========================================================
@@ -63,6 +64,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 1.6vmin;
+    padding-top: 2.6vmin;
     padding-bottom: 1vmin;
     flex-shrink: 0;
 }
@@ -139,6 +141,11 @@ main {
     height: 3.2vmin;
 }
 
+/* First header cell governs the week column width (table-layout: fixed) */
+.schedule-table thead th:first-child {
+    width: 2.4%;
+}
+
 /* Week-number column */
 .week-number-cell {
     width: 2.4%;
@@ -178,7 +185,7 @@ main {
     position: absolute;
     top: 0.2vmin;
     left: 0.5vmin;
-    font-size: 2.5vmin;
+    font-size: 2.375vmin;
     font-weight: 700;
     color: var(--date-number-color);
     z-index: 3;
@@ -232,6 +239,11 @@ main {
 
 .lecture-content.is-empty-slot {
     background-color: var(--empty-cell-bg);
+}
+
+/* Yasiin & Tahlil — green cell, white text */
+.lecture-content:has(.yasin-block) {
+    background-color: #c3ffc5;
 }
 
 /* Adjacent lecture blocks separated by a soft divider */
@@ -308,17 +320,17 @@ main {
 }
 
 .arabic-text {
-    font-family: 'Times New Roman', serif;
-    font-size: 4.5vmin;
+    font-family: 'Scheherazade New', 'Times New Roman', serif;
+    font-size: 2.36vmin;
     line-height: 1.15;
-    color: #111;
+    color: #000000;
 }
 
 .yasin-title {
     font-weight: 700;
     font-size: 1.4vmin;
     letter-spacing: 0.04em;
-    color: #1c1c1c;
+    color: #000000;
 }
 
 /* =========================================================
@@ -327,6 +339,17 @@ main {
 /* --- DEFAULT (live) --- */
 .day-cell.is-today {
     background-color: var(--today-highlight-bg);
+}
+
+/* Glow drawn as an overlay ABOVE the white lecture-content layer */
+.day-cell.is-today::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 0.3vmin var(--today-highlight-bg),
+                inset 0 0 0.5vmin 0.08vmin rgba(241, 228, 44, 0.85);
 }
 
 /* --- OPTION A — soft amber, left accent bar ---
@@ -593,3 +616,4 @@ main {
         font-size: 7pt;
     }
 }
+

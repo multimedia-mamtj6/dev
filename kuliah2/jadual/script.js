@@ -33,10 +33,16 @@ const EMBEDDED_DATA = {
         { "date": "2026-07-17", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Muhammad Fathmi", "tajuk_kuliah": "Syarah Hadis 40 Imam Nawawi", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-18", "subuh": { "nama_penceramah": "Ustaz Abd Maarof", "tajuk_kuliah": "Penawar Hati", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Nawawi", "tajuk_kuliah": "Ringkasan Riyadhus Solihin", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-19", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Amir", "tajuk_kuliah": "Kitab Fekah: Syarah Safinah An-Naja", "poster_url": "" }, "cuti_umum": null },
+        { "date": "2026-07-20", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Ahmad Termizi", "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-21", "subuh": null, "maghrib": null, "cuti_umum": null },
+        { "date": "2026-07-22", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Mohd Fikri", "tajuk_kuliah": "Pedoman Sembahyang Berjemaah", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-23", "subuh": null, "maghrib": { "nama_penceramah": "Bacaan Yasiin & Tahlil", "tajuk_kuliah": "-", "poster_url": "" }, "cuti_umum": null },
+        { "date": "2026-07-24", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Wahid", "tajuk_kuliah": "Umum & Semasa", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-25", "subuh": { "nama_penceramah": "Ustaz Abd Maarof", "tajuk_kuliah": "Penawar Hati", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Nawawi", "tajuk_kuliah": "Ringkasan Riyadhus Solihin", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-26", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": null, "cuti_umum": null },
+        { "date": "2026-07-27", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Ahmad Termizi", "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran", "poster_url": "" }, "cuti_umum": null },
+        { "date": "2026-07-28", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Abdul Aziz", "tajuk_kuliah": "Terjemahan Al-Azkar Imam An-Nawawi", "poster_url": "" }, "cuti_umum": null },
+        { "date": "2026-07-29", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Hairul Azam", "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-30", "subuh": null, "maghrib": { "nama_penceramah": "Tuan Haji Hazarudin", "tajuk_kuliah": "Terjemahan Inti Sari Matan Al-Zubad", "poster_url": "" }, "cuti_umum": null },
         { "date": "2026-07-31", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Anuar Suhaimi", "tajuk_kuliah": "132 Langkah Penyucian Jiwa", "poster_url": "" }, "cuti_umum": null }
     ]
@@ -144,7 +150,6 @@ function buildDayCell(dayNumber, year, month, dataByDate, todayString) {
 
     // STATE 4 — full-day empty
     if (!subuh && !maghrib) {
-        cellClass += ' empty-cell';
         return `<td class="${cellClass}">
                     ${inner}
                     <div class="lecture-content is-empty-slot">
@@ -268,3 +273,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
