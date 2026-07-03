@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN JUN 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 2/7/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 3/7/2026"
   },
   "senaraiHari": [
     {
@@ -463,7 +463,11 @@
     {
       "date": "2026-07-17",
       "subuh": null,
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Mohd Firdaus Azmy",
+        "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Anfal",
+        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/09_8.-Ustaz-Mohd-Firdaus-Azmy.jpg"
+      },
       "cuti_umum": null
     },
     {
