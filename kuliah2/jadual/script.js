@@ -3,52 +3,10 @@
    Vanilla JS (ES6+). Renders desktop table for browser + Xibo.
    ========================================================= */
 
-/* ---------------------------------------------------------
-   Embedded sample data (July 2026).
-   Used as a fallback when the live JSON endpoint is
-   unreachable (e.g. local preview / offline signage boot).
-   --------------------------------------------------------- */
-const EMBEDDED_DATA = {
-    "infoJadual": {
-        "tajukBulan": "BULAN JULAI 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 29/6/2026"
-    },
-    "senaraiHari": [
-        { "date": "2026-07-01", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Hairul Azam", "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-02", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Mohd Firdaus Azmy", "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Anfal", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-03", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Nazir", "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-04", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": null, "cuti_umum": null },
-        { "date": "2026-07-05", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Amir", "tajuk_kuliah": "Kitab Fekah: Syarah Safinah An-Naja", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-06", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Hisyamuddin", "tajuk_kuliah": "Nasihat Agama dan Wasiat Iman", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-07", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Shahruwardi", "tajuk_kuliah": "Tuhfah Ar-Raghibin", "poster_url": "" }, "cuti_umum": "Hari Kebangsaan" },
-        { "date": "2026-07-08", "subuh": null, "maghrib": { "nama_penceramah": "YAA Dato' Sri Haji Abdul Rahman", "tajuk_kuliah": "Fekah Kesihatan Dalam Ibadah Dan Sunnah Nabi", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-09", "subuh": null, "maghrib": { "nama_penceramah": "Bacaan Yasiin & Tahlil", "tajuk_kuliah": "-", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-10", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Muhammad Fathmi", "tajuk_kuliah": "Syarah Hadis 40 Imam Nawawi", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-11", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Nawawi", "tajuk_kuliah": "Ringkasan Riyadhus Solihin", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-12", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Amir", "tajuk_kuliah": "Kitab Fekah: Syarah Safinah An-Naja", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-13", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Hisyamuddin", "tajuk_kuliah": "Nasihat Agama dan Wasiat Iman", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-14", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Ahmad Termizi", "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-15", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Mohd Firdaus Azmy", "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Anfal", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-16", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Nazir", "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-17", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Muhammad Fathmi", "tajuk_kuliah": "Syarah Hadis 40 Imam Nawawi", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-18", "subuh": { "nama_penceramah": "Ustaz Abd Maarof", "tajuk_kuliah": "Penawar Hati", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Nawawi", "tajuk_kuliah": "Ringkasan Riyadhus Solihin", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-19", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Amir", "tajuk_kuliah": "Kitab Fekah: Syarah Safinah An-Naja", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-20", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Ahmad Termizi", "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-21", "subuh": null, "maghrib": null, "cuti_umum": null },
-        { "date": "2026-07-22", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Mohd Fikri", "tajuk_kuliah": "Pedoman Sembahyang Berjemaah", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-23", "subuh": null, "maghrib": { "nama_penceramah": "Bacaan Yasiin & Tahlil", "tajuk_kuliah": "-", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-24", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Wahid", "tajuk_kuliah": "Umum & Semasa", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-25", "subuh": { "nama_penceramah": "Ustaz Abd Maarof", "tajuk_kuliah": "Penawar Hati", "poster_url": "" }, "maghrib": { "nama_penceramah": "Ustaz Nawawi", "tajuk_kuliah": "Ringkasan Riyadhus Solihin", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-26", "subuh": { "nama_penceramah": "Ustaz Badrul Hisham", "tajuk_kuliah": "Fadilat Sedekah", "poster_url": "" }, "maghrib": null, "cuti_umum": null },
-        { "date": "2026-07-27", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Ahmad Termizi", "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-28", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Abdul Aziz", "tajuk_kuliah": "Terjemahan Al-Azkar Imam An-Nawawi", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-29", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Hairul Azam", "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-30", "subuh": null, "maghrib": { "nama_penceramah": "Tuan Haji Hazarudin", "tajuk_kuliah": "Terjemahan Inti Sari Matan Al-Zubad", "poster_url": "" }, "cuti_umum": null },
-        { "date": "2026-07-31", "subuh": null, "maghrib": { "nama_penceramah": "Ustaz Anuar Suhaimi", "tajuk_kuliah": "132 Langkah Penyucian Jiwa", "poster_url": "" }, "cuti_umum": null }
-    ]
-};
 
 const DAY_NAMES = ['AHAD', 'ISNIN', 'SELASA', 'RABU', 'KHAMIS', 'JUMAAT', 'SABTU'];
+
+let cachedSenaraiHari = null;
 
 /* ---------------------------------------------------------
    Helpers
@@ -70,14 +28,9 @@ function escapeHtml(str) {
    Data fetch
    --------------------------------------------------------- */
 async function fetchScheduleData() {
-    try {
-        const response = await fetch(`/kuliah/data/jadual_lengkap.json?v=${new Date().getTime()}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-    } catch (err) {
-        console.warn('Live JSON unavailable, using embedded data.', err);
-        return EMBEDDED_DATA;
-    }
+    const response = await fetch(`/kuliah/data/jadual_lengkap.json?v=${new Date().getTime()}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
 }
 
 /* ---------------------------------------------------------
@@ -100,8 +53,10 @@ function createLectureBlock(type, sessionData) {
             </div>`;
 }
 
-function createEmptyLectureBlock() {
+function createEmptyLectureBlock(type) {
+    const label = type === 'subuh' ? 'Subuh' : 'Maghrib';
     return `<div class="lecture-block is-weekend-empty">
+                <div class="lecture-time ${type}">${label}</div>
                 <div class="empty-slot-text">Slot Kosong</div>
             </div>`;
 }
@@ -165,14 +120,14 @@ function buildDayCell(dayNumber, year, month, dataByDate, todayString) {
     if (subuh) {
         blocks += createLectureBlock('subuh', subuh);
     } else if (isWeekend) {
-        blocks += createEmptyLectureBlock();
+        blocks += createEmptyLectureBlock('subuh');
     }
 
     // Maghrib
     if (maghrib) {
         blocks += createLectureBlock('maghrib', maghrib);
     } else if (isWeekend) {
-        blocks += createEmptyLectureBlock();
+        blocks += createEmptyLectureBlock('maghrib');
     }
 
     inner += `<div class="lecture-content">${blocks}</div>`;
@@ -235,6 +190,235 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
 }
 
 /* ---------------------------------------------------------
+   Mobile lecture block builder (returns HTML string)
+   --------------------------------------------------------- */
+function createMobileLectureBlock(time, lecture) {
+    const badgeClass = time.toLowerCase();
+    if (lecture.nama_penceramah && lecture.nama_penceramah.indexOf('Yasiin') !== -1) {
+        return `<div class="lecture-block-v2">
+                    <span class="session-badge ${badgeClass}">${time}</span>
+                    <div class="lecture-ustaz" lang="ar" dir="rtl" style="font-size:1.1rem;text-align:right;">باچاءن يسٓ دان تهليل</div>
+                    <div class="lecture-tajuk">BACAAN YASIIN &amp; TAHLIL</div>
+                </div>`;
+    }
+    return `<div class="lecture-block-v2">
+                <span class="session-badge ${badgeClass}">${time}</span>
+                <div class="lecture-ustaz">${escapeHtml(lecture.nama_penceramah)}</div>
+                <div class="lecture-tajuk">${escapeHtml(lecture.tajuk_kuliah)}</div>
+            </div>`;
+}
+
+/* ---------------------------------------------------------
+   Mobile view — monthly card list
+   --------------------------------------------------------- */
+async function initializeMobileView(senaraiHari, targetDate) {
+    const mobileListContainer = document.getElementById('mobile-card-list');
+    if (!mobileListContainer) return;
+
+    const today = new Date();
+    const isCurrentMonth = targetDate.getMonth() === today.getMonth() &&
+                           targetDate.getFullYear() === today.getFullYear();
+
+    if (isCurrentMonth) {
+        await renderTodayCard(senaraiHari);
+    } else {
+        const todayCard = document.getElementById('today-kuliah-card');
+        if (todayCard) todayCard.style.display = 'none';
+    }
+
+    const daysInMalay = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+    const monthNames = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
+                        'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+    const targetMonth = targetDate.getMonth();
+    const targetYear  = targetDate.getFullYear();
+
+    const days = senaraiHari.filter(d => {
+        const date = new Date(d.date + 'T00:00:00');
+        return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+    });
+
+    const emptyCards = [];
+
+    days.forEach(dayData => {
+        const currentDate = new Date(dayData.date + 'T00:00:00');
+        if (isCurrentMonth && currentDate.toDateString() === today.toDateString()) return;
+
+        const isEmpty = !dayData.subuh && !dayData.maghrib;
+        const card = document.createElement('div');
+        card.className = 'mobile-card-v2' + (dayData.cuti_umum ? ' is-holiday' : '');
+
+        const dayName    = daysInMalay[currentDate.getDay()];
+        const dateNum    = `${currentDate.getDate()} ${monthNames[currentDate.getMonth()]}`;
+        const holidayPill = dayData.cuti_umum
+            ? `<span class="mobile-holiday-label">${escapeHtml(dayData.cuti_umum)}</span>` : '';
+
+        let bodyHtml = '';
+        if (isEmpty) {
+            bodyHtml = `<div class="empty-slot-v2">Tiada kuliah</div>`;
+        } else {
+            if (dayData.subuh)   bodyHtml += createMobileLectureBlock('Subuh', dayData.subuh);
+            if (dayData.maghrib) bodyHtml += createMobileLectureBlock('Maghrib', dayData.maghrib);
+        }
+
+        card.innerHTML = `
+            <div class="card-date-header-v2">
+                <span class="card-day-label">${dayName}${holidayPill}</span>
+                <span class="card-date-number">${dateNum}</span>
+            </div>
+            <div class="card-body-v2">${bodyHtml}</div>`;
+
+        if (isEmpty) {
+            emptyCards.push(card);
+        } else {
+            mobileListContainer.appendChild(card);
+        }
+    });
+
+    if (emptyCards.length > 0) {
+        const toggle = document.createElement('button');
+        toggle.className = 'show-empty-toggle';
+        toggle.textContent = `Tunjuk ${emptyCards.length} hari tiada kuliah ▾`;
+        toggle.addEventListener('click', () => {
+            emptyCards.forEach(c => mobileListContainer.appendChild(c));
+            toggle.remove();
+        });
+        mobileListContainer.appendChild(toggle);
+    }
+}
+
+/* ---------------------------------------------------------
+   Mobile view — today / tomorrow card
+   --------------------------------------------------------- */
+async function renderTodayCard(senaraiHari, selectedDay = 'today') {
+    const todayContainer = document.getElementById('today-kuliah-card');
+    if (!todayContainer) return;
+
+    cachedSenaraiHari = senaraiHari;
+    todayContainer.classList.add('is-today-card');
+
+    const today = new Date();
+    const targetDate = new Date(today);
+    if (selectedDay === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1);
+
+    const targetDateString = `${targetDate.getFullYear()}-${pad2(targetDate.getMonth() + 1)}-${pad2(targetDate.getDate())}`;
+    const targetData = senaraiHari.find(d => d.date === targetDateString);
+
+    const iframeSuffix = selectedDay === 'tomorrow' ? 'tomorrow' : 'today';
+
+    let cardBody = '';
+    if (targetData && (targetData.subuh || targetData.maghrib)) {
+        if (targetData.subuh) {
+            cardBody += createMobileLectureBlock('Subuh', targetData.subuh);
+            cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_subuh.html" loading="lazy" scrolling="no"></iframe></div></div>`;
+        }
+        if (targetData.maghrib) {
+            cardBody += createMobileLectureBlock('Maghrib', targetData.maghrib);
+            cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_maghrib.html" loading="lazy" scrolling="no"></iframe></div></div>`;
+        }
+    } else if (selectedDay === 'tomorrow' && !targetData) {
+        cardBody = `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
+    } else {
+        const dayLabel = selectedDay === 'tomorrow' ? 'esok' : 'hari ini';
+        cardBody = `<div class="no-kuliah-today">Tiada kuliah dijadualkan ${dayLabel}.</div>`;
+    }
+
+    const holidayHtml = targetData && targetData.cuti_umum
+        ? `<span class="mobile-holiday-label">${escapeHtml(targetData.cuti_umum)}</span>` : '';
+
+    todayContainer.innerHTML = `
+        <div class="today-card-top-bar"></div>
+        <div class="today-card-header">
+            <div class="day-select-wrapper">
+                <select class="day-select">
+                    <option value="today" ${selectedDay === 'today' ? 'selected' : ''}>Hari Ini</option>
+                    <option value="tomorrow" ${selectedDay === 'tomorrow' ? 'selected' : ''}>Hari Esok</option>
+                </select>
+            </div>
+            <div class="today-date-right">
+                <div id="today-date-gregorian">Memuatkan tarikh...</div>
+                <div id="today-date-hijri"></div>
+            </div>
+            ${holidayHtml}
+        </div>
+        <div class="today-card-body">${cardBody}</div>`;
+
+    todayContainer.querySelector('.day-select').addEventListener('change', async function () {
+        await renderTodayCard(cachedSenaraiHari, this.value);
+    });
+
+    await loadHijriDate(targetDate);
+}
+
+/* ---------------------------------------------------------
+   Hijri date — JAKIM API with JS calculator fallback
+   --------------------------------------------------------- */
+function gregorianToHijri(date) {
+    const d = date.getDate(), m = date.getMonth() + 1, y = date.getFullYear();
+    const a  = Math.floor((14 - m) / 12);
+    const yj = y + 4800 - a, mj = m + 12 * a - 3;
+    const jd = d + Math.floor((153 * mj + 2) / 5) + 365 * yj +
+               Math.floor(yj / 4) - Math.floor(yj / 100) + Math.floor(yj / 400) - 32045;
+    const l  = jd - 1948440 + 10632;
+    const n  = Math.floor((l - 1) / 10631);
+    const l2 = l - 10631 * n + 354;
+    const j  = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
+               Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
+    const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+               Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+    const hMonth = Math.floor((24 * l3) / 709);
+    return { day: l3 - Math.floor((709 * hMonth) / 24), month: hMonth, year: 30 * n + j - 30 };
+}
+
+async function loadHijriDate(targetDate = new Date()) {
+    const elGreg  = document.getElementById('today-date-gregorian');
+    const elHijri = document.getElementById('today-date-hijri');
+    if (!elGreg) return;
+
+    const daysInMalay = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+    elGreg.textContent = `${daysInMalay[targetDate.getDay()]}, ${targetDate.getDate()} ${targetDate.toLocaleString('ms-MY', { month: 'long' })} ${targetDate.getFullYear()}`;
+
+    const hijriMonthNames = {
+        '01': 'Muharam', '02': 'Safar', '03': "Rabi'ul Awwal", '04': "Rabi'ul Akhir",
+        '05': 'Jamadil Awal', '06': 'Jamadil Akhir', '07': 'Rejab', '08': 'Syaaban',
+        '09': 'Ramadan', '10': 'Syawal', '11': 'Zulkaedah', '12': 'Zulhijah'
+    };
+
+    const calcFallback = () => {
+        const h  = gregorianToHijri(targetDate);
+        const mp = String(h.month).padStart(2, '0');
+        if (elHijri) elHijri.textContent = `${h.day} ${hijriMonthNames[mp]} ${h.year}H`;
+    };
+
+    try {
+        const isToday = targetDate.toDateString() === new Date().toDateString();
+        const resp = await fetch('https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01');
+        if (!resp.ok) throw new Error('API failed');
+        const data = await resp.json();
+
+        const day       = String(targetDate.getDate()).padStart(2, '0');
+        const mNames    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const targetStr = `${day}-${mNames[targetDate.getMonth()]}-${targetDate.getFullYear()}`;
+        let info = data.prayerTime.find(p => p.date === targetStr);
+
+        if (!info && !isToday) {
+            try {
+                const nm = targetDate.getMonth() + 1;
+                const ny = nm > 12 ? targetDate.getFullYear() + 1 : targetDate.getFullYear();
+                const am = nm > 12 ? 1 : nm;
+                const nr = await fetch(`https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${ny}&month=${am}`);
+                if (nr.ok) { const nd = await nr.json(); info = nd.prayerTime.find(p => p.date === targetStr); }
+            } catch (e) { /* silent */ }
+        }
+
+        if (!info) { calcFallback(); return; }
+        const hp = info.hijri.split('-');
+        if (elHijri) elHijri.textContent = `${parseInt(hp[2], 10)} ${hijriMonthNames[hp[1]]} ${hp[0]}H`;
+    } catch (e) {
+        calcFallback();
+    }
+}
+
+/* ---------------------------------------------------------
    Boot
    --------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -261,8 +445,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         titleEl.textContent = jsonData.infoJadual.tajukBulan || '';
     }
 
-    // 5. Render desktop calendar
+    // 5. Render desktop calendar + mobile view
     renderCalendarDesktop(jsonData.senaraiHari, baseDate);
+    await initializeMobileView(jsonData.senaraiHari, baseDate);
 
     // 6. Auto-print for PDF context
     if (urlParams.get('file') === 'pdf') {
