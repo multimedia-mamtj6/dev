@@ -469,7 +469,7 @@ main {
 
     .page-header {
         flex-direction: column;
-        padding-top: 1rem;
+        padding-top: 0.5rem;
         padding-bottom: 0.5rem;
         gap: 0.5rem;
     }
