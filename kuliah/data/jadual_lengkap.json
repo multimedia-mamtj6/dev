@@ -1,7 +1,7 @@
 {
   "infoJadual": {
     "tajukBulan": "BULAN JULAI 2026",
-    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 3/7/2026"
+    "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 4/7/2026"
   },
   "senaraiHari": [
     {
@@ -207,7 +207,11 @@
         "tajuk_kuliah": "Fadilat Sedekah",
         "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg"
       },
-      "maghrib": null,
+      "maghrib": {
+        "nama_penceramah": "Sdr Ahmad Syafiq Muhaimin",
+        "tajuk_kuliah": "Syamail Muhammadiah",
+        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/20_19.-Sdr.-Syafiq.jpg"
+      },
       "cuti_umum": null
     },
     {
