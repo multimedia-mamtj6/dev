@@ -138,7 +138,7 @@ module.exports = async function handler(req, res) {
         return res.status(500).json({ error: 'Server misconfiguration: missing GitHub env vars' });
     }
 
-    const filePath  = 'kuliah/data/jadual_lengkap.json';
+    const filePath  = 'kuliah/data/jadual_lengkap_beta.json';
     const ghHeaders = {
         'Authorization':        `Bearer ${githubToken}`,
         'Accept':               'application/vnd.github+json',
