@@ -29,14 +29,29 @@ async function requireAuth() {
 // Inject "Pengguna" nav link for super_admin (non-super admins never see it)
 function _injectSuperAdminNav() {
     if (currentAdmin?.role !== 'super_admin') return;
-    const nav = document.querySelector('nav');
-    if (!nav || nav.querySelector('a[href="users.html"]')) return;
-    const spacer = nav.querySelector('.spacer');
+    const navLinks = document.querySelector('.nav-links');
+    if (!navLinks || navLinks.querySelector('a[href="users.html"]')) return;
+    const spacer = navLinks.querySelector('.spacer');
     const link = document.createElement('a');
     link.href = 'users.html';
     link.textContent = 'Pengguna';
-    nav.insertBefore(link, spacer);
+    navLinks.insertBefore(link, spacer);
 }
+
+// Hamburger nav toggle (mobile)
+function toggleNav() {
+    const navLinks = document.querySelector('.nav-links');
+    if (navLinks) navLinks.classList.toggle('open');
+}
+
+// Close hamburger when a nav link is clicked
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-links a').forEach(a => {
+        a.addEventListener('click', () => {
+            document.querySelector('.nav-links')?.classList.remove('open');
+        });
+    });
+});
 
 async function signInWithGoogle() {
     const btn = document.getElementById('google-btn');

@@ -11,12 +11,15 @@
 </head>
 <body>
 
-<nav>
+<nav id="main-nav">
   <span class="brand">Admin Kuliah</span>
-  <a href="dashboard.html" class="active">Jadual</a>
-  <a href="ustaz.html">Penceramah</a>
-  <span class="spacer"></span>
-  <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+  <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+  <div class="nav-links">
+    <a href="dashboard.html" class="active">Jadual</a>
+    <a href="ustaz.html">Penceramah</a>
+    <span class="spacer"></span>
+    <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+  </div>
 </nav>
 
 <div class="page">
@@ -34,7 +37,7 @@
     </button>
   </div>
 
-  <!-- Calendar -->
+  <!-- Calendar (desktop) -->
   <div class="card" style="overflow-x:auto">
     <table class="calendar" id="calendar-table">
       <thead>
@@ -53,6 +56,9 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Calendar (mobile day list) -->
+  <div id="mobile-day-list" class="mobile-day-list"></div>
 
   <p style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-muted)">
     Klik mana-mana tarikh untuk mengedit kuliah atau menandakan cuti umum.

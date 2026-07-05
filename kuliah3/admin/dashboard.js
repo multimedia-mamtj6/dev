@@ -126,6 +126,44 @@ function renderCalendar() {
     }
 
     tbody.innerHTML = html;
+    renderMobileDayList();
+}
+
+// ─── Mobile day list (phone view, ≤640px) ─────────────────────────────────────
+function renderMobileDayList() {
+    const list = document.getElementById('mobile-day-list');
+    if (!list) return;
+
+    const today    = todayString();
+    const total    = lastDayOfMonth(currentYear, currentMonth);
+    const padMonth = String(currentMonth).padStart(2, '0');
+    let html = '';
+
+    for (let d = 1; d <= total; d++) {
+        const dateStr = `${currentYear}-${padMonth}-${String(d).padStart(2, '0')}`;
+        const row     = scheduleMap[dateStr];
+        const dow     = new Date(dateStr + 'T00:00:00').getDay();
+
+        let cls = 'mobile-day-card';
+        if (dateStr === today)  cls += ' is-today';
+        if (row?.cuti_umum)     cls += ' has-holiday';
+
+        const subuhName   = row?.subuh   ? escapeHtml(row.subuh.short_name   || row.subuh.full_name)   : null;
+        const maghribName = row?.maghrib ? escapeHtml(row.maghrib.short_name || row.maghrib.full_name) : null;
+
+        html += `<div class="${cls}" onclick="openModal('${dateStr}')">
+            <div class="mdc-date">${d}</div>
+            <div class="mdc-day">${HARI_MALAY[dow]}</div>
+            <div class="mdc-sessions">
+                ${row?.cuti_umum ? `<span class="mdc-holiday">${escapeHtml(row.cuti_umum)}</span>` : ''}
+                <span class="${subuhName ? 'mdc-s' : 'mdc-empty'}">S: ${subuhName || 'Tiada'}</span>
+                <span class="${maghribName ? 'mdc-m' : 'mdc-empty'}">M: ${maghribName || 'Tiada'}</span>
+            </div>
+            <div class="mdc-arrow">›</div>
+        </div>`;
+    }
+
+    list.innerHTML = html;
 }
 
 // ─── Month navigation ─────────────────────────────────────────────────────────

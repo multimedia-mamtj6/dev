@@ -11,13 +11,16 @@
 </head>
 <body>
 
-<nav>
+<nav id="main-nav">
   <span class="brand">Admin Kuliah</span>
-  <a href="dashboard.html">Jadual</a>
-  <a href="ustaz.html">Penceramah</a>
-  <a href="users.html" class="active">Pengguna</a>
-  <span class="spacer"></span>
-  <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+  <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+  <div class="nav-links">
+    <a href="dashboard.html">Jadual</a>
+    <a href="ustaz.html">Penceramah</a>
+    <a href="users.html" class="active">Pengguna</a>
+    <span class="spacer"></span>
+    <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+  </div>
 </nav>
 
 <div class="page">

@@ -48,14 +48,14 @@ function renderUsers() {
         }
 
         return `<tr>
-            <td>
+            <td data-label="E-mel">
                 ${escapeHtml(u.email)}
                 ${isSelf ? ' <span style="font-size:0.7rem;color:var(--text-muted)">(anda)</span>' : ''}
             </td>
-            <td>${escapeHtml(u.name || '—')}</td>
-            <td>${roleLabel}</td>
-            <td style="font-size:0.85rem">${permLabel}</td>
-            <td>
+            <td data-label="Nama">${escapeHtml(u.name || '—')}</td>
+            <td data-label="Peranan">${roleLabel}</td>
+            <td data-label="Kebenaran" style="font-size:0.85rem">${permLabel}</td>
+            <td data-label="">
                 <div class="actions">
                     <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(u.email)}')">Edit</button>
                     ${!isSelf

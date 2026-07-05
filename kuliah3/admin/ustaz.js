@@ -35,16 +35,16 @@ function renderTable() {
 
     tbody.innerHTML = allUstaz.map(u => `
         <tr>
-            <td>
+            <td data-label="Poster">
                 ${u.poster_url
                     ? `<img src="${escapeHtml(u.poster_url)}" class="poster-thumb" alt="Poster ${escapeHtml(u.short_name)}" loading="lazy">`
                     : `<div class="no-poster">Tiada poster</div>`
                 }
             </td>
-            <td><strong>${escapeHtml(u.full_name)}</strong></td>
-            <td style="color:var(--text-muted)">${escapeHtml(u.short_name)}</td>
-            <td style="color:var(--text-muted);font-size:0.8125rem">${escapeHtml(u.tajuk_kuliah || '—')}</td>
-            <td>
+            <td data-label="Nama Penuh"><strong>${escapeHtml(u.full_name)}</strong></td>
+            <td data-label="Nama Ringkas" style="color:var(--text-muted)">${escapeHtml(u.short_name)}</td>
+            <td data-label="Tajuk Kuliah" style="color:var(--text-muted);font-size:0.8125rem">${escapeHtml(u.tajuk_kuliah || '—')}</td>
+            <td data-label="">
                 <div class="actions">
                     <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(u.id)}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(u.id)}', '${escapeHtml(u.full_name)}')">Padam</button>
