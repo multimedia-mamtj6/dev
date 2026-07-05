@@ -1,0 +1,18 @@
+{
+  "infoJadual": {
+    "tajukBulan": "BULAN JULAI 2026",
+    "tarikhKemasKini": "*Dikemaskini melalui Admin Dashboard pada 5/7/2026"
+  },
+  "senaraiHari": [
+    {
+      "date": "2026-07-01",
+      "subuh": null,
+      "maghrib": {
+        "nama_penceramah": "Ustaz Nawawi",
+        "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
+      },
+      "cuti_umum": "cutii"
+    }
+  ]
+}
