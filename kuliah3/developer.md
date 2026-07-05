@@ -144,10 +144,10 @@ Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
   "headers": [
     {
       "source": "/kuliah3/admin/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
   ]
 }
 ```
 
-Forces revalidation on every visit — mobile browsers won't serve stale CSS/JS after deploys.
+`no-store` (not `max-age=0, must-revalidate`) is required here — `must-revalidate` still lets mobile Chrome serve the page from back-forward cache (bfcache) with no network request at all, so a stale copy with old JS can resurface after backgrounding the app or navigating back. `no-store` disables bfcache for these routes and forces a full re-fetch every visit.

@@ -5,7 +5,13 @@
     {
       "source": "/kuliah3/admin/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/kuliah3/jadual/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
       ]
     },
     {
