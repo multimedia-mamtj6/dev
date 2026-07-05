@@ -75,7 +75,7 @@ module.exports = async function handler(req, res) {
     );
     if (!ustazRes.ok) {
         const err = await ustazRes.text();
-        return res.status(500).json({ error: 'Failed to fetch ustaz from Supabase', details: err });
+        return res.status(500).json({ error: 'Failed to fetch ustaz from Supabase', status: ustazRes.status, details: err });
     }
     const ustazList = await ustazRes.json();
     const ustazMap  = Object.fromEntries(ustazList.map(u => [u.id, u]));

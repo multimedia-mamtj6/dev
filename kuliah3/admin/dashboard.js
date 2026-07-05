@@ -247,7 +247,8 @@ async function publishMonth() {
         const data = await res.json();
 
         if (!res.ok) {
-            showToast('Gagal menerbitkan: ' + (data.error || res.statusText), 'error', 6000);
+            const detail = data.details ? ` (${data.status}: ${data.details})` : '';
+            showToast('Gagal menerbitkan: ' + (data.error || res.statusText) + detail, 'error', 8000);
         } else {
             const rows = data.published?.rows ?? 0;
             showToast(`Berjaya diterbitkan! ${rows} hari dalam jadual.`, 'success', 6000);
