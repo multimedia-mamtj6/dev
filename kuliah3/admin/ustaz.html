@@ -69,11 +69,22 @@
       <label for="edit-topic">Tajuk Kuliah <span style="font-weight:400;color:var(--text-muted)">(boleh ubah kemudian)</span></label>
       <input type="text" id="edit-topic" placeholder="Cth: Tadabbur Surah Al-Baqarah">
     </div>
+    <div class="form-group" id="poster-current-group" style="display:none">
+      <label>Poster Semasa</label>
+      <img id="poster-current-img" src="" alt="Poster semasa" class="poster-modal-preview">
+      <p id="poster-current-url" style="font-size:0.7rem;color:var(--text-muted);word-break:break-all;margin-top:0.375rem"></p>
+      <button type="button" class="btn btn-danger btn-sm" onclick="removePoster()" style="margin-top:0.5rem">Buang Poster</button>
+    </div>
+
     <div class="form-group">
-      <label>Gambar Poster (1920×1080)</label>
+      <label>Muat Naik Poster Baru <span style="font-weight:400;color:var(--text-muted)">(1920×1080)</span></label>
       <input type="file" id="edit-poster" accept="image/jpeg,image/png,image/webp">
       <div id="poster-preview" style="margin-top:0.5rem"></div>
-      <p id="poster-current" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.375rem"></p>
+    </div>
+
+    <div class="form-group">
+      <label>Atau Gunakan URL Gambar</label>
+      <input type="url" id="edit-poster-url" placeholder="https://contoh.com/gambar.jpg">
     </div>
 
     <div class="modal-footer">

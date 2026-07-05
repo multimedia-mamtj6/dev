@@ -1,6 +1,7 @@
 // ─── State ────────────────────────────────────────────────────────────────────
-let allUstaz   = [];
-let deletingId = null;
+let allUstaz          = [];
+let deletingId        = null;
+let pendingRemovePoster = false;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
@@ -59,13 +60,15 @@ function renderTable() {
 // ─── Add modal ────────────────────────────────────────────────────────────────
 function openAddModal() {
     document.getElementById('ustaz-modal-title').textContent = 'Tambah Penceramah';
-    document.getElementById('edit-id').value        = '';
-    document.getElementById('edit-fullname').value  = '';
-    document.getElementById('edit-shortname').value = '';
-    document.getElementById('edit-topic').value     = '';
-    document.getElementById('edit-poster').value    = '';
+    document.getElementById('edit-id').value          = '';
+    document.getElementById('edit-fullname').value    = '';
+    document.getElementById('edit-shortname').value   = '';
+    document.getElementById('edit-topic').value       = '';
+    document.getElementById('edit-poster').value      = '';
+    document.getElementById('edit-poster-url').value  = '';
     document.getElementById('poster-preview').innerHTML = '';
-    document.getElementById('poster-current').textContent = '';
+    document.getElementById('poster-current-group').style.display = 'none';
+    pendingRemovePoster = false;
     document.getElementById('ustaz-modal').classList.add('open');
 }
 
@@ -75,20 +78,37 @@ function openEditModal(id) {
     if (!u) return;
 
     document.getElementById('ustaz-modal-title').textContent = 'Edit Penceramah';
-    document.getElementById('edit-id').value        = u.id;
-    document.getElementById('edit-fullname').value  = u.full_name;
-    document.getElementById('edit-shortname').value = u.short_name;
-    document.getElementById('edit-topic').value     = u.tajuk_kuliah || '';
-    document.getElementById('edit-poster').value    = '';
+    document.getElementById('edit-id').value          = u.id;
+    document.getElementById('edit-fullname').value    = u.full_name;
+    document.getElementById('edit-shortname').value   = u.short_name;
+    document.getElementById('edit-topic').value       = u.tajuk_kuliah || '';
+    document.getElementById('edit-poster').value      = '';
+    document.getElementById('edit-poster-url').value  = '';
     document.getElementById('poster-preview').innerHTML = '';
-    document.getElementById('poster-current').textContent =
-        u.poster_url ? 'Poster semasa ada. Muat naik baru untuk menggantikan.' : 'Tiada poster semasa.';
+    pendingRemovePoster = false;
+
+    if (u.poster_url) {
+        document.getElementById('poster-current-group').style.display = '';
+        document.getElementById('poster-current-img').src = u.poster_url;
+        document.getElementById('poster-current-url').textContent = u.poster_url;
+    } else {
+        document.getElementById('poster-current-group').style.display = 'none';
+    }
 
     document.getElementById('ustaz-modal').classList.add('open');
 }
 
 function closeUstazModal() {
     document.getElementById('ustaz-modal').classList.remove('open');
+    pendingRemovePoster = false;
+}
+
+function removePoster() {
+    pendingRemovePoster = true;
+    document.getElementById('poster-current-group').style.display = 'none';
+    document.getElementById('edit-poster').value     = '';
+    document.getElementById('edit-poster-url').value = '';
+    document.getElementById('poster-preview').innerHTML = '';
 }
 
 function handleUstazOverlay(e) {
@@ -97,11 +117,12 @@ function handleUstazOverlay(e) {
 
 // ─── Save ustaz ───────────────────────────────────────────────────────────────
 async function saveUstaz() {
-    const id        = document.getElementById('edit-id').value.trim();
-    const fullName  = document.getElementById('edit-fullname').value.trim();
-    const shortName = document.getElementById('edit-shortname').value.trim();
-    const topic     = document.getElementById('edit-topic').value.trim();
-    const posterFile = document.getElementById('edit-poster').files[0];
+    const id             = document.getElementById('edit-id').value.trim();
+    const fullName       = document.getElementById('edit-fullname').value.trim();
+    const shortName      = document.getElementById('edit-shortname').value.trim();
+    const topic          = document.getElementById('edit-topic').value.trim();
+    const posterFile     = document.getElementById('edit-poster').files[0];
+    const posterUrlInput = document.getElementById('edit-poster-url').value.trim();
 
     if (!fullName) {
         showToast('Nama penuh diperlukan', 'error');
@@ -113,14 +134,17 @@ async function saveUstaz() {
         document.getElementById('edit-shortname').focus();
         return;
     }
+    if (posterFile && posterUrlInput) {
+        showToast('Pilih sama ada muat naik fail atau URL gambar, bukan kedua-dua.', 'error');
+        return;
+    }
 
     const saveBtn = document.getElementById('ustaz-save-btn');
     saveBtn.disabled  = true;
     saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
 
-    let posterUrl = null;
+    let newPosterUrl = null;
 
-    // Upload poster to Supabase Storage if a file was selected
     if (posterFile) {
         const ext      = posterFile.name.split('.').pop().toLowerCase();
         const safeName = shortName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
@@ -132,7 +156,7 @@ async function saveUstaz() {
 
         if (uploadErr) {
             showToast('Gagal muat naik poster: ' + uploadErr.message, 'error');
-            saveBtn.disabled  = false;
+            saveBtn.disabled    = false;
             saveBtn.textContent = 'Simpan';
             return;
         }
@@ -140,7 +164,9 @@ async function saveUstaz() {
         const { data: { publicUrl } } = db.storage
             .from('kuliah-assets')
             .getPublicUrl(filename);
-        posterUrl = publicUrl;
+        newPosterUrl = publicUrl;
+    } else if (posterUrlInput) {
+        newPosterUrl = posterUrlInput;
     }
 
     const payload = {
@@ -149,7 +175,11 @@ async function saveUstaz() {
         tajuk_kuliah: topic || null,
         updated_at:   new Date().toISOString(),
     };
-    if (posterUrl) payload.poster_url = posterUrl;
+    if (pendingRemovePoster) {
+        payload.poster_url = null;
+    } else if (newPosterUrl) {
+        payload.poster_url = newPosterUrl;
+    }
 
     let error;
     if (id) {
