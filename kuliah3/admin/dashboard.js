@@ -290,9 +290,6 @@ async function publishMonth() {
         } else {
             const rows = data.published?.rows ?? 0;
             showToast(`Berjaya diterbitkan! ${rows} hari dalam jadual.`, 'success', 6000);
-            if (data.commitUrl) {
-                setTimeout(() => window.open(data.commitUrl, '_blank'), 600);
-            }
         }
     } catch (err) {
         showToast('Ralat sambungan: ' + err.message, 'error');
