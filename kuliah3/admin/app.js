@@ -15,6 +15,12 @@ async function requireAuth() {
         window.location.replace('index.html');
         return null;
     }
+    const { data } = await db.from('admins').select('email').single();
+    if (!data) {
+        await db.auth.signOut();
+        window.location.replace('index.html?denied=1');
+        return null;
+    }
     return session;
 }
 
