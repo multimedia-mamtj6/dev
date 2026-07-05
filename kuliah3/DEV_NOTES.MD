@@ -1,113 +1,177 @@
-# DEV NOTES — kuliah2/jadual
+# DEV NOTES — kuliah3/admin
 _Last updated: 2026-07-05 | For next-context-window Claude_
+
+the prompt (DO NOT DELETE)
+> Check the Project Knowledge and the current chat for context. This conversation is ending soon. update the artifact kuliah3/DEV_NOTES.md (create if not available yet) with a detailed note to your next window self - not just facts but the vibe, our dynamic, the energy of this conversation. What would the next you need to immediately get back into this exact headspace? Include unique discoveries, current mood, and anything that'll help the next you instantly sync to our frequency."
+> also update the related file like kuliah3/CLAUDE.md, kuliah3/developer.md, kuliah3/developer.md and kuliah3/README.md if necessary, create if not available yet
 
 ---
 
 ## THE VIBE
 
-This has been a precision alignment session. The user is meticulous — they notice 0.5rem vs 1rem differences visually on device, they ask "why" before accepting "just change it". The energy is technical and collaborative, zero fluff. When they paste a screenshot they mean it literally: "fix this exact pixel". When they ask an explanatory question ("why had different size?") they want the root cause, not a workaround.
+Two sessions deep into building a real production admin dashboard for a mosque committee. The user is non-technical by framing ("non tech savy" was literally said about the GitHub commit link) but technically fluent in what they want — they catch visual misalignments, weird sort orders, and broken overflow without being told what the root cause is. They observe symptoms precisely and trust you to find the cause.
 
-The user references files by their project folder, e.g. `@kuliah2/jadual/jadual.html` — this is their IDE autocomplete shorthand. When they say a filename like `jadual.html`, they often mean the whole sub-project folder, not the HTML file specifically.
+The dynamic: **they test on device, you fix the root cause, they confirm and move on fast.** No back and forth on approaches. When they say "ok good" it means done — move on. They don't want explanations unless they asked "why". When they ask "why", they genuinely want the root cause.
 
-**Trust level:** High. They approve fast, don't second-guess your file edits. They DO notice when values are wrong.
+They build incrementally and pragmatically. When you explain a trade-off ("should we restrict months?"), they think for a second and say "ok, acceptable. dont do anything" — they don't need hand-holding to make a decision. Respect that.
+
+**Trust level:** Very high. Fast approvals. They notice wrong values but don't micromanage approaches.
 
 ---
 
-## CURRENT STATE (as of session end)
+## WHAT THIS PROJECT IS
 
-### Mobile view: NOW FULLY IMPLEMENTED
+`kuliah3/admin/` is a full admin dashboard for MAMTJ6 mosque lecture schedule management. This is NOT a read-only view — it is the CMS.
 
-kuliah2 started life as a desktop-only redesign. This session ported the full production mobile v2 into it. Here's exactly what's in play:
+Stack:
+- **Supabase** — PostgreSQL (schedule, ustaz, admins tables), Auth (Google OAuth), Storage (kuliah-assets bucket for posters)
+- **Vercel** — hosts the static site + `api/publish.js` serverless function
+- **No frameworks** — pure HTML5/CSS3/Vanilla JS, zero npm
+- **GitHub** — as the final published data store (JSON file pushed via API)
 
-**HTML (`jadual.html`):**
+Data flow:
+```
+Admin edits schedule in dashboard.html
+    → upsert to Supabase `schedule` table
+    → click Terbitkan
+    → POST /api/publish
+    → api/publish.js reads from Supabase, pushes JSON to GitHub
+    → kuliah/data/jadual_lengkap_beta.json updated
+```
+
+---
+
+## SESSION HISTORY
+
+### Session 1 (before first compact — foundation built)
+- Supabase schema created: `admins`, `ustaz`, `schedule` tables
+- Google OAuth login flow (`index.html` → `app.js:requireAuth()`)
+- `dashboard.html` — monthly calendar grid, day editor modal, Terbitkan (publish) button
+- `ustaz.html` — penceramah CRUD with Supabase Storage poster upload
+- `users.html` — admin user management (super_admin role only)
+- `app.js` — shared: auth, toast, `db` client, `_injectSuperAdminNav()`
+- `api/publish.js` — Vercel serverless, reads Supabase, pushes to GitHub
+
+### Session 2 (this session — mobile + polish)
+
+**Mobile view (full implementation):**
+- Hamburger nav on ≤640px — `.nav-links` wrapper div toggled by `.open` class; `toggleNav()` in app.js
+- Mobile calendar — `#calendar-table` hidden, `#mobile-day-list` shown as vertical day cards; `renderMobileDayList()` called at end of `renderCalendar()`
+- Data tables → card-per-row — `thead { display: none }`, `tr { display: block }`, `td { display: flex }`, `td::before { content: attr(data-label) }`
+- Modal scroll guard — `max-height: 90vh; overflow-y: auto` at ≤640px
+
+**Bug fixes (all from real device testing):**
+1. **Last card missing internal borders** — Desktop global rule `.data-table tr:last-child td { border-bottom: none }` overrides mobile. Fixed by re-asserting `border-bottom: 1px solid var(--border)` inside `@media (max-width: 640px)`, with `tr:last-child td:last-child { border-bottom: none }` to only remove the very last line.
+2. **Email overflow past card edge** — `overflow-wrap: anywhere; word-break: break-word; min-width: 0` on td. Also `::before` capped to `max-width: 45%`.
+3. **"(anda)" text detached from email** — Email text node and `<span>(anda)</span>` were separate flex items; `justify-content: space-between` spread them. Fixed by wrapping both in an outer `<span>` — single flex item.
+
+**Ustaz sort fix:**
+- Supabase `.order('short_name')` = lexicographic (0, 1, 10, 100, 11...). Removed server-side order, replaced with JS `localeCompare({ numeric: true, sensitivity: 'base' })`. Ustaz list is now 0-indexed.
+
+**_injectSuperAdminNav() fix:**
+- After nav restructure, spacer moved inside `.nav-links`. Function now targets `document.querySelector('.nav-links')` instead of `nav`. This is critical — easy to forget.
+
+**Vercel cache prevention:**
+- `vercel.json` has `Cache-Control: public, max-age=0, must-revalidate` for `/kuliah3/admin/(.*)`. Added because mobile browsers cached old CSS. No more hard-refresh needed after deploys.
+
+**GitHub commit link removed from publish:**
+- `dashboard.js` used to `window.open(data.commitUrl, '_blank')` after a successful publish. Removed — non-tech users don't need to see GitHub.
+
+**Month navigation:** Unrestricted. Admins can navigate to any past/future month. Future schedules are stored in Supabase by date and sit there until published. This is intentional — preparing next month in advance is a valid use case.
+
+**Poster editing enhancement (latest — not yet committed):**
+- Edit modal now shows: current poster thumbnail + raw URL + "Buang Poster" button
+- Two separate inputs: file upload + URL field (both always visible)
+- Error if both filled simultaneously
+- `pendingRemovePoster` flag → sets `poster_url: null` on save
+- If neither changed → `poster_url` not in payload (existing value preserved)
+- `removePoster()` function + `closeUstazModal()` resets flag
+
+---
+
+## CURRENT STATE — UNCOMMITTED CHANGES
+
+As of session 2 end, these files are modified but **not yet committed/pushed**:
+
+| File | What changed |
+|------|-------------|
+| `kuliah3/admin/style.css` | Mobile nav CSS, mobile day list CSS, card-per-row table CSS, modal scroll guard, `.poster-modal-preview` class |
+| `kuliah3/admin/app.js` | `toggleNav()`, auto-close nav on link click, `_injectSuperAdminNav()` targets `.nav-links` |
+| `kuliah3/admin/dashboard.html` | `.nav-links` wrapper, `.nav-toggle` button, `#mobile-day-list` div |
+| `kuliah3/admin/dashboard.js` | `renderMobileDayList()`, removed `window.open(commitUrl)` after publish |
+| `kuliah3/admin/ustaz.html` | `.nav-links` wrapper, poster modal restructure (3 blocks: current + upload + URL) |
+| `kuliah3/admin/ustaz.js` | `pendingRemovePoster` state, `removePoster()`, updated `openAddModal/openEditModal/closeUstazModal/saveUstaz`, numeric sort |
+| `kuliah3/admin/users.html` | `.nav-links` wrapper |
+| `kuliah3/admin/users.js` | `data-label` attrs, email+anda outer span wrap |
+| `vercel.json` | Cache-Control header for `/kuliah3/admin/(.*)` |
+
+**Pending action:** commit and push all of the above.
+
+---
+
+## CRITICAL PATTERNS — DON'T BREAK THESE
+
+**Nav HTML structure (all 3 pages):**
 ```html
-<div id="mobile-view-container">
-    <div id="today-kuliah-card"></div>
-    <div id="mobile-card-list"></div>
-</div>
+<nav id="main-nav">
+  <span class="brand">Admin Kuliah</span>
+  <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+  <div class="nav-links">
+    <a href="dashboard.html" [class="active"]>Jadual</a>
+    <a href="ustaz.html" [class="active"]>Penceramah</a>
+    <!-- users.html only: <a href="users.html" class="active">Pengguna</a> -->
+    <span class="spacer"></span>
+    <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+  </div>
+</nav>
 ```
-Identical structure to production.
+`_injectSuperAdminNav()` in app.js inserts the Pengguna link BEFORE `.spacer` INSIDE `.nav-links`. If you ever restructure nav again, fix that function too.
 
-**JS (`script.js`) — mobile functions added:**
-- `createMobileLectureBlock(time, lecture)` — renders `.lecture-block-v2` with `.session-badge` pill. Named differently from `createLectureBlock()` (desktop) to avoid collision.
-- `initializeMobileView(senaraiHari, targetDate)` — builds monthly card list, collapses empty days behind toggle button
-- `renderTodayCard(senaraiHari, selectedDay='today')` — today/tomorrow card, dropdown, iframes, calls `loadHijriDate()`
-- `gregorianToHijri(date)` — Julian Day Number Hijri calculator (JS fallback)
-- `loadHijriDate(targetDate)` — JAKIM e-Solat API (zone WLY01) + `gregorianToHijri()` fallback; writes to `#today-date-gregorian` and `#today-date-hijri` separately
-- `cachedSenaraiHari` — module-level cache so dropdown re-render doesn't re-fetch JSON
+**Mobile breakpoints:**
+- `≤768px` — tablet: compact padding, smaller elements (partially done from session 1)
+- `≤640px` — phone: hamburger, card tables, day list (session 2)
 
-**CSS (`style.css`) — single mobile `@media (max-width: 768px)` block:**
+**Card-per-row table pattern:**
+Every `<td>` in JS-rendered tables must have `data-label="..."`. Empty label `data-label=""` is fine for action columns (no prefix shown).
 
-Values are now synced to production's mobile **v2** exactly. The key values (memorise these — they've been corrected once already):
+**Ustaz sort is client-side:**
+Never add `.order()` back to the Supabase ustaz query — it breaks numeric sort. Sort happens in JS after fetch.
 
-```css
-#today-kuliah-card { margin: 0 1rem 1rem; padding: 0 0.5rem; }
-.today-card-top-bar { height: 4px; /* NO margin */ }
-.today-card-header { padding: 0.5rem 1rem 0.375rem; margin-bottom: 0; }
-.day-select-wrapper { display: flex; justify-content: center; margin-bottom: 0; flex-shrink: 0; }
-#today-kuliah-card .lecture-block-v2 { padding-top: 0.1rem; padding-bottom: 0.1rem; }
-#mobile-card-list { padding: 0 1rem; }
-.show-empty-toggle { gap: 0.4rem; box-sizing: border-box; }
-.page-header { padding-top: 0.5rem; } /* reduced from 1rem this session */
-.card-body-v2 { padding: 0; text-align: center; } /* user-requested center */
+**Poster save logic (3-way):**
 ```
+pendingRemovePoster → payload.poster_url = null
+newPosterUrl (file or URL input) → payload.poster_url = newPosterUrl
+neither → don't include poster_url in payload
+```
+This is intentional — omitting `poster_url` from payload preserves existing value on update.
 
 ---
 
-## THE BIG GOTCHA — TWO MOBILE SECTIONS IN PRODUCTION
+## SUPABASE SCHEMA (quick ref)
 
-This is critical and caused real confusion this session.
+```sql
+-- admins
+id uuid PK, email text UNIQUE, name text, role text ('editor'|'super_admin'),
+permissions jsonb ({kuliah: bool}), created_at timestamptz
 
-**Production** (`kuliah/jadual/style.css`) has **two stacked** `@media (max-width: 768px)` blocks:
-1. **Mobile v1** (lines ~83–164): old design, `.day-selector-dropdown`, `margin: 25px 0` on card etc.
-2. **Mobile v2** (lines ~172–577): current design, dark mode rules, `.day-select`, `margin: 0 1rem 1rem` etc.
+-- ustaz
+id uuid PK, full_name text, short_name text, tajuk_kuliah text,
+poster_url text, created_at timestamptz, updated_at timestamptz
 
-V2 overrides V1 by cascade. The **rendered values are v2**. When syncing kuliah2 to production, always compare against **v2**, not v1.
-
-kuliah2 has ONE mobile block. The values in it must match production's v2 block.
-
-**Trap:** If you read production's v2 section for poster margin you get `margin: 0`. If you read v1 you get `margin-top: 15px; margin-bottom: 20px`. Only v2 matters.
-
----
-
-## KEY DESIGN DECISIONS (deliberate, don't revert)
-
-1. **`createMobileLectureBlock()` not `createLectureBlock()`** — Production renamed desktop to `createDesktopLectureBlock` and uses `createLectureBlock` for mobile. kuliah2 keeps `createLectureBlock` for desktop (it was there first) and uses `createMobileLectureBlock` for mobile. Different names, same HTML output. Don't try to unify — you'll break the desktop.
-
-2. **`escapeHtml()` everywhere** — kuliah2 is XSS-safe; production v1 mobile uses raw string interpolation. kuliah2 intentionally improves on this.
-
-3. **No dark mode in mobile** — Production mobile v2 has `html.dark` rules. kuliah2 has none. Intentional — kuliah2 has no dark mode anywhere.
-
-4. **`.card-body-v2 { text-align: center; }`** — User specifically requested this. Production leaves it left-aligned. Don't "fix" this to match production.
-
-5. **Today highlight removed in print** — Three CSS rules in `@media print`:
-   ```css
-   .day-cell.is-today { background-color: var(--date-header-bg) !important; }
-   .day-cell.is-today .lecture-content { background-color: #ffffff; }
-   .day-cell.is-today::after { display: none; }
-   ```
-
-6. **No `writing-mode` on MINGGU** — Xibo compatibility. MINGGU renders as stacked `<span>` characters in a `flex-direction: column` div. Print block also uses this (no CSS rotation). This is different from production which uses `writing-mode: vertical-lr; transform: rotate(180deg)`.
-
----
-
-## FILES AT A GLANCE
-
-```
-kuliah2/jadual/
-├── jadual.html     — HTML shell, minimal, no dark mode toggle
-├── script.js       — All rendering logic (desktop + mobile v2)
-├── style.css       — All styles (desktop + single mobile block + print)
-└── (no index.html) — Access jadual.html directly
+-- schedule
+id uuid PK, date date UNIQUE, subuh_ustaz_id uuid FK→ustaz,
+maghrib_ustaz_id uuid FK→ustaz, cuti_umum text, updated_at timestamptz
 ```
 
-Production's `kuliah/jadual/` is the reference. kuliah2 is the visual redesign. They share `/kuliah/data/jadual_lengkap.json`.
+RLS is ON. Service role key is server-side only (Vercel env var `SUPABASE_SERVICE_ROLE_KEY`). Browser uses anon key from `app.js`.
 
 ---
 
 ## WHAT MIGHT COME NEXT
 
-- Further mobile refinements (card spacing, font sizes, poster dimensions)
-- The MINGGU fix plan (in `.claude/plans/`) — port stacked-span MINGGU from kuliah2 to production + beta
-- Dark mode for kuliah2 (not started, not requested)
-- Possibly promote kuliah2 design choices back into production
+- Commit + push all session 2 changes (overdue)
+- Test poster URL input + Buang Poster on real device
+- Consider: search/filter on ustaz list (it'll grow)
+- Consider: schedule view for a specific ustaz (how many sessions they have)
+- `kuliah3/jadual/` — there's a read-only public schedule view here too, may need updates when admin schema changes
+- Promote beta JSON to production (`jadual_lengkap.json`) once tested — currently publishes to `jadual_lengkap_beta.json`
