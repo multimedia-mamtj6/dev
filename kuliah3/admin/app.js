@@ -1,11 +1,11 @@
 // ─── Supabase configuration ──────────────────────────────────────────────────
-// Replace these placeholders with your actual Supabase project values.
-// Find them in: Supabase Dashboard → Project Settings → API
 const SUPABASE_URL      = 'https://qeantrmluevgybkwgvbq.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_mhfFUZQWurQGZQ7A6DwCYQ_fALDGOnl';
 
-// Supabase JS client (loaded via CDN script tag in HTML)
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── Current admin (populated by requireAuth) ─────────────────────────────────
+let currentAdmin = null;
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -15,13 +15,27 @@ async function requireAuth() {
         window.location.replace('index.html');
         return null;
     }
-    const { data } = await db.from('admins').select('email').single();
+    const { data } = await db.from('admins').select('*').eq('email', session.user.email).single();
     if (!data) {
         await db.auth.signOut();
         window.location.replace('index.html?denied=1');
         return null;
     }
+    currentAdmin = data;
+    _injectSuperAdminNav();
     return session;
+}
+
+// Inject "Pengguna" nav link for super_admin (non-super admins never see it)
+function _injectSuperAdminNav() {
+    if (currentAdmin?.role !== 'super_admin') return;
+    const nav = document.querySelector('nav');
+    if (!nav || nav.querySelector('a[href="users.html"]')) return;
+    const spacer = nav.querySelector('.spacer');
+    const link = document.createElement('a');
+    link.href = 'users.html';
+    link.textContent = 'Pengguna';
+    nav.insertBefore(link, spacer);
 }
 
 async function signInWithGoogle() {
@@ -31,7 +45,6 @@ async function signInWithGoogle() {
     const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            // Must be whitelisted in: Supabase Dashboard → Auth → URL Configuration → Redirect URLs
             redirectTo: window.location.origin + '/kuliah3/admin/dashboard.html'
         }
     });
