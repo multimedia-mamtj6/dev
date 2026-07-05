@@ -57,9 +57,9 @@ function renderUsers() {
             <td style="font-size:0.85rem">${permLabel}</td>
             <td>
                 <div class="actions">
-                    <button class="btn btn-ghost btn-sm" onclick="openEditModal(${JSON.stringify(u.email)})">Edit</button>
+                    <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(u.email)}')">Edit</button>
                     ${!isSelf
-                        ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal(${JSON.stringify(u.email)})">Buang</button>`
+                        ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(u.email)}')">Buang</button>`
                         : ''}
                 </div>
             </td>
