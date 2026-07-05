@@ -146,31 +146,33 @@ module.exports = async function handler(req, res) {
         'Content-Type':         'application/json',
     };
 
-    // Get current file SHA (required for update)
+    // Get current file SHA (required for update; 404 = new file, no SHA needed)
     const shaRes = await fetch(
         `https://api.github.com/repos/${githubRepo}/contents/${filePath}`,
         { headers: ghHeaders }
     );
-    if (!shaRes.ok) {
+    if (!shaRes.ok && shaRes.status !== 404) {
         return res.status(500).json({
             error: 'Failed to read current file SHA from GitHub',
             status: shaRes.status,
         });
     }
-    const { sha: currentSha } = await shaRes.json();
+    const currentSha = shaRes.ok ? (await shaRes.json()).sha : undefined;
 
-    // Commit the new content
+    // Commit the new content (create if no SHA, update if SHA exists)
+    const commitBody = {
+        message: `[Admin] Terbitkan jadual ${tajukBulan}`,
+        content: Buffer.from(jsonContent, 'utf8').toString('base64'),
+        branch:  'main',
+    };
+    if (currentSha) commitBody.sha = currentSha;
+
     const updateRes = await fetch(
         `https://api.github.com/repos/${githubRepo}/contents/${filePath}`,
         {
-            method: 'PUT',
+            method:  'PUT',
             headers: ghHeaders,
-            body: JSON.stringify({
-                message: `[Admin] Terbitkan jadual ${tajukBulan}`,
-                content: Buffer.from(jsonContent, 'utf8').toString('base64'),
-                sha:     currentSha,
-                branch:  'main',
-            }),
+            body:    JSON.stringify(commitBody),
         }
     );
     if (!updateRes.ok) {
