@@ -14,14 +14,15 @@ async function init() {
 async function loadUstaz() {
     const { data, error } = await db
         .from('ustaz')
-        .select('*')
-        .order('full_name');
+        .select('*');
 
     if (error) {
         showToast('Gagal memuatkan senarai penceramah: ' + error.message, 'error');
         return;
     }
-    allUstaz = data || [];
+    allUstaz = (data || []).sort((a, b) =>
+        a.short_name.localeCompare(b.short_name, undefined, { numeric: true, sensitivity: 'base' })
+    );
     renderTable();
 }
 
@@ -29,12 +30,13 @@ function renderTable() {
     const tbody = document.getElementById('ustaz-tbody');
 
     if (allUstaz.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="state-cell">Tiada penceramah lagi. Klik "+ Tambah Penceramah" untuk mula.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="state-cell">Tiada penceramah lagi. Klik "+ Tambah Penceramah" untuk mula.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = allUstaz.map(u => `
+    tbody.innerHTML = allUstaz.map((u, i) => `
         <tr>
+            <td data-label="#">${i}</td>
             <td data-label="Poster">
                 ${u.poster_url
                     ? `<img src="${escapeHtml(u.poster_url)}" class="poster-thumb" alt="Poster ${escapeHtml(u.short_name)}" loading="lazy">`

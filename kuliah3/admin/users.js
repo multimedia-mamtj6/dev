@@ -48,10 +48,7 @@ function renderUsers() {
         }
 
         return `<tr>
-            <td data-label="E-mel">
-                ${escapeHtml(u.email)}
-                ${isSelf ? ' <span style="font-size:0.7rem;color:var(--text-muted)">(anda)</span>' : ''}
-            </td>
+            <td data-label="E-mel"><span>${escapeHtml(u.email)}${isSelf ? ' <span style="font-size:0.7rem;color:var(--text-muted)">(anda)</span>' : ''}</span></td>
             <td data-label="Nama">${escapeHtml(u.name || '—')}</td>
             <td data-label="Peranan">${roleLabel}</td>
             <td data-label="Kebenaran" style="font-size:0.85rem">${permLabel}</td>
