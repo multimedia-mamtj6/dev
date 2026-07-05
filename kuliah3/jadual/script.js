@@ -28,7 +28,7 @@ function escapeHtml(str) {
    Data fetch
    --------------------------------------------------------- */
 async function fetchScheduleData() {
-    const response = await fetch(`/kuliah/data/jadual_lengkap.json?v=${new Date().getTime()}`);
+    const response = await fetch(`/kuliah/data/jadual_lengkap_beta.json?v=${new Date().getTime()}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
 }
@@ -217,7 +217,7 @@ async function initializeMobileView(senaraiHari, targetDate) {
 
     const today = new Date();
     const isCurrentMonth = targetDate.getMonth() === today.getMonth() &&
-                           targetDate.getFullYear() === today.getFullYear();
+        targetDate.getFullYear() === today.getFullYear();
 
     if (isCurrentMonth) {
         await renderTodayCard(senaraiHari);
@@ -228,9 +228,9 @@ async function initializeMobileView(senaraiHari, targetDate) {
 
     const daysInMalay = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
     const monthNames = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
-                        'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+        'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
     const targetMonth = targetDate.getMonth();
-    const targetYear  = targetDate.getFullYear();
+    const targetYear = targetDate.getFullYear();
 
     const days = senaraiHari.filter(d => {
         const date = new Date(d.date + 'T00:00:00');
@@ -247,8 +247,8 @@ async function initializeMobileView(senaraiHari, targetDate) {
         const card = document.createElement('div');
         card.className = 'mobile-card-v2' + (dayData.cuti_umum ? ' is-holiday' : '');
 
-        const dayName    = daysInMalay[currentDate.getDay()];
-        const dateNum    = `${currentDate.getDate()} ${monthNames[currentDate.getMonth()]}`;
+        const dayName = daysInMalay[currentDate.getDay()];
+        const dateNum = `${currentDate.getDate()} ${monthNames[currentDate.getMonth()]}`;
         const holidayPill = dayData.cuti_umum
             ? `<span class="mobile-holiday-label">${escapeHtml(dayData.cuti_umum)}</span>` : '';
 
@@ -256,7 +256,7 @@ async function initializeMobileView(senaraiHari, targetDate) {
         if (isEmpty) {
             bodyHtml = `<div class="empty-slot-v2">Tiada kuliah</div>`;
         } else {
-            if (dayData.subuh)   bodyHtml += createMobileLectureBlock('Subuh', dayData.subuh);
+            if (dayData.subuh) bodyHtml += createMobileLectureBlock('Subuh', dayData.subuh);
             if (dayData.maghrib) bodyHtml += createMobileLectureBlock('Maghrib', dayData.maghrib);
         }
 
@@ -354,23 +354,23 @@ async function renderTodayCard(senaraiHari, selectedDay = 'today') {
    --------------------------------------------------------- */
 function gregorianToHijri(date) {
     const d = date.getDate(), m = date.getMonth() + 1, y = date.getFullYear();
-    const a  = Math.floor((14 - m) / 12);
+    const a = Math.floor((14 - m) / 12);
     const yj = y + 4800 - a, mj = m + 12 * a - 3;
     const jd = d + Math.floor((153 * mj + 2) / 5) + 365 * yj +
-               Math.floor(yj / 4) - Math.floor(yj / 100) + Math.floor(yj / 400) - 32045;
-    const l  = jd - 1948440 + 10632;
-    const n  = Math.floor((l - 1) / 10631);
+        Math.floor(yj / 4) - Math.floor(yj / 100) + Math.floor(yj / 400) - 32045;
+    const l = jd - 1948440 + 10632;
+    const n = Math.floor((l - 1) / 10631);
     const l2 = l - 10631 * n + 354;
-    const j  = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
-               Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
+    const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
+        Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
     const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
-               Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+        Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
     const hMonth = Math.floor((24 * l3) / 709);
     return { day: l3 - Math.floor((709 * hMonth) / 24), month: hMonth, year: 30 * n + j - 30 };
 }
 
 async function loadHijriDate(targetDate = new Date()) {
-    const elGreg  = document.getElementById('today-date-gregorian');
+    const elGreg = document.getElementById('today-date-gregorian');
     const elHijri = document.getElementById('today-date-hijri');
     if (!elGreg) return;
 
@@ -384,7 +384,7 @@ async function loadHijriDate(targetDate = new Date()) {
     };
 
     const calcFallback = () => {
-        const h  = gregorianToHijri(targetDate);
+        const h = gregorianToHijri(targetDate);
         const mp = String(h.month).padStart(2, '0');
         if (elHijri) elHijri.textContent = `${h.day} ${hijriMonthNames[mp]} ${h.year}H`;
     };
@@ -395,8 +395,8 @@ async function loadHijriDate(targetDate = new Date()) {
         if (!resp.ok) throw new Error('API failed');
         const data = await resp.json();
 
-        const day       = String(targetDate.getDate()).padStart(2, '0');
-        const mNames    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const day = String(targetDate.getDate()).padStart(2, '0');
+        const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const targetStr = `${day}-${mNames[targetDate.getMonth()]}-${targetDate.getFullYear()}`;
         let info = data.prayerTime.find(p => p.date === targetStr);
 
