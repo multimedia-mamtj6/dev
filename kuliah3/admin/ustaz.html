@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Penceramah — Admin MAMTJ6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<nav>
+  <span class="brand">Admin Kuliah</span>
+  <a href="dashboard.html">Jadual</a>
+  <a href="ustaz.html" class="active">Penceramah</a>
+  <span class="spacer"></span>
+  <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+</nav>
+
+<div class="page">
+  <div class="section-header">
+    <h1 class="section-title">Senarai Penceramah</h1>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Tambah Penceramah</button>
+  </div>
+
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:60px">Poster</th>
+          <th>Nama Penuh</th>
+          <th>Nama Ringkas</th>
+          <th>Tajuk Kuliah</th>
+          <th style="width:120px">Tindakan</th>
+        </tr>
+      </thead>
+      <tbody id="ustaz-tbody">
+        <tr><td colspan="5" class="state-cell">Memuatkan...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Add / Edit modal ── -->
+<div class="modal-overlay" id="ustaz-modal" onclick="handleUstazOverlay(event)">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title" id="ustaz-modal-title">Tambah Penceramah</span>
+      <button class="modal-close" onclick="closeUstazModal()">&times;</button>
+    </div>
+
+    <input type="hidden" id="edit-id">
+
+    <div class="form-group">
+      <label for="edit-fullname">Nama Penuh *</label>
+      <input type="text" id="edit-fullname" placeholder="Ustaz Muhammad Ali">
+    </div>
+    <div class="form-group">
+      <label for="edit-shortname">Nama Ringkas * <span style="font-weight:400;color:var(--text-muted)">(digunakan dalam jadual)</span></label>
+      <input type="text" id="edit-shortname" placeholder="Cth: UA Hairul, Ust Zaidi">
+    </div>
+    <div class="form-group">
+      <label for="edit-topic">Tajuk Kuliah <span style="font-weight:400;color:var(--text-muted)">(boleh ubah kemudian)</span></label>
+      <input type="text" id="edit-topic" placeholder="Cth: Tadabbur Surah Al-Baqarah">
+    </div>
+    <div class="form-group">
+      <label>Gambar Poster (1920×1080)</label>
+      <input type="file" id="edit-poster" accept="image/jpeg,image/png,image/webp">
+      <div id="poster-preview" style="margin-top:0.5rem"></div>
+      <p id="poster-current" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.375rem"></p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeUstazModal()">Batal</button>
+      <button class="btn btn-primary" id="ustaz-save-btn" onclick="saveUstaz()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete confirm modal ── -->
+<div class="modal-overlay" id="delete-modal" onclick="handleDeleteOverlay(event)">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <span class="modal-title">Padam Penceramah</span>
+      <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+    </div>
+    <p style="color:var(--text-muted);margin-bottom:1.25rem">
+      Adakah anda pasti mahu memadam
+      <strong id="delete-name" style="color:var(--text)"></strong>?
+      Tindakan ini tidak boleh diundur.
+    </p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+      <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Padam</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="ustaz.js"></script>
+</body>
+</html>
