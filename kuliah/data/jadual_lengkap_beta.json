@@ -13,6 +13,20 @@
         "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
       },
       "cuti_umum": "cutii"
+    },
+    {
+      "date": "2026-07-02",
+      "subuh": {
+        "nama_penceramah": "Ustaz Abdul Aziz",
+        "tajuk_kuliah": "Terjemahan Al-Azkar Imam An-Nawawi",
+        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/05_4.-Ustaz-Abdul-Aziz.jpg"
+      },
+      "maghrib": {
+        "nama_penceramah": "Ustaz Ahmad Termizi",
+        "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+        "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
+      },
+      "cuti_umum": null
     }
   ]
 }
