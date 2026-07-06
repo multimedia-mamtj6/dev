@@ -30,12 +30,37 @@
       <button class="nav-btn" onclick="prevMonth()" title="Bulan sebelum">&#8249;</button>
       <span class="month-label" id="month-label">—</span>
       <button class="nav-btn" onclick="nextMonth()" title="Bulan depan">&#8250;</button>
+      <span class="month-tag" id="month-tag"></span>
     </div>
     <div class="spacer" style="flex:1"></div>
+    <div class="schedule-actions" id="schedule-actions" style="display:none">
+      <a class="btn btn-view-schedule" id="view-schedule-btn" href="#" target="_blank" rel="noopener noreferrer">Tunjukkan Jadual</a>
+      <a class="btn btn-pdf-export" id="export-pdf-btn" href="#" target="_blank" rel="noopener noreferrer">Export PDF</a>
+    </div>
+    <div class="month-actions" id="month-actions">
+      <button type="button" class="btn btn-ghost" onclick="toggleMonthActionsMenu(event)">Tindakan Bulan &#9662;</button>
+      <div class="month-actions-menu" id="month-actions-menu">
+        <button type="button" class="month-actions-item" id="duplicate-month-btn" onclick="openDuplicateModal()">📋 <span id="duplicate-month-label">Salin Data</span></button>
+        <button type="button" class="month-actions-item danger" onclick="openClearModal()">🗑 Kosongkan Bulan Ini</button>
+      </div>
+    </div>
     <button class="btn btn-primary" id="publish-btn" onclick="publishMonth()">
       Terbitkan
     </button>
   </div>
+
+  <p style="margin-top:0.75rem;margin-bottom:0.5rem;font-size:0.75rem;color:var(--text-muted)">
+    Klik mana-mana tarikh untuk mengedit kuliah atau menandakan cuti umum.
+    <span id="publish-hint">Tekan <strong>Terbitkan</strong> untuk menghantar jadual ke laman web.</span>
+  </p>
+
+  <p class="schedule-actions-note" id="schedule-actions-note" style="display:none">
+    💡 Nota: Jadual mengambil masa 1-2 minit untuk dikemaskini selepas diterbitkan.
+  </p>
+
+  <p class="schedule-actions-note" id="future-month-note" style="display:none">
+    💡 Nota: Sistem ini hanya menyokong papaparan untuk bulan semasa dan bulan hadapan sahaja. Anda boleh mengedit data untuk bulan ini untuk perancangan awal.
+  </p>
 
   <!-- Calendar (desktop) -->
   <div class="card" style="overflow-x:auto">
@@ -59,11 +84,6 @@
 
   <!-- Calendar (mobile day list) -->
   <div id="mobile-day-list" class="mobile-day-list"></div>
-
-  <p style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-muted)">
-    Klik mana-mana tarikh untuk mengedit kuliah atau menandakan cuti umum.
-    Tekan <strong>Terbitkan</strong> untuk menghantar jadual ke laman web.
-  </p>
 </div>
 
 <!-- ── Day editor modal ── -->
@@ -103,6 +123,36 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
       <button class="btn btn-primary" id="save-btn" onclick="saveDay()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Duplicate month confirm modal ── -->
+<div class="modal-overlay" id="duplicate-modal" onclick="handleDuplicateOverlay(event)">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Salin Data Bulan</span>
+      <button class="modal-close" onclick="closeDuplicateModal()">&times;</button>
+    </div>
+    <p id="duplicate-modal-text" style="color:var(--text-muted);margin-bottom:1.25rem"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDuplicateModal()">Batal</button>
+      <button class="btn btn-primary" id="confirm-duplicate-btn" onclick="confirmDuplicate()">Salin & Gantikan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Clear month confirm modal ── -->
+<div class="modal-overlay" id="clear-modal" onclick="handleClearOverlay(event)">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Kosongkan Jadual Bulan</span>
+      <button class="modal-close" onclick="closeClearModal()">&times;</button>
+    </div>
+    <p id="clear-modal-text" style="color:var(--text-muted);margin-bottom:1.25rem"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeClearModal()">Batal</button>
+      <button class="btn btn-danger" id="confirm-clear-btn" onclick="confirmClear()">Kosongkan</button>
     </div>
   </div>
 </div>

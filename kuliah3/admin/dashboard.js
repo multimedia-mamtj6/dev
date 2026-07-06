@@ -25,6 +25,10 @@ async function loadMonth() {
 
     labelEl.textContent    = label;
     publishBtn.textContent = `Terbitkan ${label}`;
+    updateScheduleActions();
+
+    const src = getPrevMonthOf(currentYear, currentMonth);
+    document.getElementById('duplicate-month-label').textContent = `Salin Data ${monthLabel(src.year, src.month)}`;
 
     document.getElementById('calendar-body').innerHTML =
         '<tr><td colspan="7" class="state-cell">Memuatkan...</td></tr>';
@@ -164,6 +168,211 @@ function renderMobileDayList() {
     }
 
     list.innerHTML = html;
+}
+
+// ─── Schedule view / PDF export links (real current or next month only) ──────
+function updateScheduleActions() {
+    const now       = new Date();
+    const realYear  = now.getFullYear();
+    const realMonth = now.getMonth() + 1;
+    let nextYear = realYear, nextMonth = realMonth + 1;
+    if (nextMonth > 12) { nextMonth = 1; nextYear++; }
+
+    const container       = document.getElementById('schedule-actions');
+    const note            = document.getElementById('schedule-actions-note');
+    const futureMonthNote = document.getElementById('future-month-note');
+    const viewBtn         = document.getElementById('view-schedule-btn');
+    const pdfBtn          = document.getElementById('export-pdf-btn');
+    const publishBtn      = document.getElementById('publish-btn');
+    const publishHint     = document.getElementById('publish-hint');
+
+    const isRealCurrent = currentYear === realYear && currentMonth === realMonth;
+    const isRealNext    = currentYear === nextYear  && currentMonth === nextMonth;
+
+    const tagEl = document.getElementById('month-tag');
+    if (tagEl) tagEl.textContent = isRealCurrent ? 'Bulan Ini' : (isRealNext ? 'Bulan Depan' : '');
+
+    if (!isRealCurrent && !isRealNext) {
+        container.style.display       = 'none';
+        note.style.display            = 'none';
+        futureMonthNote.style.display = 'block';
+        publishBtn.style.display      = 'none';
+        publishHint.style.display     = 'none';
+        return;
+    }
+    futureMonthNote.style.display = 'none';
+    publishBtn.style.display      = '';
+    publishHint.style.display     = '';
+
+    const query    = isRealNext ? '?bulan=depan' : '';
+    const pdfQuery = isRealNext ? '?file=pdf&bulan=depan' : '?file=pdf';
+    const label    = monthLabel(currentYear, currentMonth);
+    viewBtn.href = `/kuliah3/jadual/jadual.html${query}`;
+    pdfBtn.href  = `/kuliah3/jadual/jadual.html${pdfQuery}`;
+    viewBtn.textContent = `Tunjukkan Jadual ${label}`;
+    pdfBtn.textContent  = `Export PDF ${label}`;
+    container.style.display = 'flex';
+    note.style.display      = 'block';
+}
+
+// ─── Month actions dropdown ───────────────────────────────────────────────────
+function toggleMonthActionsMenu(e) {
+    e.stopPropagation();
+    document.getElementById('month-actions-menu').classList.toggle('open');
+}
+
+document.addEventListener('click', () => {
+    document.getElementById('month-actions-menu')?.classList.remove('open');
+});
+
+function getPrevMonthOf(year, month) {
+    let y = year, m = month - 1;
+    if (m < 1) { m = 12; y--; }
+    return { year: y, month: m };
+}
+
+function countFilledDays(map) {
+    return Object.values(map).filter(row => row.subuh_ustaz_id || row.maghrib_ustaz_id || row.cuti_umum).length;
+}
+
+// ─── Duplicate month ──────────────────────────────────────────────────────────
+function openDuplicateModal() {
+    document.getElementById('month-actions-menu').classList.remove('open');
+
+    const src         = getPrevMonthOf(currentYear, currentMonth);
+    const srcLabel    = monthLabel(src.year, src.month);
+    const targetLabel = monthLabel(currentYear, currentMonth);
+    const filledCount = countFilledDays(scheduleMap);
+
+    let text = `Salin semua data dari <strong>${escapeHtml(srcLabel)}</strong> ke <strong>${escapeHtml(targetLabel)}</strong>?`;
+    if (filledCount > 0) {
+        text += ` ${escapeHtml(targetLabel)} sudah mempunyai <strong>${filledCount}</strong> hari yang diisi — ia akan digantikan.`;
+    }
+
+    document.getElementById('duplicate-modal-text').innerHTML = text;
+    document.getElementById('duplicate-modal').classList.add('open');
+}
+
+function closeDuplicateModal() {
+    document.getElementById('duplicate-modal').classList.remove('open');
+}
+
+function handleDuplicateOverlay(e) {
+    if (e.target === document.getElementById('duplicate-modal')) closeDuplicateModal();
+}
+
+async function confirmDuplicate() {
+    const btn = document.getElementById('confirm-duplicate-btn');
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner"></span> Menyalin...';
+
+    const src         = getPrevMonthOf(currentYear, currentMonth);
+    const padSrcMonth = String(src.month).padStart(2, '0');
+    const srcStart    = `${src.year}-${padSrcMonth}-01`;
+    const srcLastDay  = lastDayOfMonth(src.year, src.month);
+    const srcEnd      = `${src.year}-${padSrcMonth}-${String(srcLastDay).padStart(2, '0')}`;
+
+    const { data: srcRows, error: srcErr } = await db
+        .from('schedule')
+        .select('date, subuh_ustaz_id, maghrib_ustaz_id')
+        .gte('date', srcStart)
+        .lte('date', srcEnd);
+
+    if (srcErr) {
+        showToast('Gagal memuatkan data sumber: ' + srcErr.message, 'error');
+        btn.disabled   = false;
+        btn.textContent = 'Salin & Gantikan';
+        return;
+    }
+
+    const targetLastDay  = lastDayOfMonth(currentYear, currentMonth);
+    const padTargetMonth = String(currentMonth).padStart(2, '0');
+
+    const upserts = (srcRows || [])
+        .filter(row => row.subuh_ustaz_id || row.maghrib_ustaz_id)
+        .map(row => {
+            const day = parseInt(row.date.split('-')[2], 10);
+            if (day > targetLastDay) return null;
+            return {
+                date:             `${currentYear}-${padTargetMonth}-${String(day).padStart(2, '0')}`,
+                subuh_ustaz_id:   row.subuh_ustaz_id,
+                maghrib_ustaz_id: row.maghrib_ustaz_id,
+                updated_at:       new Date().toISOString(),
+            };
+        })
+        .filter(Boolean);
+
+    if (upserts.length === 0) {
+        showToast('Tiada data untuk disalin dari bulan sebelum ini.', 'info');
+        btn.disabled   = false;
+        btn.textContent = 'Salin & Gantikan';
+        closeDuplicateModal();
+        return;
+    }
+
+    const { error: upsertErr } = await db.from('schedule').upsert(upserts, { onConflict: 'date' });
+
+    btn.disabled   = false;
+    btn.textContent = 'Salin & Gantikan';
+
+    if (upsertErr) {
+        showToast('Gagal menyalin data: ' + upsertErr.message, 'error');
+        return;
+    }
+
+    showToast(`Berjaya menyalin ${upserts.length} hari.`, 'success');
+    closeDuplicateModal();
+    await loadMonth();
+}
+
+// ─── Clear month ──────────────────────────────────────────────────────────────
+function openClearModal() {
+    document.getElementById('month-actions-menu').classList.remove('open');
+
+    const label       = monthLabel(currentYear, currentMonth);
+    const filledCount = countFilledDays(scheduleMap);
+
+    document.getElementById('clear-modal-text').innerHTML =
+        `Padam semua jadual <strong>${escapeHtml(label)}</strong>? ` +
+        `<strong>${filledCount}</strong> hari akan dikosongkan. Tindakan ini tidak boleh diundur.`;
+    document.getElementById('clear-modal').classList.add('open');
+}
+
+function closeClearModal() {
+    document.getElementById('clear-modal').classList.remove('open');
+}
+
+function handleClearOverlay(e) {
+    if (e.target === document.getElementById('clear-modal')) closeClearModal();
+}
+
+async function confirmClear() {
+    const btn = document.getElementById('confirm-clear-btn');
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner"></span> Mengosongkan...';
+
+    const padMonth  = String(currentMonth).padStart(2, '0');
+    const startDate = `${currentYear}-${padMonth}-01`;
+    const lastDay   = lastDayOfMonth(currentYear, currentMonth);
+    const endDate   = `${currentYear}-${padMonth}-${String(lastDay).padStart(2, '0')}`;
+
+    const { error } = await db
+        .from('schedule')
+        .delete()
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+    btn.disabled   = false;
+    btn.textContent = 'Kosongkan';
+
+    if (error) {
+        showToast('Gagal mengosongkan jadual: ' + error.message, 'error');
+        return;
+    }
+
+    showToast('Jadual bulan ini telah dikosongkan.', 'success');
+    closeClearModal();
+    await loadMonth();
 }
 
 // ─── Month navigation ─────────────────────────────────────────────────────────

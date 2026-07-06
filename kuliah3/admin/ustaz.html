@@ -49,7 +49,7 @@
 
 <!-- ── Add / Edit modal ── -->
 <div class="modal-overlay" id="ustaz-modal" onclick="handleUstazOverlay(event)">
-  <div class="modal" style="max-width:480px">
+  <div class="modal modal-poster">
     <div class="modal-header">
       <span class="modal-title" id="ustaz-modal-title">Tambah Penceramah</span>
       <button class="modal-close" onclick="closeUstazModal()">&times;</button>
@@ -57,34 +57,41 @@
 
     <input type="hidden" id="edit-id">
 
-    <div class="form-group">
-      <label for="edit-fullname">Nama Penuh *</label>
-      <input type="text" id="edit-fullname" placeholder="Ustaz Muhammad Ali">
-    </div>
-    <div class="form-group">
-      <label for="edit-shortname">Nama Ringkas * <span style="font-weight:400;color:var(--text-muted)">(digunakan dalam jadual)</span></label>
-      <input type="text" id="edit-shortname" placeholder="Cth: UA Hairul, Ust Zaidi">
-    </div>
-    <div class="form-group">
-      <label for="edit-topic">Tajuk Kuliah <span style="font-weight:400;color:var(--text-muted)">(boleh ubah kemudian)</span></label>
-      <input type="text" id="edit-topic" placeholder="Cth: Tadabbur Surah Al-Baqarah">
-    </div>
-    <div class="form-group" id="poster-current-group" style="display:none">
-      <label>Poster Semasa</label>
-      <img id="poster-current-img" src="" alt="Poster semasa" class="poster-modal-preview">
-      <p id="poster-current-url" style="font-size:0.7rem;color:var(--text-muted);word-break:break-all;margin-top:0.375rem"></p>
-      <button type="button" class="btn btn-danger btn-sm" onclick="removePoster()" style="margin-top:0.5rem">Buang Poster</button>
-    </div>
+    <div class="ustaz-form-columns">
+      <div class="ustaz-form-col">
+        <div class="form-group">
+          <label for="edit-fullname">Nama Penuh *</label>
+          <input type="text" id="edit-fullname" placeholder="Ustaz Muhammad Ali">
+        </div>
+        <div class="form-group">
+          <label for="edit-shortname">Nama Ringkas * <span style="font-weight:400;color:var(--text-muted)">(digunakan dalam jadual)</span></label>
+          <input type="text" id="edit-shortname" placeholder="Cth: UA Hairul, Ust Zaidi">
+        </div>
+        <div class="form-group">
+          <label for="edit-topic">Tajuk Kuliah <span style="font-weight:400;color:var(--text-muted)">(boleh ubah kemudian)</span></label>
+          <input type="text" id="edit-topic" placeholder="Cth: Tadabbur Surah Al-Baqarah">
+        </div>
+      </div>
 
-    <div class="form-group">
-      <label>Muat Naik Poster Baru <span style="font-weight:400;color:var(--text-muted)">(1920×1080)</span></label>
-      <input type="file" id="edit-poster" accept="image/jpeg,image/png,image/webp">
-      <div id="poster-preview" style="margin-top:0.5rem"></div>
-    </div>
+      <div class="ustaz-form-col ustaz-form-col-poster">
+        <div class="form-group" id="poster-current-group" style="display:none">
+          <label>Poster Semasa</label>
+          <img id="poster-current-img" src="" alt="Poster semasa" class="poster-modal-preview">
+          <p id="poster-current-url" style="font-size:0.7rem;color:var(--text-muted);word-break:break-all;margin-top:0.375rem"></p>
+          <button type="button" class="btn btn-danger btn-sm" onclick="removePoster()" style="margin-top:0.5rem">Buang Poster</button>
+        </div>
 
-    <div class="form-group">
-      <label>Atau Gunakan URL Gambar</label>
-      <input type="url" id="edit-poster-url" placeholder="https://contoh.com/gambar.jpg">
+        <div class="form-group">
+          <label>Muat Naik Poster Baru <span style="font-weight:400;color:var(--text-muted)">(1920×1080)</span></label>
+          <input type="file" id="edit-poster" accept="image/jpeg,image/png,image/webp">
+          <div id="poster-preview" style="margin-top:0.5rem"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Atau Gunakan URL Gambar</label>
+          <input type="url" id="edit-poster-url" placeholder="https://contoh.com/gambar.jpg">
+        </div>
+      </div>
     </div>
 
     <div class="modal-footer">
