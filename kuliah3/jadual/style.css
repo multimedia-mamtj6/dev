@@ -456,7 +456,7 @@ main {
 /* =========================================================
    Responsive breakpoint — mobile
    ========================================================= */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
     body {
         overflow-y: auto;
         background-color: #f1f5f9;

@@ -80,7 +80,7 @@ main { flex-grow: 1; min-height: 0; }
 /* ======================================================= */
 /* BAHAGIAN 2: GAYA UNTUK PAPARAN MUDAH ALIH (<= 768px)    */
 /* ======================================================= */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
     body { overflow-y: auto; }
     .page-container { padding: 15px; height: auto; width: 98vw; }
     .schedule-table { display: none; }
@@ -169,7 +169,7 @@ main { flex-grow: 1; min-height: 0; }
    these rules win by cascade within @media (max-width: 768px).
    ================================================================ */
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
 
     body {
         background-color: #f1f5f9;
@@ -672,8 +672,7 @@ main { flex-grow: 1; min-height: 0; }
     .title-container .title-main { font-size: 14pt; }
     .title-container .title-month { font-size: 28pt; }
     .schedule-table thead th { font-size: 9pt; font-weight: bold; }
-    .week-number-cell { writing-mode: vertical-lr; transform: rotate(180deg); }
-    
+
     .date-number { position: absolute; top: 2pt; left: 4pt; font-size: 9pt; z-index: 3; }
     .date-header { align-items: flex-start !important; z-index: 2; }
     .holiday-label {
