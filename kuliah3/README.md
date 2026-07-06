@@ -22,8 +22,10 @@ Live at: `dev-data.mamtj6.com/kuliah3/admin/`
 - Google OAuth login — only pre-registered emails can access
 - Monthly calendar view with day editor modal (subuh + maghrib ustaz, public holiday)
 - Dual view: desktop grid calendar / mobile scrollable day list
-- Penceramah (ustaz) registry with poster images (upload file or URL)
-- Publish schedule to GitHub (pushes `jadual_lengkap_beta.json`)
+- Penceramah (ustaz) registry with poster images (upload file or URL), two-column layout on desktop
+- "Lihat Terbitan" — quick view/export-PDF links to the live published schedule (current + next month only)
+- "Tindakan Bulan" — duplicate the previous month's ustaz assignments forward, or clear a month's data, both with a confirmation safeguard
+- Publish schedule to GitHub (pushes `jadual_lengkap_beta.json` — each publish replaces the whole file with just that month's data, not a merge)
 - Admin user management with role-based access (editor / super_admin)
 - Fully responsive — desktop and mobile (≤640px hamburger nav, card-per-row tables)
 

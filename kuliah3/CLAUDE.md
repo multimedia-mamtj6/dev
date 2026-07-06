@@ -8,6 +8,8 @@ Architecture reference for Claude Code when working in `kuliah3/`.
 - Monthly lecture schedules (subuh + maghrib sessions per day)
 - Ustaz (penceramah) list with poster images
 - Admin user accounts (super_admin only)
+- Quick access to the live published schedule ("Lihat Terbitan" dropdown: view/export PDF, current + next month only)
+- Bulk month actions ("Tindakan Bulan" dropdown: duplicate the previous month's ustaz assignments forward, or clear a month's data entirely)
 
 `kuliah3/jadual/` is the public-facing read-only schedule view that reads from the same published JSON.
 
@@ -108,7 +110,17 @@ Admin edits day in dashboard.html
 - New file or URL entered → `poster_url: newValue`
 - Neither → omit `poster_url` from payload (preserves existing)
 
-**Cache-busting:** `vercel.json` serves `Cache-Control: public, max-age=0, must-revalidate` for all `/kuliah3/admin/(.*)` — browsers always revalidate after deploy.
+**Cache-busting:** `vercel.json` serves `Cache-Control: no-store` for `/kuliah3/admin/(.*)` and `/kuliah3/jadual/(.*)`. `no-store` (not `max-age=0, must-revalidate`) is required — `must-revalidate` still lets mobile Chrome serve the page from bfcache with zero network request, so a stale copy with old JS can resurface after backgrounding the app. `no-store` disables bfcache for these routes.
+
+**Dropdown menu pattern:** `.month-actions` (wrapper, `position: relative`) + `.month-actions-menu` (absolute-positioned panel, `.open` class toggles `display`) + `.month-actions-item` (row). Closed via a single shared `document.addEventListener('click', ...)` in `dashboard.js`; each trigger button calls `e.stopPropagation()` so its own click doesn't immediately close it again. Both the "Tindakan Bulan" (Salin Data / Kosongkan) and "Lihat Terbitan" (Tunjukkan Jadual / Export PDF) dropdowns in `dashboard.html` reuse this exact CSS — reuse it for any future dropdown rather than inventing a new one.
+
+**Publish overwrites, never merges:** every `Terbitkan` click replaces the *entire* `jadual_lengkap_beta.json` with only the currently-viewed month's data (see `api/publish.js`). There is no way for "current month" and "next month" to both be live at once — whichever was published most recently is the only one the public page actually renders correctly. If the public page looks empty for one of them, someone needs to go republish it.
+
+**Local testing:** `Terbitkan` calls `POST /api/publish`, a Vercel serverless function that does not exist under plain `python -m http.server` (the documented local-dev method for this repo) — it will 404 and surface as a "Ralat sambungan" toast. Day-edit/save, and the Duplicate/Clear month actions (below), all write directly to Supabase instead — same production project everywhere, no local/prod split — so they work locally but have real, immediate, non-sandboxed effects on production data.
+
+**Month action buttons only show for the real current/next month:** `dashboard.js`'s `updateScheduleActions()` computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from the dashboard's own navigable `currentYear`/`currentMonth`), since `kuliah3/jadual/script.js` can only render the real current month or real next month (`?bulan=depan`) — no arbitrary-month param exists. This one computation also drives the "Bulan Ini"/"Bulan Depan" `#month-tag` badge and whether `#future-month-note` (vs the Terbitkan button) is shown.
+
+**Duplicate/Clear month actions:** "Salin Data {previous month}" copies `subuh_ustaz_id`/`maghrib_ustaz_id` only (never `cuti_umum` — holidays are date-specific and copying them forward would mislabel the wrong day) from the month immediately before whatever's currently displayed, matched by day-of-month number, full overwrite (confirmation modal shows how many already-filled target days will be replaced). "Kosongkan Bulan Ini" hard-deletes all `schedule` rows in the viewed month's date range. Both require the confirmation modal — same safeguard regardless of which month is targeted, including the real current/live month.
 
 ## Print/PDF Export (kuliah3/jadual/)
 

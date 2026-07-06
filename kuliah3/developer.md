@@ -19,8 +19,8 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/index.html` | Login page — Google OAuth via Supabase |
 | `admin/app.js` | Shared: Supabase client (`db`), `requireAuth()`, `signOut()`, `showToast()`, `escapeHtml()`, `_injectSuperAdminNav()`, `toggleNav()` |
 | `admin/style.css` | All admin styles: desktop, ≤768px tablet, ≤640px mobile |
-| `admin/dashboard.html` | Monthly calendar grid + day editor modal |
-| `admin/dashboard.js` | `renderCalendar()`, `renderMobileDayList()`, `openModal()`, `saveDay()`, `publishSchedule()` |
+| `admin/dashboard.html` | Monthly calendar grid + day editor modal + "Lihat Terbitan" and "Tindakan Bulan" dropdowns |
+| `admin/dashboard.js` | `renderCalendar()`, `renderMobileDayList()`, `openModal()`, `saveDay()`, `publishMonth()`, `updateScheduleActions()` (real current/next month gating), `toggleMonthActionsMenu()`/`toggleScheduleActionsMenu()`, `openDuplicateModal()`/`confirmDuplicate()`, `openClearModal()`/`confirmClear()` |
 | `admin/ustaz.html` | Penceramah list table + add/edit/delete modals |
 | `admin/ustaz.js` | `loadUstaz()`, `renderTable()`, `openEditModal()`, `saveUstaz()`, `removePoster()`, `confirmDelete()` |
 | `admin/users.html` | Admin user table + add/edit/delete modals (super_admin only) |
@@ -80,6 +80,18 @@ Every JS-rendered `<td>` must have `data-label="..."`. Empty string is fine for 
 
 **Trap:** The global desktop rule `.data-table tr:last-child td { border-bottom: none }` applies outside the media query and overrides mobile borders on the last row. The mobile block re-asserts borders to fix this.
 
+### Dropdown menu pattern
+```css
+.month-actions { position: relative; }        /* or any wrapper needing this */
+.month-actions-menu { display: none; position: absolute; ... }
+.month-actions-menu.open { display: block; }
+.month-actions-item { display: block; width: 100%; text-align: left; ... }
+```
+Toggle function calls `e.stopPropagation()`; a single shared `document.addEventListener('click', ...)` in `dashboard.js` closes all open menus. Both dropdowns in `dashboard.html` ("Tindakan Bulan" and "Lihat Terbitan") reuse this exact CSS — don't build a new dropdown pattern, extend this one.
+
+### Ustaz modal two-column layout (`ustaz.html`)
+`.ustaz-form-columns` wraps two `.ustaz-form-col` divs (identity fields left, poster fields right), stacked by default (mobile, unchanged) and side-by-side at `@media screen and (min-width: 768px)` with a `1px solid var(--border)` divider on the poster column. The modal itself uses a `.modal-poster` class (480px → 700px at that same breakpoint) instead of an inline `max-width` style.
+
 ---
 
 ## JS architecture
@@ -94,13 +106,17 @@ Every JS-rendered `<td>` must have `data-label="..."`. Empty string is fine for 
 - `_injectSuperAdminNav()` — appends Pengguna link to `.nav-links` before `.spacer` if role is super_admin
 
 ### dashboard.js
-- `currentYear`, `currentMonth` — module-level state for month navigation
+- `currentYear`, `currentMonth` — module-level state for month navigation (unrestricted — admin can browse any past/future month)
 - `scheduleMap` — `{ 'YYYY-MM-DD': { subuh, maghrib, cuti_umum } }` built from Supabase fetch
 - `renderCalendar()` — builds `#calendar-table` grid + calls `renderMobileDayList()`
 - `renderMobileDayList()` — builds `#mobile-day-list` vertical day cards (≤640px view)
 - `openModal(dateStr)` — populates editor modal from `scheduleMap`
 - `saveDay()` — upserts to `schedule` table with `onConflict: 'date'`
-- `publishSchedule()` — POSTs to `/api/publish?month=YYYY-MM` with Bearer token
+- `publishMonth()` — POSTs to `/api/publish?month=YYYY-MM` with Bearer token. **Only works where a Vercel serverless runtime is available** — 404s under plain `python -m http.server`
+- `updateScheduleActions()` — computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from `currentYear`/`currentMonth` alone, since those can be any month). Drives: the `#schedule-actions` dropdown visibility/hrefs, the `#month-tag` "Bulan Ini"/"Bulan Depan" badge, whether `#future-month-note` or the Terbitkan button + `#publish-hint` show. Called every `loadMonth()`
+- `toggleMonthActionsMenu()` / `toggleScheduleActionsMenu()` — open/close the two dropdown menus (`.month-actions-menu` / `.month-actions-item` pattern, see CSS architecture below); one shared `document` click listener closes both on outside-click
+- `openDuplicateModal()` / `confirmDuplicate()` — copies `subuh_ustaz_id`/`maghrib_ustaz_id` (never `cuti_umum`) from the month immediately before `currentMonth`, matched by day-of-month number, full overwrite after confirmation
+- `openClearModal()` / `confirmClear()` — hard-deletes all `schedule` rows in the viewed month's date range, after confirmation
 
 ### ustaz.js
 - `allUstaz` — sorted client-side with `localeCompare({ numeric: true })`; never use Supabase `.order()`
@@ -124,6 +140,10 @@ Vercel serverless function. Requires:
 Reads schedule + ustaz from Supabase using service role. Builds `jadual_lengkap_beta.json` and pushes to GitHub via API. Returns `{ published: { rows }, commitUrl }`.
 
 Note: `commitUrl` is returned but **not shown to the user** (removed from dashboard.js — non-tech users don't need it).
+
+**Overwrite, not merge:** each call replaces the *entire* JSON with only the requested month — there's no per-month storage. Publishing Ogos wipes out whatever Julai data was previously live. `kuliah3/jadual/script.js` sets its page title straight from the JSON unconditionally and builds its calendar grid from the real today's date (or +1 month for `?bulan=depan`) — these two can silently disagree if the wrong month was last published (title says one month, grid renders empty because the JSON's dates don't match).
+
+**Local testing:** this endpoint only exists where a Vercel serverless runtime runs it — plain `python -m http.server` (this repo's documented local-dev method) has no `/api` route at all, so `Terbitkan` will fail locally with a connection-error toast. Everything else in `dashboard.js`/`ustaz.js`/`users.js` talks directly to Supabase and works identically local or deployed (same production project both ways).
 
 ---
 
