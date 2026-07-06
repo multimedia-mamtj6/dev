@@ -54,7 +54,7 @@ The application renders **two complete layouts simultaneously** in `jadual.html`
      - Embedded Digital Signage posters via iframe
    - Uses `em`/`rem` units for text sizing
 
-**Display control:** CSS `@media (max-width: 768px)` query toggles visibility between views.
+**Display control:** CSS `@media screen and (max-width: 768px)` query toggles visibility between views. **Must include `screen`** — see the PDF Export warning below for why a bare `@media (max-width: 768px)` broke print output.
 
 ### Data Structure & Management
 
@@ -109,6 +109,140 @@ Version 15.0 introduced URL-based PDF export:
 - Converts all units to `pt` for print consistency
 - A4 landscape orientation enforced
 
+### ⚠️ CRITICAL: Print/PDF is fragile — read this before touching style.css
+
+**Bug fixed 2026-07-06:** PDF exports triggered from a narrow/mobile-width browser (e.g. opening `jadual.html?file=pdf` on a phone) came out broken — header stacked instead of side-by-side, and the footer legend (Petunjuk boxes) vanished entirely. Root cause: both `@media (max-width: 768px)` blocks in `style.css` were **not scoped to `screen`**. `max-width` is a viewport-width check, and on a phone the print rendering context still reports that narrow width — so the mobile column-layout/`.legend{display:none}` rules stayed active *during* printing, and the `@media print` block never reset `.page-header`/`.page-footer` flex-direction or `.legend` display to compensate.
+
+**Fix:** both mobile blocks must be `@media screen and (max-width: 768px)` — never bare `@media (max-width: 768px)`. This guarantees `@media print` always gets the desktop layout as its starting point, regardless of the exporting device's screen width. **If you ever add a new `@media (max-width: ...)` block to this file, scope it to `screen` too, or it can silently leak into print again.**
+
+**Second bug fixed same day:** the print block still had a leftover `.week-number-cell { writing-mode: vertical-lr; transform: rotate(180deg); }` rule from before the week label was refactored (see "Week labels" below) to build "MINGGU" as individually stacked `<span>` letters via `.week-label { flex-direction: column }` (style.css:45, script.js:84-87). Rotating an already-stacked label produced garbled/reversed text in the printed week column. **The rotation rule has been removed from print** — do not re-add `writing-mode`/`transform: rotate` to `.week-number-cell` unless the underlying `.week-label` markup goes back to a single rotated block of text.
+
+**Every value in the `@media print` block below is a deliberately tuned pt size or position from real print testing (A4 landscape) — do not "clean up" or round these without reprinting and visually comparing.** Full block preserved here for reference so a stale in-code version can always be diffed against a known-good one:
+
+```css
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 0;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body {
+        overflow: visible !important;
+        background-color: white;
+    }
+
+    /* --- Sembunyikan elemen yang tidak perlu dicetak --- */
+    .print-button,
+    .legend-box.today-legend{
+        display: none !important;
+    }
+
+    /* --- CRITICAL: Force desktop table view for printing even on mobile --- */
+    #mobile-view-container {
+        display: none !important;
+    }
+
+    .schedule-table {
+        display: table !important;
+    }
+
+    /* --- Aturan Reka Letak Utama --- */
+    .page-container {
+        display: flex; flex-direction: column; height: 100vh !important;
+        width: 100% !important; max-width: none !important;
+        padding: 1cm !important; margin: 0 !important;
+    }
+    .page-header { flex-shrink: 0; }
+    main { flex-grow: 1; min-height: 0; }
+    .page-footer { flex-shrink: 0; padding-top: 5px; }
+
+    /* --- Strategi Jadual Muktamad --- */
+    .schedule-table {
+        width: 100%;
+        height: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        /* PEMBETULAN #1: Garisan lebih halus dan lembut */
+        border: 0.5pt solid #555;
+        padding: 0 !important;
+        background-color: transparent !important;
+        position: relative;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* PEMBETULAN #2: Kembalikan warna hijau pada header hari */
+    .schedule-table thead th {
+        box-shadow: inset 0 0 0 1000px var(--week-bg);
+    }
+
+    .week-number-cell {
+        box-shadow: inset 0 0 0 1000px var(--week-col-bg);
+    }
+
+    .day-cell {
+        box-shadow: inset 0 0 0 1000px var(--date-header-bg);
+    }
+
+    .day-cell.empty-cell {
+        box-shadow: inset 0 0 0 1000px var(--empty-cell-bg);
+    }
+
+    /* --- Aturan untuk sel yang mempunyai tarikh --- */
+    .day-cell .date-header {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 14pt;
+        background-color: var(--date-header-bg);
+    }
+
+    .day-cell .lecture-content {
+        position: absolute;
+        top: 14pt; bottom: 0; left: 0; right: 0;
+        background-color: #fff;
+        padding: 0.5vmin;
+    }
+
+    /* --- Penyesuaian Saiz Fon & Posisi Teks (Final) --- */
+    .title-container .title-main { font-size: 14pt; }
+    .title-container .title-month { font-size: 28pt; }
+    .schedule-table thead th { font-size: 9pt; font-weight: bold; }
+
+    .date-number { position: absolute; top: 2pt; left: 4pt; font-size: 9pt; z-index: 3; }
+    .date-header { align-items: flex-start !important; z-index: 2; }
+    .holiday-label {
+        font-size: 6.5pt;
+        float: right;
+        margin-top: 2pt;
+        margin-right: 4pt;
+        background-color: var(--holiday-label-bg) !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .lecture-content { font-size: 5pt; z-index: 2; }
+    .lecture-time { font-size: 7pt; }
+    .ustaz-name { font-size: 7pt; }
+    .lecture-title { font-size: 6.5pt; }
+    .empty-slot-text { font-size: 9pt; }
+    .lecture-content.is-empty-slot { background-color: var(--empty-cell-bg); }
+
+    .arabic-text { font-size: 18pt; }
+    .yasin-title { font-size: 8pt; }
+    .page-footer { font-size: 7pt; }
+}
+```
+
 ## Desktop View Implementation Details
 
 **Positioning strategy:**
@@ -126,8 +260,7 @@ Version 15.0 introduced URL-based PDF export:
 - Print styles include `print-color-adjust: exact` to preserve colors
 
 **Week labels:**
-- Vertical text using `writing-mode: vertical-lr`
-- 180° rotation with vendor prefixes for Edge compatibility (style.css:45)
+- "MINGGU" is rendered as individually stacked `<span>` letters inside `.week-label { display: flex; flex-direction: column }` (style.css:45, script.js:84-87) — **not** CSS `writing-mode`/`transform: rotate`. The old rotation approach was removed; do not reintroduce it (see the print-block warning above — combining rotation with the stacked-letter markup produces garbled text).
 
 **Empty slots:**
 - Gray background with "Slot Kosong" text
@@ -228,7 +361,7 @@ Update iframe sources in `script.js:227` (Subuh) and `script.js:231` (Maghrib).
 The script automatically handles next month via `?bulan=depan`. For additional months, extend the logic in `script.js:9-15`.
 
 ### Modifying Responsive Breakpoint
-Change the `768px` value in `@media (max-width: 768px)` queries throughout `style.css`.
+Change the `768px` value in the `@media screen and (max-width: 768px)` queries throughout `style.css`. Keep the `screen` qualifier — see the PDF Export warning above.
 
 ## Important Constants & Configuration
 
@@ -243,6 +376,7 @@ Change the `768px` value in `@media (max-width: 768px)` queries throughout `styl
 
 ## Version History
 
+- **15.4.1** (2026-07-06): Fixed PDF export breaking when triggered from a narrow/mobile-width browser — scoped both `@media (max-width: 768px)` blocks to `@media screen and (max-width: 768px)` so mobile header/footer/legend layout can no longer bleed into `@media print`; removed stale `.week-number-cell { writing-mode: vertical-lr; transform: rotate(180deg); }` print rule left over from before the week label became stacked `<span>` letters (was garbling "MINGGU" in printed output)
 - **15.4** (2026-06-03): Merged mobile v2 into production (script.js + style.css); redesigned today card header — side-by-side flex layout with dropdown left and two-line date right (`#today-date-gregorian` + `#today-date-hijri`); fixed poster wrapper to true 16:9 with `margin: 0`; added `0.5rem` left/right padding to `#today-kuliah-card`
 - **15.3** (2026-05-24): Expanded page container to 98vw; fixed Apps Script skipping empty rows in Schedule sheet (code.gs v6.1); beta mobile v2 — replaced pill tab switcher with `<select>` dropdown, reduced today-card padding
 - **15.2.2** (2026-05-23): Fixed Hijri date not loading in mobile view — added `gregorianToHijri()` JS fallback calculator, fixed next-month API URL missing `&month=` param, replaced error throw with silent fallback

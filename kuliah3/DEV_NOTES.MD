@@ -87,6 +87,16 @@ Admin edits schedule in dashboard.html
 - If neither changed → `poster_url` not in payload (existing value preserved)
 - `removePoster()` function + `closeUstazModal()` resets flag
 
+### Session 3 (2026-07-06 — print/PDF export bug fix, from the repo-root chat, not admin)
+
+Not a `kuliah3/admin` session — this came from a root-level chat working across `kuliah/jadual/` and `kuliah3/jadual/` (the public read-only schedule views), triggered by a user-reported "PDF export looks broken" screenshot comparison.
+
+**Root cause:** `kuliah3/jadual/style.css`'s `@media (max-width: 768px)` block (~line 459) was never scoped to `screen`. `max-width` is a pure viewport-width check — it doesn't care whether the browser is rendering to screen or to a print/PDF context. So when a PDF export (`jadual.html?file=pdf`) was triggered from a narrow/mobile-width browser, the mobile column-layout rules (`.page-header{flex-direction:column}`, `.legend{display:none}`, etc.) stayed active *during* printing, and `@media print` never reset them back to desktop layout. Result: stacked header, missing footer legend in the exported PDF.
+
+**Fix:** changed it to `@media screen and (max-width: 768px)`. Same root-cause fix was also applied to `kuliah/jadual/style.css` (two mobile blocks there), which additionally had a second, unrelated bug: a stale `.week-number-cell { writing-mode: vertical-lr; transform: rotate(180deg); }` rule left over from before the week label was refactored into stacked `<span>` letters — that one doesn't affect `kuliah3/jadual/` since its print block never had that rotation rule.
+
+**Why this matters for kuliah3/admin too:** if `kuliah3/admin/style.css` or any future admin-side print/export feature ever adds a `@media (max-width: ...)` block, scope it to `screen` from the start. This bug class is invisible in normal desktop browser testing — it only shows up when someone exports a PDF from a phone. See `kuliah3/CLAUDE.md` → "Print/PDF Export" and `kuliah/jadual/CLAUDE.md` → "PDF Export Functionality" for the full annotated `@media print` block (every pt value there is deliberate, tuned from real print testing — don't casually "clean up" it).
+
 ---
 
 ## CURRENT STATE — UNCOMMITTED CHANGES
@@ -130,6 +140,9 @@ As of session 2 end, these files are modified but **not yet committed/pushed**:
 **Mobile breakpoints:**
 - `≤768px` — tablet: compact padding, smaller elements (partially done from session 1)
 - `≤640px` — phone: hamburger, card tables, day list (session 2)
+
+**Any `@media (max-width: ...)` block must be `@media screen and (max-width: ...)`:**
+Without `screen`, mobile layout rules stay active during print/PDF export on narrow devices and `@media print` can't reliably reset them. Broke `kuliah3/jadual/` PDF export this way (session 3) — fixed there, but this applies to any new print/export feature in `kuliah3/admin` too.
 
 **Card-per-row table pattern:**
 Every `<td>` in JS-rendered tables must have `data-label="..."`. Empty label `data-label=""` is fine for action columns (no prefix shown).

@@ -110,6 +110,12 @@ Admin edits day in dashboard.html
 
 **Cache-busting:** `vercel.json` serves `Cache-Control: public, max-age=0, must-revalidate` for all `/kuliah3/admin/(.*)` — browsers always revalidate after deploy.
 
+## Print/PDF Export (kuliah3/jadual/)
+
+`kuliah3/jadual/jadual.html` supports the same `?file=pdf` auto-print export as `kuliah/jadual/` (see `kuliah/jadual/CLAUDE.md` for the full write-up and the annotated `@media print` block — read it before touching `kuliah3/jadual/style.css`'s print rules).
+
+**Bug fixed 2026-07-06:** exporting PDF from a narrow/mobile-width browser broke the layout (stacked header, missing footer legend) because `kuliah3/jadual/style.css`'s `@media (max-width: 768px)` block (line ~459) wasn't scoped to `screen` — the mobile column layout stayed active during printing since `max-width` still matched the exporting device's width, and `@media print` never reset it. **Fixed by changing it to `@media screen and (max-width: 768px)`.** Any new mobile breakpoint block added to this file must use the same `screen`-scoped form, or print output can silently break again.
+
 ## Sensitive Files
 
 - `kuliah3/admin/` has no config files with secrets — credentials are Vercel env vars
