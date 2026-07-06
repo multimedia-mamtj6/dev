@@ -12,7 +12,7 @@
         "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
         "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg"
       },
-      "cuti_umum": "cutii"
+      "cuti_umum": null
     },
     {
       "date": "2026-07-02",
@@ -243,7 +243,7 @@
       "subuh": null,
       "maghrib": {
         "nama_penceramah": "Ustaz Mohd Fikri",
-        "tajuk_kuliah": "Ceramah Khas Isra Mikraj",
+        "tajuk_kuliah": "Pedoman Sembahyang Berjemaah",
         "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/08_7.-Ustaz-Fikri.jpg"
       },
       "cuti_umum": null
