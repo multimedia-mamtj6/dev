@@ -181,6 +181,7 @@ function updateScheduleActions() {
     const container       = document.getElementById('schedule-actions');
     const note            = document.getElementById('schedule-actions-note');
     const futureMonthNote = document.getElementById('future-month-note');
+    const scheduleLabel   = document.getElementById('schedule-actions-label');
     const viewBtn         = document.getElementById('view-schedule-btn');
     const pdfBtn          = document.getElementById('export-pdf-btn');
     const publishBtn      = document.getElementById('publish-btn');
@@ -209,9 +210,8 @@ function updateScheduleActions() {
     const label    = monthLabel(currentYear, currentMonth);
     viewBtn.href = `/kuliah3/jadual/jadual.html${query}`;
     pdfBtn.href  = `/kuliah3/jadual/jadual.html${pdfQuery}`;
-    viewBtn.textContent = `Tunjukkan Jadual ${label}`;
-    pdfBtn.textContent  = `Export PDF ${label}`;
-    container.style.display = 'flex';
+    scheduleLabel.textContent = `Lihat Terbitan ${label}`;
+    container.style.display = 'block';
     note.style.display      = 'block';
 }
 
@@ -221,8 +221,14 @@ function toggleMonthActionsMenu(e) {
     document.getElementById('month-actions-menu').classList.toggle('open');
 }
 
+function toggleScheduleActionsMenu(e) {
+    e.stopPropagation();
+    document.getElementById('schedule-actions-menu').classList.toggle('open');
+}
+
 document.addEventListener('click', () => {
     document.getElementById('month-actions-menu')?.classList.remove('open');
+    document.getElementById('schedule-actions-menu')?.classList.remove('open');
 });
 
 function getPrevMonthOf(year, month) {

@@ -34,8 +34,13 @@
     </div>
     <div class="spacer" style="flex:1"></div>
     <div class="schedule-actions" id="schedule-actions" style="display:none">
-      <a class="btn btn-view-schedule" id="view-schedule-btn" href="#" target="_blank" rel="noopener noreferrer">Tunjukkan Jadual</a>
-      <a class="btn btn-pdf-export" id="export-pdf-btn" href="#" target="_blank" rel="noopener noreferrer">Export PDF</a>
+      <button type="button" class="btn btn-view-schedule" onclick="toggleScheduleActionsMenu(event)">
+        <span id="schedule-actions-label">Lihat Terbitan</span> &#9662;
+      </button>
+      <div class="month-actions-menu" id="schedule-actions-menu">
+        <a class="month-actions-item" id="view-schedule-btn" href="#" target="_blank" rel="noopener noreferrer">📅 Tunjukkan Jadual</a>
+        <a class="month-actions-item" id="export-pdf-btn" href="#" target="_blank" rel="noopener noreferrer">📄 Export PDF</a>
+      </div>
     </div>
     <div class="month-actions" id="month-actions">
       <button type="button" class="btn btn-ghost" onclick="toggleMonthActionsMenu(event)">Tindakan Bulan &#9662;</button>

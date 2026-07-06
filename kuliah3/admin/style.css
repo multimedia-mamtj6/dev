@@ -97,7 +97,7 @@ nav .logout-btn:hover { background: rgba(0,0,0,0.35); }
 .month-tag:empty { display: none; }
 
 /* ── Schedule view / PDF export links ── */
-.schedule-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.schedule-actions { position: relative; }
 .schedule-actions-note {
   flex-basis: 100%;
   font-size: 0.75rem;
@@ -132,6 +132,7 @@ nav .logout-btn:hover { background: rgba(0,0,0,0.35); }
   font-size: 0.8125rem;
   font-family: inherit;
   color: var(--text);
+  text-decoration: none;
   cursor: pointer;
 }
 .month-actions-item:hover { background: var(--bg); }
@@ -170,15 +171,6 @@ nav .logout-btn:hover { background: rgba(0,0,0,0.35); }
 }
 .btn-view-schedule::before { content: "📅"; }
 .btn-view-schedule:hover { background: var(--today-bg); }
-
-.btn-pdf-export {
-  background: var(--today-bg);
-  color: var(--primary-hover);
-  border: 1.5px solid transparent;
-  text-decoration: none;
-}
-.btn-pdf-export::before { content: "📄"; }
-.btn-pdf-export:hover { background: #bbf7d0; border-color: var(--primary); }
 
 /* ── Calendar grid ── */
 .calendar { width: 100%; border-collapse: collapse; table-layout: fixed; }
