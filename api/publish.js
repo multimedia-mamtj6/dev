@@ -105,7 +105,7 @@ module.exports = async function handler(req, res) {
     const tajukBulan = `BULAN ${BULAN[monthNum - 1].toUpperCase()} ${year}`;
     const now        = new Date();
     const tarikhKemasKini =
-        `*Dikemaskini melalui Admin Dashboard pada ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+        `*Dikemaskini oleh Biro Dakwah pada ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
 
     const senaraiHari = scheduleRows.map(row => {
         const subuhUstaz   = row.subuh_ustaz_id   ? ustazMap[row.subuh_ustaz_id]   : null;

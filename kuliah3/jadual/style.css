@@ -772,9 +772,16 @@ main {
         font-size: 0.8rem;
     }
 
+    .page-footer .update-info,
+    .page-footer .legend,
+    .page-footer .footer-link {
+        font-size: 0.8rem;
+    }
+
     .legend {
         flex-wrap: wrap;
         justify-content: center;
+        display: none;
     }
 
     .legend-box.today-legend {
