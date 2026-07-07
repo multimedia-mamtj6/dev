@@ -213,9 +213,16 @@ function createMobileLectureBlock(time, lecture) {
 /* ---------------------------------------------------------
    Mobile view — monthly card list
    --------------------------------------------------------- */
-async function initializeMobileView(senaraiHari, targetDate) {
+async function initializeMobileView(senaraiHari, targetDate, notYetPublished = false) {
     const mobileListContainer = document.getElementById('mobile-card-list');
     if (!mobileListContainer) return;
+
+    if (notYetPublished) {
+        mobileListContainer.innerHTML = '<div class="no-kuliah-today">Jadual belum diterbitkan buat masa ini.</div>';
+        const todayCard = document.getElementById('today-kuliah-card');
+        if (todayCard) todayCard.style.display = 'none';
+        return;
+    }
 
     const today = new Date();
     const isCurrentMonth = targetDate.getMonth() === today.getMonth() &&
@@ -430,14 +437,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (urlParams.get('bulan') === 'depan') {
         baseDate.setMonth(baseDate.getMonth() + 1);
     }
+    const monthKey = `${baseDate.getFullYear()}-${pad2(baseDate.getMonth() + 1)}`;
 
     // 2. Fetch JSON (cache-busted, with embedded fallback)
     const jsonData = await fetchScheduleData();
+    const monthData = jsonData.months?.[monthKey];
+    const senaraiHari = monthData?.senaraiHari ?? [];
 
     // 3. Footer update info
     const updateInfoEl = document.getElementById('update-info');
-    if (updateInfoEl && jsonData.infoJadual) {
-        updateInfoEl.textContent = jsonData.infoJadual.tarikhKemasKini || '';
+    if (updateInfoEl) {
+        updateInfoEl.textContent = monthData?.infoJadual?.tarikhKemasKini || '';
     }
 
     // 4. Schedule title — always reflects the requested month, not the published data
@@ -447,8 +457,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 5. Render desktop calendar + mobile view
-    renderCalendarDesktop(jsonData.senaraiHari, baseDate);
-    await initializeMobileView(jsonData.senaraiHari, baseDate);
+    renderCalendarDesktop(senaraiHari, baseDate);
+    await initializeMobileView(senaraiHari, baseDate, !monthData);
 
     // 6. Auto-print for PDF context
     if (urlParams.get('file') === 'pdf') {

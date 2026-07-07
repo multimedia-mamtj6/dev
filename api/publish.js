@@ -1,5 +1,6 @@
 // Vercel serverless function: POST /api/publish?month=YYYY-MM
-// Reads schedule from Supabase, generates jadual_lengkap.json, commits to GitHub.
+// Reads schedule from Supabase, merges it into jadual_lengkap_beta.json's
+// months map (keyed by real current/next YYYY-MM), commits to GitHub.
 //
 // Required Vercel environment variables (set in Vercel Dashboard → Project → Settings → Environment Variables):
 //   SUPABASE_URL             — your Supabase project URL
@@ -11,6 +12,68 @@ const BULAN = [
     'Januari','Februari','Mac','April','Mei','Jun',
     'Julai','Ogos','September','Oktober','November','Disember'
 ];
+
+const MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // Malaysia is UTC+8, no DST
+
+// ── Pure helpers (kept dependency-free for ad-hoc local testing) ────────────
+
+function computeRealMonthKeys(mytNow) {
+    const y = mytNow.getUTCFullYear();
+    const m = mytNow.getUTCMonth() + 1; // 1-12
+    const realCurrentKey = `${y}-${String(m).padStart(2, '0')}`;
+    let ny = y, nm = m + 1;
+    if (nm > 12) { nm = 1; ny++; }
+    const realNextKey = `${ny}-${String(nm).padStart(2, '0')}`;
+    return { realCurrentKey, realNextKey };
+}
+
+function inferMonthKeyFromTajuk(tajukBulan) {
+    if (typeof tajukBulan !== 'string') return null;
+    const m = tajukBulan.match(/BULAN\s+([A-Za-z]+)\s+(\d{4})/i);
+    if (!m) return null;
+    const idx = BULAN.findIndex(name => name.toUpperCase() === m[1].toUpperCase());
+    if (idx === -1) return null;
+    return `${m[2]}-${String(idx + 1).padStart(2, '0')}`;
+}
+
+// Parses the existing file's base64 content into a `months` map, migrating
+// the old single-month flat schema if that's what's currently published.
+// Never throws — any unrecognized/corrupt content just yields an empty map.
+function buildMonthsStoreFromExisting(base64Content) {
+    if (!base64Content) return {};
+
+    let parsed;
+    try {
+        const decoded = Buffer.from(base64Content, 'base64').toString('utf8');
+        parsed = JSON.parse(decoded);
+    } catch (e) {
+        return {};
+    }
+
+    if (parsed && typeof parsed.months === 'object' && parsed.months !== null && !Array.isArray(parsed.months)) {
+        return { ...parsed.months };
+    }
+
+    if (parsed && parsed.infoJadual && Array.isArray(parsed.senaraiHari)) {
+        const inferredKey = inferMonthKeyFromTajuk(parsed.infoJadual.tajukBulan);
+        if (inferredKey) {
+            return { [inferredKey]: { infoJadual: parsed.infoJadual, senaraiHari: parsed.senaraiHari } };
+        }
+    }
+
+    return {};
+}
+
+// Merges `newMonthEntry` into `monthsStore[month]`, then drops every key that
+// isn't the real-current or real-next month so the file never accumulates
+// stale/unbounded history.
+function mergeAndPruneMonthsStore(monthsStore, month, newMonthEntry, realCurrentKey, realNextKey) {
+    const merged = { ...monthsStore, [month]: newMonthEntry };
+    for (const key of Object.keys(merged)) {
+        if (key !== realCurrentKey && key !== realNextKey) delete merged[key];
+    }
+    return merged;
+}
 
 module.exports = async function handler(req, res) {
     // ── CORS ────────────────────────────────────────────────────────────────
@@ -58,6 +121,15 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Month out of range' });
     }
 
+    // Only the real current/next month may ever be published — this keeps the
+    // file's `months` map bounded to exactly these two keys (see prune step below).
+    const { realCurrentKey, realNextKey } = computeRealMonthKeys(new Date(Date.now() + MYT_OFFSET_MS));
+    if (month !== realCurrentKey && month !== realNextKey) {
+        return res.status(400).json({
+            error: `Month must be the real current (${realCurrentKey}) or next (${realNextKey}) month`,
+        });
+    }
+
     const startDate = `${month}-01`;
     const lastDay   = new Date(year, monthNum, 0).getDate();
     const endDate   = `${month}-${String(lastDay).padStart(2, '0')}`;
@@ -101,7 +173,7 @@ module.exports = async function handler(req, res) {
     }
     const scheduleRows = await schedRes.json();
 
-    // ── 5. Build jadual_lengkap.json payload ────────────────────────────────
+    // ── 5. Build this month's entry ─────────────────────────────────────────
     const tajukBulan = `BULAN ${BULAN[monthNum - 1].toUpperCase()} ${year}`;
     const now        = new Date();
     const tarikhKemasKini =
@@ -126,11 +198,6 @@ module.exports = async function handler(req, res) {
         };
     });
 
-    const jsonContent = JSON.stringify(
-        { infoJadual: { tajukBulan, tarikhKemasKini }, senaraiHari },
-        null, 2
-    );
-
     // ── 6. Push to GitHub ────────────────────────────────────────────────────
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo  = process.env.GITHUB_REPO;  // e.g. "multimedia-mamtj6/dev"
@@ -146,18 +213,33 @@ module.exports = async function handler(req, res) {
         'Content-Type':         'application/json',
     };
 
-    // Get current file SHA (required for update; 404 = new file, no SHA needed)
-    const shaRes = await fetch(
+    // Get current file content + SHA in one call (404 = new file, no SHA needed)
+    const contentsRes = await fetch(
         `https://api.github.com/repos/${githubRepo}/contents/${filePath}`,
         { headers: ghHeaders }
     );
-    if (!shaRes.ok && shaRes.status !== 404) {
+    if (!contentsRes.ok && contentsRes.status !== 404) {
         return res.status(500).json({
-            error: 'Failed to read current file SHA from GitHub',
-            status: shaRes.status,
+            error: 'Failed to read current file from GitHub',
+            status: contentsRes.status,
         });
     }
-    const currentSha = shaRes.ok ? (await shaRes.json()).sha : undefined;
+
+    let currentSha;
+    let monthsStore = {};
+    if (contentsRes.ok) {
+        const fileData = await contentsRes.json();
+        currentSha  = fileData.sha;
+        monthsStore = buildMonthsStoreFromExisting(fileData.content);
+    }
+
+    monthsStore = mergeAndPruneMonthsStore(
+        monthsStore, month,
+        { infoJadual: { tajukBulan, tarikhKemasKini }, senaraiHari },
+        realCurrentKey, realNextKey
+    );
+
+    const jsonContent = JSON.stringify({ months: monthsStore }, null, 2);
 
     // Commit the new content (create if no SHA, update if SHA exists)
     const commitBody = {
@@ -189,5 +271,11 @@ module.exports = async function handler(req, res) {
         success:   true,
         commitUrl: updateData.commit?.html_url ?? null,
         published: { month, rows: senaraiHari.length, tajukBulan },
+        months:    Object.keys(monthsStore),
     });
 };
+
+module.exports.computeRealMonthKeys        = computeRealMonthKeys;
+module.exports.inferMonthKeyFromTajuk       = inferMonthKeyFromTajuk;
+module.exports.buildMonthsStoreFromExisting = buildMonthsStoreFromExisting;
+module.exports.mergeAndPruneMonthsStore     = mergeAndPruneMonthsStore;
