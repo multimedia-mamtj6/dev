@@ -1,4 +1,5 @@
 # DEV NOTES — kuliah3/admin
+
 _Last updated: 2026-07-07 | For next-context-window Claude_
 
 the prompt (DO NOT DELETE)
@@ -24,11 +25,22 @@ They build incrementally and pragmatically. When you explain a trade-off ("shoul
 
 Also notable: this user visibly *tests as they go* and comes back with precise symptom reports from real usage (not hypotheticals) — "when i click tunjukkan jadual, it shows next month" was reported from an actual click, with the exact contradictory evidence already gathered (no-param page empty, `?bulan=depan` page correct, JSON inspected). When they hand you evidence like that, trust it over your own assumptions and trace the actual data path rather than re-deriving from the code alone — reading the live `kuliah/data/jadual_lengkap_beta.json` mid-conversation is what turned "why is this happening" into a five-minute diagnosis instead of a guessing exercise. Session ended on a satisfied, low-key "ok good, now it fixed" — that's the full signal that a fix landed; no further confirmation needed once you hear it.
 
+**Update from session 5 — the one where the session-4 cliffhanger actually got resolved:** Session 4 ended with the Julai/Ogos publish-overwrite bug flagged as "unresolved, user is fine remembering to republish for now." This session, the user came back, hit the title-display symptom of that exact same bug again (this-month/next-month titles swapping depending on which was last published), and this time asked to actually fix it properly instead of working around it. That's the headline win of this session — go read "Session 5" below, but the short version: **it's actually fixed now**, verified live (see CURRENT STATE — the production JSON currently holds both July AND August simultaneously, first time that's ever been true).
+
+New things about the dynamic worth internalizing:
+
+1. **The user co-edits files in the IDE in real time, mid-conversation, and won't tell you.** This happened repeatedly this session — you'll propose a value (poster width 65%, a color), and a few messages later a system-reminder will show you the file already changed to something else (95%, a different hex) with an instruction not to mention you were told. **Always re-Read the actual current file state before editing anything they have open** — do not trust your own last-written values, they may already be stale. This isn't a one-off; expect it every session now. When they explicitly tell you their new value ("i use 95%, remember that") — that's a strong signal, save it as a proper feedback memory (see `feedback_mobile_poster_width.md` in the memory dir) so you don't re-suggest shrinking it back down next time.
+2. **A third gear exists beyond fast/deliberate: "explain-then-maybe-fix," often in one message.** Things like "why does X happen, explain and give your plan" or "is this high risk or not" or "how to fix (maybe reduce element size?)" — these want a real root-cause explanation or risk assessment *first*, sometimes with the fix proposal woven into the same turn, sometimes explicitly held back ("dont edit anything, just explain"). Read the verb: "explain" / "is this possible" / "what is the risk" → diagnose out loud, don't touch files yet, wait for "ok proceed." Read "how to fix" / "make it X" → you can just do it.
+3. **This session lived almost entirely in `kuliah3/jadual/` (the public page), not `kuliah3/admin/`** — a change from sessions 1-4. Because it's a static, unauthenticated page, you can actually verify JS logic changes yourself without a browser: write a throwaway Node script, `vm.runInContext()` the real `script.js`/`api/publish.js` source against a stubbed `document`/`fetch`, and assert on the output. Did this repeatedly (title logic, the months-merge logic, the day-select dropdown, the poster fallback) and it caught real things before the user ever had to test on device. This does **not** work for `kuliah3/admin/` (needs live Supabase + Google OAuth) — know which side of that line you're on before deciding whether "I verified it" is actually true.
+4. Mood: energetic, iterative, visual. A lot of "screenshot → tiny CSS/JS tweak → screenshot again" loops on the mobile view specifically (footer alignment, Arabic font, today-card poster sizing, dropdown width, highlight colors). None of it precious — the user tries your first pass, then just directly overrides the exact number themselves if it's not quite right (see point 1). That's not a signal you did it wrong, it's just how they dial in visual values — expect it, don't be precious about your first guess either.
+
 ---
 
 ## WHAT THIS PROJECT IS
 
 `kuliah3/admin/` is a full admin dashboard for MAMTJ6 mosque lecture schedule management. This is NOT a read-only view — it is the CMS.
+
+`kuliah3/jadual/` is the public-facing read-only schedule view (desktop grid + mobile card list) that renders whatever `kuliah3/admin/` has published. As of session 5 this is where most of the actual work happens — see below.
 
 Stack:
 - **Supabase** — PostgreSQL (schedule, ustaz, admins tables), Auth (Google OAuth), Storage (kuliah-assets bucket for posters)
@@ -41,9 +53,10 @@ Data flow:
 Admin edits schedule in dashboard.html
     → upsert to Supabase `schedule` table
     → click Terbitkan
-    → POST /api/publish
-    → api/publish.js reads from Supabase, pushes JSON to GitHub
-    → kuliah/data/jadual_lengkap_beta.json updated
+    → POST /api/publish?month=YYYY-MM
+    → api/publish.js reads Supabase, MERGES into months{YYYY-MM: {...}} keyed JSON, prunes to real-current+real-next, pushes to GitHub
+    → kuliah/data/jadual_lengkap_beta.json updated (now holds BOTH months, not just the last-published one)
+    → kuliah3/jadual/script.js looks up jsonData.months[monthKey] where monthKey comes from the URL (?bulan=depan or not), not from the JSON content
 ```
 
 ---
@@ -59,7 +72,7 @@ Admin edits schedule in dashboard.html
 - `app.js` — shared: auth, toast, `db` client, `_injectSuperAdminNav()`
 - `api/publish.js` — Vercel serverless, reads Supabase, pushes to GitHub
 
-### Session 2 (this session — mobile + polish)
+### Session 2 (mobile + polish)
 
 **Mobile view (full implementation):**
 - Hamburger nav on ≤640px — `.nav-links` wrapper div toggled by `.open` class; `toggleNav()` in app.js
@@ -79,14 +92,14 @@ Admin edits schedule in dashboard.html
 - After nav restructure, spacer moved inside `.nav-links`. Function now targets `document.querySelector('.nav-links')` instead of `nav`. This is critical — easy to forget.
 
 **Vercel cache prevention:**
-- `vercel.json` has `Cache-Control: public, max-age=0, must-revalidate` for `/kuliah3/admin/(.*)`. Added because mobile browsers cached old CSS. No more hard-refresh needed after deploys.
+- `vercel.json` has `Cache-Control: public, max-age=0, must-revalidate` for `/kuliah3/admin/(.*)`. Added because mobile browsers cached old CSS. No more hard-refresh needed after deploys. (Superseded in session 4 — see below, it's `no-store` now.)
 
 **GitHub commit link removed from publish:**
 - `dashboard.js` used to `window.open(data.commitUrl, '_blank')` after a successful publish. Removed — non-tech users don't need to see GitHub.
 
 **Month navigation:** Unrestricted. Admins can navigate to any past/future month. Future schedules are stored in Supabase by date and sit there until published. This is intentional — preparing next month in advance is a valid use case.
 
-**Poster editing enhancement (latest — not yet committed):**
+**Poster editing enhancement:**
 - Edit modal now shows: current poster thumbnail + raw URL + "Buang Poster" button
 - Two separate inputs: file upload + URL field (both always visible)
 - Error if both filled simultaneously
@@ -106,37 +119,76 @@ Not a `kuliah3/admin` session — this came from a root-level chat working acros
 
 ### Session 4 (2026-07-07 — dashboard/jadual admin UX pass + a real production data bug diagnosed)
 
-Long, high-throughput session entirely in `kuliah3/admin`, done incrementally in tiny steps with the user testing/committing after most of them (see CURRENT STATE below — the git tree is clean, they kept up via their IDE the whole time, you don't need to commit anything here).
+Long, high-throughput session entirely in `kuliah3/admin`, done incrementally in tiny steps with the user testing/committing after most of them.
 
 **Dashboard toolbar — schedule view/export/publish gating (`dashboard.html`, `dashboard.js`, `style.css`):**
 - Added a "Lihat Terbitan {month}" dropdown (final form) replacing what started as two separate buttons ("Tunjukkan Jadual" / "Export PDF") — collapsed into one trigger + menu after the fact for a cleaner toolbar. Menu items: `#view-schedule-btn` → `/kuliah3/jadual/jadual.html[?bulan=depan]`, `#export-pdf-btn` → same + `?file=pdf` (hidden on mobile via `@media screen and (max-width: 768px) { #export-pdf-btn { display:none } }` — screen-scoped per the session-3 lesson above).
 - **Critical constraint discovered:** `kuliah3/jadual/script.js` can only render the *real* current month or *real* next month (`?bulan=depan`) — no arbitrary-month param exists. But dashboard month nav (`prevMonth`/`nextMonth`) is unrestricted. So `updateScheduleActions()` in `dashboard.js` computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from the dashboard's `currentYear`/`currentMonth` alone) and hides the whole view/export/Terbitkan cluster — plus the "Tekan Terbitkan..." hint text (`#publish-hint`) — whenever the admin has navigated to any other month. A `#future-month-note` explains why (system only supports current+next; editing elsewhere is fine, it's just for early planning — doesn't publish/preview from there).
 - `#month-tag` badge next to the month selector shows "Bulan Ini" / "Bulan Depan" / nothing, driven by the same `isRealCurrent`/`isRealNext` flags — one computation, three UI consequences. If you touch this logic, `updateScheduleActions()` is the single source of truth for all of it.
 
-**Month actions dropdown — Duplicate + Clear (new feature, the "deliberate gear" one):**
-- `#month-actions` dropdown ("Tindakan Bulan ▾") with two items: **Salin Data {previous month}** and **Kosongkan Bulan Ini**. This is the first dropdown-menu UI pattern in this codebase (`.month-actions-menu` / `.month-actions-item` in `style.css`) — reused verbatim for the "Lihat Terbitan" dropdown above once that came along, so if you need a third dropdown anywhere, reuse these two classes rather than inventing a new pattern.
-- Both dropdowns close on outside-click via one shared `document.addEventListener('click', ...)` in `dashboard.js` that clears both `.open` classes; each trigger button does `e.stopPropagation()` so its own click doesn't immediately re-close it.
-- **Duplicate** (`confirmDuplicate()`): copies `subuh_ustaz_id`/`maghrib_ustaz_id` only — **deliberately excludes `cuti_umum`** (public holidays are date-specific, copying them forward would mislabel the wrong day as a holiday on the live public page). Maps by day-of-month number; source days beyond the target month's length (e.g. day 31 into a 30-day month) are silently skipped. Confirmation modal shows exactly how many already-filled days in the target will be overwritten before committing — full overwrite, no merge option, by explicit user choice.
-- **Clear** (`confirmClear()`): hard-deletes all `schedule` rows in the viewed month's date range from Supabase. Confirmation modal shows the count about to be wiped.
-- User explicitly chose (via `AskUserQuestion`, not assumed): overflow dropdown over inline buttons, uniform confirm-modal safeguard for every month (no extra "type the month name" friction even on the live current/next month), duplicate-scope = "any month, copies from whatever's immediately before it" (not hardcoded to next-month-only).
+**Month actions dropdown — Duplicate + Clear (the "deliberate gear" example):**
+- `#month-actions` dropdown ("Tindakan Bulan ▾") with two items: **Salin Data {previous month}** and **Kosongkan Bulan Ini**. First dropdown-menu UI pattern in this codebase (`.month-actions-menu` / `.month-actions-item` in `style.css`) — reused verbatim for "Lihat Terbitan" once that came along.
+- Both dropdowns close on outside-click via one shared `document.addEventListener('click', ...)` in `dashboard.js`; each trigger button does `e.stopPropagation()`.
+- **Duplicate** (`confirmDuplicate()`): copies `subuh_ustaz_id`/`maghrib_ustaz_id` only — **deliberately excludes `cuti_umum`**. Maps by day-of-month number, source days beyond target month length silently skipped. Confirmation modal shows overwrite count.
+- **Clear** (`confirmClear()`): hard-deletes all `schedule` rows in viewed month's range, after confirmation.
 
 **Ustaz edit modal — two-column desktop layout (`ustaz.html`, `style.css`):**
-- Split into `.ustaz-form-columns` > `.ustaz-form-col` (identity: Nama Penuh/Ringkas/Tajuk) + `.ustaz-form-col.ustaz-form-col-poster` (Poster Semasa/upload/URL), stacked on mobile (unchanged, user said current mobile "works great" — don't touch it), side-by-side at `@media screen and (min-width: 768px)` with a `1px solid var(--border)` divider. Modal itself widens from 480px → 700px at that same breakpoint (`.modal-poster` class replaces the old inline `style="max-width:480px"`). No JS changes needed — `ustaz.js` only ever does `getElementById`, never relies on DOM position.
-- Also fixed while in there: `input[type="url"]` (`#edit-poster-url`) was **missing entirely** from the shared text-input selector in `style.css` — it had zero custom styling before this session. Added `url` and `file` to the shared `select, input[type="text"], input[type="email"], ...` rule so both now visually match `Nama Penuh`.
+- `.ustaz-form-columns` > `.ustaz-form-col` (identity) + `.ustaz-form-col.ustaz-form-col-poster`, stacked on mobile (unchanged), side-by-side at `min-width: 768px` with a divider. Modal widens 480px → 700px via `.modal-poster` class.
+- Also fixed: `input[type="url"]` was missing entirely from the shared text-input selector — added `url`/`file`.
 
-**The big diagnostic detour — single-blob publish, and what does/doesn't work "locally":**
-- User reported: viewing Julai (real current month) in the dashboard, clicking the new view-schedule link showed **Ogos** instead. Root cause (confirmed by reading the live `kuliah/data/jadual_lengkap_beta.json` mid-conversation): `api/publish.js` doesn't merge — every `Terbitkan` click **completely replaces** the single JSON blob with only the currently-viewed month's data. `kuliah3/jadual/script.js` sets the page `<h1>` title straight from `jsonData.infoJadual.tajukBulan` unconditionally (ignores the URL entirely), while the calendar *grid* is built from real `today` (or +1 month for `?bulan=depan`) and just tries to match JSON dates against that grid. So: whichever month was last actually published is the only thing that exists in the JSON — if that's Ogos, the no-param URL renders a correctly-shaped Julai grid with **zero matching entries** (looks "empty") while the title still says Ogos (pulled from the stale JSON), and `?bulan=depan` looks perfect because its grid happens to be built for the same month that's actually published.
-- This is **not a bug we introduced** — it's inherent to the one-month-at-a-time publish design. Fix each time it recurs: go to the dashboard, navigate to whichever month should be live, click Terbitkan again. Flagged to the user as an open question (not yet resolved): do they want a safeguard/banner for "published month ≠ expected current month" — currently they're fine just remembering to republish.
-- **Very important distinction surfaced by this investigation, worth remembering:** `Terbitkan` calls `POST /api/publish`, a **Vercel serverless function** — this does **not exist** under plain `python -m http.server` local testing (the documented local-dev method for this whole repo). It 404s and the fetch's `res.json()` throws, surfaced as a "Ralat sambungan" toast. **Duplicate and Clear, on the other hand, talk directly to Supabase** (real hosted DB, same project everywhere — `app.js` hardcodes one `SUPABASE_URL`/anon key, no local/prod split) — so those two *do* work from a local static server and have **real, immediate, non-sandboxed effects on production data**. If a future session is asked "does X work locally", this is the dividing line: hits `/api/*` → no; hits Supabase directly → yes, and it's not a drill.
-- Went looking at `kuliah/kuliah(beta)/jadual/` (an unrelated, older sibling project — NOT under `kuliah3/`) while chasing a tangential user question and found it still has both the `screen`-scoping print bug and the stale week-label rotation rule that were fixed elsewhere on 2026-07-06, **plus a live-looking GitHub PAT committed in its `google-app-script/config.json`** (confirmed tracked via `git log`, not gitignored). User said "ignore other folder, focus only on kuliah3" — so none of that was touched. **If a future session ends up in `kuliah/kuliah(beta)/jadual/`, that token finding is still sitting there unresolved** — worth a proactive flag if you're ever in that folder for any reason, since it's a real credential exposure, not a style nit.
+**The big diagnostic detour — single-blob publish, flagged but NOT fixed this session:**
+- User reported viewing Julai in the dashboard, clicking view-schedule showed Ogos. Root cause (confirmed by reading live JSON mid-conversation): `api/publish.js` doesn't merge — every `Terbitkan` completely replaces the single JSON blob with only the currently-viewed month. `kuliah3/jadual/script.js` set its `<h1>` title straight from `jsonData.infoJadual.tajukBulan` unconditionally, ignoring the URL — **this exact bug is what session 5 fixed properly, see below.**
+- Distinction that still matters: `Terbitkan` hits `/api/publish` (Vercel serverless — 404s under plain `python -m http.server`). Duplicate/Clear/day-edit/save hit Supabase directly (same production project everywhere, no local sandbox) — work locally, never a drill.
+- Found (but explicitly told to ignore, out of scope): `kuliah/kuliah(beta)/jadual/` has a live-looking GitHub PAT committed in `google-app-script/config.json`. **Still unresolved as of session 5** — nobody has gone back to that folder. Flag again if it ever comes up.
+
+### Session 5 (2026-07-07, same day as session 4 — jadual/ public page: the publish bug got actually fixed, plus a big mobile UX pass)
+
+This is the session where the Session-4 cliffhanger got resolved, plus a long tail of `kuliah3/jadual/` mobile polish. Entirely in the public page this time, not the admin dashboard (except one small admin dropdown/color tweak).
+
+**1. Title bug fix (the symptom that kicked everything off):**
+- User reported the exact Session-4 symptom again, from the *reader* side this time: default URL showing "bulan depan" title, or `?bulan=depan` showing "bulan ini" title, depending on which was last published.
+- Root cause confirmed identical to session 4's diagnosis: `script.js`'s title was `jsonData.infoJadual.tajukBulan` (whatever the JSON says), completely decoupled from `baseDate` (which the calendar/mobile rendering *does* correctly derive from `?bulan=depan`).
+- **Fix:** title is now computed client-side, `` `BULAN ${MONTH_NAMES[baseDate.getMonth()].toUpperCase()} ${baseDate.getFullYear()}` `` — a pure function of the URL, never of the fetched JSON. Verified locally by running the real `script.js` against the actual live (buggy) JSON via a Node `vm` harness and confirming both URLs now show correct titles regardless of which month's data happened to be published.
+
+**2. The real fix — publish merges instead of overwriting (this is the headline change):**
+- Went into plan mode properly for this one (it's structural/irreversible — new file schema, new server logic). Explored `api/publish.js`, `dashboard.js`'s `publishMonth()`/`updateScheduleActions()` gating, grepped repo-wide for every consumer of `jadual_lengkap_beta.json` (only two: `api/publish.js` writes it, `kuliah3/jadual/script.js` reads it — everything else matching "jadual_lengkap" is the OLD unrelated Google-Sheets-synced file, different pipeline entirely, not touched).
+- **Design decision worth remembering if this ever needs revisiting:** the user's own instinct was to key the JSON by relative role (`bulanIni`/`bulanDepan`). Talked through why that's wrong — it needs an explicit relabel step at every month rollover that nothing would ever trigger, silently going stale. Went with **absolute `YYYY-MM` keys** instead (`{ "months": { "2026-07": {...}, "2026-08": {...} } }`) so the reader (`script.js`) just computes what "this month"/"next month" mean itself from `baseDate`, at request time — rollover-safe by construction, no relabeling ever needed.
+- `api/publish.js` now: fetches the existing file's *content* (not just its SHA — GitHub's contents API already returns both in one call, this was previously being thrown away), migrates the old flat schema if that's still what's live (parses `tajukBulan` text back into a `YYYY-MM` key via the existing `BULAN` array, drops it cleanly if unparseable rather than guessing wrong), merges only `months[requestedMonth]` leaving every other key untouched, and **prunes** any key that isn't the real-current or real-next month (computed **in Malaysia time, UTC+8, explicitly** — Vercel runs in UTC and naive server-local time math could disagree with Malaysia near a month-boundary midnight and prune away the month that was just written; this was a real new bug surface introduced by adding server-side month math, caught and fixed before it shipped, not before). Added a safety-net 400 rejection for any `month` param that isn't real-current/real-next, since the prune logic's correctness now *depends* on that invariant actually holding, not just usually holding.
+- **Verified for real, not just in theory:** wrote a Node script that `require()`s the actual exported pure functions from `api/publish.js` (`computeRealMonthKeys`, `inferMonthKeyFromTajuk`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore` — these are attached to `module.exports` as properties specifically so they're unit-testable without a Vercel runtime) and reproduced the exact bug scenario with `assert`: publishing August with cleared data no longer erases July's `senaraiHari`. Then — best part — **confirmed it live**: after the user clicked Terbitkan for both months post-deploy, `kuliah/data/jadual_lengkap_beta.json` on GitHub genuinely contains both `"2026-07"` and `"2026-08"` keys simultaneously right now. First time that's ever been true. This is a fixed bug, not a documented limitation anymore.
+- `kuliah3/jadual/script.js` now computes `monthKey` from `baseDate` and looks up `jsonData.months[monthKey]`; added a "Jadual belum diterbitkan buat masa ini." fallback for the mobile view when a month key is entirely absent (previously rendered nothing at all, looked broken).
+- `kuliah3/CLAUDE.md` and `README.md`'s stale "overwrites, never merges" language updated to match (do this same update to any other doc echoing the old behavior if you find one).
+
+**3. Ustaz dropdown in the day-editor modal — numbered Nama Ringkas:**
+- Fast-then-deliberate: user asked for short_name + numbering + "-TIADA KULIAH-" first, but this was ambiguous enough (numbering scheme, sort order, number placement, stability) that four `AskUserQuestion` rounds happened before touching code. User picked the "Recommended" option on all four every time — worth noting, when you present a clearly-reasoned default they tend to just take it.
+- Result: `dashboard.js`'s `loadMonth()` now sorts `ustazList` client-side by `short_name` (`localeCompare({numeric:true})`, matching `ustaz.js`'s existing convention exactly so the numbers line up across both pages), and `openModal()` renders `"ShortName (N)"` — **suffix**, not prefix, specifically so the browser's native type-to-jump-by-letter still works on the `<select>`. `"— Tiada Kuliah —"` stays unnumbered and first.
+
+**4. Yasin/Yasiin special coloring, extended to the admin dashboard:**
+- Public page (`kuliah3/jadual/`) already had a "Bacaan Yasiin & Tahlil" special case (Arabic text block, green cell) from before this session. User asked for the admin dashboard's calendar pills to match when that same ustaz is assigned.
+- Added `isYasinEntry(ustaz)` to `app.js` (shared helper, matches `/yasi+n/i` against `short_name`+`full_name` combined — handles both "Yasin" and "Yasiin" spelling, since which field has which spelling wasn't guaranteed) rather than hardcoding whichever dropdown position it happened to land on (position isn't stable — see ustaz numbering above, it recalculates every load).
+- `dashboard.js`'s `renderCalendar()`/`renderMobileDayList()` now check `isYasinEntry()` and swap in a `.yasin`/`.mdc-yasin` class (light green) instead of the normal subuh-blue/maghrib-amber styling, for either session, on both desktop pills and the mobile day-list text.
+
+**5. Mobile "today card" — extended from today/tomorrow-only to any day in the month:**
+- This one got an explicit risk conversation before implementing (user asked "is this high risk?"). The honest answer mattered: the *dropdown/date-math* part is low-risk (client-side only, no auth, fully testable locally via `python -m http.server` since it's a static JSON-fetching page) — but the poster **iframe** embed for today/tomorrow points at `kuliah/paparan/{today|tomorrow}_{subuh|maghrib}.html`, a *separate* subsystem driving an actual physical signage screen at the mosque, on the OLD non-beta JSON pipeline (Google Sheets, not this Supabase one). That subsystem's `getTargetDate()` is hardcoded to only know "today" or "today+1" — no arbitrary date support at all.
+- **Resolution:** kept the iframe exactly as-is for today/tomorrow (zero risk to the physical screen), and for every other day in the month, render the poster directly as `<img src="{session.poster_url}">` instead — kuliah3's own `senaraiHari` already carries `poster_url` per session, so this needed zero changes outside `kuliah3/jadual/`. Confirmed `kuliah/paparan/style.css` is fully responsive (`object-fit: contain`, percentage-based) before relying on this, so nothing about the shared `.poster-wrapper` sizing risks cropping either path.
+- Dropdown (`buildDaySelectOptions()`) lists every day of the current month, "Hari Ini"/"Hari Esok" always pinned first using their *real* dates (handles the edge case where today is the last day of the month and "tomorrow" spills into the next month — verified with a July-31 test case specifically).
+- Verified end-to-end with a Node `vm` harness: booted the real `script.js`, rendered "today," then called `renderTodayCard()` again simulating a mid-month selection, and asserted the iframe→`<img>` swap actually happens and pulls the right ustaz.
+- Later trimmed the option labels to drop the day-of-week suffix ("15 Julai" not "15 Julai (Rabu)") after the user clarified — note for next time: since this is a native `<select>`, there's no way to show a shorter label in the closed state and a longer one in the open list; whatever text is on the option is what shows in both, always.
+
+**6. Mobile visual polish pass on `kuliah3/jadual/` (rapid-fire, screenshot-driven):**
+- Footer text was right-aligned on mobile only because `.footer-link` has its own explicit `text-align: right` for the desktop flex-row layout, which beats the parent `.page-footer`'s inherited `text-align: center` on mobile since it's a direct rule, not inheritance. Fixed with a mobile-scoped `.footer-link { text-align: center; }` override, screen-scoped media query, no desktop impact.
+- Arabic/Jawi text ("Bacaan Yasiin & Tahlil") used a proper font on desktop (`.arabic-text { font-family: 'Scheherazade New', ... }`) but mobile reused the generic `.lecture-ustaz` class with no font-family override, so it rendered in the site's default Poppins sans-serif — wrong font for Jawi script entirely. Fixed narrowly via `.lecture-ustaz[lang="ar"]` attribute selector so only this specific instance is affected, not regular ustaz names. Also centered it (was right-aligned) per follow-up.
+- Today-card was overflowing/needed scrolling on a 2-session day. Did the "must fit one screen" version (user's explicit choice over "just tighten spacing, scrolling OK"): shrunk `.poster-wrapper` width as the single biggest lever (16:9 aspect-ratio means less width = proportionally less height too), plus header/padding trims. **User immediately overrode the poster width value themselves** (65% → 95%, told me explicitly to remember it — saved as `feedback_mobile_poster_width.md` in the memory dir). Confirmed via `kuliah/paparan/style.css` inspection that shrinking the iframe wrapper doesn't crop anything (it's a responsive page, scales cleanly) before touching it.
+- Split the today-highlight color into two independent CSS variables (`--today-highlight-bg` for the date-bar/cell background+glow, `--today-lecture-bg` for the ceramah/lecture-content area specifically) after the user noticed one variable was driving both and asked to separate them. **User then directly set both values themselves** (`#ebdb07` / `#f7ec56`) without further discussion — noticed via a system-reminder file diff, not something they announced. Same pattern as the poster width: propose the *structure* (the separable variable), they'll dial in the actual *values* themselves in the IDE.
 
 ---
 
 ## CURRENT STATE
 
-`git status` is clean as of session end — the user committed everything (dashboard/ustaz/style changes across several small commits, done via their IDE alongside this chat, not by Claude) as we went. Nothing pending, no "commit this" backlog like session 2 left behind.
+`git status` is clean — the user has committed everything (script.js, style.css, app.js, dashboard.js, api/publish.js, and doc updates) via their IDE alongside this chat, same pattern as every prior session. Most recent commits on `main` are the session-5 CSS/layout work plus repeated `[Admin] Terbitkan jadual BULAN JULAI/OGOS 2026` auto-commits from the user actually clicking Terbitkan (twice, deliberately, right after the merge fix deployed — this *is* the regression test for the fix, and it's confirmed to have passed).
 
-**One thing worth checking at the start of the next session, not a code problem:** the most recent commit on `main` is `[Admin] Terbitkan jadual BULAN OGOS 2026` — meaning the *live* `jadual_lengkap_beta.json` is currently Ogos-only again (the user re-published Ogos after we fixed the Julai/Ogos mix-up, almost certainly intentionally while wrapping up testing of the new Duplicate feature). If the no-param `/kuliah3/jadual/jadual` page looks "empty" again next time someone checks, it's the exact same single-blob behavior explained above, not a regression — just republish whichever month should be current.
+**Confirmed live right now (checked directly, not assumed):** `kuliah/data/jadual_lengkap_beta.json` on GitHub currently has `months: { "2026-07": {...31 real days...}, "2026-08": {...} }` — both months coexisting in the published file simultaneously for the first time ever. If you start a new session and this has regressed to a single key again, something broke — that would be a real regression this time, not the old known limitation.
+
+Today's real date during this whole session was **2026-07-07** (July 7, 2026) — "this month" = Julai/July, "next month" = Ogos/August. Keep that in mind if you're sanity-checking any month-key math left over in your context.
 
 ---
 
@@ -159,17 +211,17 @@ Long, high-throughput session entirely in `kuliah3/admin`, done incrementally in
 `_injectSuperAdminNav()` in app.js inserts the Pengguna link BEFORE `.spacer` INSIDE `.nav-links`. If you ever restructure nav again, fix that function too.
 
 **Mobile breakpoints:**
-- `≤768px` — tablet: compact padding, smaller elements (partially done from session 1)
-- `≤640px` — phone: hamburger, card tables, day list (session 2)
+- `≤768px` — tablet: compact padding, smaller elements
+- `≤640px` — phone: hamburger, card tables, day list (admin); `kuliah3/jadual/` uses `≤768px` as its own mobile/desktop split (different file, different breakpoint — don't confuse the two)
 
 **Any `@media (max-width: ...)` block must be `@media screen and (max-width: ...)`:**
-Without `screen`, mobile layout rules stay active during print/PDF export on narrow devices and `@media print` can't reliably reset them. Broke `kuliah3/jadual/` PDF export this way (session 3) — fixed there, but this applies to any new print/export feature in `kuliah3/admin` too.
+Without `screen`, mobile layout rules stay active during print/PDF export on narrow devices and `@media print` can't reliably reset them. Broke `kuliah3/jadual/` PDF export this way (session 3) — applies to any new print/export feature anywhere in `kuliah3/`.
 
 **Card-per-row table pattern:**
 Every `<td>` in JS-rendered tables must have `data-label="..."`. Empty label `data-label=""` is fine for action columns (no prefix shown).
 
-**Ustaz sort is client-side:**
-Never add `.order()` back to the Supabase ustaz query — it breaks numeric sort. Sort happens in JS after fetch.
+**Ustaz sort is client-side, everywhere it's used:**
+Never add `.order()` back to the Supabase ustaz query — it breaks numeric sort. Sort with `localeCompare({numeric:true, sensitivity:'base'})` in JS after fetch. As of session 5, both `ustaz.js` (Penceramah page `#` column) and `dashboard.js` (day-editor dropdown numbering) do this identically and are meant to produce matching numbers — if you change one, change both.
 
 **Poster save logic (3-way):**
 ```
@@ -179,11 +231,19 @@ neither → don't include poster_url in payload
 ```
 This is intentional — omitting `poster_url` from payload preserves existing value on update.
 
-**Dropdown menu pattern (session 4):** `.month-actions` (or any wrapper with `position: relative`) + `.month-actions-menu` (absolute, `.open` toggles `display`) + `.month-actions-item` rows, closed via one shared document-level click listener in `dashboard.js`. Reuse these classes for any new dropdown rather than building a fresh one — both the "Tindakan Bulan" and "Lihat Terbitan" dropdowns already share this exact CSS.
+**Dropdown menu pattern:** `.month-actions` (or any wrapper with `position: relative`) + `.month-actions-menu` (absolute, `.open` toggles `display`) + `.month-actions-item` rows, closed via one shared document-level click listener in `dashboard.js`. Reuse these classes for any new dropdown rather than building a fresh one.
 
-**Publish is a full overwrite, not a merge (session 4):** every `Terbitkan` click replaces the *entire* `jadual_lengkap_beta.json` with only the currently-viewed month. There's no way for "current month" and "next month" to both be live at once — whichever was published last is the only one that actually renders correctly on the public page. See Session 4 below for the full Julai/Ogos incident this caused.
+**Publish MERGES now, keyed by absolute month — this replaces the old "full overwrite" note from session 4, which is no longer true:**
+`jadual_lengkap_beta.json` is `{ "months": { "YYYY-MM": { infoJadual, senaraiHari }, ... } }`. Each `Terbitkan` click writes only `months[thatMonth]`, leaves every other key untouched, and prunes anything that isn't the real-current/real-next month (computed server-side in Malaysia time, UTC+8). `kuliah3/jadual/script.js` reads `jsonData.months[monthKey]` where `monthKey` comes from the URL/`baseDate`, never from the JSON content — so the title and the data can never disagree with the URL again. See Session 5 above for the full story, and `api/publish.js`'s exported helper functions (`computeRealMonthKeys`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore`) if you need to touch this logic again — they're structured as pure functions specifically so you can unit-test them with a throwaway Node script instead of needing a live deploy.
 
-**Local testing split — know which one you're touching:** `Terbitkan` hits `/api/publish` (Vercel serverless — does not exist under plain `python -m http.server`, will error). Duplicate/Clear/day-edit/save all hit Supabase directly (same production project everywhere, no local sandbox) — they work locally but are never a drill.
+**`isYasinEntry()` in app.js (session 5):** shared helper, `/yasi+n/i` against `short_name + full_name` combined. Use this instead of hardcoding a dropdown position or a single spelling — the ustaz's numbered position in dropdowns is NOT stable (recalculated every load), and "Yasin" vs "Yasiin" spelling isn't guaranteed consistent between short_name and full_name.
+
+**Local testing split — know which one you're touching:**
+- `kuliah3/admin/`: `Terbitkan` hits `/api/publish` (Vercel serverless — does not exist under plain `python -m http.server`, will error). Duplicate/Clear/day-edit/save all hit Supabase directly (same production project everywhere, no local sandbox) — work locally but are never a drill.
+- `kuliah3/jadual/` (session 5 discovery): this is a static, unauthenticated page — you CAN verify JS logic changes yourself with a Node `vm.runInContext()` harness against a stubbed DOM/fetch, no browser or server needed. Did this for the title fix, the months-merge logic, and the any-day dropdown/poster logic. Good technique to reach for again before asking the user to test on device.
+
+**The user co-edits files in the IDE mid-conversation (session 5 discovery, expect it going forward):**
+Values you propose (a CSS width, a hex color) may already be different by the time you look again — a system-reminder will show you the diff without the user saying anything. Always re-Read a file's current state before editing it if the user has it open and you're not 100% sure your last edit is still what's on disk. If they explicitly tell you a new value and ask you to remember it, save it as a feedback memory immediately.
 
 ---
 
@@ -209,8 +269,10 @@ RLS is ON. Service role key is server-side only (Vercel env var `SUPABASE_SERVIC
 
 ## WHAT MIGHT COME NEXT
 
-- Decide whether the "published month ≠ real current/next month" mismatch (see Session 4) needs an actual safeguard (banner in the dashboard, or a check in `api/publish.js`) — currently unresolved, user is fine remembering to republish for now
+- ~~Decide whether "published month ≠ real current/next month" needs a safeguard~~ — **done, this was session 5.** Publish now merges + prunes, keyed by absolute month; this class of bug shouldn't recur.
+- The mobile today-card's poster width (95%) and today-highlight colors (`#ebdb07`/`#f7ec56`) are exactly where the user last set them — don't "clean up" or revert these without being asked, they were deliberate manual overrides.
 - Consider: search/filter on ustaz list (it'll grow)
 - Consider: schedule view for a specific ustaz (how many sessions they have)
-- Promote beta JSON to production (`jadual_lengkap.json`) once tested — currently publishes to `jadual_lengkap_beta.json`
-- The leaked GitHub token in `kuliah/kuliah(beta)/jadual/google-app-script/config.json` is still unresolved (out of scope this session per explicit user instruction to stay in `kuliah3/`) — flag it again if that folder ever comes up
+- Promote beta JSON to production (`jadual_lengkap.json`) once tested — currently still publishes to `jadual_lengkap_beta.json` only
+- The leaked GitHub token in `kuliah/kuliah(beta)/jadual/google-app-script/config.json` is STILL unresolved (two sessions running now, both times explicitly out of scope) — flag it again if that folder ever comes up, it's a real credential exposure sitting untouched
+- Possible future ask: apply the same "any day" mobile dropdown pattern (session 5, point 5) to `kuliah/jadual/` or `kuliah2/` if those get revisited — the poster-fallback approach (iframe for today/tomorrow, direct `<img>` otherwise) should transfer directly if they share the same `kuliah/paparan/` signage subsystem

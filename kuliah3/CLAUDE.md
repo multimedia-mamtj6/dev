@@ -103,7 +103,9 @@ Admin edits day in dashboard.html
 
 **Data table mobile pattern:** Every JS-rendered `<td>` needs `data-label="..."` for the card-per-row mobile layout. CSS reads `content: attr(data-label)` via `::before`.
 
-**Ustaz sort:** Always client-side with `localeCompare({ numeric: true })`. Never `.order('short_name')` on Supabase — it sorts lexicographically.
+**Ustaz sort:** Always client-side with `localeCompare({ numeric: true })`. Never `.order('short_name')` on Supabase — it sorts lexicographically. Both `ustaz.js` (Penceramah page `#` column) and `dashboard.js` (day-editor Subuh/Maghrib dropdowns) sort this exact way so their numbering lines up — `dashboard.js`'s `openModal()` renders each option as `"{short_name} (N)"` (suffix, not prefix, so the browser's native type-to-jump-by-letter still works), 0-indexed, with `"— Tiada Kuliah —"` pinned first and unnumbered. These numbers are a recalculated position, not a stored field — they shift if the ustaz roster changes.
+
+**`isYasinEntry(ustaz)` (app.js):** matches `/yasi+n/i` against `short_name + full_name` combined, to detect the "Bacaan Yasiin & Tahlil" special ustaz entry regardless of which field has which spelling ("Yasin" vs "Yasiin"). `dashboard.js` uses it to swap the calendar's session-tag pill / mobile day-list text to a `.yasin`/`.mdc-yasin` light-green style instead of the normal subuh/maghrib colors. Use this helper (not a hardcoded dropdown position — those aren't stable) if this needs extending anywhere else.
 
 **Poster save (3-way logic in saveUstaz):**
 - `pendingRemovePoster` → `poster_url: null`
@@ -127,6 +129,12 @@ Admin edits day in dashboard.html
 `kuliah3/jadual/jadual.html` supports the same `?file=pdf` auto-print export as `kuliah/jadual/` (see `kuliah/jadual/CLAUDE.md` for the full write-up and the annotated `@media print` block — read it before touching `kuliah3/jadual/style.css`'s print rules).
 
 **Bug fixed 2026-07-06:** exporting PDF from a narrow/mobile-width browser broke the layout (stacked header, missing footer legend) because `kuliah3/jadual/style.css`'s `@media (max-width: 768px)` block (line ~459) wasn't scoped to `screen` — the mobile column layout stayed active during printing since `max-width` still matched the exporting device's width, and `@media print` never reset it. **Fixed by changing it to `@media screen and (max-width: 768px)`.** Any new mobile breakpoint block added to this file must use the same `screen`-scoped form, or print output can silently break again.
+
+## Mobile "today card" — any day in the month, not just today/tomorrow (kuliah3/jadual/)
+
+The mobile view's day-select dropdown (`script.js`'s `renderTodayCard()`) lets the visitor pick any day within the currently-viewed month, not just today/tomorrow. `buildDaySelectOptions()` lists every day of the month with "Hari Ini"/"Hari Esok" always pinned first using their *real* dates (handles today being the last day of the month, where "tomorrow" spills into next month).
+
+**Poster rendering differs by day, deliberately:** today/tomorrow embed an `<iframe>` pointing at `kuliah/paparan/{today|tomorrow}_{subuh|maghrib}.html` — a *separate* digital-signage subsystem driving an actual physical screen at the mosque, on the OLD non-beta Google-Sheets JSON pipeline, whose `getTargetDate()` only understands "today"/"tomorrow" (no arbitrary date param exists there). Every other day instead renders `<img src="{session.poster_url}">` directly from `kuliah3`'s own already-available `senaraiHari` data — `buildPosterHtml()` picks between the two based on whether the selected day is today/tomorrow. Don't try to make the iframe work for arbitrary days; extend the `<img>` path instead if this needs more capability.
 
 ## Sensitive Files
 

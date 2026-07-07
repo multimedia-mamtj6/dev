@@ -104,13 +104,14 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `escapeHtml(str)` — XSS sanitiser, used everywhere user content is interpolated
 - `toggleNav()` — toggles `.nav-links.open`
 - `_injectSuperAdminNav()` — appends Pengguna link to `.nav-links` before `.spacer` if role is super_admin
+- `isYasinEntry(ustaz)` — matches `/yasi+n/i` against `short_name + full_name` combined; detects the "Bacaan Yasiin & Tahlil" special ustaz entry regardless of spelling, used by `dashboard.js` to color its calendar pills green
 
 ### dashboard.js
 - `currentYear`, `currentMonth` — module-level state for month navigation (unrestricted — admin can browse any past/future month)
 - `scheduleMap` — `{ 'YYYY-MM-DD': { subuh, maghrib, cuti_umum } }` built from Supabase fetch
 - `renderCalendar()` — builds `#calendar-table` grid + calls `renderMobileDayList()`
 - `renderMobileDayList()` — builds `#mobile-day-list` vertical day cards (≤640px view)
-- `openModal(dateStr)` — populates editor modal from `scheduleMap`
+- `openModal(dateStr)` — populates editor modal from `scheduleMap`; Subuh/Maghrib `<select>` options are `ustazList` sorted client-side by `short_name` (`localeCompare({numeric:true})`, same as `ustaz.js`) and rendered as `"{short_name} (N)"` — 0-indexed suffix, not prefix, so native type-to-jump-by-letter still works — with `"— Tiada Kuliah —"` pinned first and unnumbered
 - `saveDay()` — upserts to `schedule` table with `onConflict: 'date'`
 - `publishMonth()` — POSTs to `/api/publish?month=YYYY-MM` with Bearer token. **Only works where a Vercel serverless runtime is available** — 404s under plain `python -m http.server`
 - `updateScheduleActions()` — computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from `currentYear`/`currentMonth` alone, since those can be any month). Drives: the `#schedule-actions` dropdown visibility/hrefs, the `#month-tag` "Bulan Ini"/"Bulan Depan" badge, whether `#future-month-note` or the Terbitkan button + `#publish-hint` show. Called every `loadMonth()`
@@ -137,11 +138,11 @@ Vercel serverless function. Requires:
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — Vercel env vars
 - `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO` — Vercel env vars
 
-Reads schedule + ustaz from Supabase using service role. Builds `jadual_lengkap_beta.json` and pushes to GitHub via API. Returns `{ published: { rows }, commitUrl }`.
+Reads schedule + ustaz from Supabase using service role. Fetches the existing `jadual_lengkap_beta.json` (content + SHA in one GitHub Contents API call), merges just the requested month into a `months: { "YYYY-MM": { infoJadual, senaraiHari } }` map, prunes any key that isn't the real-current/real-next month (computed server-side in Malaysia time, UTC+8), then pushes the merged file back to GitHub. Returns `{ published: { rows }, commitUrl, months }`.
 
 Note: `commitUrl` is returned but **not shown to the user** (removed from dashboard.js — non-tech users don't need it).
 
-**Overwrite, not merge:** each call replaces the *entire* JSON with only the requested month — there's no per-month storage. Publishing Ogos wipes out whatever Julai data was previously live. `kuliah3/jadual/script.js` sets its page title straight from the JSON unconditionally and builds its calendar grid from the real today's date (or +1 month for `?bulan=depan`) — these two can silently disagree if the wrong month was last published (title says one month, grid renders empty because the JSON's dates don't match).
+**Merges by absolute month key, not an overwrite:** publishing Ogos no longer wipes out Julai — each key in `months` is independent, and the endpoint rejects any `month` param that isn't the real-current/real-next `YYYY-MM`. `kuliah3/jadual/script.js` looks up `jsonData.months[monthKey]` where `monthKey` comes from the URL (`baseDate`), never from the JSON content, so the title and the rendered data can no longer disagree with the URL. If a month key is entirely absent (never published yet), the public page shows an explicit "belum diterbitkan" message instead of rendering blank. The migration path for the old flat single-month schema, and the merge/prune logic itself, are exposed as pure functions on `module.exports` (`computeRealMonthKeys`, `inferMonthKeyFromTajuk`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore`) specifically so they can be unit-tested with a plain Node script without needing a live Vercel deploy.
 
 **Local testing:** this endpoint only exists where a Vercel serverless runtime runs it — plain `python -m http.server` (this repo's documented local-dev method) has no `/api` route at all, so `Terbitkan` will fail locally with a connection-error toast. Everything else in `dashboard.js`/`ustaz.js`/`users.js` talks directly to Supabase and works identically local or deployed (same production project both ways).
 
