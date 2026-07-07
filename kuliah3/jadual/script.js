@@ -199,7 +199,7 @@ function createMobileLectureBlock(time, lecture) {
     if (lecture.nama_penceramah && lecture.nama_penceramah.indexOf('Yasiin') !== -1) {
         return `<div class="lecture-block-v2">
                     <span class="session-badge ${badgeClass}">${time}</span>
-                    <div class="lecture-ustaz" lang="ar" dir="rtl" style="font-size:1.1rem;text-align:right;">باچاءن يسٓ دان تهليل</div>
+                    <div class="lecture-ustaz" lang="ar" dir="rtl" style="font-size:1.1rem;text-align:center;">باچاءن يسٓ دان تهليل</div>
                     <div class="lecture-tajuk">BACAAN YASIIN &amp; TAHLIL</div>
                 </div>`;
     }
@@ -295,9 +295,45 @@ async function initializeMobileView(senaraiHari, targetDate, notYetPublished = f
 }
 
 /* ---------------------------------------------------------
-   Mobile view — today / tomorrow card
+   Mobile view — today / tomorrow / any-day-this-month card
    --------------------------------------------------------- */
-async function renderTodayCard(senaraiHari, selectedDay = 'today') {
+// Lists every day of `today`'s month, with "Hari Ini"/"Hari Esok" pinned first
+// (using their real dates, even if "tomorrow" spills into next month).
+function buildDaySelectOptions(today, selectedDateString) {
+    const year  = today.getFullYear();
+    const month = today.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const todayString = `${year}-${pad2(month + 1)}-${pad2(today.getDate())}`;
+    const tomorrowDate = new Date(today);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowString = `${tomorrowDate.getFullYear()}-${pad2(tomorrowDate.getMonth() + 1)}-${pad2(tomorrowDate.getDate())}`;
+
+    const opt = (value, label) => `<option value="${value}" ${value === selectedDateString ? 'selected' : ''}>${label}</option>`;
+
+    let opts = opt(todayString, 'Hari Ini') + opt(tomorrowString, 'Hari Esok');
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${pad2(month + 1)}-${pad2(d)}`;
+        if (dateStr === todayString || dateStr === tomorrowString) continue; // already pinned above
+        opts += opt(dateStr, `${d} ${MONTH_NAMES[month]}`);
+    }
+    return opts;
+}
+
+// Today/tomorrow reuse the digital-signage iframes (kuliah/paparan/*.html only know
+// "today"/"tomorrow", not arbitrary dates); any other day renders its poster_url directly.
+function buildPosterHtml(type, session, useIframe, isTomorrow) {
+    if (useIframe) {
+        const iframeSuffix = isTomorrow ? 'tomorrow' : 'today';
+        return `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_${type}.html" loading="lazy" scrolling="no"></iframe></div></div>`;
+    }
+    if (!session.poster_url) return '';
+    const label = type === 'subuh' ? 'Subuh' : 'Maghrib';
+    return `<div class="poster-section"><div class="poster-wrapper"><img class="poster-img" src="${escapeHtml(session.poster_url)}" alt="Poster Kuliah ${label}" loading="lazy"></div></div>`;
+}
+
+async function renderTodayCard(senaraiHari, selectedDate = null) {
     const todayContainer = document.getElementById('today-kuliah-card');
     if (!todayContainer) return;
 
@@ -305,28 +341,33 @@ async function renderTodayCard(senaraiHari, selectedDay = 'today') {
     todayContainer.classList.add('is-today-card');
 
     const today = new Date();
-    const targetDate = new Date(today);
-    if (selectedDay === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1);
+    const todayString = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowString = `${tomorrow.getFullYear()}-${pad2(tomorrow.getMonth() + 1)}-${pad2(tomorrow.getDate())}`;
 
-    const targetDateString = `${targetDate.getFullYear()}-${pad2(targetDate.getMonth() + 1)}-${pad2(targetDate.getDate())}`;
+    const targetDateString = selectedDate || todayString;
+    const targetDate = new Date(targetDateString + 'T00:00:00');
     const targetData = senaraiHari.find(d => d.date === targetDateString);
 
-    const iframeSuffix = selectedDay === 'tomorrow' ? 'tomorrow' : 'today';
+    const isToday    = targetDateString === todayString;
+    const isTomorrow = targetDateString === tomorrowString;
+    const useIframe  = isToday || isTomorrow;
 
     let cardBody = '';
     if (targetData && (targetData.subuh || targetData.maghrib)) {
         if (targetData.subuh) {
             cardBody += createMobileLectureBlock('Subuh', targetData.subuh);
-            cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_subuh.html" loading="lazy" scrolling="no"></iframe></div></div>`;
+            cardBody += buildPosterHtml('subuh', targetData.subuh, useIframe, isTomorrow);
         }
         if (targetData.maghrib) {
             cardBody += createMobileLectureBlock('Maghrib', targetData.maghrib);
-            cardBody += `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_maghrib.html" loading="lazy" scrolling="no"></iframe></div></div>`;
+            cardBody += buildPosterHtml('maghrib', targetData.maghrib, useIframe, isTomorrow);
         }
-    } else if (selectedDay === 'tomorrow' && !targetData) {
+    } else if (isTomorrow && !targetData) {
         cardBody = `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
     } else {
-        const dayLabel = selectedDay === 'tomorrow' ? 'esok' : 'hari ini';
+        const dayLabel = isToday ? 'hari ini' : isTomorrow ? 'esok' : `pada ${targetDate.getDate()} ${MONTH_NAMES[targetDate.getMonth()]}`;
         cardBody = `<div class="no-kuliah-today">Tiada kuliah dijadualkan ${dayLabel}.</div>`;
     }
 
@@ -338,8 +379,7 @@ async function renderTodayCard(senaraiHari, selectedDay = 'today') {
         <div class="today-card-header">
             <div class="day-select-wrapper">
                 <select class="day-select">
-                    <option value="today" ${selectedDay === 'today' ? 'selected' : ''}>Hari Ini</option>
-                    <option value="tomorrow" ${selectedDay === 'tomorrow' ? 'selected' : ''}>Hari Esok</option>
+                    ${buildDaySelectOptions(today, targetDateString)}
                 </select>
             </div>
             <div class="today-date-right">
