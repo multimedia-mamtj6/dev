@@ -83,11 +83,7 @@
         },
         {
           "date": "2026-07-07",
-          "subuh": {
-            "nama_penceramah": "Ustaz Ahmad Termizi",
-            "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/02_1.-Ustaz-Ahmad-Termizi.jpg"
-          },
+          "subuh": null,
           "maghrib": {
             "nama_penceramah": "Ustaz Shahruwardi",
             "tajuk_kuliah": "Tuhfah Ar-Raghibin",
