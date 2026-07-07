@@ -36,14 +36,17 @@ async function loadMonth() {
     // Load ustaz list (needed for dropdowns and display)
     const { data: ustaz, error: ustazErr } = await db
         .from('ustaz')
-        .select('id, short_name, full_name, tajuk_kuliah, poster_url')
-        .order('full_name');
+        .select('id, short_name, full_name, tajuk_kuliah, poster_url');
 
     if (ustazErr) {
         showToast('Gagal memuatkan senarai penceramah: ' + ustazErr.message, 'error');
         return;
     }
-    ustazList = ustaz || [];
+    // Client-side sort by short_name (same as ustaz.js) — Supabase .order('short_name')
+    // sorts lexicographically, not numerically, so never sort short_name server-side.
+    ustazList = (ustaz || []).sort((a, b) =>
+        a.short_name.localeCompare(b.short_name, undefined, { numeric: true, sensitivity: 'base' })
+    );
     ustazMap  = Object.fromEntries(ustazList.map(u => [u.id, u]));
 
     // Load schedule rows for this month
@@ -112,12 +115,14 @@ function renderCalendar() {
                     html += `<span class="holiday-tag">${escapeHtml(row.cuti_umum)}</span>`;
                 }
                 if (row?.subuh) {
-                    html += `<span class="session-tag subuh">S: ${escapeHtml(row.subuh.short_name || row.subuh.full_name)}</span>`;
+                    const subuhClass = isYasinEntry(row.subuh) ? 'session-tag yasin' : 'session-tag subuh';
+                    html += `<span class="${subuhClass}">S: ${escapeHtml(row.subuh.short_name || row.subuh.full_name)}</span>`;
                 } else if (row) {
                     html += `<span class="session-tag empty">S: Tiada</span>`;
                 }
                 if (row?.maghrib) {
-                    html += `<span class="session-tag maghrib">M: ${escapeHtml(row.maghrib.short_name || row.maghrib.full_name)}</span>`;
+                    const maghribClass = isYasinEntry(row.maghrib) ? 'session-tag yasin' : 'session-tag maghrib';
+                    html += `<span class="${maghribClass}">M: ${escapeHtml(row.maghrib.short_name || row.maghrib.full_name)}</span>`;
                 } else if (row) {
                     html += `<span class="session-tag empty">M: Tiada</span>`;
                 }
@@ -154,14 +159,16 @@ function renderMobileDayList() {
 
         const subuhName   = row?.subuh   ? escapeHtml(row.subuh.short_name   || row.subuh.full_name)   : null;
         const maghribName = row?.maghrib ? escapeHtml(row.maghrib.short_name || row.maghrib.full_name) : null;
+        const subuhClass   = subuhName   ? (isYasinEntry(row.subuh)   ? 'mdc-s mdc-yasin' : 'mdc-s')   : 'mdc-empty';
+        const maghribClass = maghribName ? (isYasinEntry(row.maghrib) ? 'mdc-m mdc-yasin' : 'mdc-m')   : 'mdc-empty';
 
         html += `<div class="${cls}" onclick="openModal('${dateStr}')">
             <div class="mdc-date">${d}</div>
             <div class="mdc-day">${HARI_MALAY[dow]}</div>
             <div class="mdc-sessions">
                 ${row?.cuti_umum ? `<span class="mdc-holiday">${escapeHtml(row.cuti_umum)}</span>` : ''}
-                <span class="${subuhName ? 'mdc-s' : 'mdc-empty'}">S: ${subuhName || 'Tiada'}</span>
-                <span class="${maghribName ? 'mdc-m' : 'mdc-empty'}">M: ${maghribName || 'Tiada'}</span>
+                <span class="${subuhClass}">S: ${subuhName || 'Tiada'}</span>
+                <span class="${maghribClass}">M: ${maghribName || 'Tiada'}</span>
             </div>
             <div class="mdc-arrow">›</div>
         </div>`;
@@ -407,10 +414,10 @@ function openModal(dateStr) {
     document.getElementById('cuti-text').value     = row?.cuti_umum || '';
     document.getElementById('cuti-text').style.display = hasCuti ? 'block' : 'none';
 
-    // Populate ustaz dropdowns
+    // Populate ustaz dropdowns — numbered by Nama Ringkas (suffix, so type-to-jump-by-name still works)
     const opts = '<option value="">— Tiada Kuliah —</option>' +
-        ustazList.map(u =>
-            `<option value="${escapeHtml(u.id)}">${escapeHtml(u.full_name)}</option>`
+        ustazList.map((u, i) =>
+            `<option value="${escapeHtml(u.id)}">${escapeHtml(u.short_name || u.full_name)} (${i})</option>`
         ).join('');
 
     const subuhSel   = document.getElementById('subuh-select');

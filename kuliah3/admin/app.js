@@ -120,6 +120,13 @@ function todayString() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// Matches the "Bacaan Yasiin & Tahlil" special-case ustaz entry (also special-cased
+// by name on the public kuliah3/jadual/script.js page) regardless of Yasin/Yasiin spelling.
+function isYasinEntry(ustaz) {
+    if (!ustaz) return false;
+    return /yasi+n/i.test(`${ustaz.short_name || ''} ${ustaz.full_name || ''}`);
+}
+
 function formatDateMY(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
     return `${d.getDate()} ${BULAN_MALAY[d.getMonth()]} ${d.getFullYear()} (${HARI_MALAY[d.getDay()]})`;
