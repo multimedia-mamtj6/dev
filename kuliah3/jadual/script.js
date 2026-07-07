@@ -5,6 +5,8 @@
 
 
 const DAY_NAMES = ['AHAD', 'ISNIN', 'SELASA', 'RABU', 'KHAMIS', 'JUMAAT', 'SABTU'];
+const MONTH_NAMES = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
+    'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
 
 let cachedSenaraiHari = null;
 
@@ -227,8 +229,7 @@ async function initializeMobileView(senaraiHari, targetDate) {
     }
 
     const daysInMalay = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
-    const monthNames = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
-        'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+    const monthNames = MONTH_NAMES;
     const targetMonth = targetDate.getMonth();
     const targetYear = targetDate.getFullYear();
 
@@ -439,10 +440,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateInfoEl.textContent = jsonData.infoJadual.tarikhKemasKini || '';
     }
 
-    // 4. Schedule title
+    // 4. Schedule title — always reflects the requested month, not the published data
     const titleEl = document.getElementById('schedule-title');
-    if (titleEl && jsonData.infoJadual) {
-        titleEl.textContent = jsonData.infoJadual.tajukBulan || '';
+    if (titleEl) {
+        titleEl.textContent = `BULAN ${MONTH_NAMES[baseDate.getMonth()].toUpperCase()} ${baseDate.getFullYear()}`;
     }
 
     // 5. Render desktop calendar + mobile view
