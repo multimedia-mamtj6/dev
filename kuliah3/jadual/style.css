@@ -15,8 +15,9 @@
     --date-header-bg: #FFFACD;
     --date-number-color: #2E5A88;
     --holiday-label-bg: #2c3e50;
-    --today-highlight-bg: #f1e42c;
-    --today-lecture-bg: var(--today-highlight-bg); /* ceramah (lecture-content) area inside today's cell — set independently from the date-bar above */
+    --today-highlight-bg: #ebdb07;
+    --today-lecture-bg: #f7ec56;
+    /* ceramah (lecture-content) area inside today's cell — set independently from the date-bar above */
 
     /* Refined internal borders (Visual Improvement 2) */
     --cell-border: #bcbcbc;
@@ -323,7 +324,7 @@ main {
 
 .arabic-text {
     font-family: 'Scheherazade New', 'Times New Roman', serif;
-    font-size: 2.36vmin;
+    font-size: 3vmin;
     line-height: 1.15;
     color: #000000;
 }
