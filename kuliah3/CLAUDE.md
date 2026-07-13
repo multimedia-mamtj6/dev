@@ -134,7 +134,7 @@ Admin edits day in dashboard.html
 
 The mobile view's day-select dropdown (`script.js`'s `renderTodayCard()`) lets the visitor pick any day within the currently-viewed month, not just today/tomorrow. `buildDaySelectOptions()` lists every day of the month with "Hari Ini"/"Hari Esok" always pinned first using their *real* dates (handles today being the last day of the month, where "tomorrow" spills into next month).
 
-**Poster rendering differs by day, deliberately:** today/tomorrow embed an `<iframe>` pointing at `kuliah/paparan/{today|tomorrow}_{subuh|maghrib}.html` — a *separate* digital-signage subsystem driving an actual physical screen at the mosque, on the OLD non-beta Google-Sheets JSON pipeline, whose `getTargetDate()` only understands "today"/"tomorrow" (no arbitrary date param exists there). Every other day instead renders `<img src="{session.poster_url}">` directly from `kuliah3`'s own already-available `senaraiHari` data — `buildPosterHtml()` picks between the two based on whether the selected day is today/tomorrow. Don't try to make the iframe work for arbitrary days; extend the `<img>` path instead if this needs more capability.
+**Poster rendering is uniform across all days:** `buildPosterHtml()` always renders `<img src="{session.poster_url}">` directly from `kuliah3`'s own `senaraiHari` data, for today/tomorrow and every other day alike. (Earlier this embedded a digital-signage `<iframe>` for today/tomorrow only — `kuliah/paparan/{today|tomorrow}_{subuh|maghrib}.html`, a separate subsystem on the old non-beta Google-Sheets pipeline — but that was standardized away in favor of the same direct-image approach used for every other day. `.poster-iframe` CSS was removed as dead code along with it.)
 
 ## Sensitive Files
 

@@ -321,13 +321,8 @@ function buildDaySelectOptions(today, selectedDateString) {
     return opts;
 }
 
-// Today/tomorrow reuse the digital-signage iframes (kuliah/paparan/*.html only know
-// "today"/"tomorrow", not arbitrary dates); any other day renders its poster_url directly.
-function buildPosterHtml(type, session, useIframe, isTomorrow) {
-    if (useIframe) {
-        const iframeSuffix = isTomorrow ? 'tomorrow' : 'today';
-        return `<div class="poster-section"><div class="poster-wrapper"><iframe class="poster-iframe" src="https://dev.mamtj6.com/kuliah/paparan/${iframeSuffix}_${type}.html" loading="lazy" scrolling="no"></iframe></div></div>`;
-    }
+// Every day (including today/tomorrow) renders its own poster_url directly.
+function buildPosterHtml(type, session) {
     if (!session.poster_url) return '';
     const label = type === 'subuh' ? 'Subuh' : 'Maghrib';
     return `<div class="poster-section"><div class="poster-wrapper"><img class="poster-img" src="${escapeHtml(session.poster_url)}" alt="Poster Kuliah ${label}" loading="lazy"></div></div>`;
@@ -352,17 +347,16 @@ async function renderTodayCard(senaraiHari, selectedDate = null) {
 
     const isToday    = targetDateString === todayString;
     const isTomorrow = targetDateString === tomorrowString;
-    const useIframe  = isToday || isTomorrow;
 
     let cardBody = '';
     if (targetData && (targetData.subuh || targetData.maghrib)) {
         if (targetData.subuh) {
             cardBody += createMobileLectureBlock('Subuh', targetData.subuh);
-            cardBody += buildPosterHtml('subuh', targetData.subuh, useIframe, isTomorrow);
+            cardBody += buildPosterHtml('subuh', targetData.subuh);
         }
         if (targetData.maghrib) {
             cardBody += createMobileLectureBlock('Maghrib', targetData.maghrib);
-            cardBody += buildPosterHtml('maghrib', targetData.maghrib, useIframe, isTomorrow);
+            cardBody += buildPosterHtml('maghrib', targetData.maghrib);
         }
     } else if (isTomorrow && !targetData) {
         cardBody = `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
