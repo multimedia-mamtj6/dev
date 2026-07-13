@@ -297,7 +297,7 @@ label {
   margin-bottom: 0.35rem;
   color: var(--text-muted);
 }
-select, input[type="text"], input[type="email"], input[type="url"], input[type="file"] {
+select, input[type="text"], input[type="email"], input[type="url"], input[type="file"], input[type="date"] {
   width: 100%;
   padding: 0.4375rem 0.75rem;
   border: 1px solid var(--border);
@@ -308,7 +308,7 @@ select, input[type="text"], input[type="email"], input[type="url"], input[type="
   color: var(--text);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-select:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="url"]:focus, input[type="file"]:focus {
+select:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="url"]:focus, input[type="file"]:focus, input[type="date"]:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
@@ -317,6 +317,10 @@ input[type="file"] {
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
+
+.filter-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; margin-bottom: 1rem; }
+.filter-bar .form-group { margin-bottom: 0; flex: 1 1 160px; min-width: 140px; }
+.filter-bar .form-group.filter-actions { flex: 0 0 auto; }
 
 .toggle-row { display: flex; align-items: center; gap: 0.625rem; }
 input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }

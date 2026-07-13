@@ -29,6 +29,32 @@
     <h1 class="section-title">Log Aktiviti</h1>
   </div>
 
+  <div class="filter-bar">
+    <div class="form-group">
+      <label for="filter-admin">Admin</label>
+      <select id="filter-admin" onchange="applyFilters()">
+        <option value="">Semua Admin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filter-action">Tindakan</label>
+      <select id="filter-action" onchange="applyFilters()">
+        <option value="">Semua Tindakan</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filter-from">Dari</label>
+      <input type="date" id="filter-from" onchange="applyFilters()">
+    </div>
+    <div class="form-group">
+      <label for="filter-to">Hingga</label>
+      <input type="date" id="filter-to" onchange="applyFilters()">
+    </div>
+    <div class="form-group filter-actions">
+      <button class="btn btn-ghost btn-sm" onclick="resetFilters()">Reset</button>
+    </div>
+  </div>
+
   <div class="card">
     <table class="data-table">
       <thead>
