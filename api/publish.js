@@ -275,6 +275,18 @@ module.exports = async function handler(req, res) {
     const updateData = await updateRes.json();
 
     try {
+        let actorName = null;
+        if (actorEmail) {
+            const adminRes = await fetch(
+                `${supabaseUrl}/rest/v1/admins?select=name&email=eq.${encodeURIComponent(actorEmail)}`,
+                { headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}`, 'Accept': 'application/json' } }
+            );
+            if (adminRes.ok) {
+                const rows = await adminRes.json();
+                actorName = rows[0]?.name || null;
+            }
+        }
+
         await fetch(`${supabaseUrl}/rest/v1/activity_log`, {
             method:  'POST',
             headers: {
@@ -285,7 +297,7 @@ module.exports = async function handler(req, res) {
             },
             body: JSON.stringify({
                 actor_email:  actorEmail || 'unknown',
-                actor_name:   null,
+                actor_name:   actorName,
                 action:       'publish',
                 target_label: monthLabelFromKey(month),
                 detail:       `${senaraiHari.length} hari diterbitkan.`,
