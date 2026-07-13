@@ -116,6 +116,25 @@ function handleUstazOverlay(e) {
 }
 
 // ─── Save ustaz ───────────────────────────────────────────────────────────────
+// Compares the pre-write ustaz row against the values about to be saved and
+// returns a human-readable diff string, or null if nothing actually changed.
+function buildUstazDiffText(before, after) {
+    const parts = [];
+    if (before.full_name !== after.full_name) {
+        parts.push(`Nama Penuh: "${before.full_name}" → "${after.full_name}"`);
+    }
+    if (before.short_name !== after.short_name) {
+        parts.push(`Nama Ringkas: "${before.short_name}" → "${after.short_name}"`);
+    }
+    if ((before.tajuk_kuliah || null) !== (after.tajuk_kuliah || null)) {
+        parts.push(`Tajuk Kuliah: ${before.tajuk_kuliah ? `"${before.tajuk_kuliah}"` : 'Tiada'} → ${after.tajuk_kuliah ? `"${after.tajuk_kuliah}"` : 'Tiada'}`);
+    }
+    if (after.posterChanged) {
+        parts.push(after.posterRemoved ? 'Poster dibuang' : 'Poster dikemaskini');
+    }
+    return parts.length ? parts.join('; ') : null;
+}
+
 async function saveUstaz() {
     const id             = document.getElementById('edit-id').value.trim();
     const fullName       = document.getElementById('edit-fullname').value.trim();
@@ -143,6 +162,7 @@ async function saveUstaz() {
     saveBtn.disabled  = true;
     saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
 
+    const before = id ? allUstaz.find(u => u.id === id) : null;
     let newPosterUrl = null;
 
     if (posterFile) {
@@ -197,6 +217,16 @@ async function saveUstaz() {
     }
 
     showToast(id ? 'Penceramah dikemaskini' : 'Penceramah berjaya ditambah', 'success');
+    if (id) {
+        const after = {
+            full_name: fullName, short_name: shortName, tajuk_kuliah: topic || null,
+            posterChanged: pendingRemovePoster || !!newPosterUrl, posterRemoved: pendingRemovePoster,
+        };
+        const diff = buildUstazDiffText(before, after);
+        if (diff) await logActivity('ustaz_update', shortName, diff);
+    } else {
+        await logActivity('ustaz_create', shortName, `Penceramah baharu ditambah${topic ? `: "${topic}"` : ''}.`);
+    }
     closeUstazModal();
     await loadUstaz();
 }
@@ -249,6 +279,7 @@ async function confirmDelete() {
     }
 
     btn.textContent = 'Memadam...';
+    const target = allUstaz.find(u => u.id === deletingId);
     const { error } = await db.from('ustaz').delete().eq('id', deletingId);
 
     btn.disabled  = false;
@@ -260,6 +291,7 @@ async function confirmDelete() {
     }
 
     showToast('Penceramah berjaya dipadam', 'success');
+    await logActivity('ustaz_delete', target?.short_name || '(tidak diketahui)', `Penceramah "${target?.full_name || ''}" dipadam.`);
     closeDeleteModal();
     await loadUstaz();
 }

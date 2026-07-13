@@ -110,3 +110,31 @@ INSERT INTO ustaz (short_name, full_name, tajuk_kuliah, poster_url) VALUES
     ('UA Zaidi',   'Ustaz Zaidi Hassan', 'Fiqh Munakahat',                        null)
 ON CONFLICT (short_name) DO NOTHING;
 */
+
+
+-- ── 7. Activity log ───────────────────────────────────────────────────────────
+-- Records who changed what across the dashboard (schedule edits, ustaz CRUD,
+-- admin-account CRUD, Terbitkan/publish). Written by the client (and by
+-- api/publish.js server-side for the publish action) right after each
+-- successful write — see kuliah3/admin/app.js's logActivity(). Not run
+-- automatically; run this manually in the Supabase SQL editor.
+
+CREATE TABLE IF NOT EXISTS activity_log (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_email  TEXT NOT NULL,
+    actor_name   TEXT,
+    action       TEXT NOT NULL,
+    target_label TEXT,
+    detail       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON activity_log(created_at DESC);
+
+ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all_activity_log" ON activity_log
+    FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);

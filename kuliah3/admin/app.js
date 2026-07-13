@@ -26,16 +26,22 @@ async function requireAuth() {
     return session;
 }
 
-// Inject "Pengguna" nav link for super_admin (non-super admins never see it)
+// Inject "Pengguna" / "Log Aktiviti" nav links for super_admin (non-super admins never see them)
 function _injectSuperAdminNav() {
     if (currentAdmin?.role !== 'super_admin') return;
     const navLinks = document.querySelector('.nav-links');
-    if (!navLinks || navLinks.querySelector('a[href="users.html"]')) return;
+    if (!navLinks) return;
     const spacer = navLinks.querySelector('.spacer');
-    const link = document.createElement('a');
-    link.href = 'users.html';
-    link.textContent = 'Pengguna';
-    navLinks.insertBefore(link, spacer);
+    [
+        { href: 'users.html',   label: 'Pengguna' },
+        { href: 'userlog.html', label: 'Log Aktiviti' },
+    ].forEach(({ href, label }) => {
+        if (navLinks.querySelector(`a[href="${href}"]`)) return;
+        const link = document.createElement('a');
+        link.href = href;
+        link.textContent = label;
+        navLinks.insertBefore(link, spacer);
+    });
 }
 
 // Hamburger nav toggle (mobile)
@@ -130,6 +136,26 @@ function isYasinEntry(ustaz) {
 function formatDateMY(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
     return `${d.getDate()} ${BULAN_MALAY[d.getMonth()]} ${d.getFullYear()} (${HARI_MALAY[d.getDay()]})`;
+}
+
+// ─── Activity log ─────────────────────────────────────────────────────────────
+// Fire-and-forget insert into activity_log, called right after a mutating write
+// already succeeded. Never throws/toasts — a logging failure must not make the
+// admin think their actual save/delete/publish failed when it didn't.
+async function logActivity(action, targetLabel, detail) {
+    if (!currentAdmin) return;
+    try {
+        const { error } = await db.from('activity_log').insert({
+            actor_email:  currentAdmin.email,
+            actor_name:   currentAdmin.name || null,
+            action,
+            target_label: targetLabel || null,
+            detail:       detail || null,
+        });
+        if (error) console.error('logActivity gagal:', error.message);
+    } catch (e) {
+        console.error('logActivity gagal:', e);
+    }
 }
 
 // ─── XSS utility ─────────────────────────────────────────────────────────────

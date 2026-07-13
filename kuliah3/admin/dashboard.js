@@ -334,6 +334,11 @@ async function confirmDuplicate() {
     }
 
     showToast(`Berjaya menyalin ${upserts.length} hari.`, 'success');
+    await logActivity(
+        'schedule_duplicate',
+        monthLabel(currentYear, currentMonth),
+        `${upserts.length} hari disalin dari ${monthLabel(src.year, src.month)} ke ${monthLabel(currentYear, currentMonth)}.`
+    );
     closeDuplicateModal();
     await loadMonth();
 }
@@ -368,6 +373,7 @@ async function confirmClear() {
     const startDate = `${currentYear}-${padMonth}-01`;
     const lastDay   = lastDayOfMonth(currentYear, currentMonth);
     const endDate   = `${currentYear}-${padMonth}-${String(lastDay).padStart(2, '0')}`;
+    const filledCount = countFilledDays(scheduleMap);
 
     const { error } = await db
         .from('schedule')
@@ -384,6 +390,11 @@ async function confirmClear() {
     }
 
     showToast('Jadual bulan ini telah dikosongkan.', 'success');
+    await logActivity(
+        'schedule_clear',
+        monthLabel(currentYear, currentMonth),
+        `${filledCount} hari dikosongkan (jadual dipadam).`
+    );
     closeClearModal();
     await loadMonth();
 }
@@ -447,6 +458,32 @@ function toggleCutiField() {
 }
 
 // ─── Save day ─────────────────────────────────────────────────────────────────
+// Compares the pre-write scheduleMap row against the values about to be saved and
+// returns a human-readable diff string, or null if nothing actually changed.
+function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti) {
+    const parts = [];
+    const nameOf = u => u ? (u.short_name || u.full_name) : null;
+
+    const beforeSubuh = nameOf(before?.subuh);
+    const afterSubuh   = afterSubuhId ? nameOf(ustazMap[afterSubuhId]) : null;
+    if ((beforeSubuh || null) !== (afterSubuh || null)) {
+        parts.push(`Subuh: ${beforeSubuh || 'Tiada'} → ${afterSubuh || 'Tiada'}`);
+    }
+
+    const beforeMaghrib = nameOf(before?.maghrib);
+    const afterMaghrib   = afterMaghribId ? nameOf(ustazMap[afterMaghribId]) : null;
+    if ((beforeMaghrib || null) !== (afterMaghrib || null)) {
+        parts.push(`Maghrib: ${beforeMaghrib || 'Tiada'} → ${afterMaghrib || 'Tiada'}`);
+    }
+
+    const beforeCuti = before?.cuti_umum || null;
+    if ((beforeCuti || null) !== (afterCuti || null)) {
+        parts.push(`Cuti Umum: ${beforeCuti ? `"${beforeCuti}"` : 'Tiada'} → ${afterCuti ? `"${afterCuti}"` : 'Tiada'}`);
+    }
+
+    return parts.length ? parts.join('; ') : null;
+}
+
 async function saveDay() {
     if (!editingDate) return;
 
@@ -458,6 +495,7 @@ async function saveDay() {
     const maghribId = document.getElementById('maghrib-select').value || null;
     const hasCuti   = document.getElementById('cuti-check').checked;
     const cutiText  = hasCuti ? (document.getElementById('cuti-text').value.trim() || null) : null;
+    const before    = scheduleMap[editingDate];
 
     const { error } = await db.from('schedule').upsert(
         {
@@ -479,6 +517,8 @@ async function saveDay() {
     }
 
     showToast('Berjaya disimpan', 'success');
+    const diff = buildDayDiffText(before, subuhId, maghribId, cutiText);
+    if (diff) await logActivity('schedule_day_edit', formatDateMY(editingDate), diff);
     closeModal();
     await loadMonth();
 }

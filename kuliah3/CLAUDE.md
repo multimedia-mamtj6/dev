@@ -34,6 +34,8 @@ kuliah3/
     ustaz.js         ← Ustaz load/sort/save/delete, poster upload/URL/remove
     users.html       ← Admin user management (super_admin only)
     users.js         ← User CRUD
+    userlog.html     ← Activity log / changelog (super_admin only)
+    userlog.js       ← Log load/render/paginate
     setup.sql        ← Supabase schema reference (do not run blindly)
   jadual/
     jadual.html      ← Public schedule view
@@ -63,6 +65,14 @@ id uuid PK, date date UNIQUE NOT NULL,
 subuh_ustaz_id uuid FK→ustaz(id),
 maghrib_ustaz_id uuid FK→ustaz(id),
 cuti_umum text, updated_at timestamptz
+
+-- activity_log: accountability changelog (see Key Patterns below)
+id uuid PK, created_at timestamptz,
+actor_email text NOT NULL, actor_name text,
+action text NOT NULL,       -- schedule_day_edit | schedule_duplicate | schedule_clear |
+                             -- ustaz_create | ustaz_update | ustaz_delete |
+                             -- admin_create | admin_update | admin_delete | publish
+target_label text, detail text  -- both plain-text snapshots, never FKs
 ```
 
 RLS is ON on all tables. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var).
@@ -82,7 +92,7 @@ Admin edits day in dashboard.html
 
 ## Key Patterns
 
-**Nav HTML — always use this structure on all 3 pages:**
+**Nav HTML — always use this structure on all pages:**
 ```html
 <nav id="main-nav">
   <span class="brand">Admin Kuliah</span>
@@ -95,7 +105,7 @@ Admin edits day in dashboard.html
   </div>
 </nav>
 ```
-`_injectSuperAdminNav()` in app.js inserts Pengguna link before `.spacer` inside `.nav-links`. If you restructure nav, update that function.
+`_injectSuperAdminNav()` in app.js inserts both "Pengguna" and "Log Aktiviti" links before `.spacer` inside `.nav-links`, each independently guarded against double-injection — so `users.html`/`userlog.html` can hardcode their own link (matching every other page's convention of hardcoding its own active link) while `dashboard.html`/`ustaz.html` gain both purely via injection. If you restructure nav or add a third super_admin-only page, update that function's array.
 
 **Mobile breakpoints:**
 - `≤768px` — tablet compact
@@ -123,6 +133,8 @@ Admin edits day in dashboard.html
 **Month action buttons only show for the real current/next month:** `dashboard.js`'s `updateScheduleActions()` computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from the dashboard's own navigable `currentYear`/`currentMonth`), since `kuliah3/jadual/script.js` can only render the real current month or real next month (`?bulan=depan`) — no arbitrary-month param exists. This one computation also drives the "Bulan Ini"/"Bulan Depan" `#month-tag` badge and whether `#future-month-note` (vs the Terbitkan button) is shown.
 
 **Duplicate/Clear month actions:** "Salin Data {previous month}" copies `subuh_ustaz_id`/`maghrib_ustaz_id` only (never `cuti_umum` — holidays are date-specific and copying them forward would mislabel the wrong day) from the month immediately before whatever's currently displayed, matched by day-of-month number, full overwrite (confirmation modal shows how many already-filled target days will be replaced). "Kosongkan Bulan Ini" hard-deletes all `schedule` rows in the viewed month's date range. Both require the confirmation modal — same safeguard regardless of which month is targeted, including the real current/live month.
+
+**Activity log (`activity_log` table + `logActivity()` in app.js, viewed at `userlog.html`, super_admin only):** every mutating admin action inserts one row right after its write succeeds — schedule day edits, bulk duplicate/clear (one summary row each, not per-date), ustaz create/update/delete, admin-account create/update/delete, and Terbitkan/publish (logged server-side from `api/publish.js` using its existing service-role client, since that write happens outside the browser). `target_label`/`detail` are always plain-text snapshots (an ustaz's `short_name`, an admin's email, a month label) — **never** a live foreign key — so history stays readable even after the referenced ustaz/admin is later renamed or deleted. Each call-site captures its "before" value from an already-loaded in-memory cache (`scheduleMap`, `allUstaz`, `allUsers`) rather than an extra query, builds a diff string via a small pure `build*DiffText()` helper local to that page's JS file, and skips the insert entirely if nothing actually changed (no no-op log rows). `logActivity()` never throws or toasts — a logging failure must never make an admin think their actual save/delete/publish failed.
 
 ## Print/PDF Export (kuliah3/jadual/)
 

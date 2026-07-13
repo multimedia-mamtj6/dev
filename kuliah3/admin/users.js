@@ -113,12 +113,37 @@ function togglePermFields() {
     }
 }
 
+function roleLabelMY(role) {
+    return role === 'super_admin' ? 'Super Admin' : 'Editor';
+}
+
+// Compares the pre-write admins row against the values about to be saved and
+// returns a human-readable diff string, or null if nothing actually changed.
+function buildUserDiffText(before, after) {
+    const parts = [];
+    if ((before.name || null) !== (after.name || null)) {
+        parts.push(`Nama: ${before.name || '—'} → ${after.name || '—'}`);
+    }
+    if (before.role !== after.role) {
+        parts.push(`Peranan: ${roleLabelMY(before.role)} → ${roleLabelMY(after.role)}`);
+    }
+    const permText = p => p.role === 'super_admin'
+        ? 'Semua'
+        : (Object.entries(p.permissions || {}).filter(([, v]) => v).map(([k]) => k).join(', ') || 'Tiada');
+    const beforePerm = permText(before), afterPerm = permText(after);
+    if (beforePerm !== afterPerm) {
+        parts.push(`Kebenaran: ${beforePerm} → ${afterPerm}`);
+    }
+    return parts.length ? parts.join('; ') : null;
+}
+
 async function saveUser() {
     const originalEmail = document.getElementById('edit-original-email').value;
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
     const name  = document.getElementById('edit-name').value.trim();
     const role  = document.getElementById('edit-role').value;
     const perms = { kuliah: document.getElementById('perm-kuliah').checked };
+    const before = originalEmail ? allUsers.find(u => u.email === originalEmail) : null;
 
     if (!email) { showToast('Sila masukkan e-mel.', 'error'); return; }
 
@@ -149,6 +174,13 @@ async function saveUser() {
     }
     closeUserModal();
     showToast(originalEmail ? 'Pengguna dikemaskini.' : 'Pengguna ditambah.', 'success');
+    if (originalEmail) {
+        const after = { name: name || null, role, permissions: role === 'super_admin' ? {} : perms };
+        const diff = buildUserDiffText(before, after);
+        if (diff) await logActivity('admin_update', email, diff);
+    } else {
+        await logActivity('admin_create', email, `Pengguna baharu ditambah (${roleLabelMY(role)}).`);
+    }
     await loadUsers();
 }
 
@@ -174,12 +206,15 @@ async function confirmDeleteUser() {
     const btn = document.getElementById('confirm-delete-btn');
     btn.disabled = true; btn.textContent = 'Membuang...';
 
+    const target = allUsers.find(u => u.email === pendingDeleteEmail);
     const { error } = await db.from('admins').delete().eq('email', pendingDeleteEmail);
 
     btn.disabled = false; btn.textContent = 'Buang';
+    const deletedEmail = pendingDeleteEmail;
     closeDeleteModal();
 
     if (error) { showToast('Ralat: ' + error.message, 'error'); return; }
     showToast('Pengguna dibuang.', 'success');
+    await logActivity('admin_delete', deletedEmail, `Pengguna "${target?.name || deletedEmail}" (${roleLabelMY(target?.role)}) dibuang.`);
     await loadUsers();
 }

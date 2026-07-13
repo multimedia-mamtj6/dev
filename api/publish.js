@@ -27,6 +27,11 @@ function computeRealMonthKeys(mytNow) {
     return { realCurrentKey, realNextKey };
 }
 
+function monthLabelFromKey(monthKey) {
+    const [y, m] = monthKey.split('-').map(Number);
+    return `${BULAN[m - 1]} ${y}`;
+}
+
 function inferMonthKeyFromTajuk(tajukBulan) {
     if (typeof tajukBulan !== 'string') return null;
     const m = tajukBulan.match(/BULAN\s+([A-Za-z]+)\s+(\d{4})/i);
@@ -107,6 +112,8 @@ module.exports = async function handler(req, res) {
     if (!authCheck.ok) {
         return res.status(401).json({ error: 'Invalid or expired session' });
     }
+    const authUser   = await authCheck.json();
+    const actorEmail = authUser?.email || null;
 
     // ── 2. Parse month param ────────────────────────────────────────────────
     const month = typeof req.query.month === 'string' ? req.query.month.trim() : '';
@@ -267,6 +274,27 @@ module.exports = async function handler(req, res) {
 
     const updateData = await updateRes.json();
 
+    try {
+        await fetch(`${supabaseUrl}/rest/v1/activity_log`, {
+            method:  'POST',
+            headers: {
+                'apikey':        serviceKey,
+                'Authorization': `Bearer ${serviceKey}`,
+                'Content-Type':  'application/json',
+                'Prefer':        'return=minimal',
+            },
+            body: JSON.stringify({
+                actor_email:  actorEmail || 'unknown',
+                actor_name:   null,
+                action:       'publish',
+                target_label: monthLabelFromKey(month),
+                detail:       `${senaraiHari.length} hari diterbitkan.`,
+            }),
+        });
+    } catch (e) {
+        console.error('activity_log insert failed:', e); // never blocks the publish response
+    }
+
     return res.status(200).json({
         success:   true,
         commitUrl: updateData.commit?.html_url ?? null,
@@ -279,3 +307,4 @@ module.exports.computeRealMonthKeys        = computeRealMonthKeys;
 module.exports.inferMonthKeyFromTajuk       = inferMonthKeyFromTajuk;
 module.exports.buildMonthsStoreFromExisting = buildMonthsStoreFromExisting;
 module.exports.mergeAndPruneMonthsStore     = mergeAndPruneMonthsStore;
+module.exports.monthLabelFromKey            = monthLabelFromKey;
