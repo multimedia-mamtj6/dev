@@ -138,3 +138,12 @@ CREATE POLICY "auth_all_activity_log" ON activity_log
     TO authenticated
     USING (true)
     WITH CHECK (true);
+
+-- Explicit table-level grants — RLS policies only take effect once the role
+-- already has base privileges; ustaz/schedule inherited this from the
+-- project's default privileges, but don't rely on that for a new table.
+-- `authenticated` is used by every browser write; `service_role` is used by
+-- api/publish.js's own log insert (server-side, bypasses RLS but still needs
+-- the grant) — both are required or one of the two log paths fails silently.
+GRANT SELECT, INSERT, UPDATE, DELETE ON activity_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON activity_log TO service_role;
