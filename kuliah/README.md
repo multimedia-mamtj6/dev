@@ -17,7 +17,7 @@ Full admin interface for committee members to manage the lecture schedule.
 /kuliah/admin/userlog.html    ← Activity log / changelog (super_admin only)
 ```
 
-Live at: `dev-data.mamtj6.com/kuliah/admin/`
+Live at: `dev.mamtj6.com/kuliah/admin/`
 
 **Features:**
 - Google OAuth login — only pre-registered emails can access

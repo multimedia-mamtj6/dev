@@ -124,7 +124,7 @@ CREATE POLICY "auth_delete_kuliah_assets" ON storage.objects
 --
 -- In Supabase Dashboard → Authentication → URL Configuration:
 --   Add these redirect URLs (replace with your actual domain):
---     https://dev-data.mamtj6.com/kuliah/admin/dashboard.html
+--     https://dev.mamtj6.com/kuliah/admin/dashboard.html
 --     http://localhost:8000/kuliah/admin/dashboard.html    ← for local dev
 
 
