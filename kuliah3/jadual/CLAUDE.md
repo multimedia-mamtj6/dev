@@ -15,12 +15,12 @@ The application must be served through a local web server (not `file://`) becaus
 python -m http.server
 ```
 
-Then open `http://localhost:8000/kuliah/jadual/` in your browser.
+Then open `http://localhost:8000/kuliah3/jadual/` in your browser.
 
 ## Project Structure
 
 ```
-kuliah/jadual/
+kuliah3/jadual/
 ├── index.html              # Landing page with navigation buttons
 ├── jadual.html             # Main schedule page (dual-view)
 ├── script.js               # Rendering logic (v15.2.2)
@@ -327,24 +327,24 @@ Version 15.0 introduced URL-based PDF export:
 
 The site is deployed with `cleanUrls: true` and `trailingSlash: false` in `vercel.json` (repo root). This combination means:
 
-- URLs are served without `.html` extensions (e.g. `/kuliah/jadual/jadual` not `/kuliah/jadual/jadual.html`)
+- URLs are served without `.html` extensions (e.g. `/kuliah3/jadual/jadual` not `/kuliah3/jadual/jadual.html`)
 - Without a trailing slash, relative paths like `href="style.css"` resolve from the wrong base directory
 
-**Rule:** All asset references (`<link href>`, `<script src>`) and all internal `<a href>` links in files under `kuliah/jadual/` must use **absolute root-relative paths**:
+**Rule:** All asset references (`<link href>`, `<script src>`) and all internal `<a href>` links in files under `kuliah3/jadual/` must use **absolute root-relative paths**:
 
 ```html
 <!-- Correct — works on Vercel and locally -->
-<link rel="stylesheet" href="/kuliah/jadual/style.css">
-<script src="/kuliah/jadual/script.js"></script>
-<a href="/kuliah/jadual/jadual">...</a>
-<a href="/kuliah/jadual/jadual?bulan=depan">...</a>
+<link rel="stylesheet" href="/kuliah3/jadual/style.css">
+<script src="/kuliah3/jadual/script.js"></script>
+<a href="/kuliah3/jadual/jadual">...</a>
+<a href="/kuliah3/jadual/jadual?bulan=depan">...</a>
 
 <!-- Wrong — breaks on Vercel with cleanUrls -->
 <link rel="stylesheet" href="style.css">
 <a href="jadual.html">...</a>
 ```
 
-Note: Omit `.html` in `<a href>` values since Vercel serves clean URLs — the browser will request `/kuliah/jadual/jadual` and Vercel maps it to `jadual.html`.
+Note: Omit `.html` in `<a href>` values since Vercel serves clean URLs — the browser will request `/kuliah3/jadual/jadual` and Vercel maps it to `jadual.html`.
 
 ## Common Development Tasks
 

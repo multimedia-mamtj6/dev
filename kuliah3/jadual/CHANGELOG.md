@@ -46,30 +46,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - **Vercel stylesheet and script not loading** - All relative asset paths in `index.html` and `jadual.html` were broken on Vercel due to `cleanUrls: true` + `trailingSlash: false` combination
-  - With `cleanUrls`, Vercel strips `.html` extensions from URLs (e.g. `/kuliah/jadual/jadual` instead of `/kuliah/jadual/jadual.html`)
-  - Without a trailing slash, relative paths like `style.css` resolve one directory level too high (e.g. `/kuliah/style.css` instead of `/kuliah/jadual/style.css`)
+  - With `cleanUrls`, Vercel strips `.html` extensions from URLs (e.g. `/kuliah3/jadual/jadual` instead of `/kuliah3/jadual/jadual.html`)
+  - Without a trailing slash, relative paths like `style.css` resolve one directory level too high (e.g. `/kuliah/style.css` instead of `/kuliah3/jadual/style.css`)
   - Fixed by switching all asset references to absolute root-relative paths
-  - `index.html`: `href="style.css"` → `href="/kuliah/jadual/style.css"`
-  - `jadual.html`: `href="style.css"` → `href="/kuliah/jadual/style.css"`, `src="script.js"` → `src="/kuliah/jadual/script.js"`
+  - `index.html`: `href="style.css"` → `href="/kuliah3/jadual/style.css"`
+  - `jadual.html`: `href="style.css"` → `href="/kuliah3/jadual/style.css"`, `src="script.js"` → `src="/kuliah3/jadual/script.js"`
   - Files modified: `index.html` (line 7), `jadual.html` (lines 7, 69)
 
 - **Navigation links broken on Vercel** - All `href="jadual.html"` links in `index.html` resolved to the wrong URL on Vercel
-  - With `cleanUrls: true` and no trailing slash on `/kuliah/jadual`, the relative `jadual.html` resolved to `/kuliah/jadual.html` (404) instead of `/kuliah/jadual/jadual`
+  - With `cleanUrls: true` and no trailing slash on `/kuliah3/jadual`, the relative `jadual.html` resolved to `/kuliah3/jadual.html` (404) instead of `/kuliah3/jadual/jadual`
   - Fixed by switching all nav links to absolute root-relative paths without `.html` extension (Vercel handles extension-less clean URLs)
-  - `jadual.html` → `/kuliah/jadual/jadual`
-  - `jadual.html?file=pdf` → `/kuliah/jadual/jadual?file=pdf`
-  - `jadual.html?bulan=depan` → `/kuliah/jadual/jadual?bulan=depan`
-  - `jadual.html?file=pdf&bulan=depan` → `/kuliah/jadual/jadual?file=pdf&bulan=depan`
+  - `jadual.html` → `/kuliah3/jadual/jadual`
+  - `jadual.html?file=pdf` → `/kuliah3/jadual/jadual?file=pdf`
+  - `jadual.html?bulan=depan` → `/kuliah3/jadual/jadual?bulan=depan`
+  - `jadual.html?file=pdf&bulan=depan` → `/kuliah3/jadual/jadual?file=pdf&bulan=depan`
   - Files modified: `index.html` (lines 43, 47, 54, 58)
 
 - **`vercel.json` trailing slash** - Changed `trailingSlash` from `true` to `false`
-  - `trailingSlash: true` caused Vercel to redirect `/kuliah/jadual/jadual` → `/kuliah/jadual/jadual/`, making relative `style.css` resolve to `/kuliah/jadual/jadual/style.css` (404)
+  - `trailingSlash: true` caused Vercel to redirect `/kuliah3/jadual/jadual` → `/kuliah3/jadual/jadual/`, making relative `style.css` resolve to `/kuliah3/jadual/jadual/style.css` (404)
   - Correct combination is `trailingSlash: false` + `cleanUrls: true`
   - File modified: `vercel.json`
 
 ### Technical Details
 - **Root cause**: `cleanUrls` removes `.html` from served URLs, making the browser treat the URL path as a directory segment rather than a file — which breaks relative asset resolution
-- **Fix strategy**: Use absolute root-relative paths (`/kuliah/jadual/...`) for all assets and internal links in files affected by `cleanUrls`
+- **Fix strategy**: Use absolute root-relative paths (`/kuliah3/jadual/...`) for all assets and internal links in files affected by `cleanUrls`
 - **Local development unaffected**: Absolute paths resolve correctly on both `http://127.0.0.1:5500` and `http://localhost:8000` as long as the project root is the server root
 
 ## [15.2] - 2026-01-24
