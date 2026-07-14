@@ -7,7 +7,7 @@ let cachedSenaraiHari = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const jsonData = await fetch(`../data/jadual_lengkap.json?v=${new Date().getTime()}`).then(res => res.json());
+        const jsonData = await fetch(`/kuliah/data/jadual_lengkap.json?v=${new Date().getTime()}`).then(res => res.json());
         
         // --- LOGIK BAHARU UNTUK MENENTUKAN BULAN ---
         const urlParams = new URLSearchParams(window.location.search);
