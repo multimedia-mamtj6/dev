@@ -27,6 +27,7 @@ Live at: `dev.mamtj6.com/kuliah/admin/`
 - "Lihat Terbitan" — quick view/export-PDF links to the live published schedule (current + next month only)
 - "Tindakan Bulan" — duplicate the previous month's ustaz assignments forward, or clear a month's data, both with a confirmation safeguard
 - Publish schedule to GitHub (pushes `jadual_lengkap_beta.json`, keyed by month — publishing one month merges into the existing file and prunes stale months, current+next stay live simultaneously)
+- Shows when the current/next month was last published and by whom, right on the dashboard toolbar
 - Admin user management with role-based access (editor / super_admin)
 - Activity log — accountability changelog of every schedule edit, ustaz/admin-account change, and Terbitkan/publish, with filters by admin/action/date range
 - Fully responsive — desktop and mobile (≤640px hamburger nav, card-per-row tables)
