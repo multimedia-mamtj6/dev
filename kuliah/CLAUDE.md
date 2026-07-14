@@ -88,7 +88,7 @@ Admin edits day in dashboard.html
   → api/publish.js validates token, reads schedule+ustaz from Supabase (service role)
   → builds jadual_lengkap_beta.json
   → pushes to GitHub via API (GITHUB_TOKEN env var)
-  → GitHub Pages / Vercel serves updated JSON
+  → Vercel serves updated JSON
 ```
 
 ## Key Patterns

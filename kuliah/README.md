@@ -76,5 +76,5 @@ Google Sheet (legacy) → [deprecated path]
 Admin dashboard → Supabase (live edit)
                → Terbitkan → api/publish.js
                → kuliah/data/jadual_lengkap_beta.json on GitHub
-               → served by GitHub Pages / Vercel
+               → served by Vercel
 ```

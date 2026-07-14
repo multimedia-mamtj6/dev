@@ -35,7 +35,7 @@ Projek ini bertujuan untuk memaparkan tarikh-tarikh penting dalam kalendar Islam
 *   **JavaScript ES6+** (Vanilla JS dalam `tarikh-penting/app.js` — tanpa sebarang *framework*)
 *   **JSON** (untuk penyimpanan data acara)
 *   **API e-Solat JAKIM** (penukaran tarikh Hijri masa nyata)
-*   **GitHub Pages** (untuk pengehosan percuma dan pantas)
+*   **Vercel** (untuk pengehosan pantas)
 
 ---
 
