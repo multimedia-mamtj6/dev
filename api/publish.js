@@ -278,7 +278,7 @@ module.exports = async function handler(req, res) {
         let actorName = null;
         if (actorEmail) {
             const adminRes = await fetch(
-                `${supabaseUrl}/rest/v1/admins?select=name&email=eq.${encodeURIComponent(actorEmail)}`,
+                `${supabaseUrl}/rest/v1/admins?select=name&email=ilike.${encodeURIComponent(actorEmail)}`,
                 { headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}`, 'Accept': 'application/json' } }
             );
             if (adminRes.ok) {

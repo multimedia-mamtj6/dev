@@ -244,7 +244,14 @@ async function loadLastPublishedNote(label) {
         el.textContent = 'Bulan ini belum pernah diterbitkan.';
     } else {
         const row = data[0];
-        const who = row.actor_name || row.actor_email;
+        let who = row.actor_name;
+        if (!who) {
+            // Log row predates a name being set, or was written before the admin
+            // filled in their name — look up the current name as a fallback so we
+            // never show a raw email address when a name is available.
+            const { data: adminRow } = await db.from('admins').select('name').ilike('email', row.actor_email).single();
+            who = adminRow?.name || row.actor_email;
+        }
         el.textContent = `Terakhir diterbitkan pada ${formatDateTimeMY(row.created_at)} (${formatRelativeMY(row.created_at)}) oleh ${who}`;
     }
     el.style.display = 'block';
