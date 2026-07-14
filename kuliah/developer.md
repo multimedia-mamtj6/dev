@@ -1,11 +1,11 @@
-# kuliah3/admin — Developer Guide
+# kuliah/admin — Developer Guide
 
 ## Quick start
 
 ```bash
 # From repo root
 python -m http.server
-# Open http://localhost:8000/kuliah3/admin/index.html
+# Open http://localhost:8000/kuliah/admin/index.html
 ```
 
 Admin pages fetch from Supabase — they work on `file://` for layout but auth and data require HTTP.
@@ -154,7 +154,7 @@ Reads schedule + ustaz from Supabase using service role. Fetches the existing `j
 
 Note: `commitUrl` is returned but **not shown to the user** (removed from dashboard.js — non-tech users don't need it).
 
-**Merges by absolute month key, not an overwrite:** publishing Ogos no longer wipes out Julai — each key in `months` is independent, and the endpoint rejects any `month` param that isn't the real-current/real-next `YYYY-MM`. `kuliah3/jadual/script.js` looks up `jsonData.months[monthKey]` where `monthKey` comes from the URL (`baseDate`), never from the JSON content, so the title and the rendered data can no longer disagree with the URL. If a month key is entirely absent (never published yet), the public page shows an explicit "belum diterbitkan" message instead of rendering blank. The migration path for the old flat single-month schema, and the merge/prune logic itself, are exposed as pure functions on `module.exports` (`computeRealMonthKeys`, `inferMonthKeyFromTajuk`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore`) specifically so they can be unit-tested with a plain Node script without needing a live Vercel deploy.
+**Merges by absolute month key, not an overwrite:** publishing Ogos no longer wipes out Julai — each key in `months` is independent, and the endpoint rejects any `month` param that isn't the real-current/real-next `YYYY-MM`. `kuliah/jadual/script.js` looks up `jsonData.months[monthKey]` where `monthKey` comes from the URL (`baseDate`), never from the JSON content, so the title and the rendered data can no longer disagree with the URL. If a month key is entirely absent (never published yet), the public page shows an explicit "belum diterbitkan" message instead of rendering blank. The migration path for the old flat single-month schema, and the merge/prune logic itself, are exposed as pure functions on `module.exports` (`computeRealMonthKeys`, `inferMonthKeyFromTajuk`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore`) specifically so they can be unit-tested with a plain Node script without needing a live Vercel deploy.
 
 **Local testing:** this endpoint only exists where a Vercel serverless runtime runs it — plain `python -m http.server` (this repo's documented local-dev method) has no `/api` route at all, so `Terbitkan` will fail locally with a connection-error toast. Everything else in `dashboard.js`/`ustaz.js`/`users.js` talks directly to Supabase and works identically local or deployed (same production project both ways).
 
@@ -192,7 +192,7 @@ Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
 {
   "headers": [
     {
-      "source": "/kuliah3/admin/(.*)",
+      "source": "/kuliah/admin/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
   ]

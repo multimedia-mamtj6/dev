@@ -1,4 +1,4 @@
-# kuliah3
+# kuliah
 
 Admin dashboard and public schedule view for Masjid Al-Mukhlisin lecture schedule.
 
@@ -10,14 +10,14 @@ Full admin interface for committee members to manage the lecture schedule.
 
 **Access:**
 ```
-/kuliah3/admin/index.html      ← Login (Google OAuth)
-/kuliah3/admin/dashboard.html  ← Monthly schedule editor
-/kuliah3/admin/ustaz.html      ← Penceramah management
-/kuliah3/admin/users.html      ← Admin user accounts (super_admin only)
-/kuliah3/admin/userlog.html    ← Activity log / changelog (super_admin only)
+/kuliah/admin/index.html      ← Login (Google OAuth)
+/kuliah/admin/dashboard.html  ← Monthly schedule editor
+/kuliah/admin/ustaz.html      ← Penceramah management
+/kuliah/admin/users.html      ← Admin user accounts (super_admin only)
+/kuliah/admin/userlog.html    ← Activity log / changelog (super_admin only)
 ```
 
-Live at: `dev-data.mamtj6.com/kuliah3/admin/`
+Live at: `dev-data.mamtj6.com/kuliah/admin/`
 
 **Features:**
 - Google OAuth login — only pre-registered emails can access
@@ -43,7 +43,7 @@ Read-only lecture schedule display. Reads from the published JSON.
 
 **Access:**
 ```
-/kuliah3/jadual/jadual.html
+/kuliah/jadual/jadual.html
 ```
 
 ---
@@ -63,7 +63,7 @@ See [`developer.md`](developer.md) for full setup, file map, and architecture.
 
 ```bash
 python -m http.server
-# Open http://localhost:8000/kuliah3/admin/index.html
+# Open http://localhost:8000/kuliah/admin/index.html
 ```
 
 ---

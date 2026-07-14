@@ -66,7 +66,7 @@ async function signInWithGoogle() {
     const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin + '/kuliah3/admin/dashboard.html'
+            redirectTo: window.location.origin + '/kuliah/admin/dashboard.html'
         }
     });
     if (error) {
@@ -127,7 +127,7 @@ function todayString() {
 }
 
 // Matches the "Bacaan Yasiin & Tahlil" special-case ustaz entry (also special-cased
-// by name on the public kuliah3/jadual/script.js page) regardless of Yasin/Yasiin spelling.
+// by name on the public kuliah/jadual/script.js page) regardless of Yasin/Yasiin spelling.
 function isYasinEntry(ustaz) {
     if (!ustaz) return false;
     return /yasi+n/i.test(`${ustaz.short_name || ''} ${ustaz.full_name || ''}`);

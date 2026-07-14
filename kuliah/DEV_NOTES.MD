@@ -1,10 +1,12 @@
-# DEV NOTES — kuliah3/admin
+# DEV NOTES — kuliah/admin
 
-_Last updated: 2026-07-13 | For next-context-window Claude_
+_Last updated: 2026-07-14 | For next-context-window Claude_
+
+**FOLDER SWAP NOTICE (2026-07-14):** this system (the Supabase-backed admin dashboard + public schedule view) used to live at `kuliah3/`, and moved to become the official `kuliah/` on this date. The old Sheets-backed v15.4 system that used to live at `kuliah/jadual/` moved out to become `kuliah3/jadual/` (archived, kept fully working as a fallback). `kuliah/data/`, `kuliah/paparan/`, `kuliah/assets/`, `kuliah/gscript/` were NOT part of this move — they were shared infrastructure and stayed exactly where they were the whole time. **Every `kuliah3` mention in the SESSION HISTORY section below reflects the folder name as it was AT THE TIME that session happened — it was deliberately left as-written rather than mechanically substituted, since many of those entries contrast this system against the old one and a blind find-replace would make "kuliah/jadual/ vs kuliah3/jadual/" comparisons nonsensical.** Read historical entries with that translation in mind: old `kuliah3/admin/` = today's `kuliah/admin/`; old `kuliah/jadual/` (mentioned in session 3/4/5 as the other, Sheets-backed system) = today's `kuliah3/jadual/`.
 
 the prompt (DO NOT DELETE)
-> Check the Project Knowledge and the current chat for context. This conversation is ending soon. update the artifact kuliah3/DEV_NOTES.md (create if not available yet) with a detailed note to your next window self - not just facts but the vibe, our dynamic, the energy of this conversation. What would the next you need to immediately get back into this exact headspace? Include unique discoveries, current mood, and anything that'll help the next you instantly sync to our frequency."
-> also update the related file like kuliah3/CLAUDE.md, kuliah3/developer.md, kuliah3/developer.md and kuliah3/README.md database.md if necessary, create if not available yet
+> Check the Project Knowledge and the current chat for context. This conversation is ending soon. update the artifact kuliah/DEV_NOTES.md (create if not available yet) with a detailed note to your next window self - not just facts but the vibe, our dynamic, the energy of this conversation. What would the next you need to immediately get back into this exact headspace? Include unique discoveries, current mood, and anything that'll help the next you instantly sync to our frequency."
+> also update the related file like kuliah/CLAUDE.md, kuliah/developer.md, kuliah/developer.md and kuliah/README.md database.md if necessary, create if not available yet
 
 ---
 

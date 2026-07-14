@@ -1,17 +1,17 @@
-# CLAUDE.md — kuliah3/admin
+# CLAUDE.md — kuliah/admin
 
-Architecture reference for Claude Code when working in `kuliah3/`.
+Architecture reference for Claude Code when working in `kuliah/`.
 
 ## What this is
 
-`kuliah3/admin/` is a full CMS admin dashboard for MAMTJ6 mosque lecture schedule management. Committee members log in with Google OAuth and manage:
+`kuliah/admin/` is a full CMS admin dashboard for MAMTJ6 mosque lecture schedule management. Committee members log in with Google OAuth and manage:
 - Monthly lecture schedules (subuh + maghrib sessions per day)
 - Ustaz (penceramah) list with poster images
 - Admin user accounts (super_admin only)
 - Quick access to the live published schedule ("Lihat Terbitan" dropdown: view/export PDF, current + next month only)
 - Bulk month actions ("Tindakan Bulan" dropdown: duplicate the previous month's ustaz assignments forward, or clear a month's data entirely)
 
-`kuliah3/jadual/` is the public-facing read-only schedule view that reads from the same published JSON.
+`kuliah/jadual/` is the public-facing read-only schedule view that reads from the same published JSON.
 
 ## Tech Stack
 
@@ -23,7 +23,7 @@ Architecture reference for Claude Code when working in `kuliah3/`.
 ## File Structure
 
 ```
-kuliah3/
+kuliah/
   admin/
     index.html       ← Login page (Google OAuth)
     app.js           ← Shared: Supabase client, auth, toast, nav injection
@@ -123,35 +123,35 @@ Admin edits day in dashboard.html
 - New file or URL entered → `poster_url: newValue`
 - Neither → omit `poster_url` from payload (preserves existing)
 
-**Cache-busting:** `vercel.json` serves `Cache-Control: no-store` for `/kuliah3/admin/(.*)` and `/kuliah3/jadual/(.*)`. `no-store` (not `max-age=0, must-revalidate`) is required — `must-revalidate` still lets mobile Chrome serve the page from bfcache with zero network request, so a stale copy with old JS can resurface after backgrounding the app. `no-store` disables bfcache for these routes.
+**Cache-busting:** `vercel.json` serves `Cache-Control: no-store` for `/kuliah/admin/(.*)` and `/kuliah/jadual/(.*)`. `no-store` (not `max-age=0, must-revalidate`) is required — `must-revalidate` still lets mobile Chrome serve the page from bfcache with zero network request, so a stale copy with old JS can resurface after backgrounding the app. `no-store` disables bfcache for these routes.
 
 **Dropdown menu pattern:** `.month-actions` (wrapper, `position: relative`) + `.month-actions-menu` (absolute-positioned panel, `.open` class toggles `display`) + `.month-actions-item` (row). Closed via a single shared `document.addEventListener('click', ...)` in `dashboard.js`; each trigger button calls `e.stopPropagation()` so its own click doesn't immediately close it again. Both the "Tindakan Bulan" (Salin Data / Kosongkan) and "Lihat Terbitan" (Tunjukkan Jadual / Export PDF) dropdowns in `dashboard.html` reuse this exact CSS — reuse it for any future dropdown rather than inventing a new one.
 
-**Publish merges by absolute month key, prunes stale months:** `jadual_lengkap_beta.json` is `{ "months": { "YYYY-MM": { infoJadual, senaraiHari }, ... } }`. Each `Terbitkan` click (`api/publish.js`) reads the existing file, writes only `months[thatMonth]`, and leaves every other key untouched — so publishing "next month" (even to clear it) no longer wipes out "this month"'s data. The endpoint rejects any `month` that isn't the real-current or real-next `YYYY-MM` (computed server-side in Malaysia time, UTC+8) and prunes any other key out of `months` on every publish, so the file never holds more than these two months at once. `kuliah3/jadual/script.js` looks up `jsonData.months[monthKey]` where `monthKey` is derived from `baseDate` (today, or +1 month for `?bulan=depan`) — so month rollover (July → August) is automatically correct with no republish needed, since the key was already written when that month was "next month". If a month key is entirely absent (never published), the public page shows "Jadual belum diterbitkan buat masa ini." instead of a blank-looking page.
+**Publish merges by absolute month key, prunes stale months:** `jadual_lengkap_beta.json` is `{ "months": { "YYYY-MM": { infoJadual, senaraiHari }, ... } }`. Each `Terbitkan` click (`api/publish.js`) reads the existing file, writes only `months[thatMonth]`, and leaves every other key untouched — so publishing "next month" (even to clear it) no longer wipes out "this month"'s data. The endpoint rejects any `month` that isn't the real-current or real-next `YYYY-MM` (computed server-side in Malaysia time, UTC+8) and prunes any other key out of `months` on every publish, so the file never holds more than these two months at once. `kuliah/jadual/script.js` looks up `jsonData.months[monthKey]` where `monthKey` is derived from `baseDate` (today, or +1 month for `?bulan=depan`) — so month rollover (July → August) is automatically correct with no republish needed, since the key was already written when that month was "next month". If a month key is entirely absent (never published), the public page shows "Jadual belum diterbitkan buat masa ini." instead of a blank-looking page.
 
 **Local testing:** `Terbitkan` calls `POST /api/publish`, a Vercel serverless function that does not exist under plain `python -m http.server` (the documented local-dev method for this repo) — it will 404 and surface as a "Ralat sambungan" toast. Day-edit/save, and the Duplicate/Clear month actions (below), all write directly to Supabase instead — same production project everywhere, no local/prod split — so they work locally but have real, immediate, non-sandboxed effects on production data.
 
-**Month action buttons only show for the real current/next month:** `dashboard.js`'s `updateScheduleActions()` computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from the dashboard's own navigable `currentYear`/`currentMonth`), since `kuliah3/jadual/script.js` can only render the real current month or real next month (`?bulan=depan`) — no arbitrary-month param exists. This one computation also drives the "Bulan Ini"/"Bulan Depan" `#month-tag` badge and whether `#future-month-note` (vs the Terbitkan button) is shown.
+**Month action buttons only show for the real current/next month:** `dashboard.js`'s `updateScheduleActions()` computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from the dashboard's own navigable `currentYear`/`currentMonth`), since `kuliah/jadual/script.js` can only render the real current month or real next month (`?bulan=depan`) — no arbitrary-month param exists. This one computation also drives the "Bulan Ini"/"Bulan Depan" `#month-tag` badge and whether `#future-month-note` (vs the Terbitkan button) is shown.
 
 **Duplicate/Clear month actions:** "Salin Data {previous month}" copies `subuh_ustaz_id`/`maghrib_ustaz_id` only (never `cuti_umum` — holidays are date-specific and copying them forward would mislabel the wrong day) from the month immediately before whatever's currently displayed, matched by day-of-month number, full overwrite (confirmation modal shows how many already-filled target days will be replaced). "Kosongkan Bulan Ini" hard-deletes all `schedule` rows in the viewed month's date range. Both require the confirmation modal — same safeguard regardless of which month is targeted, including the real current/live month.
 
 **Activity log (`activity_log` table + `logActivity()` in app.js, viewed at `userlog.html`, super_admin only):** every mutating admin action inserts one row right after its write succeeds — schedule day edits, bulk duplicate/clear (one summary row each, not per-date), ustaz create/update/delete, admin-account create/update/delete, and Terbitkan/publish (logged server-side from `api/publish.js` using its existing service-role client, since that write happens outside the browser). `target_label`/`detail` are always plain-text snapshots (an ustaz's `short_name`, an admin's email, a month label) — **never** a live foreign key — so history stays readable even after the referenced ustaz/admin is later renamed or deleted. Each call-site captures its "before" value from an already-loaded in-memory cache (`scheduleMap`, `allUstaz`, `allUsers`) rather than an extra query, builds a diff string via a small pure `build*DiffText()` helper local to that page's JS file, and skips the insert entirely if nothing actually changed (no no-op log rows). `logActivity()` never throws or toasts — a logging failure must never make an admin think their actual save/delete/publish failed.
 
-## Print/PDF Export (kuliah3/jadual/)
+## Print/PDF Export (kuliah/jadual/)
 
-`kuliah3/jadual/jadual.html` supports the same `?file=pdf` auto-print export as `kuliah/jadual/` (see `kuliah/jadual/CLAUDE.md` for the full write-up and the annotated `@media print` block — read it before touching `kuliah3/jadual/style.css`'s print rules).
+`kuliah/jadual/jadual.html` supports the same `?file=pdf` auto-print export as `kuliah3/jadual/` (see `kuliah3/jadual/CLAUDE.md` for the full write-up and the annotated `@media print` block — read it before touching `kuliah/jadual/style.css`'s print rules).
 
-**Bug fixed 2026-07-06:** exporting PDF from a narrow/mobile-width browser broke the layout (stacked header, missing footer legend) because `kuliah3/jadual/style.css`'s `@media (max-width: 768px)` block (line ~459) wasn't scoped to `screen` — the mobile column layout stayed active during printing since `max-width` still matched the exporting device's width, and `@media print` never reset it. **Fixed by changing it to `@media screen and (max-width: 768px)`.** Any new mobile breakpoint block added to this file must use the same `screen`-scoped form, or print output can silently break again.
+**Bug fixed 2026-07-06:** exporting PDF from a narrow/mobile-width browser broke the layout (stacked header, missing footer legend) because `kuliah/jadual/style.css`'s `@media (max-width: 768px)` block (line ~459) wasn't scoped to `screen` — the mobile column layout stayed active during printing since `max-width` still matched the exporting device's width, and `@media print` never reset it. **Fixed by changing it to `@media screen and (max-width: 768px)`.** Any new mobile breakpoint block added to this file must use the same `screen`-scoped form, or print output can silently break again.
 
-## Mobile "today card" — any day in the month, not just today/tomorrow (kuliah3/jadual/)
+## Mobile "today card" — any day in the month, not just today/tomorrow (kuliah/jadual/)
 
 The mobile view's day-select dropdown (`script.js`'s `renderTodayCard()`) lets the visitor pick any day within the currently-viewed month, not just today/tomorrow. `buildDaySelectOptions()` lists every day of the month with "Hari Ini"/"Hari Esok" always pinned first using their *real* dates (handles today being the last day of the month, where "tomorrow" spills into next month).
 
-**Poster rendering is uniform across all days:** `buildPosterHtml()` always renders `<img src="{session.poster_url}">` directly from `kuliah3`'s own `senaraiHari` data, for today/tomorrow and every other day alike. (Earlier this embedded a digital-signage `<iframe>` for today/tomorrow only — `kuliah/paparan/{today|tomorrow}_{subuh|maghrib}.html`, a separate subsystem on the old non-beta Google-Sheets pipeline — but that was standardized away in favor of the same direct-image approach used for every other day. `.poster-iframe` CSS was removed as dead code along with it.)
+**Poster rendering is uniform across all days:** `buildPosterHtml()` always renders `<img src="{session.poster_url}">` directly from `kuliah`'s own `senaraiHari` data, for today/tomorrow and every other day alike. (Earlier this embedded a digital-signage `<iframe>` for today/tomorrow only — `kuliah/paparan/{today|tomorrow}_{subuh|maghrib}.html`, a separate subsystem on the old non-beta Google-Sheets pipeline — but that was standardized away in favor of the same direct-image approach used for every other day. `.poster-iframe` CSS was removed as dead code along with it.)
 
 ## Sensitive Files
 
-- `kuliah3/admin/` has no config files with secrets — credentials are Vercel env vars
+- `kuliah/admin/` has no config files with secrets — credentials are Vercel env vars
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side only, never in browser code
 - `GITHUB_TOKEN` — Vercel env var only, used in `api/publish.js`
 - Supabase anon key in `app.js` is public (safe — RLS enforces access control)

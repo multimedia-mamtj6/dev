@@ -3,13 +3,13 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/kuliah3/admin/(.*)",
+      "source": "/kuliah/admin/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
       ]
     },
     {
-      "source": "/kuliah3/jadual/(.*)",
+      "source": "/kuliah/jadual/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
       ]

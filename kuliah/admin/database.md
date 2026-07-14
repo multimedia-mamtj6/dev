@@ -1,6 +1,6 @@
-# Database — kuliah3/admin
+# Database — kuliah/admin
 
-Everything about the Supabase (PostgreSQL) database backing `kuliah3/admin/`: how to set it up from scratch, what's in it, how to maintain it, and how to fix it when something breaks.
+Everything about the Supabase (PostgreSQL) database backing `kuliah/admin/`: how to set it up from scratch, what's in it, how to maintain it, and how to fix it when something breaks.
 
 The canonical setup script is [`setup.sql`](setup.sql) — this document explains *why* it's structured the way it is and walks through using it. **Never run parts of it blindly without reading what they do first** (per its own header comment).
 
@@ -13,7 +13,7 @@ Follow these in order — each step depends on the one before it.
 ### 1.1 Create the Supabase project
 
 1. Go to [supabase.com](https://supabase.com) → New project.
-2. Note the **Project URL** and the **anon (publishable) key** (Project Settings → API) — the anon key goes in `kuliah3/admin/app.js` (`SUPABASE_URL`/`SUPABASE_ANON_KEY`, safe to expose in browser code, RLS enforces access control).
+2. Note the **Project URL** and the **anon (publishable) key** (Project Settings → API) — the anon key goes in `kuliah/admin/app.js` (`SUPABASE_URL`/`SUPABASE_ANON_KEY`, safe to expose in browser code, RLS enforces access control).
 3. Note the **service_role key** separately — this is a secret, never put it in any file that gets committed. It only ever goes into a Vercel environment variable (see 1.4).
 
 ### 1.2 Run `setup.sql`
@@ -37,7 +37,7 @@ Follow `setup.sql`'s §5 comment block:
 
 1. Supabase Dashboard → Authentication → Providers → Google → enable it, paste your Google OAuth Client ID/Secret (create these at [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services → Credentials).
 2. Copy the Callback URL Supabase shows you, add it to your Google OAuth app's Authorised redirect URIs.
-3. Supabase Dashboard → Authentication → URL Configuration → add your redirect URLs (production domain's `dashboard.html`, plus `http://localhost:8000/kuliah3/admin/dashboard.html` for local dev).
+3. Supabase Dashboard → Authentication → URL Configuration → add your redirect URLs (production domain's `dashboard.html`, plus `http://localhost:8000/kuliah/admin/dashboard.html` for local dev).
 
 ### 1.4 Bootstrap the first super_admin
 
@@ -63,7 +63,7 @@ The email must exactly match the Google account you'll log in with. After this o
 
 ### 1.6 Verify
 
-1. Serve the site locally (`python -m http.server` from repo root) or visit the deployed URL, open `kuliah3/admin/index.html`.
+1. Serve the site locally (`python -m http.server` from repo root) or visit the deployed URL, open `kuliah/admin/index.html`.
 2. Log in with the Google account you bootstrapped in 1.4.
 3. You should land on `dashboard.html` with **both** "Pengguna" and "Log Aktiviti" visible in the nav (proves the `super_admin` role and `_injectSuperAdminNav()` are both working).
 4. Add a test ustaz on `ustaz.html`, assign them to a day on `dashboard.html`, save — confirms `ustaz`/`schedule` writes work.
@@ -74,7 +74,7 @@ The email must exactly match the Google account you'll log in with. After this o
 
 ## 2. Database structure
 
-Four tables, one storage bucket. No triggers, no stored procedures, no views — every table is written to directly from `kuliah3/admin/*.js` (and `activity_log` also from `api/publish.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs; all business logic lives in the client JS.
+Four tables, one storage bucket. No triggers, no stored procedures, no views — every table is written to directly from `kuliah/admin/*.js` (and `activity_log` also from `api/publish.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs; all business logic lives in the client JS.
 
 ```
 admins ──────────────┐

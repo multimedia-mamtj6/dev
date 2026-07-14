@@ -499,7 +499,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary)
 
 /* Export PDF only works reliably on desktop — hide on mobile/tablet widths.
    Scoped to `screen` so it can never bleed into a print/export context
-   (see kuliah3/DEV_NOTES.MD — this bug already broke kuliah3/jadual/ once). */
+   (see kuliah/DEV_NOTES.MD — this bug already broke kuliah/jadual/ once). */
 @media screen and (max-width: 768px) {
   #export-pdf-btn { display: none; }
 }
