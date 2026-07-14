@@ -13,7 +13,7 @@ Malaysian Islamic Important Dates Calendar (Kalendar Tarikh Penting Islam Malays
 - Google Fonts: Inter (shadcn/ui-inspired typography)
 - Data stored in `data/events.json` (single source of truth for all pages)
 - External APIs: e-Solat JAKIM API (Hijri dates/prayer times), SIRIM MST widget (Malaysia Standard Time)
-- Deployed via GitHub Pages at `https://multimedia.mamtj6.com/calendar/hijri/`
+- Deployed via Vercel at `https://multimedia.mamtj6.com/calendar/hijri/` (GitHub Pages retired 2026-07-14)
 
 ## Development
 
@@ -91,7 +91,7 @@ GitHub Actions (monthly cron) ──→ generate_ics.py ──→ commit jakim_h
 ## Annual Update Process
 
 1. Edit `data/events.json` with new Gregorian dates, Hijri dates, and `lastUpdated` timestamp
-2. Commit and push — GitHub Pages deploys automatically
+2. Commit and push — Vercel deploys automatically
 3. No code changes needed unless event names change or new events are added
 
 ## Important Considerations

@@ -1,7 +1,10 @@
-/* --- KOD PENUH STYLE.CSS (MUKTAMAD DENGAN HIGHLIGHT YANG BETUL) --- */
-/* --- KOD BAHARU DENGAN FON YANG BETUL --- */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&display=swap');
 
+/* =========================================================
+   Masjid Al-Mukhlisin — Jadual Kuliah
+   Design tokens
+   ========================================================= */
 :root {
     --week-bg: #EAF1DD;
     --week-col-bg: #D9EAD3;
@@ -12,176 +15,488 @@
     --date-header-bg: #FFFACD;
     --date-number-color: #2E5A88;
     --holiday-label-bg: #2c3e50;
-    --today-highlight-bg: #f1e42c;
+    --today-highlight-bg: #ebdb07;
+    --today-lecture-bg: #f7ec56;
+    /* ceramah (lecture-content) area inside today's cell — set independently from the date-bar above */
+
+    /* Refined internal borders (Visual Improvement 2) */
+    --cell-border: #bcbcbc;
+    --cell-border-inner: #cfcfcf;
+    --table-border: #000;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* =========================================================
+   Base
+   ========================================================= */
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #fff;
-    color: #000;
+    color: #1a1a1a;
+    background-color: #ffffff;
+    overflow: hidden;
 }
 
-/* ======================================================= */
-/* BAHAGIAN 1: GAYA ASAS & PAPARAN DESKTOP (> 768px)       */
-/* ======================================================= */
+/* =========================================================
+   Page shell — fills exactly one screen, no scroll
+   ========================================================= */
+.page-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    padding: 1.2vmin 2.08vmin;
+}
 
-.page-container { display: flex; flex-direction: column; height: 100vh; width: 98vw; max-width: 1800px; margin: 0 auto; padding: 1.5vmin; }
-.page-header { display: flex; align-items: center; justify-content: center; text-align: left; flex-shrink: 0; padding-bottom: 1.5vmin; }
-.logo-container { width: 20vmin; margin-right: 2vmin; flex-shrink: 0; }
-.logo-container img { max-width: 100%; }
-.title-container .title-main { font-size: 2.2vmin; font-weight: 400; margin-bottom: -0.5vmin; }
-.title-container .title-month { font-size: 5vmin; font-weight: 700; margin-top: -1vmin; }
-main { flex-grow: 1; min-height: 0; }
+/* =========================================================
+   Header
+   ========================================================= */
+.page-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1.6vmin;
+    padding-top: 2.6vmin;
+    padding-bottom: 1vmin;
+    flex-shrink: 0;
+}
 
-#mobile-view-container { display: none; }
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-.schedule-table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid var(--border-color); }
-.schedule-table th, .schedule-table td { border: 1px solid var(--border-color); vertical-align: top; padding: 0.5vmin; }
-.schedule-table thead th { background-color: var(--week-bg); font-size: 1.6vmin; text-align: center; vertical-align: middle; }
-.week-header-title { background-color: var(--week-col-bg) !important; width: 2%; }
-.week-number-cell { background-color: var(--week-col-bg); font-weight: bold; font-size: 1.6vmin; text-align: center; vertical-align: middle; }
-.week-label { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.logo-container img {
+    height: 8vmin;
+    width: auto;
+    display: block;
+}
 
-.day-cell { position: relative; background-color: var(--date-header-bg); }
-.day-cell.empty-cell { background-color: var(--empty-cell-bg); }
+.title-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
 
-/* --- PERATURAN HIGHLIGHT YANG BETUL KINI AKAN BERFUNGSI --- */
+.title-main {
+    margin: 0;
+    font-size: 2vmin;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #2b2b2b;
+    line-height: 1.1;
+}
+
+.title-month {
+    margin: 0;
+    font-size: 5vmin;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #111;
+    line-height: 1;
+}
+
+/* =========================================================
+   Main / Table
+   ========================================================= */
+main {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.schedule-table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    border: 2px solid var(--table-border);
+}
+
+.schedule-table th,
+.schedule-table td {
+    border: 1px solid var(--cell-border);
+    overflow: hidden;
+}
+
+/* Day-name header row */
+.schedule-table thead th {
+    background-color: var(--week-bg);
+    font-size: 1.6vmin;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #33421f;
+    padding: 0.7vmin 0;
+    text-align: center;
+    height: 3.2vmin;
+}
+
+/* First header cell governs the week column width (table-layout: fixed) */
+.schedule-table thead th:first-child {
+    width: 2.4%;
+}
+
+/* Week-number column */
+.week-number-cell {
+    width: 2.4%;
+    background-color: var(--week-col-bg);
+    text-align: center;
+    vertical-align: middle;
+    color: #33421f;
+}
+
+.week-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.4vmin;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+}
+
+/* =========================================================
+   Day cells — 3-layer absolute stack
+   ========================================================= */
+.day-cell {
+    position: relative;
+    background-color: var(--date-header-bg);
+    vertical-align: top;
+    width: 13.94%;
+}
+
+.day-cell.empty-cell {
+    background-color: var(--empty-cell-bg);
+}
+
+/* Layer 1 — date number */
+.date-number {
+    position: absolute;
+    top: 0.2vmin;
+    left: 0.5vmin;
+    font-size: 2.375vmin;
+    font-weight: 700;
+    color: var(--date-number-color);
+    z-index: 3;
+    line-height: 1;
+}
+
+/* Layer 2 — holiday header (only when cuti_umum) */
+.date-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    z-index: 2;
+    padding-top: 0.4vmin;
+}
+
+.holiday-label {
+    background-color: var(--holiday-label-bg);
+    color: #ffffff;
+    font-size: 1.1vmin;
+    font-weight: 500;
+    border-radius: 4px;
+    padding: 0.2vmin 0.8vmin;
+    white-space: normal;
+    word-break: break-word;
+    text-align: center;
+    line-height: 1.25;
+    margin-right: 0.5vmin;
+    max-width: 80%;
+}
+
+/* Layer 3 — lecture content */
+.lecture-content {
+    position: absolute;
+    top: 2.5vmin;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: #ffffff;
+    font-size: 1.2vmin;
+    text-align: center;
+    z-index: 1;
+    padding: 0.4vmin 0.6vmin;
+}
+
+.lecture-content.is-empty-slot {
+    background-color: var(--empty-cell-bg);
+}
+
+/* Yasiin & Tahlil — green cell, white text */
+.lecture-content:has(.yasin-block) {
+    background-color: #c3ffc5;
+}
+
+/* Adjacent lecture blocks separated by a soft divider */
+.lecture-block+.lecture-block {
+    border-top: 1px solid var(--cell-border-inner);
+    padding-top: 0.5vmin;
+    margin-top: 0.5vmin;
+}
+
+/* Session label — compact badge (Visual Improvement 1) */
+.lecture-time {
+    font-size: 1.6vmin;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.1;
+    margin-bottom: 0.15vmin;
+}
+
+.lecture-time.subuh {
+    color: var(--subuh-color);
+}
+
+.lecture-time.maghrib {
+    color: var(--maghrib-color);
+}
+
+/* Lecturer name — the primary read */
+.ustaz-name {
+    font-size: 1.3vmin;
+    font-weight: 600;
+    color: #1c1c1c;
+    line-height: 1.15;
+}
+
+/* Lecture title — secondary, italic, lighter */
+.lecture-title {
+    font-size: 1.1vmin;
+    font-style: italic;
+    font-weight: 400;
+    color: #5f5f5f;
+    line-height: 1.2;
+    margin-top: 0.15vmin;
+}
+
+/* Weekend empty placeholder */
+.lecture-block.is-weekend-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--empty-cell-bg);
+    border-radius: 3px;
+    min-height: 3.5vmin;
+}
+
+/* Full-day empty text */
+.empty-slot-text {
+    font-size: 1.6vmin;
+    font-weight: 700;
+    color: #8a8a8a;
+    letter-spacing: 0.03em;
+}
+
+/* =========================================================
+   Special — Bacaan Yasiin & Tahlil
+   ========================================================= */
+.yasin-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4vmin;
+    height: 100%;
+}
+
+.arabic-text {
+    font-family: 'Scheherazade New', 'Times New Roman', serif;
+    font-size: 3vmin;
+    line-height: 1.15;
+    color: #000000;
+}
+
+.yasin-title {
+    font-weight: 700;
+    font-size: 1.4vmin;
+    letter-spacing: 0.04em;
+    color: #000000;
+}
+
+/* =========================================================
+   Today highlight
+   ========================================================= */
+/* --- DEFAULT (live) --- */
 .day-cell.is-today {
     background-color: var(--today-highlight-bg);
 }
 
-.date-number { font-weight: bold; position: absolute; top: -0.6vmin; left: 0.5vmin; font-size: 2.5vmin; color: var(--date-number-color); }
-.lecture-content { position: absolute; top: 2.5vmin; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; justify-content: center; font-size: 1.2vmin; text-align: center; background-color: #fff; padding: 0.1vmin; }
-.lecture-block { padding-bottom: 0.5vmin; }
-.lecture-block + .lecture-block { border-top: 1px solid #ccc; padding-top: 0.5vmin; margin-top: 0.5vmin; }
-.lecture-time, .ustaz-name, .lecture-title { line-height: 1.2; }
-.lecture-time { font-weight: bold; font-size: 1.6vmin; }
-.lecture-time.subuh { color: var(--subuh-color); }
-.lecture-time.maghrib { color: var(--maghrib-color); }
-.ustaz-name { font-weight: bold; }
-.lecture-title {  font-style: italic; font-weight: 400 !important; }
-.arabic-text { font-size: 4.5vmin; font-family: 'Times New Roman', serif; }
-.yasin-title { font-weight: bold; font-size: 1.4vmin; }
-.page-footer { padding-top: 1vmin; font-size: 1.2vmin; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-.legend { display: flex; align-items: center; gap: 1vmin; }
-.legend-box { width: 12vw; padding: 0.5vmin 0; border: 1px solid #000; text-align: center; font-weight: bold; }
-.empty-slot-legend { background-color: var(--empty-cell-bg); }
-.public-holiday-legend { background-color: #2c3e50; color: white; }
-.legend-box.today-legend { background-color: var(--today-highlight-bg); }
-.footer-link a { color: #0000FF; }
-.date-header { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; width: 100%; }
-.holiday-label { background-color: var(--holiday-label-bg); color: white; font-size: 1.1vmin; font-weight: bold; padding: 0vmin 0.8vmin; border-radius: 5px; white-space: nowrap; margin-left: auto; }
-.lecture-content.is-empty-slot { background-color: var(--empty-cell-bg); }
-.empty-slot-text { font-weight: bold; font-size: 1.6vmin; color: #888; }
-.lecture-block.is-weekend-empty { background-color: var(--empty-cell-bg); border-radius: 5px; padding-top: 2vmin; padding-bottom: 1.5vmin; }
-
-/* ======================================================= */
-/* BAHAGIAN 2: GAYA UNTUK PAPARAN MUDAH ALIH (<= 768px)    */
-/* ======================================================= */
-@media screen and (max-width: 768px) {
-    body { overflow-y: auto; }
-    .page-container { padding: 15px; height: auto; width: 98vw; }
-    .schedule-table { display: none; }
-    #mobile-view-container { display: block; }
-    .page-header { flex-direction: column; text-align: center; }
-    .logo-container { margin: 0 0 15px 0; width: 150px; }
-    .title-container .title-main { font-size: 0.95em; font-weight: 400; }
-    .title-container .title-month { font-size: 2em; }
-    #today-kuliah-card.is-today-card { background-color: var(--date-header-bg); border: 2px solid var(--date-number-color); }
-    #today-kuliah-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 25px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .today-card-header { text-align: center; margin-bottom: 15px; }
-    .today-card-header .label { font-size: 2em; font-weight: bold; text-transform: uppercase; color: #2c3e50; }
-
-    /* Gaya dropdown pemilih hari */
-    .day-selector-wrapper {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 5px;
-    }
-    .day-selector-dropdown {
-        font-family: 'Poppins', sans-serif;
-        font-size: 1.6em;
-        font-weight: bold;
-        text-transform: uppercase;
-        color: #2c3e50;
-        background-color: #fff;
-        border: 2px solid var(--date-number-color);
-        border-radius: 8px;
-        padding: 8px 40px 8px 15px;
-        cursor: pointer;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232E5A88' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        background-size: 20px;
-        transition: all 0.2s ease;
-        text-align: center;
-        text-align-last: center;
-        -moz-text-align-last: center;
-    }
-    .day-selector-dropdown:hover {
-        border-color: #2c3e50;
-        background-color: #f8f9fa;
-    }
-    .day-selector-dropdown:focus {
-        outline: none;
-        border-color: #2c3e50;
-        box-shadow: 0 0 0 3px rgba(46, 90, 136, 0.2);
-    }
-    .day-selector-dropdown option {
-        font-weight: bold;
-        padding: 10px;
-    }
-
-    .today-card-header .date-string { font-size: 1.2em; font-weight: 600; }
-    .today-card-header .hijri-date-string { font-size: 1em; color: #555; margin-top: -5px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; }
-    .today-card-header .holiday-label { margin-top: 10px; display: inline-block; font-size: 1em; padding: 5px 12px; }
-    .today-card-body .lecture-block { font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-    .today-card-body .lecture-time { font-size: 1.1rem; text-align: center; }
-    .today-card-body .ustaz-name { font-size: 1.2em; text-align: center;}
-    .today-card-body .lecture-title { font-size: 1em; text-align: center;}
-    .no-kuliah-today { text-align: center; font-size: 1.1em; font-weight: 500; padding: 20px 0; }
-    .poster-wrapper { width: 100%; aspect-ratio: 16 / 9; margin-top: 15px; margin-bottom: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .poster-iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
-    #mobile-card-list .mobile-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-    .card-header { background-color: #fffde7; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-style: italic; font-size: 1.1em; }
-    .card-header .holiday-label { font-size: 0.95em; padding: 4px 10px; }
-    .card-body { padding: 15px; }
-    .card-body.is-empty-slot { background-color: var(--empty-cell-bg); text-align: center; }
-    .card-body .empty-slot-text { font-size: 1.1rem; }
-    .card-body .lecture-block { font-size: 1.1em; }
-    .card-body .lecture-time { font-size: 1.1rem; }
-    .card-body .ustaz-name { font-size: 1.1em; }
-    .page-footer { flex-direction: column; gap: 20px; text-align: center; }
-    .page-footer .update-info, .page-footer .legend, .page-footer .footer-link { font-size: 0.8rem; }
-    .legend { flex-wrap: wrap; justify-content: center; display: none;}
-    .legend-box { width: auto; flex-grow: 1; padding: 8px 12px; font-size: 0.9em; }
+/* Ceramah cells — independently colorable from the date-bar above */
+.day-cell.is-today .lecture-content {
+    background-color: var(--today-lecture-bg);
 }
 
-/* ================================================================
-   MOBILE VIEW V2
-   Modern mobile UI — loaded after legacy mobile rules above so
-   these rules win by cascade within @media (max-width: 768px).
-   ================================================================ */
+/* Glow drawn as an overlay ABOVE the white lecture-content layer */
+.day-cell.is-today::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 0.3vmin var(--today-highlight-bg),
+        inset 0 0 0.5vmin 0.08vmin rgba(241, 228, 44, 0.85);
+}
 
+/* --- OPTION A — soft amber, left accent bar ---
+.day-cell.is-today {
+    background-color: #fef9c3;
+    border-left: 4px solid #eab308;
+}
+*/
+
+/* --- OPTION B — soft emerald, left accent bar ---
+.day-cell.is-today {
+    background-color: #ecfdf5;
+    border-left: 4px solid #10b981;
+}
+*/
+
+/* =========================================================
+   Footer
+   ========================================================= */
+.page-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.6vmin;
+    padding-top: 1vmin;
+    flex-shrink: 0;
+    font-size: 1.4vmin;
+}
+
+.update-info {
+    margin: 0;
+    color: #555;
+    font-style: italic;
+    font-size: 1.4vmin;
+}
+
+.legend {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.8vmin;
+    font-size: 1.3vmin;
+}
+
+.legend>span {
+    font-weight: 600;
+    color: #333;
+}
+
+.legend-box {
+    padding: 0.5vmin 1.2vmin;
+    font-size: 1.2vmin;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.empty-slot-legend {
+    background-color: var(--empty-cell-bg);
+    color: #555;
+    border: 1px solid #d0d0d0;
+}
+
+.public-holiday-legend {
+    background-color: var(--holiday-label-bg);
+    color: #ffffff;
+}
+
+.today-legend {
+    background-color: var(--today-highlight-bg);
+    color: #333;
+}
+
+.footer-link {
+    margin: 0;
+    color: #555;
+    font-size: 1.4vmin;
+    text-align: right;
+}
+
+.footer-link a {
+    color: var(--subuh-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.footer-link a:hover {
+    text-decoration: underline;
+}
+
+/* =========================================================
+   Mobile container (content out of scope)
+   ========================================================= */
+#mobile-view-container {
+    display: none;
+}
+
+/* =========================================================
+   Responsive breakpoint — mobile
+   ========================================================= */
 @media screen and (max-width: 768px) {
-
     body {
+        overflow-y: auto;
         background-color: #f1f5f9;
     }
 
-    html.dark body {
-        background-color: #0f172a;
+    .page-container {
+        height: auto;
+        padding: 15px;
     }
 
-    .logo-container {
-        width: 150px !important;
-        margin-bottom: 6px !important;
+    .page-header {
+        flex-direction: column;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+        gap: 0.35rem;
+    }
+
+    .logo-container img {
+        height: 44px;
+    }
+
+    .title-container {
+        align-items: center;
+        text-align: center;
+    }
+
+    .title-main {
+        font-size: 0.72rem;
+    }
+
+    .title-month {
+        font-size: 1.3rem;
+    }
+
+    .schedule-table {
+        display: none;
     }
 
     #mobile-view-container {
@@ -189,34 +504,9 @@ main { flex-grow: 1; min-height: 0; }
         padding-bottom: 2rem;
     }
 
-    .mobile-month-header {
-        text-align: center;
-        padding: 1.25rem 1rem 1rem;
-    }
-
-    .mobile-month-header .sub-label {
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin-bottom: 0.2rem;
-    }
-
-    .mobile-month-header .month-name {
-        font-size: 1.35rem;
-        font-weight: 800;
-        color: #0f172a;
-        letter-spacing: -0.01em;
-        text-transform: uppercase;
-    }
-
-    html.dark .mobile-month-header .month-name {
-        color: #f1f5f9;
-    }
-
+    /* ---- Today/Tomorrow card ---- */
     #today-kuliah-card {
-        margin: 0 1rem 1rem;
+        margin: 0 1rem 0.75rem;
         background: #ffffff;
         border-radius: 16px;
         border: 1.5px solid #bbf7d0;
@@ -225,24 +515,13 @@ main { flex-grow: 1; min-height: 0; }
         padding: 0 0.5rem;
     }
 
-    #today-kuliah-card.is-today-card {
-        background: #ffffff;
-        border-color: #bbf7d0;
-    }
-
-    html.dark #today-kuliah-card {
-        background: #1e293b;
-        border-color: #166534;
-        box-shadow: 0 4px 20px rgba(22, 163, 74, 0.08);
-    }
-
     .today-card-top-bar {
         height: 4px;
         background: linear-gradient(90deg, #16a34a 0%, #4ade80 100%);
     }
 
     .today-card-header {
-        padding: 0.5rem 1rem 0.375rem;
+        padding: 0.375rem 0.5rem 0.25rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -250,10 +529,6 @@ main { flex-grow: 1; min-height: 0; }
         text-align: left;
         border-bottom: 1px solid #f1f5f9;
         margin-bottom: 0;
-    }
-
-    html.dark .today-card-header {
-        border-bottom-color: #334155;
     }
 
     .day-select-wrapper {
@@ -276,6 +551,10 @@ main { flex-grow: 1; min-height: 0; }
         border: 1.5px solid #bbf7d0;
         border-radius: 8px;
         padding: 0.35rem 2rem 0.35rem 0.75rem;
+        max-width: 7.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         cursor: pointer;
         background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316a34a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
         background-repeat: no-repeat;
@@ -288,29 +567,6 @@ main { flex-grow: 1; min-height: 0; }
     .day-select:focus {
         border-color: #16a34a;
         box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
-    }
-
-    html.dark .day-select {
-        color: #4ade80;
-        background-color: #052e16;
-        border-color: #166534;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234ade80' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    }
-
-    html.dark .day-select option {
-        background-color: #1e293b;
-        color: #f1f5f9;
-    }
-
-    #today-date-combined {
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: #1e293b;
-        line-height: 1.4;
-    }
-
-    html.dark #today-date-combined {
-        color: #e2e8f0;
     }
 
     .today-date-right {
@@ -332,13 +588,11 @@ main { flex-grow: 1; min-height: 0; }
         line-height: 1.4;
     }
 
-    html.dark #today-date-gregorian { color: #e2e8f0; }
-    html.dark #today-date-hijri     { color: #4ade80; }
-
     .today-card-body {
-        padding-bottom: 1rem;
+        padding-bottom: 0.6rem;
     }
 
+    /* ---- Mobile lecture block (v2) ---- */
     .lecture-block-v2 {
         padding: 0.875rem 1rem;
         border-bottom: 1px solid #f1f5f9;
@@ -348,8 +602,11 @@ main { flex-grow: 1; min-height: 0; }
         border-bottom: none;
     }
 
-    html.dark .lecture-block-v2 {
-        border-bottom-color: #334155;
+    #today-kuliah-card .lecture-block-v2 {
+        text-align: center;
+        padding-top: 0.1rem;
+        padding-bottom: 0.1rem;
+        border-bottom: none;
     }
 
     .session-badge {
@@ -361,7 +618,7 @@ main { flex-grow: 1; min-height: 0; }
         text-transform: uppercase;
         padding: 2px 8px;
         border-radius: 999px;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.2rem;
     }
 
     .session-badge.subuh {
@@ -374,16 +631,6 @@ main { flex-grow: 1; min-height: 0; }
         color: #b45309;
     }
 
-    html.dark .session-badge.subuh {
-        background: #0c4a6e;
-        color: #7dd3fc;
-    }
-
-    html.dark .session-badge.maghrib {
-        background: #451a03;
-        color: #fcd34d;
-    }
-
     .lecture-ustaz {
         font-size: 0.92rem;
         font-weight: 600;
@@ -391,8 +638,8 @@ main { flex-grow: 1; min-height: 0; }
         line-height: 1.3;
     }
 
-    html.dark .lecture-ustaz {
-        color: #f1f5f9;
+    .lecture-ustaz[lang="ar"] {
+        font-family: 'Scheherazade New', 'Times New Roman', serif;
     }
 
     .lecture-tajuk {
@@ -402,42 +649,27 @@ main { flex-grow: 1; min-height: 0; }
         line-height: 1.4;
     }
 
-    html.dark .lecture-tajuk {
-        color: #94a3b8;
-    }
-
-    #today-kuliah-card .lecture-block-v2 {
-        text-align: center;
-        padding-top: 0.1rem;
-        padding-bottom: 0.1rem;
-        border-bottom: none;
-    }
-
+    /* ---- Poster image ---- */
     .poster-section {
         padding: 0;
     }
 
     .poster-wrapper {
-        width: 100%;
+        width: 95%;
         aspect-ratio: 16 / 9;
-        margin: 0;
+        margin: 0 auto;
         overflow: hidden;
         border-radius: 10px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
-    html.dark .poster-wrapper {
-        border-color: #334155;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    .poster-iframe {
+    .poster-img {
         width: 100%;
         height: 100%;
-        border: none;
-        pointer-events: none;
+        object-fit: contain;
         display: block;
+        background: #fff;
     }
 
     .no-kuliah-today {
@@ -446,9 +678,9 @@ main { flex-grow: 1; min-height: 0; }
         font-size: 0.85rem;
         color: #94a3b8;
         font-style: italic;
-        font-weight: normal;
     }
 
+    /* ---- Monthly card list ---- */
     #mobile-card-list {
         padding: 0 1rem;
         display: flex;
@@ -465,9 +697,9 @@ main { flex-grow: 1; min-height: 0; }
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
-    html.dark .mobile-card-v2 {
-        background: #1e293b;
-        border-color: #334155;
+    .mobile-card-v2.is-holiday .card-date-header-v2 {
+        background: #fefce8;
+        border-bottom-color: #fde68a;
     }
 
     .card-date-header-v2 {
@@ -479,21 +711,12 @@ main { flex-grow: 1; min-height: 0; }
         border-bottom: 1px solid #e2e8f0;
     }
 
-    html.dark .card-date-header-v2 {
-        background: #162032;
-        border-bottom-color: #334155;
-    }
-
     .card-day-label {
         font-size: 0.72rem;
         font-weight: 700;
         color: #334155;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-    }
-
-    html.dark .card-day-label {
-        color: #94a3b8;
     }
 
     .card-date-number {
@@ -516,6 +739,7 @@ main { flex-grow: 1; min-height: 0; }
 
     .card-body-v2 {
         padding: 0;
+        text-align: center;
     }
 
     .empty-slot-v2 {
@@ -526,10 +750,7 @@ main { flex-grow: 1; min-height: 0; }
         font-style: italic;
     }
 
-    html.dark .empty-slot-v2 {
-        color: #475569;
-    }
-
+    /* ---- Empty-day collapse toggle ---- */
     .show-empty-toggle {
         display: flex;
         align-items: center;
@@ -541,11 +762,11 @@ main { flex-grow: 1; min-height: 0; }
         background: transparent;
         border: 1.5px dashed #cbd5e1;
         border-radius: 10px;
+        font-family: inherit;
         font-size: 0.75rem;
         font-weight: 500;
         color: #94a3b8;
         cursor: pointer;
-        font-family: inherit;
         transition: border-color 0.15s, color 0.15s;
         margin-top: 0.125rem;
     }
@@ -555,27 +776,38 @@ main { flex-grow: 1; min-height: 0; }
         color: #64748b;
     }
 
-    html.dark .show-empty-toggle {
-        border-color: #334155;
-        color: #475569;
+    /* ---- Footer ---- */
+    .page-footer {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+        font-size: 0.8rem;
     }
 
-    html.dark .show-empty-toggle:hover {
-        border-color: #475569;
-        color: #64748b;
+    .page-footer .update-info,
+    .page-footer .legend,
+    .page-footer .footer-link {
+        font-size: 0.8rem;
     }
 
-    .mobile-card-v2.is-holiday .card-date-header-v2 {
-        background: #fefce8;
-        border-bottom-color: #fde68a;
+    .footer-link {
+        text-align: center;
     }
 
-    html.dark .mobile-card-v2.is-holiday .card-date-header-v2 {
-        background: #1c1a07;
-        border-bottom-color: #713f12;
+    .legend {
+        flex-wrap: wrap;
+        justify-content: center;
+        display: none;
+    }
+
+    .legend-box.today-legend {
+        display: none;
     }
 }
 
+/* =========================================================
+   Print — A4 landscape
+   ========================================================= */
 @media print {
     @page {
         size: A4 landscape;
@@ -592,13 +824,6 @@ main { flex-grow: 1; min-height: 0; }
         background-color: white;
     }
 
-    /* --- Sembunyikan elemen yang tidak perlu dicetak --- */
-    .print-button,
-    .legend-box.today-legend{
-        display: none !important;
-    }
-
-    /* --- CRITICAL: Force desktop table view for printing even on mobile --- */
     #mobile-view-container {
         display: none !important;
     }
@@ -607,17 +832,25 @@ main { flex-grow: 1; min-height: 0; }
         display: table !important;
     }
 
-    /* --- Aturan Reka Letak Utama --- */
-    .page-container {
-        display: flex; flex-direction: column; height: 100vh !important;
-        width: 100% !important; max-width: none !important;
-        padding: 1cm !important; margin: 0 !important;
+    .legend-box.today-legend {
+        display: none !important;
     }
-    .page-header { flex-shrink: 0; }
-    main { flex-grow: 1; min-height: 0; }
-    .page-footer { flex-shrink: 0; padding-top: 5px; }
 
-    /* --- Strategi Jadual Muktamad --- */
+    .page-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh !important;
+        width: 100% !important;
+        max-width: none !important;
+        padding: 1cm !important;
+        margin: 0 !important;
+    }
+
+    main {
+        flex-grow: 1;
+        min-height: 0;
+    }
+
     .schedule-table {
         width: 100%;
         height: 100%;
@@ -625,22 +858,11 @@ main { flex-grow: 1; min-height: 0; }
         border-spacing: 0;
     }
 
-    .schedule-table th,
-    .schedule-table td {
-        /* PEMBETULAN #1: Garisan lebih halus dan lembut */
-        border: 0.5pt solid #555;
-        padding: 0 !important;
-        background-color: transparent !important;
-        position: relative;
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    /* PEMBETULAN #2: Kembalikan warna hijau pada header hari */
+    /* box-shadow forces background colours through browser print settings */
     .schedule-table thead th {
         box-shadow: inset 0 0 0 1000px var(--week-bg);
     }
-    
+
     .week-number-cell {
         box-shadow: inset 0 0 0 1000px var(--week-col-bg);
     }
@@ -653,47 +875,96 @@ main { flex-grow: 1; min-height: 0; }
         box-shadow: inset 0 0 0 1000px var(--empty-cell-bg);
     }
 
-    /* --- Aturan untuk sel yang mempunyai tarikh --- */
-    .day-cell .date-header {
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 14pt;
-        background-color: var(--date-header-bg);
-    }
-    
-    .day-cell .lecture-content {
-        position: absolute;
-        top: 14pt; bottom: 0; left: 0; right: 0;
-        background-color: #fff;
-        padding: 0.5vmin;
+    .lecture-content.is-empty-slot {
+        background-color: var(--empty-cell-bg);
     }
 
-    /* --- Penyesuaian Saiz Fon & Posisi Teks (Final) --- */
-    .title-container .title-main { font-size: 14pt; }
-    .title-container .title-month { font-size: 28pt; }
-    .schedule-table thead th { font-size: 9pt; font-weight: bold; }
+    /* Remove today highlight in print — treat as a normal day cell */
+    .day-cell.is-today {
+        background-color: var(--date-header-bg) !important;
+    }
 
-    .date-number { position: absolute; top: 2pt; left: 4pt; font-size: 9pt; z-index: 3; }
-    .date-header { align-items: flex-start !important; z-index: 2; }
+    .day-cell.is-today .lecture-content {
+        background-color: #ffffff;
+    }
+
+    .day-cell.is-today::after {
+        display: none;
+    }
+
     .holiday-label {
-        font-size: 6.5pt;
-        float: right;
-        margin-top: 2pt;
-        margin-right: 4pt;
         background-color: var(--holiday-label-bg) !important;
         color: #ffffff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
     }
 
-    .lecture-content { font-size: 5pt; z-index: 2; }
-    .lecture-time { font-size: 7pt; }
-    .ustaz-name { font-size: 7pt; }
-    .lecture-title { font-size: 6.5pt; }
-    .empty-slot-text { font-size: 9pt; }
-    .lecture-content.is-empty-slot { background-color: var(--empty-cell-bg); }
+    .schedule-table th,
+    .schedule-table td {
+        border: 0.5pt solid #555;
+        padding: 0 !important;
+        position: relative;
+    }
 
-    .arabic-text { font-size: 18pt; }
-    .yasin-title { font-size: 8pt; }
-    .page-footer { font-size: 7pt; }
+    .title-container .title-main {
+        font-size: 14pt;
+    }
+
+    .title-container .title-month {
+        font-size: 28pt;
+    }
+
+    .schedule-table thead th {
+        font-size: 9pt;
+        font-weight: bold;
+    }
+
+    .week-label {
+        font-size: 8pt;
+    }
+
+    .date-number {
+        position: absolute;
+        top: 2pt;
+        left: 4pt;
+        font-size: 9pt;
+        z-index: 3;
+    }
+
+    .holiday-label {
+        font-size: 6.5pt;
+        margin-top: 2pt;
+        margin-right: 4pt;
+    }
+
+    .lecture-content {
+        font-size: 5pt;
+        top: 14pt;
+    }
+
+    .lecture-time {
+        font-size: 7pt;
+    }
+
+    .ustaz-name {
+        font-size: 7pt;
+    }
+
+    .lecture-title {
+        font-size: 6.5pt;
+    }
+
+    .empty-slot-text {
+        font-size: 9pt;
+    }
+
+    .arabic-text {
+        font-size: 18pt;
+    }
+
+    .yasin-title {
+        font-size: 8pt;
+    }
+
+    .page-footer {
+        font-size: 7pt;
+    }
 }

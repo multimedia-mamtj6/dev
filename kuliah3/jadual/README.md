@@ -16,7 +16,7 @@ All schedule data is managed via a single Google Sheet, automatically synced to 
 ## Project Structure
 
 ```
-kuliah/jadual/
+kuliah3/jadual/
 ├── index.html              # Landing page with navigation buttons
 ├── jadual.html             # Main schedule page (dual-view: table + cards)
 ├── script.js               # Core rendering logic (v15.2.2)
@@ -67,23 +67,23 @@ The page fetches JSON data so it must be served via HTTP, not `file://`.
 python -m http.server
 ```
 
-Open `http://localhost:8000/kuliah/jadual/` in your browser.
+Open `http://localhost:8000/kuliah3/jadual/` in your browser.
 
 ## URL Reference
 
 | URL | Page |
 |---|---|
-| `/kuliah/jadual` | Landing page |
-| `/kuliah/jadual/jadual` | Current month schedule |
-| `/kuliah/jadual/jadual?bulan=depan` | Next month schedule |
-| `/kuliah/jadual/jadual?file=pdf` | Current month PDF export |
-| `/kuliah/jadual/jadual?file=pdf&bulan=depan` | Next month PDF export |
+| `/kuliah3/jadual` | Landing page |
+| `/kuliah3/jadual/jadual` | Current month schedule |
+| `/kuliah3/jadual/jadual?bulan=depan` | Next month schedule |
+| `/kuliah3/jadual/jadual?file=pdf` | Current month PDF export |
+| `/kuliah3/jadual/jadual?file=pdf&bulan=depan` | Next month PDF export |
 
 > **Note:** `.html` extensions are omitted because Vercel's `cleanUrls: true` serves clean URLs. Local development still works with the full `.html` path.
 
 ## Deployment Notes
 
-The site is deployed on Vercel with `cleanUrls: true` and `trailingSlash: false` (`vercel.json` at repo root). Because of this, all asset references (`style.css`, `script.js`) and internal links in HTML files use **absolute root-relative paths** (e.g. `/kuliah/jadual/style.css`) to avoid relative-path resolution issues with clean URLs.
+The site is deployed on Vercel with `cleanUrls: true` and `trailingSlash: false` (`vercel.json` at repo root). Because of this, all asset references (`style.css`, `script.js`) and internal links in HTML files use **absolute root-relative paths** (e.g. `/kuliah3/jadual/style.css`) to avoid relative-path resolution issues with clean URLs.
 
 ## Customization
 

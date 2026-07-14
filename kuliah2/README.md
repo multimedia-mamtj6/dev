@@ -14,7 +14,7 @@ A redesigned version of the lecture schedule table. Same live data, improved vis
 /kuliah2/jadual/jadual.html?file=pdf   — PDF export
 ```
 
-Live at: `dev-data.mamtj6.com/kuliah2/jadual/jadual.html`
+Live at: `dev.mamtj6.com/kuliah2/jadual/jadual.html`
 
 ## Improvements over production
 

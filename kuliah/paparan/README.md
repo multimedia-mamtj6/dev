@@ -2,7 +2,7 @@
 
 ## 📄 Project Overview
 
-This system is designed to manage and display daily lecture schedules on digital screens. It uses Google Sheets as a simple and user-friendly control panel, which then automatically updates a set of web pages hosted on GitHub Pages.
+This system is designed to manage and display daily lecture schedules on digital screens. It uses Google Sheets as a simple and user-friendly control panel, which then automatically updates a set of web pages hosted on Vercel.
 
 The system is fully responsive and optimized for viewing on large digital signs, full-screen on mobile devices, or embedded within other websites and mobile apps.
 
@@ -90,8 +90,8 @@ All display files are located in your GitHub repository under the `kuliah/papara
 ## 🔍 Troubleshooting Common Issues
 
 ### Problem: The sign is not updating after I clicked the "Update" menu.
-*   **Solution 1:** Wait 1-2 minutes. GitHub Pages can take a moment to deploy the latest changes. Your browser might also be caching the old data.
-*   **Solution 2:** In your GitHub repository, click the **"Actions"** tab. You should see a recent "pages build and deployment" workflow with a green checkmark ✅. If you see a red X ❌, the deployment failed, and you can click on it to see the error.
+*   **Solution 1:** Wait 1-2 minutes. Vercel can take a moment to deploy the latest changes. Your browser might also be caching the old data.
+*   **Solution 2:** In your Vercel dashboard, check the **Deployments** tab for the project. You should see a recent deployment with a green checkmark ✅. If it shows a red ❌, the deployment failed, and you can click on it to see the build log/error.
 
 ### Problem: The sign shows a "No Lecture" message, but I scheduled one.
 *   **Solution 1:** Check the **`Posters`** sheet. Is the `Filename` for that speaker spelled exactly right?
