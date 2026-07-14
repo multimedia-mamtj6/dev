@@ -25,7 +25,7 @@ async function loadMonth() {
 
     labelEl.textContent    = label;
     publishBtn.textContent = `Terbitkan ${label}`;
-    updateScheduleActions();
+    await updateScheduleActions();
 
     const src = getPrevMonthOf(currentYear, currentMonth);
     document.getElementById('duplicate-month-label').textContent = `Salin Data ${monthLabel(src.year, src.month)}`;
@@ -178,7 +178,7 @@ function renderMobileDayList() {
 }
 
 // ─── Schedule view / PDF export links (real current or next month only) ──────
-function updateScheduleActions() {
+async function updateScheduleActions() {
     const now       = new Date();
     const realYear  = now.getFullYear();
     const realMonth = now.getMonth() + 1;
@@ -193,6 +193,7 @@ function updateScheduleActions() {
     const pdfBtn          = document.getElementById('export-pdf-btn');
     const publishBtn      = document.getElementById('publish-btn');
     const publishHint     = document.getElementById('publish-hint');
+    const lastPublishedNote = document.getElementById('last-published-note');
 
     const isRealCurrent = currentYear === realYear && currentMonth === realMonth;
     const isRealNext    = currentYear === nextYear  && currentMonth === nextMonth;
@@ -201,11 +202,12 @@ function updateScheduleActions() {
     if (tagEl) tagEl.textContent = isRealCurrent ? 'Bulan Ini' : (isRealNext ? 'Bulan Depan' : '');
 
     if (!isRealCurrent && !isRealNext) {
-        container.style.display       = 'none';
-        note.style.display            = 'none';
-        futureMonthNote.style.display = 'block';
-        publishBtn.style.display      = 'none';
-        publishHint.style.display     = 'none';
+        container.style.display         = 'none';
+        note.style.display              = 'none';
+        futureMonthNote.style.display   = 'block';
+        publishBtn.style.display        = 'none';
+        publishHint.style.display       = 'none';
+        lastPublishedNote.style.display = 'none';
         return;
     }
     futureMonthNote.style.display = 'none';
@@ -220,6 +222,32 @@ function updateScheduleActions() {
     scheduleLabel.textContent = `Lihat Terbitan ${label}`;
     container.style.display = 'block';
     note.style.display      = 'block';
+
+    await loadLastPublishedNote(label);
+}
+
+// Reads the most recent 'publish' activity_log row for this exact month label
+// (e.g. "Julai 2026") and renders it, or "Belum diterbitkan" if none exists yet.
+async function loadLastPublishedNote(label) {
+    const el = document.getElementById('last-published-note');
+    const { data, error } = await db
+        .from('activity_log')
+        .select('created_at, actor_name, actor_email')
+        .eq('action', 'publish')
+        .eq('target_label', label)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    if (error) { el.style.display = 'none'; return; } // informational only, never block the page
+
+    if (!data || !data.length) {
+        el.textContent = 'Bulan ini belum pernah diterbitkan.';
+    } else {
+        const row = data[0];
+        const who = row.actor_name || row.actor_email;
+        el.textContent = `Terakhir diterbitkan pada ${formatDateTimeMY(row.created_at)} (${formatRelativeMY(row.created_at)}) oleh ${who}`;
+    }
+    el.style.display = 'block';
 }
 
 // ─── Month actions dropdown ───────────────────────────────────────────────────
@@ -552,6 +580,7 @@ async function publishMonth() {
         } else {
             const rows = data.published?.rows ?? 0;
             showToast(`Berjaya diterbitkan! ${rows} hari dalam jadual.`, 'success', 6000);
+            await updateScheduleActions();
         }
     } catch (err) {
         showToast('Ralat sambungan: ' + err.message, 'error');

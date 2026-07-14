@@ -138,6 +138,26 @@ function formatDateMY(dateStr) {
     return `${d.getDate()} ${BULAN_MALAY[d.getMonth()]} ${d.getFullYear()} (${HARI_MALAY[d.getDay()]})`;
 }
 
+function formatDateTimeMY(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatRelativeMY(iso) {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const min = Math.floor(diffMs / 60000);
+    if (min < 1)  return 'Baru sahaja';
+    if (min < 60) return `${min} minit lalu`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24)  return `${hr} jam lalu`;
+    const day = Math.floor(hr / 24);
+    if (day < 7)  return `${day} hari lalu`;
+    const week = Math.floor(day / 7);
+    if (day < 30) return `${week} minggu lalu`;
+    const month = Math.floor(day / 30);
+    return `${month} bulan lalu`;
+}
+
 // ─── Activity log ─────────────────────────────────────────────────────────────
 // Fire-and-forget insert into activity_log, called right after a mutating write
 // already succeeded. Never throws/toasts — a logging failure must not make the

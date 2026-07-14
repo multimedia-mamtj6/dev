@@ -63,11 +63,6 @@ function resetFilters() {
     applyFilters();
 }
 
-function formatDateTimeMY(iso) {
-    const d = new Date(iso);
-    return d.toLocaleString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
 async function loadLog() {
     const tbody = document.getElementById('log-tbody');
     tbody.innerHTML = '<tr><td colspan="5" class="state-cell">Memuatkan...</td></tr>';
