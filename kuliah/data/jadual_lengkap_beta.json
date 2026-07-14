@@ -10,7 +10,7 @@
     "2026-07": {
       "infoJadual": {
         "tajukBulan": "BULAN JULAI 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 13/7/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 14/7/2026"
       },
       "senaraiHari": [
         {
@@ -151,11 +151,7 @@
         },
         {
           "date": "2026-07-13",
-          "subuh": {
-            "nama_penceramah": "Ustaz Shahruwardi",
-            "tajuk_kuliah": "Tuhfah Ar-Raghibin",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/04_3.-Ust-Shahruwardi.jpg"
-          },
+          "subuh": null,
           "maghrib": {
             "nama_penceramah": "Sdr Ahmad Syafiq Muhaimin",
             "tajuk_kuliah": "Syamail Muhammadiah",
