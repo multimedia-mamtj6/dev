@@ -6,6 +6,18 @@
 
 -- ── 1. Tables ─────────────────────────────────────────────────────────────────
 
+-- admins: who is allowed to log in and what they can do. Checked by
+-- app.js's requireAuth() after every Google OAuth login — an email that
+-- isn't in this table gets signed out immediately (see index.html?denied=1).
+CREATE TABLE IF NOT EXISTS admins (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email       TEXT UNIQUE NOT NULL,
+    name        TEXT,
+    role        TEXT NOT NULL DEFAULT 'editor' CHECK (role IN ('editor', 'super_admin')),
+    permissions JSONB NOT NULL DEFAULT '{"kuliah": true}'::jsonb,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS ustaz (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     short_name   TEXT UNIQUE NOT NULL,
@@ -36,9 +48,23 @@ CREATE INDEX IF NOT EXISTS idx_schedule_maghrib_ustaz_id ON schedule(maghrib_ust
 
 -- ── 3. Row Level Security ─────────────────────────────────────────────────────
 -- Blocks anonymous access. Only authenticated (logged-in) users can read/write.
+-- IMPORTANT: RLS policies alone are NOT enough — Postgres also requires a
+-- separate table-level GRANT before RLS is even evaluated. Every table below
+-- gets both a policy AND an explicit GRANT for exactly this reason (see
+-- database.md's Troubleshooting section if you ever hit "permission denied
+-- for table X" despite a policy existing).
 
+ALTER TABLE admins   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ustaz    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule ENABLE ROW LEVEL SECURITY;
+
+-- admins table policies
+CREATE POLICY "auth_all_admins" ON admins
+    FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+GRANT SELECT, INSERT, UPDATE, DELETE ON admins TO authenticated;
 
 -- ustaz table policies
 CREATE POLICY "auth_all_ustaz" ON ustaz
@@ -46,6 +72,7 @@ CREATE POLICY "auth_all_ustaz" ON ustaz
     TO authenticated
     USING (true)
     WITH CHECK (true);
+GRANT SELECT, INSERT, UPDATE, DELETE ON ustaz TO authenticated;
 
 -- schedule table policies
 CREATE POLICY "auth_all_schedule" ON schedule
@@ -53,6 +80,7 @@ CREATE POLICY "auth_all_schedule" ON schedule
     TO authenticated
     USING (true)
     WITH CHECK (true);
+GRANT SELECT, INSERT, UPDATE, DELETE ON schedule TO authenticated;
 
 
 -- ── 4. Storage bucket ─────────────────────────────────────────────────────────
@@ -100,6 +128,20 @@ CREATE POLICY "auth_delete_kuliah_assets" ON storage.objects
 --     http://localhost:8000/kuliah3/admin/dashboard.html    ← for local dev
 
 
+-- ── 5b. Bootstrap the first super_admin (manual, one-time) ────────────────────
+-- The `admins` table starts empty, but users.html (where you'd normally add an
+-- admin) itself requires being logged in as a super_admin to even load —
+-- chicken-and-egg. Break the loop by inserting the very first row directly:
+--
+-- INSERT INTO admins (email, name, role, permissions) VALUES
+--     ('your-email@gmail.com', 'Your Name', 'super_admin', '{"kuliah": true}'::jsonb);
+--
+-- The email must exactly match the Google account you'll log in with. After
+-- this one row exists, log in once — you'll land in dashboard.html with the
+-- "Pengguna" and "Log Aktiviti" nav links visible — and manage every admin
+-- after that through users.html normally. Never need to run this insert again.
+
+
 -- ── 6. Sample data (optional) ─────────────────────────────────────────────────
 -- Uncomment and adjust to seed your ustaz list from the existing Posters sheet.
 -- This is a one-time operation; the admin dashboard handles all future edits.
@@ -140,10 +182,10 @@ CREATE POLICY "auth_all_activity_log" ON activity_log
     WITH CHECK (true);
 
 -- Explicit table-level grants — RLS policies only take effect once the role
--- already has base privileges; ustaz/schedule inherited this from the
--- project's default privileges, but don't rely on that for a new table.
--- `authenticated` is used by every browser write; `service_role` is used by
--- api/publish.js's own log insert (server-side, bypasses RLS but still needs
--- the grant) — both are required or one of the two log paths fails silently.
+-- already has base privileges (see §3's note — don't rely on inherited
+-- defaults for any table). `authenticated` is used by every browser write;
+-- `service_role` is used by api/publish.js's own log insert (server-side,
+-- bypasses RLS but still needs the grant) — both are required or one of the
+-- two log paths fails silently.
 GRANT SELECT, INSERT, UPDATE, DELETE ON activity_log TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON activity_log TO service_role;

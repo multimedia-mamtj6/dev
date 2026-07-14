@@ -37,6 +37,7 @@ kuliah3/
     userlog.html     ← Activity log / changelog (super_admin only)
     userlog.js       ← Log load/render/paginate
     setup.sql        ← Supabase schema reference (do not run blindly)
+    database.md      ← Full database docs: setup from scratch, schema, RLS/GRANT model, troubleshooting
   jadual/
     jadual.html      ← Public schedule view
     script.js        ← Schedule rendering

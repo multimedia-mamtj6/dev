@@ -14,6 +14,7 @@ Full admin interface for committee members to manage the lecture schedule.
 /kuliah3/admin/dashboard.html  ← Monthly schedule editor
 /kuliah3/admin/ustaz.html      ← Penceramah management
 /kuliah3/admin/users.html      ← Admin user accounts (super_admin only)
+/kuliah3/admin/userlog.html    ← Activity log / changelog (super_admin only)
 ```
 
 Live at: `dev-data.mamtj6.com/kuliah3/admin/`
@@ -27,6 +28,7 @@ Live at: `dev-data.mamtj6.com/kuliah3/admin/`
 - "Tindakan Bulan" — duplicate the previous month's ustaz assignments forward, or clear a month's data, both with a confirmation safeguard
 - Publish schedule to GitHub (pushes `jadual_lengkap_beta.json`, keyed by month — publishing one month merges into the existing file and prunes stale months, current+next stay live simultaneously)
 - Admin user management with role-based access (editor / super_admin)
+- Activity log — accountability changelog of every schedule edit, ustaz/admin-account change, and Terbitkan/publish, with filters by admin/action/date range
 - Fully responsive — desktop and mobile (≤640px hamburger nav, card-per-row tables)
 
 **Roles:**
