@@ -33,10 +33,18 @@ CREATE TABLE IF NOT EXISTS schedule (
     date             DATE UNIQUE NOT NULL,
     subuh_ustaz_id   UUID REFERENCES ustaz(id) ON DELETE SET NULL,
     maghrib_ustaz_id UUID REFERENCES ustaz(id) ON DELETE SET NULL,
+    subuh_pending    BOOLEAN NOT NULL DEFAULT false,  -- slot reserved but ustaz/topic not decided yet ("Belum Ditetapkan")
+    maghrib_pending  BOOLEAN NOT NULL DEFAULT false,
     cuti_umum        TEXT,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Migration for a database where `schedule` already existed before these two
+-- columns were added — CREATE TABLE IF NOT EXISTS above is a no-op on an
+-- existing table, it does not retroactively add new columns.
+ALTER TABLE schedule ADD COLUMN IF NOT EXISTS subuh_pending   BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE schedule ADD COLUMN IF NOT EXISTS maghrib_pending BOOLEAN NOT NULL DEFAULT false;
 
 
 -- ── 2. Indexes ────────────────────────────────────────────────────────────────

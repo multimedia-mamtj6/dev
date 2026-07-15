@@ -39,6 +39,15 @@ async function fetchScheduleData() {
    Lecture block builders (return HTML strings)
    --------------------------------------------------------- */
 function createLectureBlock(type, sessionData) {
+    // Special case — slot reserved but ustaz/topic not decided yet
+    if (sessionData.pending) {
+        const label = type === 'subuh' ? 'Subuh' : 'Maghrib';
+        return `<div class="lecture-block is-pending">
+                    <div class="lecture-time ${type}">${label}</div>
+                    <div class="pending-label">Ceramah Khas — Akan Diumumkan</div>
+                </div>`;
+    }
+
     // Special case — Bacaan Yasiin & Tahlil
     if (sessionData.nama_penceramah && sessionData.nama_penceramah.indexOf('Yasiin') !== -1) {
         return `<div class="lecture-block yasin-block">
@@ -196,6 +205,12 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
    --------------------------------------------------------- */
 function createMobileLectureBlock(time, lecture) {
     const badgeClass = time.toLowerCase();
+    if (lecture.pending) {
+        return `<div class="lecture-block-v2 is-pending">
+                    <span class="session-badge ${badgeClass}">${time}</span>
+                    <div class="pending-label">Ceramah Khas — Akan Diumumkan</div>
+                </div>`;
+    }
     if (lecture.nama_penceramah && lecture.nama_penceramah.indexOf('Yasiin') !== -1) {
         return `<div class="lecture-block-v2">
                     <span class="session-badge ${badgeClass}">${time}</span>

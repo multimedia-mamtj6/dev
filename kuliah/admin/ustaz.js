@@ -247,6 +247,19 @@ function handleDeleteOverlay(e) {
     if (e.target === document.getElementById('delete-modal')) closeDeleteModal();
 }
 
+// ─── Nama Ringkas numbering-convention popup ───────────────────────────────────
+function openNumberingHelp() {
+    document.getElementById('numbering-help-modal').classList.add('open');
+}
+
+function closeNumberingHelp() {
+    document.getElementById('numbering-help-modal').classList.remove('open');
+}
+
+function handleNumberingHelpOverlay(e) {
+    if (e.target === document.getElementById('numbering-help-modal')) closeNumberingHelp();
+}
+
 async function confirmDelete() {
     if (!deletingId) return;
 

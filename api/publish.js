@@ -162,7 +162,7 @@ module.exports = async function handler(req, res) {
     // ── 4. Fetch schedule rows ──────────────────────────────────────────────
     const schedRes = await fetch(
         `${supabaseUrl}/rest/v1/schedule` +
-        `?select=date,cuti_umum,subuh_ustaz_id,maghrib_ustaz_id` +
+        `?select=date,cuti_umum,subuh_ustaz_id,maghrib_ustaz_id,subuh_pending,maghrib_pending` +
         `&date=gte.${startDate}` +
         `&date=lte.${endDate}` +
         `&order=date`,
@@ -191,16 +191,16 @@ module.exports = async function handler(req, res) {
         const maghribUstaz = row.maghrib_ustaz_id ? ustazMap[row.maghrib_ustaz_id] : null;
         return {
             date:      row.date,
-            subuh:     subuhUstaz ? {
+            subuh:     row.subuh_pending ? { pending: true } : (subuhUstaz ? {
                 nama_penceramah: subuhUstaz.full_name,
                 tajuk_kuliah:    subuhUstaz.tajuk_kuliah || null,
                 poster_url:      subuhUstaz.poster_url  || null,
-            } : null,
-            maghrib:   maghribUstaz ? {
+            } : null),
+            maghrib:   row.maghrib_pending ? { pending: true } : (maghribUstaz ? {
                 nama_penceramah: maghribUstaz.full_name,
                 tajuk_kuliah:    maghribUstaz.tajuk_kuliah || null,
                 poster_url:      maghribUstaz.poster_url  || null,
-            } : null,
+            } : null),
             cuti_umum: row.cuti_umum || null,
         };
     });

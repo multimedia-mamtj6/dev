@@ -57,7 +57,7 @@ async function loadMonth() {
 
     const { data: rows, error: schedErr } = await db
         .from('schedule')
-        .select('date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id')
+        .select('date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id, subuh_pending, maghrib_pending')
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date');
@@ -114,13 +114,17 @@ function renderCalendar() {
                 if (row?.cuti_umum) {
                     html += `<span class="holiday-tag">${escapeHtml(row.cuti_umum)}</span>`;
                 }
-                if (row?.subuh) {
+                if (row?.subuh_pending) {
+                    html += `<span class="session-tag pending">S: Belum Ditetapkan</span>`;
+                } else if (row?.subuh) {
                     const subuhClass = isYasinEntry(row.subuh) ? 'session-tag yasin' : 'session-tag subuh';
                     html += `<span class="${subuhClass}">S: ${escapeHtml(row.subuh.short_name || row.subuh.full_name)}</span>`;
                 } else if (row) {
                     html += `<span class="session-tag empty">S: Tiada</span>`;
                 }
-                if (row?.maghrib) {
+                if (row?.maghrib_pending) {
+                    html += `<span class="session-tag pending">M: Belum Ditetapkan</span>`;
+                } else if (row?.maghrib) {
                     const maghribClass = isYasinEntry(row.maghrib) ? 'session-tag yasin' : 'session-tag maghrib';
                     html += `<span class="${maghribClass}">M: ${escapeHtml(row.maghrib.short_name || row.maghrib.full_name)}</span>`;
                 } else if (row) {
@@ -157,18 +161,20 @@ function renderMobileDayList() {
         if (dateStr === today)  cls += ' is-today';
         if (row?.cuti_umum)     cls += ' has-holiday';
 
+        const subuhPending   = !!row?.subuh_pending;
+        const maghribPending = !!row?.maghrib_pending;
         const subuhName   = row?.subuh   ? escapeHtml(row.subuh.short_name   || row.subuh.full_name)   : null;
         const maghribName = row?.maghrib ? escapeHtml(row.maghrib.short_name || row.maghrib.full_name) : null;
-        const subuhClass   = subuhName   ? (isYasinEntry(row.subuh)   ? 'mdc-s mdc-yasin' : 'mdc-s')   : 'mdc-empty';
-        const maghribClass = maghribName ? (isYasinEntry(row.maghrib) ? 'mdc-m mdc-yasin' : 'mdc-m')   : 'mdc-empty';
+        const subuhClass   = subuhPending   ? 'mdc-s mdc-pending' : (subuhName   ? (isYasinEntry(row.subuh)   ? 'mdc-s mdc-yasin' : 'mdc-s')   : 'mdc-empty');
+        const maghribClass = maghribPending ? 'mdc-m mdc-pending' : (maghribName ? (isYasinEntry(row.maghrib) ? 'mdc-m mdc-yasin' : 'mdc-m')   : 'mdc-empty');
 
         html += `<div class="${cls}" onclick="openModal('${dateStr}')">
             <div class="mdc-date">${d}</div>
             <div class="mdc-day">${HARI_MALAY[dow]}</div>
             <div class="mdc-sessions">
                 ${row?.cuti_umum ? `<span class="mdc-holiday">${escapeHtml(row.cuti_umum)}</span>` : ''}
-                <span class="${subuhClass}">S: ${subuhName || 'Tiada'}</span>
-                <span class="${maghribClass}">M: ${maghribName || 'Tiada'}</span>
+                <span class="${subuhClass}">S: ${subuhPending ? 'Belum Ditetapkan' : (subuhName || 'Tiada')}</span>
+                <span class="${maghribClass}">M: ${maghribPending ? 'Belum Ditetapkan' : (maghribName || 'Tiada')}</span>
             </div>
             <div class="mdc-arrow">›</div>
         </div>`;
@@ -280,7 +286,9 @@ function getPrevMonthOf(year, month) {
 }
 
 function countFilledDays(map) {
-    return Object.values(map).filter(row => row.subuh_ustaz_id || row.maghrib_ustaz_id || row.cuti_umum).length;
+    return Object.values(map).filter(row =>
+        row.subuh_ustaz_id || row.maghrib_ustaz_id || row.subuh_pending || row.maghrib_pending || row.cuti_umum
+    ).length;
 }
 
 // ─── Duplicate month ──────────────────────────────────────────────────────────
@@ -473,6 +481,14 @@ function openModal(dateStr) {
     subuhSel.value   = row?.subuh_ustaz_id   || '';
     maghribSel.value = row?.maghrib_ustaz_id || '';
 
+    // Belum Ditetapkan — mutually exclusive with picking an ustaz for that slot
+    const subuhPendingCheck   = document.getElementById('subuh-pending-check');
+    const maghribPendingCheck = document.getElementById('maghrib-pending-check');
+    subuhPendingCheck.checked   = !!row?.subuh_pending;
+    maghribPendingCheck.checked = !!row?.maghrib_pending;
+    subuhSel.disabled   = subuhPendingCheck.checked;
+    maghribSel.disabled = maghribPendingCheck.checked;
+
     document.getElementById('day-modal').classList.add('open');
 }
 
@@ -492,21 +508,35 @@ function toggleCutiField() {
     if (!checked) field.value = '';
 }
 
+function toggleSubuhPending() {
+    const checked = document.getElementById('subuh-pending-check').checked;
+    const sel      = document.getElementById('subuh-select');
+    sel.disabled = checked;
+    if (checked) sel.value = '';
+}
+
+function toggleMaghribPending() {
+    const checked = document.getElementById('maghrib-pending-check').checked;
+    const sel      = document.getElementById('maghrib-select');
+    sel.disabled = checked;
+    if (checked) sel.value = '';
+}
+
 // ─── Save day ─────────────────────────────────────────────────────────────────
 // Compares the pre-write scheduleMap row against the values about to be saved and
 // returns a human-readable diff string, or null if nothing actually changed.
-function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti) {
+function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti, afterSubuhPending, afterMaghribPending) {
     const parts = [];
     const nameOf = u => u ? (u.short_name || u.full_name) : null;
 
-    const beforeSubuh = nameOf(before?.subuh);
-    const afterSubuh   = afterSubuhId ? nameOf(ustazMap[afterSubuhId]) : null;
+    const beforeSubuh = before?.subuh_pending ? 'Belum Ditetapkan' : nameOf(before?.subuh);
+    const afterSubuh   = afterSubuhPending ? 'Belum Ditetapkan' : (afterSubuhId ? nameOf(ustazMap[afterSubuhId]) : null);
     if ((beforeSubuh || null) !== (afterSubuh || null)) {
         parts.push(`Subuh: ${beforeSubuh || 'Tiada'} → ${afterSubuh || 'Tiada'}`);
     }
 
-    const beforeMaghrib = nameOf(before?.maghrib);
-    const afterMaghrib   = afterMaghribId ? nameOf(ustazMap[afterMaghribId]) : null;
+    const beforeMaghrib = before?.maghrib_pending ? 'Belum Ditetapkan' : nameOf(before?.maghrib);
+    const afterMaghrib   = afterMaghribPending ? 'Belum Ditetapkan' : (afterMaghribId ? nameOf(ustazMap[afterMaghribId]) : null);
     if ((beforeMaghrib || null) !== (afterMaghrib || null)) {
         parts.push(`Maghrib: ${beforeMaghrib || 'Tiada'} → ${afterMaghrib || 'Tiada'}`);
     }
@@ -526,8 +556,10 @@ async function saveDay() {
     saveBtn.disabled  = true;
     saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
 
-    const subuhId   = document.getElementById('subuh-select').value   || null;
-    const maghribId = document.getElementById('maghrib-select').value || null;
+    const subuhPending   = document.getElementById('subuh-pending-check').checked;
+    const maghribPending = document.getElementById('maghrib-pending-check').checked;
+    const subuhId   = subuhPending   ? null : (document.getElementById('subuh-select').value   || null);
+    const maghribId = maghribPending ? null : (document.getElementById('maghrib-select').value || null);
     const hasCuti   = document.getElementById('cuti-check').checked;
     const cutiText  = hasCuti ? (document.getElementById('cuti-text').value.trim() || null) : null;
     const before    = scheduleMap[editingDate];
@@ -537,6 +569,8 @@ async function saveDay() {
             date:             editingDate,
             subuh_ustaz_id:   subuhId,
             maghrib_ustaz_id: maghribId,
+            subuh_pending:    subuhPending,
+            maghrib_pending:  maghribPending,
             cuti_umum:        cutiText,
             updated_at:       new Date().toISOString(),
         },
@@ -552,7 +586,7 @@ async function saveDay() {
     }
 
     showToast('Berjaya disimpan', 'success');
-    const diff = buildDayDiffText(before, subuhId, maghribId, cutiText);
+    const diff = buildDayDiffText(before, subuhId, maghribId, cutiText, subuhPending, maghribPending);
     if (diff) await logActivity('schedule_day_edit', formatDateMY(editingDate), diff);
     closeModal();
     await loadMonth();

@@ -117,6 +117,10 @@
       <select id="subuh-select">
         <option value="">— Tiada Kuliah —</option>
       </select>
+      <div class="toggle-row" style="margin-top:0.5rem">
+        <input type="checkbox" id="subuh-pending-check" onchange="toggleSubuhPending()">
+        <label for="subuh-pending-check">Belum Ditetapkan (Ceramah Khas)</label>
+      </div>
     </div>
 
     <!-- Maghrib ustaz -->
@@ -125,6 +129,10 @@
       <select id="maghrib-select">
         <option value="">— Tiada Kuliah —</option>
       </select>
+      <div class="toggle-row" style="margin-top:0.5rem">
+        <input type="checkbox" id="maghrib-pending-check" onchange="toggleMaghribPending()">
+        <label for="maghrib-pending-check">Belum Ditetapkan (Ceramah Khas)</label>
+      </div>
     </div>
 
     <div class="modal-footer">

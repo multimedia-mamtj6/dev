@@ -310,6 +310,28 @@ main {
     letter-spacing: 0.03em;
 }
 
+/* Slot reserved but ustaz/topic not decided yet ("Belum Ditetapkan") */
+.lecture-block.is-pending {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff7ed;
+    border: 1px dashed #fb923c;
+    border-radius: 3px;
+    min-height: 3.5vmin;
+    text-align: center;
+    padding: 0.4vmin;
+}
+
+.pending-label {
+    font-size: 1.2vmin;
+    font-weight: 700;
+    color: #c2410c;
+    letter-spacing: 0.02em;
+}
+
 /* =========================================================
    Special — Bacaan Yasiin & Tahlil
    ========================================================= */
@@ -647,6 +669,20 @@ main {
         color: #64748b;
         margin-top: 2px;
         line-height: 1.4;
+    }
+
+    .lecture-block-v2.is-pending {
+        background-color: #fff7ed;
+        border: 1px dashed #fb923c;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .lecture-block-v2.is-pending .pending-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #c2410c;
+        margin-top: 2px;
     }
 
     /* ---- Poster image ---- */
