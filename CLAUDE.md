@@ -38,7 +38,7 @@ kuliah/                              ← Official lecture-schedule system (Supab
   admin/                             ← CMS: Google-OAuth admin dashboard, see kuliah/CLAUDE.md
   jadual/                            ← Public schedule view (dual-view: desktop table + mobile cards)
   data/jadual_lengkap.json          ← OLD pipeline's data (Sheets-synced, unmoved — see Data Flow)
-  data/jadual_lengkap_beta.json     ← THIS system's published data (Supabase → api/publish.js)
+  data/jadual_lengkap_v2.json       ← THIS system's published data (Supabase → api/publish.js)
   paparan/                          ← Digital signage (4 pages: today/tomorrow × subuh/maghrib) — drives a
                                         physical screen at the mosque, reads jadual_lengkap.json (OLD pipeline)
   gscript/                          ← Local mirror of the deployed Google Apps Script (Sheets→JSON, Drive→posters)
@@ -72,7 +72,7 @@ Pipeline 2 (Supabase-backed, official system): Admin edits in kuliah/admin/dashb
                                        → Supabase `schedule`/`ustaz` tables
                                        → click Terbitkan → POST /api/publish
                                        → api/publish.js reads Supabase, pushes to GitHub
-                                       → kuliah/data/jadual_lengkap_beta.json
+                                       → kuliah/data/jadual_lengkap_v2.json
                                        → read by kuliah/jadual/ (official public view)
 ```
 
@@ -80,7 +80,7 @@ Pipeline 2 (Supabase-backed, official system): Admin edits in kuliah/admin/dashb
 Manual edit → calendar/hijri/data/events.json (updated annually with new Islamic dates)
 ```
 
-**Never manually edit `jadual_lengkap.json` or `jadual_lengkap_beta.json`** — both are overwritten by their respective automated sync (Apps Script / `api/publish.js`). Use the Google Sheet or the `kuliah/admin/` dashboard instead, matching whichever pipeline you're actually trying to change.
+**Never manually edit `jadual_lengkap.json` or `jadual_lengkap_v2.json`** — both are overwritten by their respective automated sync (Apps Script / `api/publish.js`). Use the Google Sheet or the `kuliah/admin/` dashboard instead, matching whichever pipeline you're actually trying to change.
 
 ### Sub-Project Documentation
 

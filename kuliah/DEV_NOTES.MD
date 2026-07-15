@@ -77,7 +77,7 @@ Admin edits schedule in dashboard.html
     → click Terbitkan
     → POST /api/publish?month=YYYY-MM
     → api/publish.js reads Supabase, MERGES into months{YYYY-MM: {...}} keyed JSON, prunes to real-current+real-next, pushes to GitHub
-    → kuliah/data/jadual_lengkap_beta.json updated (now holds BOTH months, not just the last-published one)
+    → kuliah/data/jadual_lengkap_v2.json updated (now holds BOTH months, not just the last-published one)
     → kuliah/jadual/script.js looks up jsonData.months[monthKey] where monthKey comes from the URL (?bulan=depan or not), not from the JSON content
 ```
 
@@ -268,7 +268,7 @@ Long session, survived at least one context compaction. If you're reading this b
 
 **Activity log is live and confirmed working in production** (session 6): schedule day-edits and Terbitkan both log correctly. Required two separate Postgres `GRANT` fixes to get there (see Session 6, point 2, and CRITICAL PATTERNS below) — if a *future* new Supabase table in this repo throws "permission denied," check that first.
 
-**Confirmed live in session 5, not re-checked since:** `kuliah/data/jadual_lengkap_beta.json` on GitHub held `months: { "2026-07": {...}, "2026-08": {...} }` simultaneously. Worth a quick re-check if you're touching `api/publish.js` again, just to keep the "confirmed, not assumed" standard current.
+**Confirmed live in session 5, not re-checked since:** `kuliah/data/jadual_lengkap_v2.json` (named `jadual_lengkap_beta.json` at the time — later renamed once this system became official) on GitHub held `months: { "2026-07": {...}, "2026-08": {...} }` simultaneously. Worth a quick re-check if you're touching `api/publish.js` again, just to keep the "confirmed, not assumed" standard current.
 
 Today's real date during session 7 was **2026-07-14** (one day after session 6's 2026-07-13) — "this month" = Julai/July, "next month" = Ogos/August, same as sessions 5-6. Keep that in mind if you're sanity-checking any month-key math left over in your context.
 
@@ -316,7 +316,7 @@ This is intentional — omitting `poster_url` from payload preserves existing va
 **Dropdown menu pattern:** `.month-actions` (or any wrapper with `position: relative`) + `.month-actions-menu` (absolute, `.open` toggles `display`) + `.month-actions-item` rows, closed via one shared document-level click listener in `dashboard.js`. Reuse these classes for any new dropdown rather than building a fresh one.
 
 **Publish MERGES now, keyed by absolute month — this replaces the old "full overwrite" note from session 4, which is no longer true:**
-`jadual_lengkap_beta.json` is `{ "months": { "YYYY-MM": { infoJadual, senaraiHari }, ... } }`. Each `Terbitkan` click writes only `months[thatMonth]`, leaves every other key untouched, and prunes anything that isn't the real-current/real-next month (computed server-side in Malaysia time, UTC+8). `kuliah/jadual/script.js` reads `jsonData.months[monthKey]` where `monthKey` comes from the URL/`baseDate`, never from the JSON content — so the title and the data can never disagree with the URL again. See Session 5 above for the full story, and `api/publish.js`'s exported helper functions (`computeRealMonthKeys`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore`) if you need to touch this logic again — they're structured as pure functions specifically so you can unit-test them with a throwaway Node script instead of needing a live deploy.
+`jadual_lengkap_v2.json` is `{ "months": { "YYYY-MM": { infoJadual, senaraiHari }, ... } }`. Each `Terbitkan` click writes only `months[thatMonth]`, leaves every other key untouched, and prunes anything that isn't the real-current/real-next month (computed server-side in Malaysia time, UTC+8). `kuliah/jadual/script.js` reads `jsonData.months[monthKey]` where `monthKey` comes from the URL/`baseDate`, never from the JSON content — so the title and the data can never disagree with the URL again. See Session 5 above for the full story, and `api/publish.js`'s exported helper functions (`computeRealMonthKeys`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore`) if you need to touch this logic again — they're structured as pure functions specifically so you can unit-test them with a throwaway Node script instead of needing a live deploy.
 
 **`isYasinEntry()` in app.js (session 5):** shared helper, `/yasi+n/i` against `short_name + full_name` combined. Use this instead of hardcoding a dropdown position or a single spelling — the ustaz's numbered position in dropdowns is NOT stable (recalculated every load), and "Yasin" vs "Yasiin" spelling isn't guaranteed consistent between short_name and full_name.
 
@@ -374,7 +374,7 @@ RLS is ON. Service role key is server-side only (Vercel env var `SUPABASE_SERVIC
 - The mobile today-card's poster width (95%) and today-highlight colors (`#ebdb07`/`#f7ec56`) are exactly where the user last set them — don't "clean up" or revert these without being asked, they were deliberate manual overrides.
 - Consider: search/filter on ustaz list (it'll grow)
 - Consider: schedule view for a specific ustaz (how many sessions they have)
-- Promote beta JSON to production (`jadual_lengkap.json`) once tested — currently still publishes to `jadual_lengkap_beta.json` only
+- Promote beta JSON to production (`jadual_lengkap.json`) once tested — currently still publishes to `jadual_lengkap_v2.json` only
 - The leaked GitHub token in `kuliah3/kuliah(beta)/jadual/google-app-script/config.json` (moved with the folder in session 7's swap, same relative position) is STILL unresolved (four sessions running now, every time explicitly out of scope) — flag it again if that folder ever comes up, it's a real credential exposure sitting untouched
 - Low-priority optional cleanup mentioned to the user but not yet done: remove the two stale `kuliah3/admin/dashboard.html`-era entries from Supabase's Redirect URLs allowlist now that the swap's login flow is confirmed working — safe to do whenever, no rush, nobody's asked for it explicitly yet
 - Possible future ask: apply the same "any day" mobile dropdown pattern (session 5, point 5) to `kuliah2/` if that gets revisited — the poster-fallback approach is now direct-`<img>`-only for `kuliah/jadual/` (session 6 standardized away the today/tomorrow iframe special-case, see Session 6 point 0) — check whether that simplification should also apply if porting this elsewhere

@@ -30,7 +30,7 @@ function escapeHtml(str) {
    Data fetch
    --------------------------------------------------------- */
 async function fetchScheduleData() {
-    const response = await fetch(`/kuliah/data/jadual_lengkap_beta.json?v=${new Date().getTime()}`);
+    const response = await fetch(`/kuliah/data/jadual_lengkap_v2.json?v=${new Date().getTime()}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
 }

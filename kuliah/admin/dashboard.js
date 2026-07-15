@@ -223,8 +223,8 @@ async function updateScheduleActions() {
     const query    = isRealNext ? '?bulan=depan' : '';
     const pdfQuery = isRealNext ? '?file=pdf&bulan=depan' : '?file=pdf';
     const label    = monthLabel(currentYear, currentMonth);
-    viewBtn.href = `/kuliah/jadual/jadual.html${query}`;
-    pdfBtn.href  = `/kuliah/jadual/jadual.html${pdfQuery}`;
+    viewBtn.href = `/kuliah/jadual/index.html${query}`;
+    pdfBtn.href  = `/kuliah/jadual/index.html${pdfQuery}`;
     scheduleLabel.textContent = `Lihat Terbitan ${label}`;
     container.style.display = 'block';
     note.style.display      = 'block';

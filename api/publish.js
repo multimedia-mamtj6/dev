@@ -1,5 +1,5 @@
 // Vercel serverless function: POST /api/publish?month=YYYY-MM
-// Reads schedule from Supabase, merges it into jadual_lengkap_beta.json's
+// Reads schedule from Supabase, merges it into jadual_lengkap_v2.json's
 // months map (keyed by real current/next YYYY-MM), commits to GitHub.
 //
 // Required Vercel environment variables (set in Vercel Dashboard → Project → Settings → Environment Variables):
@@ -212,7 +212,7 @@ module.exports = async function handler(req, res) {
         return res.status(500).json({ error: 'Server misconfiguration: missing GitHub env vars' });
     }
 
-    const filePath  = 'kuliah/data/jadual_lengkap_beta.json';
+    const filePath  = 'kuliah/data/jadual_lengkap_v2.json';
     const ghHeaders = {
         'Authorization':        `Bearer ${githubToken}`,
         'Accept':               'application/vnd.github+json',

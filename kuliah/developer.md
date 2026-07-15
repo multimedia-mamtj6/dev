@@ -153,7 +153,7 @@ Vercel serverless function. Requires:
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — Vercel env vars
 - `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO` — Vercel env vars
 
-Reads schedule + ustaz from Supabase using service role. Fetches the existing `jadual_lengkap_beta.json` (content + SHA in one GitHub Contents API call), merges just the requested month into a `months: { "YYYY-MM": { infoJadual, senaraiHari } }` map, prunes any key that isn't the real-current/real-next month (computed server-side in Malaysia time, UTC+8), then pushes the merged file back to GitHub. Returns `{ published: { rows }, commitUrl, months }`.
+Reads schedule + ustaz from Supabase using service role. Fetches the existing `jadual_lengkap_v2.json` (content + SHA in one GitHub Contents API call), merges just the requested month into a `months: { "YYYY-MM": { infoJadual, senaraiHari } }` map, prunes any key that isn't the real-current/real-next month (computed server-side in Malaysia time, UTC+8), then pushes the merged file back to GitHub. Returns `{ published: { rows }, commitUrl, months }`.
 
 Note: `commitUrl` is returned but **not shown to the user** (removed from dashboard.js — non-tech users don't need it).
 

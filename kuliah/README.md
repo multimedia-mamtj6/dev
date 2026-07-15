@@ -26,7 +26,7 @@ Live at: `dev.mamtj6.com/kuliah/admin/`
 - Penceramah (ustaz) registry with poster images (upload file or URL), two-column layout on desktop
 - "Lihat Terbitan" — quick view/export-PDF links to the live published schedule (current + next month only)
 - "Tindakan Bulan" — duplicate the previous month's ustaz assignments forward, or clear a month's data, both with a confirmation safeguard
-- Publish schedule to GitHub (pushes `jadual_lengkap_beta.json`, keyed by month — publishing one month merges into the existing file and prunes stale months, current+next stay live simultaneously)
+- Publish schedule to GitHub (pushes `jadual_lengkap_v2.json`, keyed by month — publishing one month merges into the existing file and prunes stale months, current+next stay live simultaneously)
 - Shows when the current/next month was last published and by whom, right on the dashboard toolbar
 - Admin user management with role-based access (editor / super_admin)
 - Activity log — accountability changelog of every schedule edit, ustaz/admin-account change, and Terbitkan/publish, with filters by admin/action/date range
@@ -44,7 +44,7 @@ Read-only lecture schedule display. Reads from the published JSON.
 
 **Access:**
 ```
-/kuliah/jadual/jadual.html
+/kuliah/jadual/index.html
 ```
 
 ---
@@ -76,6 +76,6 @@ Google Sheet (legacy) → [deprecated path]
 
 Admin dashboard → Supabase (live edit)
                → Terbitkan → api/publish.js
-               → kuliah/data/jadual_lengkap_beta.json on GitHub
+               → kuliah/data/jadual_lengkap_v2.json on GitHub
                → served by Vercel
 ```
