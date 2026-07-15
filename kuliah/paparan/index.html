@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="600">
+    <title>Paparan Kuliah — MAMTJ6</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="display-container" style="display:none">
+        <div id="message" class="message-box">
+            <h1>Loading Schedule...</h1>
+        </div>
+    </div>
+    <div id="landing-menu" style="display:none">
+        <a href="?subuh" class="paparan-menu-btn">Kuliah Subuh Hari Ini</a>
+        <a href="?maghrib" class="paparan-menu-btn">Kuliah Maghrib Hari Ini</a>
+        <a href="?subuh-esok" class="paparan-menu-btn">Kuliah Subuh Esok</a>
+        <a href="?maghrib-esok" class="paparan-menu-btn">Kuliah Maghrib Esok</a>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        bootstrapPaparan();
+    </script>
+</body>
+</html>

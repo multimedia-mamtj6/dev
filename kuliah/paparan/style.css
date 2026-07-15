@@ -40,10 +40,47 @@ This is the white box for text messages.
     max-width: 90%;
 }
 
-/* 
+/*
 This targets the text itself inside the message box.
 */
 .message-box h1 {
     margin: 0;
     font-size: clamp(1.1rem, 6vw, 2.5rem);
+}
+
+/*
+Landing menu shown at index.html with no (or an unrecognized) query —
+convenience/testing entry point, not something a live screen should land on.
+*/
+#landing-menu {
+    height: 100%;
+    width: 100%;
+    background-color: #ffffff;
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    gap: clamp(12px, 3vw, 24px);
+    padding: clamp(16px, 4vw, 40px);
+    box-sizing: border-box;
+}
+
+.paparan-menu-btn {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #222;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    padding: clamp(20px, 5vw, 40px) clamp(24px, 6vw, 56px);
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    font-weight: 600;
+    min-width: 220px;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.paparan-menu-btn:hover {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
 }

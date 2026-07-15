@@ -39,8 +39,10 @@ kuliah/                              ← Official lecture-schedule system (Supab
   jadual/                            ← Public schedule view (dual-view: desktop table + mobile cards)
   data/jadual_lengkap.json          ← OLD pipeline's data (Sheets-synced, unmoved — see Data Flow)
   data/jadual_lengkap_v2.json       ← THIS system's published data (Supabase → api/publish.js)
-  paparan/                          ← Digital signage (4 pages: today/tomorrow × subuh/maghrib) — drives a
-                                        physical screen at the mosque, reads jadual_lengkap.json (OLD pipeline)
+  paparan/                          ← Digital signage (index.html, routed by ?subuh/?maghrib/?subuh-esok/
+                                        ?maghrib-esok query — old 4 filenames kept as redirect stubs for
+                                        already-configured screens) — drives a physical screen at the mosque,
+                                        reads jadual_lengkap_v2.json (Pipeline 2)
   gscript/                          ← Local mirror of the deployed Google Apps Script (Sheets→JSON, Drive→posters)
 
 kuliah3/                             ← Archived v15.4 system (Sheets-backed), kept live as fallback
@@ -66,7 +68,7 @@ media/                              ← Images, logos (SVG variants: black/white
 ```
 Pipeline 1 (unmoved, pre-existing): Google Sheet → Google Apps Script → GitHub API push
                                        → kuliah/data/jadual_lengkap.json
-                                       → read by kuliah3/jadual/ (archived system) and kuliah/paparan/ (signage)
+                                       → read by kuliah3/jadual/ (archived system)
 
 Pipeline 2 (Supabase-backed, official system): Admin edits in kuliah/admin/dashboard.html
                                        → Supabase `schedule`/`ustaz` tables
@@ -74,6 +76,7 @@ Pipeline 2 (Supabase-backed, official system): Admin edits in kuliah/admin/dashb
                                        → api/publish.js reads Supabase, pushes to GitHub
                                        → kuliah/data/jadual_lengkap_v2.json
                                        → read by kuliah/jadual/ (official public view)
+                                            and kuliah/paparan/ (digital signage — migrated from Pipeline 1)
 ```
 
 ```
