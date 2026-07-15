@@ -132,6 +132,8 @@ id               UUID PK
 date             DATE UNIQUE NOT NULL
 subuh_ustaz_id   UUID REFERENCES ustaz(id) ON DELETE SET NULL
 maghrib_ustaz_id UUID REFERENCES ustaz(id) ON DELETE SET NULL
+subuh_pending    BOOLEAN NOT NULL DEFAULT false   -- "Belum Ditetapkan" — see note below
+maghrib_pending  BOOLEAN NOT NULL DEFAULT false
 cuti_umum        TEXT              -- public holiday label, optional
 created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -139,6 +141,7 @@ updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 - `date` is `UNIQUE` — every write from the dashboard is an `upsert` keyed on `date` (`onConflict: 'date'`), never a plain insert.
 - `ON DELETE SET NULL` on both ustaz FKs — if an ustaz row is ever deleted (bypassing the UI guard above), any schedule row that referenced them just goes back to "Tiada Kuliah" instead of erroring or cascading a delete.
+- **`subuh_pending`/`maghrib_pending` (added session 8) are mutually exclusive with their matching `*_ustaz_id`** — `dashboard.js`'s `saveDay()` forces the ustaz id to `null` whenever its pending checkbox is checked, so a slot is never both "assigned" and "pending" at once. Used for a Ceramah Khas day where a slot is known to be happening but the speaker/topic isn't decided yet ("Belum Ditetapkan") — publishing writes `{ pending: true }` for that slot instead of an ustaz object or `null`, so the public page can show "Ceramah Khas — Akan Diumumkan" instead of either a name or nothing at all.
 - Month navigation in `dashboard.js` is unrestricted (any past/future month), but only the **real current** and **real next** calendar month can ever be published (`api/publish.js` rejects any other `month` param) — editing further out is for early planning only.
 
 ### `activity_log`

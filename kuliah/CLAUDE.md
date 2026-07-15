@@ -42,6 +42,13 @@ kuliah/
     index.html       ← Public schedule view
     script.js        ← Schedule rendering
     style.css        ← Public view styles
+  paparan/
+    index.html       ← Digital signage entry point, routed by ?subuh/?maghrib/?subuh-esok/?maghrib-esok
+    script.js        ← Shared display logic + bootstrapPaparan() query router
+    style.css        ← Signage + landing-menu styles
+    today_subuh.html, today_maghrib.html,
+    tomorrow_subuh.html, tomorrow_maghrib.html
+                     ← Zero-JS meta-refresh redirect stubs → index.html?<query> (old URLs, kept for already-configured screens)
   DEV_NOTES.MD       ← Session-to-session context memo (read before touching anything)
   developer.md       ← Developer setup and architecture guide
   README.md          ← Project overview
@@ -65,6 +72,8 @@ created_at timestamptz, updated_at timestamptz
 id uuid PK, date date UNIQUE NOT NULL,
 subuh_ustaz_id uuid FK→ustaz(id),
 maghrib_ustaz_id uuid FK→ustaz(id),
+subuh_pending boolean DEFAULT false,   -- "Belum Ditetapkan", mutually exclusive w/ subuh_ustaz_id
+maghrib_pending boolean DEFAULT false,
 cuti_umum text, updated_at timestamptz
 
 -- activity_log: accountability changelog (see Key Patterns below)
@@ -108,7 +117,7 @@ Admin edits day in dashboard.html
 ```
 `_injectSuperAdminNav()` in app.js inserts both "Pengguna" and "Log Aktiviti" links before `.spacer` inside `.nav-links`, each independently guarded against double-injection — so `users.html`/`userlog.html` can hardcode their own link (matching every other page's convention of hardcoding its own active link) while `dashboard.html`/`ustaz.html` gain both purely via injection. If you restructure nav or add a third super_admin-only page, update that function's array.
 
-**All JS-driven navigation (`window.location.replace`/`.href`) must use absolute root-relative paths (`/kuliah/admin/...`), never a bare filename:** found live in production — `index.html`'s "already logged in, skip to dashboard" branch used `window.location.replace('dashboard.html')` (relative). Vercel's `cleanUrls: true` redirects a request for `index.html` to the bare directory path with **no trailing slash** (`/kuliah/admin`, not `/kuliah/admin/`) — and per standard URL relative-resolution rules, a relative reference from a slash-less path treats the last segment (`admin`) as a filename to be *replaced*, not a directory to append to. So `dashboard.html` resolved to `/kuliah/dashboard.html` instead of `/kuliah/admin/dashboard.html`, 404ing. This is a pre-existing bug class (would've behaved identically under the old `kuliah3/admin/` path) that just hadn't been triggered before. Fixed everywhere it appeared (`app.js`'s `requireAuth()`/`signOut()`, `index.html`, `users.js`/`userlog.js`'s role-gate redirects) by switching to absolute paths — the same convention `kuliah3/jadual/CLAUDE.md`'s "Vercel Deployment Notes" already documents for HTML `href`/`src`, now confirmed to apply equally to JS navigation.
+**Any HTML `href`/`src`, and any JS-driven navigation (`window.location.replace`/`.href`), under `kuliah/` must use absolute root-relative paths (`/kuliah/admin/...`, `/kuliah/paparan/...`), never a bare/relative filename — hit twice now, in two different subfolders:** Vercel's `cleanUrls: true` serves a directory's `index.html` at the bare directory path with **no trailing slash** (`/kuliah/admin`, not `/kuliah/admin/` — same for `/kuliah/paparan`). Per standard URL relative-resolution rules, any relative reference from a slash-less path treats the last path segment (`admin`, `paparan`) as a filename to be *replaced*, not a directory to append to. Session 7: `kuliah/admin/index.html`'s relative `window.location.replace('dashboard.html')` resolved to `/kuliah/dashboard.html` (404) instead of `/kuliah/admin/dashboard.html` — fixed by switching to absolute paths everywhere in `app.js`/`index.html`/`users.js`/`userlog.js`. Session 8: `kuliah/paparan/index.html`'s relative `<link href="style.css">`/`<script src="script.js">` silently failed to load at `https://dev.mamtj6.com/kuliah/paparan` (both resolved against `/kuliah/`, 404ing) — page rendered fully blank since `bootstrapPaparan()` never ran to flip either the display or the landing menu visible. Fixed the same way, to `/kuliah/paparan/style.css` / `/kuliah/paparan/script.js`. **Treat this as a mandatory check for any brand-new HTML entry point added under `kuliah/` — a relative asset path will work perfectly under local `python -m http.server` and under Live Server, and only break once deployed to Vercel, so local testing alone will not catch it.**
 
 **Mobile breakpoints:**
 - `≤768px` — tablet compact
@@ -141,6 +150,8 @@ Admin edits day in dashboard.html
 
 **Email matching against `admins.email` must use `ilike`, not `eq`:** Postgres `text` equality is case-sensitive by default, and `admins.email` (often typed by hand, e.g. via `setup.sql`'s bootstrap insert) isn't guaranteed to match the exact casing Google OAuth/Supabase Auth actually returns for that account. A mismatch doesn't error — `.eq('email', ...)` just silently matches zero rows, and whatever fallback exists kicks in quietly. Both `dashboard.js`'s last-published-note admin-name fallback lookup and `api/publish.js`'s own actor-name lookup use `.ilike()` (`email=ilike.` in the REST form) for this reason — use the same for any future email-matching query against `admins`.
 
+**"Belum Ditetapkan" pending slots (session 8):** a Subuh/Maghrib slot can be marked pending instead of assigned an ustaz — for a day known to have Kuliah/Ceramah Khas where the speaker/topic isn't decided yet. Day-editor modal (`dashboard.html`) has a checkbox per session (`subuh-pending-check`/`maghrib-pending-check`) under each ustaz `<select>`; checking it disables+clears that select (`toggleSubuhPending()`/`toggleMaghribPending()` in `dashboard.js`). `saveDay()` writes `schedule.subuh_pending`/`maghrib_pending` (booleans, mutually exclusive with the matching `*_ustaz_id` — checking pending forces the id to `null`). `api/publish.js` maps a pending slot to a `{ pending: true }` marker object in the published JSON instead of an ustaz object or `null` — this is truthy, so it automatically routes correctly through every existing "is this day/session empty" check with zero changes to that logic. `kuliah/jadual/script.js` renders it as a dashed-border "Ceramah Khas — Akan Diumumkan" block (`.is-pending`/`.pending-label`) instead of an ustaz name or nothing; `kuliah/paparan/script.js` shows the same message (`MESSAGES.pending`) on the signage screen. The point of the whole feature: the public schedule must show *that* a slot exists without ever showing placeholder/undetermined ustaz info as if it were real.
+
 **Activity log (`activity_log` table + `logActivity()` in app.js, viewed at `userlog.html`, super_admin only):** every mutating admin action inserts one row right after its write succeeds — schedule day edits, bulk duplicate/clear (one summary row each, not per-date), ustaz create/update/delete, admin-account create/update/delete, and Terbitkan/publish (logged server-side from `api/publish.js` using its existing service-role client, since that write happens outside the browser). `target_label`/`detail` are always plain-text snapshots (an ustaz's `short_name`, an admin's email, a month label) — **never** a live foreign key — so history stays readable even after the referenced ustaz/admin is later renamed or deleted. Each call-site captures its "before" value from an already-loaded in-memory cache (`scheduleMap`, `allUstaz`, `allUsers`) rather than an extra query, builds a diff string via a small pure `build*DiffText()` helper local to that page's JS file, and skips the insert entirely if nothing actually changed (no no-op log rows). `logActivity()` never throws or toasts — a logging failure must never make an admin think their actual save/delete/publish failed.
 
 ## Print/PDF Export (kuliah/jadual/)
@@ -148,6 +159,14 @@ Admin edits day in dashboard.html
 `kuliah/jadual/index.html` supports the same `?file=pdf` auto-print export as `kuliah3/jadual/` (see `kuliah3/jadual/CLAUDE.md` for the full write-up and the annotated `@media print` block — read it before touching `kuliah/jadual/style.css`'s print rules).
 
 **Bug fixed 2026-07-06:** exporting PDF from a narrow/mobile-width browser broke the layout (stacked header, missing footer legend) because `kuliah/jadual/style.css`'s `@media (max-width: 768px)` block (line ~459) wasn't scoped to `screen` — the mobile column layout stayed active during printing since `max-width` still matched the exporting device's width, and `@media print` never reset it. **Fixed by changing it to `@media screen and (max-width: 768px)`.** Any new mobile breakpoint block added to this file must use the same `screen`-scoped form, or print output can silently break again.
+
+## Digital Signage (kuliah/paparan/)
+
+Drives a physical screen at the mosque. As of session 8, a single `index.html` reads `?subuh`/`?maghrib`/`?subuh-esok`/`?maghrib-esok` from the URL (`bootstrapPaparan()` in `script.js`) and shows the matching poster/message; no query (or an unrecognized one) falls back to a 4-button landing menu instead of a blank/error page. The old 4 separate files (`today_subuh.html` etc.) are now zero-JS `<meta http-equiv="refresh" content="0; url=index.html?...">` redirect stubs, kept in place specifically because the old URLs are almost certainly hardcoded into the physical screen's kiosk browser or signage-player config — deleting them outright would require someone to walk over and manually reconfigure hardware. `index.html` keeps the `<meta http-equiv="refresh" content="600">` (10-minute) auto-reload unconditionally, same as the old files.
+
+Reads `kuliah/data/jadual_lengkap_v2.json` (Pipeline 2 — migrated in session 8 from the old Sheets-backed `jadual_lengkap.json`/Pipeline 1). `getTargetDate()` returns both a date string and a `monthKey` to look up `jsonData.months[monthKey].senaraiHari` (the nested schema — see "Publish merges by absolute month key" above); a session with `{ pending: true }` renders the same "Ceramah Khas — Akan Diumumkan" message as the public `jadual/` view.
+
+**See the cleanUrls absolute-path Key Pattern above** — `index.html`'s `style.css`/`script.js` references must stay absolute (`/kuliah/paparan/...`), this exact folder is where that bug most recently bit.
 
 ## Mobile "today card" — any day in the month, not just today/tomorrow (kuliah/jadual/)
 

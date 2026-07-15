@@ -21,7 +21,7 @@ Live at: `dev.mamtj6.com/kuliah/admin/`
 
 **Features:**
 - Google OAuth login — only pre-registered emails can access
-- Monthly calendar view with day editor modal (subuh + maghrib ustaz, public holiday)
+- Monthly calendar view with day editor modal (subuh + maghrib ustaz, public holiday, or mark a slot "Belum Ditetapkan" for a known Ceramah Khas whose speaker/topic isn't decided yet)
 - Dual view: desktop grid calendar / mobile scrollable day list
 - Penceramah (ustaz) registry with poster images (upload file or URL), two-column layout on desktop
 - "Lihat Terbitan" — quick view/export-PDF links to the live published schedule (current + next month only)
@@ -46,6 +46,20 @@ Read-only lecture schedule display. Reads from the published JSON.
 ```
 /kuliah/jadual/index.html
 ```
+
+### `paparan/` — Digital Signage
+
+Drives a physical screen at the mosque. Reads the same published JSON as `jadual/`.
+
+**Access:**
+```
+/kuliah/paparan/index.html?subuh          ← Kuliah Subuh Hari Ini
+/kuliah/paparan/index.html?maghrib        ← Kuliah Maghrib Hari Ini
+/kuliah/paparan/index.html?subuh-esok     ← Kuliah Subuh Esok
+/kuliah/paparan/index.html?maghrib-esok   ← Kuliah Maghrib Esok
+/kuliah/paparan/index.html                ← No query: 4-button landing menu (convenience/testing only)
+```
+The old per-page URLs (`today_subuh.html` etc.) still work — they're zero-JS redirect stubs to the query form above, kept for any screen already configured with the old URL.
 
 ---
 

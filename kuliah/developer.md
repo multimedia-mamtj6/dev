@@ -114,11 +114,12 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 
 ### dashboard.js
 - `currentYear`, `currentMonth` — module-level state for month navigation (unrestricted — admin can browse any past/future month)
-- `scheduleMap` — `{ 'YYYY-MM-DD': { subuh, maghrib, cuti_umum } }` built from Supabase fetch
-- `renderCalendar()` — builds `#calendar-table` grid + calls `renderMobileDayList()`
+- `scheduleMap` — `{ 'YYYY-MM-DD': { subuh, maghrib, cuti_umum, subuh_pending, maghrib_pending } }` built from Supabase fetch
+- `renderCalendar()` — builds `#calendar-table` grid + calls `renderMobileDayList()`; a pending session renders a dashed `.session-tag.pending`/`.mdc-pending` "Belum Ditetapkan" tag ahead of the normal ustaz-name branch
 - `renderMobileDayList()` — builds `#mobile-day-list` vertical day cards (≤640px view)
-- `openModal(dateStr)` — populates editor modal from `scheduleMap`; Subuh/Maghrib `<select>` options are `ustazList` sorted client-side by `short_name` (`localeCompare({numeric:true})`, same as `ustaz.js`) and rendered as `"{short_name} (N)"` — 0-indexed suffix, not prefix, so native type-to-jump-by-letter still works — with `"— Tiada Kuliah —"` pinned first and unnumbered
-- `saveDay()` — upserts to `schedule` table with `onConflict: 'date'`
+- `openModal(dateStr)` — populates editor modal from `scheduleMap`, including the `subuh-pending-check`/`maghrib-pending-check` checkboxes (disables+greys the matching ustaz `<select>` when checked); Subuh/Maghrib `<select>` options are `ustazList` sorted client-side by `short_name` (`localeCompare({numeric:true})`, same as `ustaz.js`) and rendered as `"{short_name} (N)"` — 0-indexed suffix, not prefix, so native type-to-jump-by-letter still works — with `"— Tiada Kuliah —"` pinned first and unnumbered
+- `toggleSubuhPending()` / `toggleMaghribPending()` (session 8) — checkbox `onchange` handlers; checking disables and clears the matching ustaz `<select>` (mutually exclusive by construction in the UI, enforced again server-side in `saveDay()`)
+- `saveDay()` — upserts to `schedule` table with `onConflict: 'date'`; forces `subuh_ustaz_id`/`maghrib_ustaz_id` to `null` whenever the matching pending checkbox is checked, regardless of what the (disabled) `<select>` still holds
 - `publishMonth()` — POSTs to `/api/publish?month=YYYY-MM` with Bearer token. **Only works where a Vercel serverless runtime is available** — 404s under plain `python -m http.server`
 - `updateScheduleActions()` — `async`. Computes `isRealCurrent`/`isRealNext` from an actual `new Date()` (never from `currentYear`/`currentMonth` alone, since those can be any month). Drives: the `#schedule-actions` dropdown visibility/hrefs, the `#month-tag` "Bulan Ini"/"Bulan Depan" badge, whether `#future-month-note` or the Terbitkan button + `#publish-hint` + `#last-published-note` show. Calls `loadLastPublishedNote(label)` at the end when visible. Called (awaited) from `loadMonth()` and again after a successful `publishMonth()`
 - `loadLastPublishedNote(label)` — queries `activity_log` for the latest `action:'publish'` row matching `target_label === label` exactly; renders `"Terakhir diterbitkan pada ... oleh ..."` (falling back to a live `admins` name lookup via `.ilike()` if the row's `actor_name` is null) or `"Bulan ini belum pernah diterbitkan."` if no row exists
@@ -154,6 +155,8 @@ Vercel serverless function. Requires:
 - `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO` — Vercel env vars
 
 Reads schedule + ustaz from Supabase using service role. Fetches the existing `jadual_lengkap_v2.json` (content + SHA in one GitHub Contents API call), merges just the requested month into a `months: { "YYYY-MM": { infoJadual, senaraiHari } }` map, prunes any key that isn't the real-current/real-next month (computed server-side in Malaysia time, UTC+8), then pushes the merged file back to GitHub. Returns `{ published: { rows }, commitUrl, months }`.
+
+**Pending slots (session 8):** a `senaraiHari` entry's `subuh`/`maghrib` field is `{ pending: true }` (not an ustaz object, not `null`) whenever `schedule.subuh_pending`/`maghrib_pending` is true for that row — read by both `kuliah/jadual/script.js` and `kuliah/paparan/script.js` to render a "Belum Ditetapkan"/"Akan Diumumkan" message instead of a name or nothing.
 
 Note: `commitUrl` is returned but **not shown to the user** (removed from dashboard.js — non-tech users don't need it).
 
