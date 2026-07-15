@@ -10,7 +10,7 @@
     "2026-07": {
       "infoJadual": {
         "tajukBulan": "BULAN JULAI 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 14/7/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 15/7/2026"
       },
       "senaraiHari": [
         {
@@ -301,9 +301,7 @@
           "date": "2026-07-27",
           "subuh": null,
           "maghrib": {
-            "nama_penceramah": "Ceramah Khas",
-            "tajuk_kuliah": "Belum Ditetapkan",
-            "poster_url": null
+            "pending": true
           },
           "cuti_umum": null
         },
