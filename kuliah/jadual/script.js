@@ -9,12 +9,21 @@ const MONTH_NAMES = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
     'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
 
 let cachedSenaraiHari = null;
+let hijriRequestId = 0; // guards against a slow response overwriting a newer day selection
+const hijriMonthCache = {}; // "YYYY-M" → prayers[] from api.waktusolat.app (one fetch covers the whole month)
 
 /* ---------------------------------------------------------
    Helpers
    --------------------------------------------------------- */
 function pad2(n) {
     return String(n).padStart(2, '0');
+}
+
+// The e-solat API can hang for minutes — never wait on it without a deadline.
+function fetchWithTimeout(url, ms = 5000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
 function escapeHtml(str) {
@@ -393,7 +402,7 @@ async function renderTodayCard(senaraiHari, selectedDate = null) {
             </div>
             <div class="today-date-right">
                 <div id="today-date-gregorian">Memuatkan tarikh...</div>
-                <div id="today-date-hijri"></div>
+                <div id="today-date-hijri" class="hijri-loading"></div>
             </div>
             ${holidayHtml}
         </div>
@@ -403,7 +412,9 @@ async function renderTodayCard(senaraiHari, selectedDate = null) {
         await renderTodayCard(cachedSenaraiHari, this.value);
     });
 
-    await loadHijriDate(targetDate);
+    // Fire-and-forget — the Hijri line fills in whenever the API (or the
+    // calculator fallback) answers. Never block the month card list on it.
+    loadHijriDate(targetDate);
 }
 
 /* ---------------------------------------------------------
@@ -427,8 +438,8 @@ function gregorianToHijri(date) {
 }
 
 async function loadHijriDate(targetDate = new Date()) {
+    const reqId = ++hijriRequestId;
     const elGreg = document.getElementById('today-date-gregorian');
-    const elHijri = document.getElementById('today-date-hijri');
     if (!elGreg) return;
 
     const daysInMalay = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
@@ -440,36 +451,47 @@ async function loadHijriDate(targetDate = new Date()) {
         '09': 'Ramadan', '10': 'Syawal', '11': 'Zulkaedah', '12': 'Zulhijah'
     };
 
+    // Re-queried at write time (not captured up front): the dropdown re-renders
+    // the card's innerHTML, so an element grabbed before a slow response would
+    // be a detached node. reqId drops stale responses after a newer selection.
+    const setHijri = (text) => {
+        if (reqId !== hijriRequestId) return;
+        const elHijri = document.getElementById('today-date-hijri');
+        if (elHijri) {
+            elHijri.textContent = text;
+            elHijri.classList.remove('hijri-loading');
+        }
+    };
+
     const calcFallback = () => {
         const h = gregorianToHijri(targetDate);
         const mp = String(h.month).padStart(2, '0');
-        if (elHijri) elHijri.textContent = `${h.day} ${hijriMonthNames[mp]} ${h.year}H`;
+        setHijri(`${h.day} ${hijriMonthNames[mp]} ${h.year}H`);
     };
 
     try {
-        const isToday = targetDate.toDateString() === new Date().toDateString();
-        const resp = await fetch('https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01');
-        if (!resp.ok) throw new Error('API failed');
-        const data = await resp.json();
+        // api.waktusolat.app (community JAKIM mirror — fast, CORS-friendly; the
+        // official e-solat.gov.my endpoint can hang for minutes). Year/month are
+        // explicit for the TARGET date, so a "tomorrow" that spills into next
+        // month needs no special case. Hijri dates are national — zone is only
+        // nominal here.
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth() + 1;
+        const cacheKey = `${year}-${month}`;
 
-        const day = String(targetDate.getDate()).padStart(2, '0');
-        const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const targetStr = `${day}-${mNames[targetDate.getMonth()]}-${targetDate.getFullYear()}`;
-        let info = data.prayerTime.find(p => p.date === targetStr);
-
-        if (!info && !isToday) {
-            try {
-                const nm = targetDate.getMonth() + 1;
-                const ny = nm > 12 ? targetDate.getFullYear() + 1 : targetDate.getFullYear();
-                const am = nm > 12 ? 1 : nm;
-                const nr = await fetch(`https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=WLY01&year=${ny}&month=${am}`);
-                if (nr.ok) { const nd = await nr.json(); info = nd.prayerTime.find(p => p.date === targetStr); }
-            } catch (e) { /* silent */ }
+        let prayers = hijriMonthCache[cacheKey];
+        if (!prayers) {
+            const resp = await fetchWithTimeout(`https://api.waktusolat.app/v2/solat/WLY01?year=${year}&month=${month}`);
+            if (!resp.ok) throw new Error('API failed');
+            const data = await resp.json();
+            prayers = data.prayers;
+            if (Array.isArray(prayers)) hijriMonthCache[cacheKey] = prayers;
         }
 
-        if (!info) { calcFallback(); return; }
+        const info = Array.isArray(prayers) ? prayers.find(p => p.day === targetDate.getDate()) : null;
+        if (!info || !info.hijri) { calcFallback(); return; }
         const hp = info.hijri.split('-');
-        if (elHijri) elHijri.textContent = `${parseInt(hp[2], 10)} ${hijriMonthNames[hp[1]]} ${hp[0]}H`;
+        setHijri(`${parseInt(hp[2], 10)} ${hijriMonthNames[hp[1]]} ${hp[0]}H`);
     } catch (e) {
         calcFallback();
     }

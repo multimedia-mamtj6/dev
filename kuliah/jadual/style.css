@@ -608,6 +608,23 @@ main {
         font-weight: 500;
         color: #16a34a;
         line-height: 1.4;
+        /* Reserve the line even while empty/loading so the header never
+           shifts when the Hijri date arrives or the day is changed */
+        min-height: calc(0.75rem * 1.4);
+    }
+
+    /* Skeleton shimmer while waiting for the Hijri date */
+    #today-date-hijri.hijri-loading {
+        width: 7.5em;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 200% 100%;
+        animation: hijri-shimmer 1.2s ease-in-out infinite;
+    }
+
+    @keyframes hijri-shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
     }
 
     .today-card-body {
