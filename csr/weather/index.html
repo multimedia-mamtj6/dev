@@ -277,7 +277,10 @@
     map = L.map('map').setView([3.8126, 102.3275], 8); // Center of Pahang
 
     // 4. Add Map Background (Basemap)
-    L.tileLayer('https://{s}.tile.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // NOTE: hostname must be {s}.basemaps.cartocdn.com — an extra ".tile."
+    // level breaks TLS (CARTO's wildcard cert covers one subdomain level
+    // only), which silently killed the basemap with ERR_CERT_COMMON_NAME_INVALID.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(map);
 
