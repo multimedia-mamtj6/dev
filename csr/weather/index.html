@@ -816,8 +816,14 @@
         if (geojsonLayer) refreshWarnings();
       }, REFRESH_MS);
 
+      // Throttled: rapid tab-switching must not burst requests at
+      // data.gov.my (per-IP rate limit → HTTP 429). The 3-min interval
+      // above still guarantees freshness.
+      const VISIBILITY_MIN_GAP_MS = 60 * 1000;
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && geojsonLayer) refreshWarnings();
+        if (document.visibilityState !== 'visible' || !geojsonLayer) return;
+        if (lastCheckedAt && (Date.now() - lastCheckedAt.getTime()) < VISIBILITY_MIN_GAP_MS) return;
+        refreshWarnings();
       });
     }
   </script>
