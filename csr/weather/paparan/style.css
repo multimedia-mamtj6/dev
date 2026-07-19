@@ -1,0 +1,272 @@
+/* =====================================================================
+   csr/weather/paparan — digital-signage stylesheet
+   Target: 16:9 TV, landscape, fullscreen kiosk browser (same setup as
+   kuliah/paparan). Sizing uses clamp()+vw so 720p/1080p/4K all read well.
+   ===================================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(12px, 1.6vw, 32px);
+    gap: clamp(8px, 1vw, 18px);
+    overflow: hidden;
+    /* signage never scrolls */
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.6vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* Test-mode indicator — must never be mistaken for a real warning */
+#test-mode-banner {
+    display: none;
+    padding: 6px 12px;
+    border: 2px dashed #7c3aed;
+    border-radius: 8px;
+    background: #f5f3ff;
+    color: #5b21b6;
+    font-size: clamp(0.8rem, 1.2vw, 1.2rem);
+    font-weight: 600;
+}
+
+#test-mode-banner.active {
+    display: block;
+}
+
+/* ------------------------------------------------------------------ */
+/* Main grid: map left, cards right                                    */
+/* ------------------------------------------------------------------ */
+main {
+    flex: 1;
+    min-height: 0;
+    /* let children shrink inside flex column */
+    display: grid;
+    grid-template-columns: 47% 1fr;
+    gap: clamp(12px, 1.4vw, 28px);
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 10px;
+    background: #e2e8f0;
+}
+
+#map.map-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: clamp(0.9rem, 1.4vw, 1.4rem);
+    text-align: center;
+}
+
+.right-col {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto 1fr 1fr;
+    gap: clamp(10px, 1.2vw, 22px);
+}
+
+/* ------------------------------------------------------------------ */
+/* Forecast card                                                       */
+/* ------------------------------------------------------------------ */
+.forecast-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: clamp(10px, 1.2vw, 22px) clamp(14px, 1.6vw, 28px);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.forecast-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: clamp(6px, 0.8vw, 14px);
+}
+
+.forecast-head h2 {
+    margin: 0;
+    font-size: clamp(1.05rem, 1.8vw, 2rem);
+}
+
+.forecast-head span {
+    font-size: clamp(0.75rem, 1.1vw, 1.1rem);
+    color: #64748b;
+}
+
+.forecast-body {
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 2vw, 36px);
+}
+
+.forecast-temp {
+    font-size: clamp(1.2rem, 2.2vw, 2.4rem);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.forecast-temp small {
+    display: block;
+    font-size: clamp(0.65rem, 0.9vw, 0.9rem);
+    font-weight: 400;
+    color: #64748b;
+}
+
+.forecast-slots {
+    display: flex;
+    gap: clamp(12px, 1.8vw, 32px);
+    flex: 1;
+    justify-content: space-around;
+}
+
+.forecast-slot {
+    text-align: center;
+    min-width: 0;
+}
+
+.forecast-slot .slot-name {
+    font-size: clamp(0.7rem, 1vw, 1rem);
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.forecast-slot .slot-icon {
+    font-size: clamp(1.4rem, 2.4vw, 2.8rem);
+    line-height: 1.3;
+}
+
+.forecast-slot .slot-text {
+    font-size: clamp(0.65rem, 0.95vw, 1rem);
+    color: #334155;
+    line-height: 1.25;
+}
+
+/* ------------------------------------------------------------------ */
+/* Warning cards                                                       */
+/* ------------------------------------------------------------------ */
+.warn-card {
+    min-height: 0;
+    background: #cbd5e1;
+    /* calm slate for the empty state, per mockup */
+    border-radius: 10px;
+    padding: clamp(10px, 1.2vw, 22px) clamp(14px, 1.6vw, 28px);
+    display: flex;
+    flex-direction: column;
+    border-left: clamp(6px, 0.6vw, 12px) solid transparent;
+}
+
+.warn-card.active {
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    /* border-left colour set inline from the warning's severity tier */
+}
+
+.warn-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: clamp(4px, 0.5vw, 10px);
+    margin-bottom: clamp(6px, 0.8vw, 14px);
+}
+
+.warn-card-head h2 {
+    margin: 0;
+    font-size: clamp(1rem, 1.7vw, 1.9rem);
+}
+
+.warn-more {
+    font-size: clamp(0.7rem, 1vw, 1rem);
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.warn-meta {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    column-gap: clamp(8px, 1vw, 18px);
+    row-gap: clamp(2px, 0.4vw, 8px);
+    font-size: clamp(0.75rem, 1.1vw, 1.15rem);
+    margin-bottom: clamp(6px, 0.8vw, 14px);
+}
+
+.warn-meta .meta-label {
+    color: #475569;
+}
+
+.warn-meta .meta-rel {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 1px 8px;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.warn-marine-note {
+    font-size: clamp(0.7rem, 1vw, 1rem);
+    color: #0369a1;
+    margin-bottom: clamp(4px, 0.5vw, 10px);
+}
+
+/* District pills — one per affected Pahang district, tier-coloured */
+.warn-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(6px, 0.7vw, 12px);
+    align-content: flex-start;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+}
+
+.warn-pill {
+    display: inline-block;
+    padding: clamp(4px, 0.5vw, 10px) clamp(12px, 1.2vw, 22px);
+    border-radius: 999px;
+    font-size: clamp(0.8rem, 1.2vw, 1.3rem);
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
+}
+
+/* Empty state */
+.warn-card.empty .warn-card-head {
+    border-bottom-color: #334155;
+}
+
+.warn-card.empty .warn-card-head h2 {
+    color: #1e293b;
+}
+
+/* ------------------------------------------------------------------ */
+/* Footer                                                              */
+/* ------------------------------------------------------------------ */
+footer {
+    font-size: clamp(0.65rem, 0.95vw, 1rem);
+    color: #64748b;
+    text-align: center;
+}

@@ -1,6 +1,6 @@
 # Plan — Pahang Weather-Warning Map Page (csr/weather/)
 
-_Status: **v1 BUILT** (2026-07-18, see "v1 as-built notes"). **v2 BUILT** (2026-07-18, both phases — proxy `api/weather-warning.js` + SEKSYEN parser, see "v2 as-built notes" at the bottom). **⚠️ v2 needs one manual step before it works live: set the `MET_TOKEN` env var in Vercel Dashboard → Project → Settings → Environment Variables, then redeploy.** Sibling of `telegram-warning-plan.md` — same data sources, same matching rules; this covers the WEB PAGE._
+_Status: **v1 BUILT** (2026-07-18, see "v1 as-built notes"). **v2 BUILT** (2026-07-18, both phases — proxy `api/weather-warning.js` + SEKSYEN parser, see "v2 as-built notes" at the bottom). **v3 BUILT** (2026-07-19, severity-tier colouring). **v4 BUILT** (2026-07-19 — signage page `csr/weather/paparan/` + shared `weather-core.js` extraction, see v4 as-built notes at the bottom). **⚠️ v2 needs one manual step before it works live: set the `MET_TOKEN` env var in Vercel Dashboard → Project → Settings → Environment Variables, then redeploy.** Sibling of `telegram-warning-plan.md` — same data sources, same matching rules; this covers the WEB PAGE._
 
 ## Goal
 
@@ -180,3 +180,56 @@ index.html ──fetch──▶ /api/weather-warning (Vercel function, ~30-40 li
 - Banner annotates rain districts with their tier ("Maran (Buruk), Temerloh (Waspada)"); legend expanded to the three rain tiers + thunderstorm amber + state wash.
 - **Fixture syntax extended** (backward compatible): `rain:buruk` (state-wide tier), `rain:bahaya:Maran` (districts at a tier), `rain:buruk:Maran;waspada:Temerloh,Bera` (multi-SECTION bulletin, one section per `;`-group — tests highest-tier-wins). Also fixed a latent fixture bug: `?testWarning=rain`'s "(TEST DATA)" suffix sat right after "Pahang" and matched the district-list regex, so the state-wide rain fixture never actually highlighted anything.
 - **Verified**: new 21-case harness `test-rain-tiers.js` that evals the REAL inline script from `index.html` in a Node `vm` (DOM/Leaflet stubs) instead of copy-pasting functions — covers tier parsing, cross-source merge, `baseStyle()` colours, and every fixture form. All pass.
+
+## v4 — BUILT: Digital-signage display (`csr/weather/paparan/`)
+
+_Decisions locked with the user 2026-07-19: new separate page (interactive map page stays); forecast card shows Pagi/Petang/Malam + min–max (hourly does not exist in any MET/data.gov.my API — verified live); location **hardcoded Temerloh (Ds061)**; target screen = same setup as `kuliah/paparan` (16:9 TV, landscape, fullscreen browser kiosk, always on)._
+
+### Files
+
+- `csr/weather/paparan/index.html` + `csr/weather/paparan/style.css` — signage layout. **All asset/script paths absolute root-relative** (`/csr/weather/...`) — the cleanUrls lesson that bit `kuliah/paparan` and `kuliah/admin`.
+- `csr/weather/weather-core.js` — **NEW shared module, extracted from the interactive page's inline script**: `KNOWN_DISTRICTS`, `DISTRICT_ALIASES`, `TIER_RANK`/`TIER_COLORS`/`TIER_LABEL`, `fetchWithTimeout`, `splitDistrictList`, `resolveDistrictName`, `isMarineBulletin`, `extractPahangDistricts`, `rainSectionTier`, `parseRainPahang`, `normalizeRainWarnings`, `isWarningActive`, `pahangScopeOf`, `computeWarningState`, `getTestWarningFixture` (parameterised on the search string), plus the two API URLs. Both pages load it via `<script src="/csr/weather/weather-core.js">`; page-specific rendering stays inline per page. Rationale: two copies of MET-wording parsing WILL drift; one file cannot.
+  - The interactive `csr/weather/index.html` is refactored in the same commit to consume the core file (delete the moved functions from its inline script, keep behaviour identical).
+  - Scratchpad harness `test-rain-tiers.js` switches from extracting the inline `<script>` to `require`-style loading of `weather-core.js` (plain script — evaluate in vm with a bare context, no DOM stubs needed since core has no DOM/Leaflet code). All 21 cases must still pass unchanged.
+
+### Layout (per the user's two mockups)
+
+- **Title bar**: "Cuaca Pahang — Amaran & Peta Daerah" (or similar), fixed, no navigation.
+- **Left ~half**: Pahang district Leaflet map, **non-interactive** — `zoomControl:false, dragging/scrollWheelZoom/touchZoom/doubleClickZoom/boxZoom/keyboard disabled`, no hover handlers, no dropdown, no popups. Tier colours paint live warnings exactly as on the interactive page (shared `baseStyle` logic via core tier tables). `fitBounds` to the Pahang layer once loaded.
+- **Right top — forecast card**: "Temerloh · Ramalan Cuaca". Today's row: three slots **Pagi / Petang / Malam**, each an icon + short label from `morning_forecast`/`afternoon_forecast`/`night_forecast`, plus **min–max temp** ("24° – 34°"). NO current temperature and NO hourly times — the API has neither; do not fake them.
+  - **Icon mapping**: table of known Malay phrases → icon ("Tiada hujan" ☀️/🌙 by slot, "Hujan di beberapa tempat" 🌦️, "Hujan" 🌧️, "Ribut petir di beberapa tempat" ⛈️, "Ribut petir" ⛈️, "Berjerebu" 🌫️ ...), fallback generic 🌤️ + `console.warn` on unmapped phrase (same silent-failure-guard philosophy as `resolveDistrictName`).
+- **Right — two FIXED warning cards** (always present, order fixed):
+  1. **Amaran Ribut Petir** (source: data.gov.my thunderstorm rows)
+  2. **Amaran Hujan Berterusan** (source: MET proxy rain rows)
+  - Active state: heading; "Masa dikeluarkan" + relative ("10 minit lepas"); "Amaran sehingga" + relative ("4 jam 30 minit lagi"); BM warning text **clamped to N lines with slow auto-scroll** inside the card if it overflows (signage has no scrollbars/hands); card accent (left border + heading underline) coloured by the item's severity tier (rain: waspada/buruk/bahaya colours; thunderstorm: amber).
+  - Empty state: "Tiada Amaran Ribut Petir" / "Tiada Amaran Hujan Berterusan" — calm grey, per mockup 2.
+  - **Multiple same-type warnings**: show the newest, plus a "+N lagi" badge. No cycling in v4.
+  - **Marine bulletins**: one small note line inside the ribut petir card ("Perairan Pahang sahaja — bukan kawasan darat"); never highlight the map.
+
+### Data behaviour
+
+- **Warnings**: same two sources, same `Promise.allSettled` independence, same 3-minute poll, same keep-last-state-on-failure. No visibilitychange handler (a kiosk tab is always visible).
+- **Forecast**: `https://api.data.gov.my/weather/forecast?contains=Ds061@location__location_id` fetched **hourly** (daily-granularity data — 3-min polling would be pure 429 bait). **Gotcha verified live 2026-07-19: results sort date-DESCENDING, so `limit=` returns the FURTHEST days** — fetch unlimited and pick `date === today` (Malaysia-time today, `new Date(...+'T00:00:00')` convention). Keep-last-state on failure; card shows "—" placeholders only before first-ever success.
+- **Clock tick**: relative-time labels re-rendered every 60 s, independent of polling.
+- **`?testWarning=`** works here too (free via shared core) — including the tier fixtures (`rain:buruk:Maran;waspada:Temerloh,Bera`) and the purple test-mode banner.
+- Nightly `location.reload()` at ~04:00 (kiosk hygiene — clears any leaked memory/stale JS after deploys; kuliah/paparan precedent).
+
+### Verification
+
+1. `node --check` on `weather-core.js`; harness (now loading the core file) all-pass; interactive page re-verified via the harness + a manual `?testWarning=` spot-check (its refactor must be behaviour-identical).
+2. Signage page checked at 1920×1080 via headless screenshot for: both empty states, active thunderstorm fixture, `rain:bahaya:Maran` fixture (red accent), long-text auto-scroll.
+3. Post-deploy on the real TV: fixture URL first, then live.
+
+### v4 out of scope
+
+- Location configurability (hardcoded Ds061 by decision; revisit only if a second screen in another district ever materialises).
+- Warning cycling/carousel, hourly anything, current-temperature anything, multi-day forecast strip.
+- Any change to `api/weather-warning.js` — proxy is signage-ready as-is (edge cache absorbs the extra screen).
+
+### v4 as-built notes (2026-07-19 — built same day as the plan; deviations/confirmations)
+
+- Built exactly per the plan: `paparan/index.html` + `paparan/style.css` (clamp()+vw sizing for 720p→4K), shared `weather-core.js` extracted, interactive `index.html` refactored to consume it in the same change (its inline script is now rendering-only: Leaflet wiring, hover/dropdown, banner, info control).
+- `getTestWarningFixture(param)` is now parameterised (was reading the page-level `TEST_WARNING_PARAM` global) — each page passes its own query value.
+- Harness rewritten (scratchpad `test-rain-tiers.js`, 33 cases): evaluates the REAL `weather-core.js` plus BOTH pages' inline scripts in Node vm contexts (DOM/Leaflet stubs) — parser/fixture/tier cases against core, `baseStyle` colour cases against the interactive page, card-rendering/forecast-icon/relative-time cases against paparan. All pass.
+- Visual verification: headless-Chrome screenshots at 1920×1080 via local `python -m http.server` — empty state (`?testWarning=none`), multi-tier rain (`rain:bahaya:Maran;waspada:Temerloh,Bera` — red+yellow districts, red card accent), thunderstorm (`district:Kuantan,Pekan` — amber), plus the refactored interactive page (`rain:buruk:...` — orange+yellow, banner tier labels intact). Forecast card showed LIVE data during the check (24°–34°, ribut petir petang/malam) — the Ds061 fetch and icon mapping work against the real API.
+- Not yet done: check on the actual mosque TV (fixture URL first, then live), and the standing v2 gate (`MET_TOKEN` in Vercel) also gates this page's rain card in production.

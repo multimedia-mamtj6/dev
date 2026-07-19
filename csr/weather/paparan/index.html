@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuaca Pahang — Paparan Digital</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- ABSOLUTE paths throughout — the Vercel cleanUrls lesson: relative
+       paths resolve one level too high on slash-less directory URLs -->
+  <link rel="stylesheet" href="/csr/weather/paparan/style.css" />
+</head>
+
+<body>
+
+  <h1>Cuaca Pahang — Amaran &amp; Peta Daerah</h1>
+  <div id="test-mode-banner"></div>
+
+  <main>
+    <div id="map"></div>
+
+    <div class="right-col">
+      <section class="forecast-card">
+        <div class="forecast-head">
+          <h2>Temerloh</h2><span>Ramalan Cuaca</span>
+        </div>
+        <div class="forecast-body">
+          <div class="forecast-temp"><span id="forecast-temp">—</span><small>min – maks hari ini</small></div>
+          <div class="forecast-slots">
+            <div class="forecast-slot">
+              <div class="slot-name">Pagi</div>
+              <div class="slot-icon" id="slot-icon-pagi">—</div>
+              <div class="slot-text" id="slot-text-pagi">—</div>
+            </div>
+            <div class="forecast-slot">
+              <div class="slot-name">Petang</div>
+              <div class="slot-icon" id="slot-icon-petang">—</div>
+              <div class="slot-text" id="slot-text-petang">—</div>
+            </div>
+            <div class="forecast-slot">
+              <div class="slot-name">Malam</div>
+              <div class="slot-icon" id="slot-icon-malam">—</div>
+              <div class="slot-text" id="slot-text-malam">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="warn-card empty" id="card-thunder"></section>
+      <section class="warn-card empty" id="card-rain"></section>
+    </div>
+  </main>
+
+  <footer id="page-footer">Sumber data: MET Malaysia / data.gov.my</footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/csr/weather/weather-core.js"></script>
+
+  <script>
+    // =========================================================
+    // csr/weather/paparan — signage rendering only.
+    // Config, parsing, severity tiers and ?testWarning= fixtures
+    // come from /csr/weather/weather-core.js (shared with the
+    // interactive map page).
+    // =========================================================
+
+    // Hardcoded by decision (2026-07-19): this screen serves Temerloh.
+    const FORECAST_URL = 'https://api.data.gov.my/weather/forecast?contains=Ds061@location__location_id';
+    const FORECAST_REFRESH_MS = 60 * 60 * 1000; // daily-granularity data — hourly is plenty
+    const TICK_MS = 60 * 1000;                  // relative-time labels + nightly-reload check
+
+    const TEST_WARNING_PARAM = new URLSearchParams(window.location.search).get('testWarning');
+
+    let map, geojsonLayer;
+    let warningDistricts = new Map(); // district name → severity tier
+    let warningScope = null;          // null | 'district' | 'state'
+    let warningStateTier = null;
+    let activeWarnings = [];
+    let lastCheckedAt = null;
+    let forecastToday = null;         // today's row from the forecast API, once fetched
+
+    // =========================================================
+    // Map — non-interactive: a TV has no mouse. Warning tiers
+    // still paint exactly as on the interactive page.
+    // =========================================================
+    map = L.map('map', {
+      zoomControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      touchZoom: false,
+    }).setView([3.8126, 102.3275], 8);
+
+    // hostname must be {s}.basemaps.cartocdn.com — an extra ".tile." level
+    // breaks TLS (wildcard cert covers one subdomain level only).
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+
+    function baseStyle(feature) {
+      const tier = warningDistricts.get(feature.properties.name);
+      // District-specific tier paints on top even under a state-wide wash.
+      if (tier) return districtWarningStyle(tier);
+      if (warningScope === 'state') return stateWarningStyle(warningStateTier);
+      return defaultStyle;
+    }
+
+    function repaintMap() {
+      if (geojsonLayer) geojsonLayer.setStyle(baseStyle);
+    }
+
+    function loadGeoJSON() {
+      fetchWithTimeout(GEOJSON_URL, 8000)
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(data => {
+          const pahangData = {
+            type: "FeatureCollection",
+            features: data.features.filter(f => f.properties.state === "PHG")
+          };
+          geojsonLayer = L.geoJSON(pahangData, { style: baseStyle }).addTo(map);
+          map.fitBounds(geojsonLayer.getBounds(), { padding: [10, 10] });
+          refreshWarnings();
+        })
+        .catch(err => {
+          console.warn('[weather] Failed to load district map:', err.message);
+          const mapDiv = document.getElementById('map');
+          mapDiv.classList.add('map-error');
+          mapDiv.textContent = 'Peta tidak dapat dimuatkan.';
+        });
+    }
+
+    // =========================================================
+    // Relative-time labels (re-rendered every minute)
+    // =========================================================
+    function relPast(iso) {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+      if (mins < 1) return 'Sebentar tadi';
+      if (mins < 60) return `${mins} minit lepas`;
+      const h = Math.floor(mins / 60), m = mins % 60;
+      return m ? `${h} jam ${m} minit lepas` : `${h} jam lepas`;
+    }
+
+    function relFuture(iso) {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      const mins = Math.floor((d.getTime() - Date.now()) / 60000);
+      if (mins < 0) return 'Tamat tempoh';
+      if (mins < 1) return 'Kurang 1 minit lagi';
+      if (mins < 60) return `${mins} minit lagi`;
+      const h = Math.floor(mins / 60), m = mins % 60;
+      return m ? `${h} jam ${m} minit lagi` : `${h} jam lagi`;
+    }
+
+    function formatTimeBM(iso) {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    // =========================================================
+    // Warning cards — two FIXED cards, one per source
+    // =========================================================
+    function newestFirst(list) {
+      return list.slice().sort((a, b) =>
+        new Date(b.warning_issue?.issued || 0) - new Date(a.warning_issue?.issued || 0));
+    }
+
+    function renderWarnCard(el, title, items, marineCount) {
+      if (!items.length) {
+        el.className = 'warn-card empty';
+        el.style.borderLeftColor = 'transparent';
+        el.innerHTML = `
+          <div class="warn-card-head"><h2>Tiada ${escapeHtml(title)}</h2></div>
+          ${marineCount ? '<div class="warn-marine-note">🌊 Amaran perairan Pahang sahaja aktif (bukan kawasan darat)</div>' : ''}`;
+        return;
+      }
+
+      const w = items[0];
+      const parsed = pahangScopeOf(w);
+      // Highest tier among this warning's districts drives the accent colour.
+      let accentTier = parsed.tier || 'amaran';
+      Object.values(parsed.tiers || {}).forEach(t => {
+        if (TIER_RANK[t] > TIER_RANK[accentTier]) accentTier = t;
+      });
+
+      // One pill per Pahang district, coloured by its severity tier — the
+      // bulletin's full text is deliberately NOT shown: MET publishes one
+      // nationwide bulletin listing every state, which is noise on a
+      // Pahang-only screen. Highest severity first.
+      const pill = (label, tier) => {
+        const c = TIER_COLORS[tier] || TIER_COLORS.amaran;
+        const textColor = (tier === 'waspada' || tier === 'amaran') ? '#713f12' : '#ffffff';
+        return `<span class="warn-pill" style="background:${c.fill};color:${textColor}">${escapeHtml(label)}</span>`;
+      };
+      let pillsHtml;
+      if (parsed.scope === 'marine') {
+        pillsHtml = '';
+      } else if (parsed.scope === 'state') {
+        pillsHtml = `<div class="warn-pills">${pill('Seluruh Pahang', accentTier)}</div>`;
+      } else {
+        const tierOf = d => (parsed.tiers && parsed.tiers[d]) || 'amaran';
+        const sorted = parsed.districts.slice().sort((a, b) =>
+          TIER_RANK[tierOf(b)] - TIER_RANK[tierOf(a)] || a.localeCompare(b));
+        pillsHtml = `<div class="warn-pills">${sorted.map(d => pill(d, tierOf(d))).join('')}</div>`;
+      }
+
+      const issued = w.warning_issue?.issued;
+      const more = items.length > 1 ? `+${items.length - 1} lagi` : '';
+
+      el.className = 'warn-card active';
+      el.style.borderLeftColor = (TIER_COLORS[accentTier] || TIER_COLORS.amaran).fill;
+      el.innerHTML = `
+        <div class="warn-card-head">
+          <h2>${escapeHtml(w.heading_bm || w.warning_issue?.title_bm || title)}</h2>
+          ${more ? `<span class="warn-more">${escapeHtml(more)}</span>` : ''}
+        </div>
+        <div class="warn-meta">
+          <span class="meta-label">Masa dikeluarkan:</span>
+          <span>${escapeHtml(issued ? (formatTimeBM(issued) || '—') : '—')}</span>
+          <span class="meta-rel">${escapeHtml(issued ? (relPast(issued) || '') : '')}</span>
+          <span class="meta-label">Amaran sehingga:</span>
+          <span>${escapeHtml(w.valid_to ? (formatTimeBM(w.valid_to) || '—') : '—')}</span>
+          <span class="meta-rel">${escapeHtml(w.valid_to ? (relFuture(w.valid_to) || '') : '')}</span>
+        </div>
+        ${pillsHtml}
+        ${(marineCount || parsed.scope === 'marine') ? '<div class="warn-marine-note">🌊 Amaran perairan Pahang aktif (bukan kawasan darat)</div>' : ''}`;
+    }
+
+    function renderCards() {
+      const rain = newestFirst(activeWarnings.filter(w => w.source === 'rain'));
+      const others = newestFirst(activeWarnings.filter(w => w.source !== 'rain'));
+      const land = others.filter(w => pahangScopeOf(w).scope !== 'marine');
+      const marineCount = others.length - land.length;
+
+      renderWarnCard(document.getElementById('card-thunder'), 'Amaran Ribut Petir', land, marineCount);
+      renderWarnCard(document.getElementById('card-rain'), 'Amaran Hujan Berterusan', rain, 0);
+    }
+
+    function updateFooter() {
+      const timeText = lastCheckedAt
+        ? lastCheckedAt.toLocaleString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+        : '—';
+      document.getElementById('page-footer').textContent =
+        `Sumber data: MET Malaysia / data.gov.my · Dikemaskini ${timeText} · Auto setiap 3 minit`;
+    }
+
+    async function refreshWarnings() {
+      lastCheckedAt = new Date();
+
+      const fixture = getTestWarningFixture(TEST_WARNING_PARAM);
+      if (fixture !== undefined) {
+        activeWarnings = fixture.filter(isWarningActive);
+        const state = computeWarningState(activeWarnings);
+        warningScope = state.scope;
+        warningDistricts = state.districts;
+        warningStateTier = state.stateTier;
+      } else {
+        // Two independent sources — either failing alone must not take
+        // down the other (rain proxy 404s under local static servers).
+        const [thunder, rain] = await Promise.allSettled([
+          fetchActiveWarnings(),
+          fetchRainWarnings(),
+        ]);
+
+        if (thunder.status === 'rejected' && rain.status === 'rejected') {
+          console.warn('[weather] Both warning sources failed:', thunder.reason?.message, rain.reason?.message);
+          // Keep the previously-known state on screen.
+        } else {
+          if (thunder.status === 'rejected') console.warn('[weather] data.gov.my warnings failed:', thunder.reason?.message);
+          if (rain.status === 'rejected') console.warn('[weather] rain proxy failed (expected under local static server):', rain.reason?.message);
+          activeWarnings = [
+            ...(thunder.status === 'fulfilled' ? thunder.value : []),
+            ...(rain.status === 'fulfilled' ? rain.value : []),
+          ];
+          const state = computeWarningState(activeWarnings);
+          warningScope = state.scope;
+          warningDistricts = state.districts;
+          warningStateTier = state.stateTier;
+        }
+      }
+
+      repaintMap();
+      renderCards();
+      updateFooter();
+    }
+
+    // =========================================================
+    // Forecast (daily granularity — Pagi/Petang/Malam + min–maks)
+    // =========================================================
+    function localDateStr(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // Finite set of Malay phrases from the API → icon. Unmapped phrases
+    // warn instead of silently showing the wrong sky (same philosophy as
+    // resolveDistrictName in weather-core.js).
+    function forecastIcon(phrase, slot) {
+      const p = (phrase || '').toLowerCase();
+      if (!p) return '—';
+      if (p.includes('ribut petir')) return '⛈️';
+      if (p.includes('tiada hujan')) return slot === 'malam' ? '🌙' : '☀️';
+      if (p.includes('hujan')) return (p.includes('beberapa') || p.includes('satu dua')) ? '🌦️' : '🌧️';
+      if (p.includes('jerebu')) return '🌫️';
+      if (p.includes('berangin')) return '💨';
+      if (p.includes('berawan') || p.includes('mendung')) return '☁️';
+      console.warn('[weather] Unmapped forecast phrase:', phrase);
+      return '🌤️';
+    }
+
+    function renderForecast() {
+      if (!forecastToday) return; // keep "—" placeholders until first success
+      const f = forecastToday;
+      document.getElementById('forecast-temp').textContent =
+        (f.min_temp != null && f.max_temp != null) ? `${f.min_temp}° – ${f.max_temp}°` : '—';
+      [['pagi', f.morning_forecast], ['petang', f.afternoon_forecast], ['malam', f.night_forecast]]
+        .forEach(([slot, phrase]) => {
+          document.getElementById(`slot-icon-${slot}`).textContent = forecastIcon(phrase, slot);
+          document.getElementById(`slot-text-${slot}`).textContent = phrase || '—';
+        });
+    }
+
+    async function refreshForecast() {
+      try {
+        const resp = await fetchWithTimeout(FORECAST_URL, 8000);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const rows = await resp.json();
+        // API sorts date-DESCENDING — limit= would return the FURTHEST
+        // days, so we fetch all and pick today explicitly (verified live).
+        const today = localDateStr(new Date());
+        const row = (Array.isArray(rows) ? rows : []).find(r => r.date === today);
+        if (row) forecastToday = row;
+        renderForecast();
+      } catch (e) {
+        // Keep last-known forecast on screen; placeholders only before
+        // the first-ever success.
+        console.warn('[weather] Forecast fetch failed:', e.message);
+      }
+    }
+
+    // =========================================================
+    // Boot + loops
+    // =========================================================
+    if (TEST_WARNING_PARAM) {
+      const el = document.getElementById('test-mode-banner');
+      el.classList.add('active');
+      el.textContent = `🧪 MOD UJIAN AKTIF — testWarning=${TEST_WARNING_PARAM} (data ujian, bukan amaran sebenar)`;
+    }
+
+    loadGeoJSON();
+    refreshForecast();
+    renderCards(); // paint both empty states immediately, before first fetch
+
+    if (!TEST_WARNING_PARAM) {
+      setInterval(() => { if (geojsonLayer) refreshWarnings(); }, REFRESH_MS);
+    }
+    setInterval(refreshForecast, FORECAST_REFRESH_MS);
+
+    // Minute tick: keep "X minit lepas / lagi" honest, and reload nightly
+    // at ~04:00 (kiosk hygiene — clears leaked memory and picks up deploys).
+    setInterval(() => {
+      renderCards();
+      const now = new Date();
+      if (now.getHours() === 4 && now.getMinutes() === 0) location.reload();
+    }, TICK_MS);
+  </script>
+
+</body>
+
+</html>
