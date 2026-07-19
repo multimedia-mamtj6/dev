@@ -1,0 +1,362 @@
+{
+    "east-johor": [
+        "kota-tinggi",
+        "mersing",
+        "segamat",
+        "kluang"
+    ],
+    "johor": [
+        "kota-tinggi",
+        "mersing",
+        "segamat",
+        "kluang",
+        "johor-bahru",
+        "muar",
+        "kulai",
+        "tangkak",
+        "batu-pahat",
+        "pontian"
+    ],
+    "pahang": [
+        "kuantan",
+        "pekan",
+        "rompin",
+        "bentong",
+        "raub",
+        "lipis",
+        "jerantut",
+        "temerloh",
+        "maran",
+        "bera",
+        "cameron-highlands"
+    ],
+    "terengganu": [
+        "besut",
+        "setiu",
+        "kuala-terengganu",
+        "kuala-nerus",
+        "marang",
+        "hulu-terengganu",
+        "dungun",
+        "kemaman"
+    ],
+    "hulu-perak": [
+        "pengkalan-hulu",
+        "belum",
+        "temengor",
+        "belukar-samang",
+        "kerunai",
+        "gerik",
+        "kenering",
+        "lenggong"
+    ],
+    "kelantan": [
+        "tumpat",
+        "pasir-mas",
+        "kota-bharu",
+        "bachok",
+        "pasir-puteh",
+        "tanah-merah",
+        "machang",
+        "kuala-krai",
+        "mukim-chiku",
+        "jeli",
+        "gua-musang"
+    ],
+    "selangor": [
+        "sabak-bernam",
+        "kuala-selangor",
+        "ft-kuala-lumpur",
+        "ft-putrajaya",
+        "klang",
+        "kuala-langat",
+        "sepang",
+        "petaling",
+        "hulu-langat",
+        "gombak",
+        "hulu-selangor"
+    ],
+    "n.-sembilan": [
+        "jelebu",
+        "jempol",
+        "seremban",
+        "kuala-pilah",
+        "rembau",
+        "port-dickson",
+        "tampin"
+    ],
+    "negeri-sembilan": [
+        "jelebu",
+        "jempol",
+        "seremban",
+        "kuala-pilah",
+        "rembau",
+        "port-dickson",
+        "tampin"
+    ],
+    "melaka": [
+        "alor-gajah",
+        "jasin",
+        "melaka-tengah"
+    ],
+    "penang": [
+        "barat-daya",
+        "timur-laut",
+        "central-seberang-perai",
+        "south-seberang-perai",
+        "north-seberang-perai"
+    ],
+    "kedah": [
+        "kubang-pasu",
+        "kota-setar",
+        "padang-terap",
+        "pendang",
+        "yan",
+        "sik",
+        "kuala-muda",
+        "kulim",
+        "baling",
+        "langkawi",
+        "bandar-baharu",
+        "pokok-sena"
+    ],
+    "perak": [
+        "kinta",
+        "larut-matang-selama",
+        "manjung",
+        "hilir-perak",
+        "kuala-kangsar",
+        "perak-tengah",
+        "kerian",
+        "batang-padang",
+        "muallim",
+        "kampar",
+        "larut-dan-matang",
+        "gerik",
+        "temengor",
+        "pengkalan-hulu",
+        "belum",
+        "belukar-samang",
+        "kerunai",
+        "kenering",
+        "lenggong",
+        "selama"
+    ],
+    "eastern-sabah": [
+        "kota-marudu",
+        "sandakan",
+        "pitas",
+        "kudat",
+        "beluran",
+        "tawau",
+        "kinabatangan",
+        "lahad-datu",
+        "kunak",
+        "semporna",
+        "kalabakan"
+    ],
+    "sabah": [
+        "kota-kinabalu",
+        "sandakan",
+        "tawau",
+        "lahad-datu",
+        "penampang",
+        "putatan",
+        "papar",
+        "tuaran",
+        "ranau",
+        "kota-belud",
+        "kinabatangan",
+        "beluran",
+        "tongod",
+        "semporna",
+        "kunak",
+        "kalabakan",
+        "kudat",
+        "kota-marudu",
+        "pitas",
+        "keningau",
+        "tenom",
+        "nabawan",
+        "tambunan",
+        "beaufort",
+        "kuala-penyu",
+        "sipitang",
+        "telupid"
+    ],
+    "western-sabah": [
+        "kota-kinabalu",
+        "penampang",
+        "putatan",
+        "papar",
+        "tuaran",
+        "ranau",
+        "kota-belud",
+        "kuala-penyu",
+        "sipitang",
+        "beaufort",
+        "ft-labuan"
+    ],
+    "sarawak": [
+        "kuching",
+        "bau",
+        "lundu",
+        "samarahan",
+        "asajaya",
+        "simunjan",
+        "serian",
+        "tebedu",
+        "sri-aman",
+        "lubok-antu",
+        "betong",
+        "saratok",
+        "kabong",
+        "pusa",
+        "sarikei",
+        "julau",
+        "pakan",
+        "sibu",
+        "kanowit",
+        "selangau",
+        "mukah",
+        "dalat",
+        "matu",
+        "daro",
+        "tanjung-manis",
+        "kapit",
+        "belaga",
+        "song",
+        "bukit-mabong",
+        "bintulu",
+        "tatau",
+        "sebauh",
+        "miri",
+        "marudi",
+        "subis",
+        "beluru",
+        "telang-usan",
+        "limbang",
+        "lawas",
+        "meradong"
+    ],
+    "wp-labuan": [
+        "ft-labuan"
+    ],
+    "fp-labuan": [
+        "ft-labuan"
+    ],
+    "bintulu": [
+        "bintulu",
+        "tatau",
+        "sebauh"
+    ],
+    "kapit": [
+        "kapit",
+        "bukit-mabong",
+        "belaga",
+        "song"
+    ],
+    "mersing": [
+        "mersing",
+        "pulau-tioman",
+        "pulau-pemanggil",
+        "pulau-aur"
+    ],
+    "limbang": [
+        "limbang",
+        "lawas"
+    ],
+    "sibu": [
+        "sibu",
+        "kanowit",
+        "selangau"
+    ],
+    "mukah": [
+        "mukah",
+        "dalat",
+        "matu",
+        "daro",
+        "tanjung-manis"
+    ],
+    "miri": [
+        "miri",
+        "subis",
+        "marudi",
+        "beluru",
+        "telang-usan"
+    ],
+    "sri-aman": [
+        "sri-aman",
+        "lubok-antu"
+    ],
+    "sarikei": [
+        "sarikei",
+        "meradong",
+        "julau",
+        "pakan"
+    ],
+    "betong": [
+        "betong",
+        "saratok",
+        "kabong",
+        "pusa"
+    ],
+    "samarahan": [
+        "samarahan",
+        "asajaya",
+        "simunjan"
+    ],
+    "serian": [
+        "serian",
+        "tebedu"
+    ],
+    "kuching": [
+        "kuching",
+        "bau",
+        "lundu"
+    ],
+    "sepang": [
+        "sepang",
+        "ft-putrajaya"
+    ],
+    "tawau": [
+        "tawau",
+        "kalabakan",
+        "lahad-datu",
+        "kunak",
+        "semporna"
+    ],
+    "sandakan": [
+        "sandakan",
+        "beluran",
+        "telupid",
+        "tongod",
+        "kinabatangan"
+    ],
+    "interior": [
+        "kuala-penyu",
+        "sipitang",
+        "beaufort",
+        "nabawan",
+        "tenom",
+        "keningau",
+        "tambunan"
+    ],
+    "west-coast": [
+        "penampang",
+        "putatan",
+        "papar",
+        "tuaran",
+        "ranau",
+        "kota-belud",
+        "kota-kinabalu"
+    ],
+    "larut": [
+        "larut-dan-matang"
+    ],
+    "kudat": [
+        "kudat",
+        "kota-marudu",
+        "pitas"
+    ]
+}

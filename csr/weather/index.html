@@ -1,159 +1,824 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ms">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weather Widget - Optimized</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuaca Pahang — Amaran &amp; Peta Daerah</title>
+
+  <!-- 1. Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <style>
-    /* BASE STYLES */
     body {
+      font-family: sans-serif;
       margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f0f0f0;
-      /* Default background for standalone view */
-      overflow: hidden;
+      padding: 20px;
+      background: #f4f4f4;
     }
 
-    /* THE WIDGET CONTAINER */
-    .widget {
-      max-width: 480px;
-      /* Standard width for desktop/standalone */
-      transition: transform 0.1s ease-out;
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
-    /* 1. & 2. EMBED MODE & TRANSPARENCY (Section 2 of Guide) */
-    body.embed-mode {
-      background: transparent !important;
-      /* Shows Google Sites background */
-      display: block;
-      justify-content: initial;
-      align-items: initial;
-      height: 100vh;
-      /* Section 7: clipping trap fix */
-      padding: 0;
-    }
-
-    /* 4. THE MAX-WIDTH TRAP (Section 4 of Guide) */
-    body.embed-mode .widget {
-      border-radius: 0;
-      box-shadow: none;
-      max-width: none !important;
+    /* Map Size */
+    #map {
+      height: 600px;
       width: 100%;
-      transform-origin: top left;
-      /* Section 3 & 7 */
+      border-radius: 5px;
+      margin-top: 15px;
     }
 
-    /* Handle Large Viewports (Section 7) */
-    body.large-viewport:not(.embed-mode) .widget {
-      max-width: none;
-      transform-origin: center center;
+    /* Controls Style */
+    .controls {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    .info-box {
+      padding: 6px 8px;
+      font: 14px/16px Arial, Helvetica, sans-serif;
+      background: white;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+    }
+
+    /* Warning banner */
+    #warning-banner {
+      display: none;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      overflow: hidden;
+      border: 1px solid #b45309;
+      background: #fffbeb;
+    }
+
+    #warning-banner.has-warning {
+      display: block;
+    }
+
+    .warning-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid #fde68a;
+      cursor: pointer;
+    }
+
+    .warning-item:last-child {
+      border-bottom: none;
+    }
+
+    .warning-item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      font-weight: 700;
+      color: #92400e;
+    }
+
+    .warning-item-valid {
+      font-weight: 400;
+      font-size: 0.85em;
+      color: #78350f;
+      white-space: nowrap;
+    }
+
+    .warning-item-districts {
+      font-size: 0.9em;
+      color: #78350f;
+      margin-top: 2px;
+    }
+
+    .warning-item-detail {
+      display: none;
+      font-size: 0.9em;
+      color: #451a03;
+      margin-top: 8px;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
+    .warning-item.expanded .warning-item-detail {
+      display: block;
+    }
+
+    /* Map div error state */
+    #map.map-error {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 15px;
+      text-align: center;
+      background: #f1f5f9;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #475569;
+      align-items: center;
+    }
+
+    .legend-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      margin-right: 5px;
+      vertical-align: middle;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    footer.page-footer {
+      margin-top: 14px;
+      font-size: 12.5px;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    /* Test mode indicator — must never be mistaken for a real warning */
+    #test-mode-banner {
+      display: none;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      border: 1px dashed #7c3aed;
+      border-radius: 6px;
+      background: #f5f3ff;
+      color: #5b21b6;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #test-mode-banner.active {
+      display: block;
     }
   </style>
 </head>
 
 <body>
-  <!-- 
-      The 'widget' class is added here so the JS can target it.
-      id="ww_fb40b67449b72" is the unique ID required by the weather provider.
-    -->
-  <div id="ww_fb40b67449b72" class="widget" v="1.3" loc="id" a='{
-        "t": "horizontal",
-        "lang": "ms",
-        "sl_lpl": 1,
-        "ids": ["wl8179"],
-        "font": "Arial",
-        "sl_ics": "one_a",
-        "sl_sot": "celsius",
-        "cl_bkg": "image",
-        "cl_font": "#FFFFFF",
-        "cl_cloud": "#FFFFFF",
-        "cl_persp": "#81D4FA",
-        "cl_sun": "#FFC107",
-        "cl_moon": "#FFC107",
-        "cl_thund": "#FF5722"
-      }'>
-    Weather for Temerloh:
-    <a href="https://2ua.org/de/mys/temerloh/karte/" target="_blank">Temerloh karte</a>
+
+  <div class="container">
+    <h2>Cuaca Pahang — Amaran &amp; Peta Daerah</h2>
+
+    <div id="test-mode-banner"></div>
+    <div id="warning-banner"></div>
+
+    <div class="controls">
+      <label for="districtSelect">Jump to District:</label>
+      <select id="districtSelect" onchange="highlightByName(this.value)">
+        <option value="">-- Select a District --</option>
+        <option value="Bentong">Bentong</option>
+        <option value="Bera">Bera</option>
+        <option value="Cameron Highlands">Cameron Highlands</option>
+        <option value="Jerantut">Jerantut</option>
+        <option value="Kuantan">Kuantan</option>
+        <option value="Lipis">Lipis</option>
+        <option value="Maran">Maran</option>
+        <option value="Pekan">Pekan</option>
+        <option value="Raub">Raub</option>
+        <option value="Rompin">Rompin</option>
+        <option value="Temerloh">Temerloh</option>
+      </select>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="legend">
+      <span><span class="legend-swatch" style="background:#3498db"></span>Biasa</span>
+      <span><span class="legend-swatch" style="background:#f39c12"></span>Hover</span>
+      <span><span class="legend-swatch" style="background:#3498db;border:2px solid #1d4ed8"></span>Dipilih</span>
+      <span><span class="legend-swatch" style="background:#f59e0b"></span>Amaran (daerah)</span>
+      <span><span class="legend-swatch" style="background:#fcd34d"></span>Amaran (seluruh negeri)</span>
+    </div>
+
+    <footer class="page-footer" id="page-footer">Sumber data: MET Malaysia / data.gov.my</footer>
   </div>
 
-  <!-- Weather Provider Script -->
-  <script async src="https://app1.weatherwidget.org/js/?id=ww_fb40b67449b72"></script>
+  <!-- 2. Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    /**
-     * 2. The ?embed=1 pattern (Section 2)
-     */
-    (function initEmbedMode() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('embed') === '1') {
-        document.body.classList.add('embed-mode');
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
-      }
+    // =========================================================
+    // Config
+    // =========================================================
+    const GEOJSON_URL = 'https://raw.githubusercontent.com/mptwaktusolat/jakim.geojson/refs/heads/master/malaysia.district.geojson';
+    const WARNING_API_URL = 'https://api.data.gov.my/weather/warning?contains=Pahang@text_en&limit=20';
+    // Vercel proxy for MET's continuous-rain dataset (see api/weather-warning.js
+    // — the METToken must stay server-side). 404s under Live Server /
+    // python -m http.server (no /api routes locally, documented repo-wide
+    // limitation) — the page just shows no rain data locally; use
+    // ?testWarning=rain to exercise the rain path without the proxy.
+    const RAIN_PROXY_URL = '/api/weather-warning';
+    const REFRESH_MS = 3 * 60 * 1000; // 3 minutes
 
-      // Large Viewport Detection (Section 7)
-      const LARGE_VIEWPORT_MIN_W = 768;
-      const LARGE_VIEWPORT_MIN_H = 480;
-      function updateViewportMode() {
-        const isLarge = window.innerWidth >= LARGE_VIEWPORT_MIN_W && window.innerHeight >= LARGE_VIEWPORT_MIN_H;
-        document.body.classList.toggle('large-viewport', isLarge);
-        scaleWidgetToFit();
-      }
+    const KNOWN_DISTRICTS = [
+      'Bentong', 'Bera', 'Cameron Highlands', 'Jerantut', 'Kuantan',
+      'Lipis', 'Maran', 'Pekan', 'Raub', 'Rompin', 'Temerloh'
+    ];
 
-      window.addEventListener('resize', updateViewportMode);
-      // Initial check
-      window.addEventListener('load', updateViewportMode);
-    })();
+    // MET wording vs GeoJSON `name` will not always agree — extend as new
+    // mismatches are observed. Keys are lowercased/trimmed.
+    const DISTRICT_ALIASES = {
+      'kuala lipis': 'Lipis',
+      'cameron highland': 'Cameron Highlands',
+    };
 
-    /**
-     * 3. Iterative Scale-to-fit algorithm (Section 3 & 7)
-     */
-    function scaleWidgetToFit() {
-      const widget = document.querySelector('.widget');
-      if (!widget) return;
+    let map, geojsonLayer;
+    let warningDistricts = new Set(); // district-level highlight set
+    let warningScope = null;          // null | 'district' | 'state'
+    let activeWarnings = [];          // filtered, currently-active warning objects
+    let lastCheckedAt = null;
+    let infoControlDiv = null;
 
-      const isEmbed = document.body.classList.contains('embed-mode');
-      const isLarge = document.body.classList.contains('large-viewport');
+    // ?testWarning= override — same convention as waktu-solat/index.html's
+    // ?testDate=/?testTime=. Supported values:
+    //   none                    — no active warnings
+    //   state                   — whole-state land advisory (no district detail)
+    //   marine                  — offshore-only bulletin (must NOT highlight any district)
+    //   district:Temerloh       — one district
+    //   district:Kuantan,Pekan  — multiple districts
+    //   rain                    — continuous-rain bulletin, whole-state Pahang
+    //   rain:Temerloh,Maran     — continuous-rain bulletin, specific districts
+    const TEST_WARNING_PARAM = new URLSearchParams(window.location.search).get('testWarning');
 
-      const containerWidth = window.innerWidth;
-      const containerHeight = window.innerHeight;
-      const MAX_SCALE = 3;
-
-      let scale = 1;
-      // The iterative loop: re-calculates width to ensure it fills the frame
-      for (let i = 0; i < 8; i++) {
-        widget.style.transform = 'none';
-        widget.style.width = (containerWidth / scale) + 'px';
-
-        const naturalHeight = widget.offsetHeight;
-        const upperBound = (isEmbed || isLarge) ? MAX_SCALE : 1;
-        const next = Math.min(upperBound, containerHeight / naturalHeight);
-
-        if (Math.abs(next - scale) < 0.005) {
-          scale = next;
-          break;
-        }
-        scale = next;
-      }
-
-      // Final application
-      widget.style.width = (containerWidth / scale) + 'px';
-      widget.style.transform = `scale(${scale})`;
+    // =========================================================
+    // Fetch helper — never let a hung API block rendering
+    // (same pattern as kuliah/jadual/script.js)
+    // =========================================================
+    function fetchWithTimeout(url, ms = 5000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
     }
 
-    // Periodically check if the third-party script has finished loading and resizing
-    // since weather widgets often inject content after the initial page load.
-    let checks = 0;
-    const interval = setInterval(() => {
-      scaleWidgetToFit();
-      if (checks++ > 10) clearInterval(interval);
-    }, 500);
+    // =========================================================
+    // 3. Initialize Map
+    // =========================================================
+    map = L.map('map').setView([3.8126, 102.3275], 8); // Center of Pahang
+
+    // 4. Add Map Background (Basemap)
+    L.tileLayer('https://{s}.tile.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+
+    // =========================================================
+    // 5. Styling — a STYLE FUNCTION (not a static object), so
+    // Leaflet's resetStyle() (used on hover-out) re-derives the
+    // correct fill instead of wiping a warning highlight.
+    // =========================================================
+    const defaultStyle = {
+      fillColor: "#3498db",
+      weight: 2,
+      opacity: 1,
+      color: 'white',
+      fillOpacity: 0.6
+    };
+
+    const warningDistrictStyle = {
+      fillColor: "#f59e0b",
+      weight: 3,
+      opacity: 1,
+      color: "#b45309",
+      fillOpacity: 0.85
+    };
+
+    const warningStateStyle = {
+      fillColor: "#fcd34d",
+      weight: 2,
+      opacity: 1,
+      color: "#b45309",
+      fillOpacity: 0.35
+    };
+
+    const hoverStyle = {
+      fillColor: "#f39c12",
+      weight: 3,
+      color: "#666",
+      fillOpacity: 0.9
+    };
+
+    function baseStyle(feature) {
+      const name = feature.properties.name;
+      if (warningScope === 'district' && warningDistricts.has(name)) return warningDistrictStyle;
+      if (warningScope === 'state') return warningStateStyle;
+      return defaultStyle;
+    }
+
+    // Dropdown "jump to district" selection — an outline-only override on
+    // top of whatever fill baseStyle() would give, so a selected district
+    // that's also under an active warning still shows its warning color.
+    function selectionStyle(feature) {
+      const base = baseStyle(feature);
+      return Object.assign({}, base, {
+        weight: 4,
+        color: '#1d4ed8',
+        fillOpacity: Math.min(1, (base.fillOpacity || 0.6) + 0.1)
+      });
+    }
+
+    function repaintMap() {
+      if (geojsonLayer) geojsonLayer.setStyle(baseStyle);
+    }
+
+    // =========================================================
+    // 6. Fetch and Process GeoJSON (with timeout + error state —
+    // this was previously unguarded against a third-party outage)
+    // =========================================================
+    function loadGeoJSON() {
+      fetchWithTimeout(GEOJSON_URL, 8000)
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(data => {
+          const pahangData = {
+            type: "FeatureCollection",
+            features: data.features.filter(f => f.properties.state === "PHG")
+          };
+
+          geojsonLayer = L.geoJSON(pahangData, {
+            style: baseStyle,
+            onEachFeature: onEachFeature
+          }).addTo(map);
+
+          addInfoControl();
+          refreshWarnings(); // initial load — map is already visible by now
+        })
+        .catch(err => {
+          console.warn('[weather] Failed to load district map:', err.message);
+          const mapDiv = document.getElementById('map');
+          mapDiv.classList.add('map-error');
+          mapDiv.textContent = 'Peta tidak dapat dimuatkan. Sila cuba muat semula halaman.';
+        });
+    }
+
+    // 7. Interaction: Mouse Hover Logic
+    function onEachFeature(feature, layer) {
+      layer.bindPopup("<strong>District:</strong> " + feature.properties.name);
+
+      layer.on({
+        mouseover: (e) => {
+          const l = e.target;
+          l.setStyle(hoverStyle);
+          l.bringToFront();
+        },
+        mouseout: (e) => {
+          geojsonLayer.resetStyle(e.target); // re-invokes baseStyle() — warning fill survives
+        },
+        click: (e) => {
+          map.fitBounds(e.target.getBounds());
+        }
+      });
+    }
+
+    /**
+     * MAIN HIGHLIGHT FUNCTION
+     * Used by the dropdown menu to highlight a specific district
+     */
+    function highlightByName(name) {
+      if (!name) {
+        repaintMap();
+        map.setView([3.8126, 102.3275], 8);
+        return;
+      }
+
+      geojsonLayer.eachLayer(function (layer) {
+        if (layer.feature.properties.name === name) {
+          layer.setStyle(selectionStyle(layer.feature));
+          layer.bringToFront();
+          layer.openPopup();
+          map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+        } else {
+          geojsonLayer.resetStyle(layer);
+        }
+      });
+    }
+
+    // =========================================================
+    // Weather warnings — fetch, parse, apply
+    // =========================================================
+
+    // Splits "Kuantan, Pekan dan Rompin" / "Kuantan, Pekan and Rompin"
+    // into ["Kuantan", "Pekan", "Rompin"].
+    function splitDistrictList(capture) {
+      return capture
+        .split(/,|\bdan\b|\band\b/i)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    // Normalizes one raw district token from warning text against the
+    // known Pahang district list, via the alias table. Returns null (and
+    // warns) for anything unrecognized, rather than silently dropping it.
+    function resolveDistrictName(raw) {
+      const norm = raw.trim().toLowerCase().replace(/\s+/g, ' ');
+      if (DISTRICT_ALIASES[norm]) return DISTRICT_ALIASES[norm];
+      const match = KNOWN_DISTRICTS.find(d => d.toLowerCase() === norm);
+      if (match) return match;
+      console.warn('[weather] Unrecognized district name in warning text:', raw);
+      return null;
+    }
+
+    // Marine/offshore bulletins ("... expected over the waters of Perlis &
+    // Kedah, Penang, ..., Pahang, ...") mention Pahang by name but describe
+    // sea conditions, not land districts — MET's phrasing consistently uses
+    // "waters of" / "perairan" right before that state list. Without this
+    // check, a marine-only bulletin would fall through to the state-wide
+    // fallback below and incorrectly paint every land district amber.
+    function isMarineBulletin(warning) {
+      return /\bwaters?\s+of\b/i.test(warning.text_en || '') ||
+        /\bperairan\b/i.test(warning.text_bm || '');
+    }
+
+    // Parses one warning object (already known to mention "Pahang" in
+    // text_en, per the API's contains= filter) into a district-level hit
+    // list, a state-wide land scope, or a marine-only scope (no land
+    // districts highlighted, but still worth showing in the banner).
+    function extractPahangDistricts(warning) {
+      const text = warning.text_en || warning.text_bm || '';
+      const match = text.match(/Pahang\s*\(([^)]+)\)/i);
+      if (match) {
+        const resolved = splitDistrictList(match[1])
+          .map(resolveDistrictName)
+          .filter(Boolean);
+        return { scope: 'district', districts: resolved };
+      }
+      if (isMarineBulletin(warning)) {
+        return { scope: 'marine', districts: [] };
+      }
+      // "Pahang" mentioned with no parenthetical detail and no marine
+      // phrasing — MET was vague about which district, so treat as a
+      // whole-state land advisory.
+      return { scope: 'state', districts: KNOWN_DISTRICTS.slice() };
+    }
+
+    function isWarningActive(w) {
+      if (w.warning_issue && w.warning_issue.title_en === 'No Advisory') return false;
+      // "Termination of ... / Penamatan ..." bulletins ANNOUNCE that a warning
+      // has ended — rendering one as active would highlight the very districts
+      // whose warning was just lifted. (Their valid_to usually expires within
+      // minutes anyway, but don't rely on that race.) Rain bulletins are
+      // exempt: their heading covers a MULTI-section document where
+      // terminations are per-section (SEKSYEN C), handled in
+      // parseRainPahang() instead.
+      if (w.source !== 'rain' &&
+        (/termination/i.test(w.heading_en || '') || /penamatan/i.test(w.heading_bm || ''))) return false;
+      if (w.valid_to) {
+        const validTo = new Date(w.valid_to);
+        if (!isNaN(validTo.getTime()) && validTo.getTime() < Date.now()) return false;
+      }
+      return true;
+    }
+
+    // =========================================================
+    // MET continuous-rain warnings (via /api/weather-warning proxy)
+    // =========================================================
+
+    // A rain bulletin is ONE multi-section prose string:
+    //   SECTION A: CONTINUOUS RAIN WARNING (SEVERE) ...
+    //   SECTION B: CONTINUOUS RAIN WARNING (ALERT) ...
+    //   SECTION C: TERMINATION OF CONTINUOUS RAIN WARNING ...
+    // Termination sections list areas whose warning just ENDED — they must
+    // be excluded before looking for Pahang, or a lifted warning would
+    // re-highlight its districts (same principle as the isWarningActive
+    // termination guard for thunderstorm bulletins).
+    function parseRainPahang(textEn) {
+      const sections = String(textEn || '')
+        .split(/(?=SECTION\s+[A-Z]\s*:|SEKSYEN\s+[A-Z]\s*:)/i)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => !/^(SECTION|SEKSYEN)\s+[A-Z]\s*:\s*(TERMINATION|PENAMATAN)/i.test(s));
+
+      const activeText = sections.join('\n');
+      const m = activeText.match(/Pahang\s*\(([^)]+)\)/i);
+      if (m) {
+        const resolved = splitDistrictList(m[1])
+          .map(resolveDistrictName)
+          .filter(Boolean);
+        return { scope: 'district', districts: resolved };
+      }
+      if (/\bPahang\b/i.test(activeText)) {
+        return { scope: 'state', districts: KNOWN_DISTRICTS.slice() };
+      }
+      return { scope: null, districts: [] }; // Pahang not affected — don't show
+    }
+
+    // Normalizes metapi2's RAIN payload rows into the same shape the
+    // banner/state code already consumes (heading_bm, text_bm, valid_to...),
+    // plus `source: 'rain'` and a precomputed `pahang` scope. Rows whose
+    // active sections never mention Pahang are dropped — this page is
+    // Pahang-scoped, a KL/Sabah-only rain warning is noise here.
+    function normalizeRainWarnings(metJson) {
+      const rows = (metJson && Array.isArray(metJson.results)) ? metJson.results : [];
+      return rows
+        .map(row => {
+          const v = row.value || {};
+          const attrs = row.attributes || {};
+          const textEn = v.text?.en?.warning || '';
+          const textBm = v.text?.ms?.warning || '';
+          return {
+            source: 'rain',
+            warning_issue: {
+              issued: attrs.timestamp || row.date,
+              title_en: attrs.title?.en || v.heading?.en || 'Continuous Rain Warning',
+              title_bm: attrs.title?.ms || v.heading?.ms || 'Amaran Hujan Berterusan',
+            },
+            heading_en: attrs.title?.en || v.heading?.en || '',
+            heading_bm: attrs.title?.ms || v.heading?.ms || '',
+            text_en: textEn,
+            text_bm: textBm,
+            instruction_bm: null,
+            valid_from: attrs.valid_from || null,
+            valid_to: attrs.valid_to || null,
+            pahang: parseRainPahang(textEn || textBm),
+          };
+        })
+        .filter(w => w.pahang.scope !== null);
+    }
+
+    async function fetchRainWarnings() {
+      const resp = await fetchWithTimeout(RAIN_PROXY_URL, 8000);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      return normalizeRainWarnings(data).filter(isWarningActive);
+    }
+
+    function formatValidTo(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function fetchActiveWarnings() {
+      const resp = await fetchWithTimeout(WARNING_API_URL);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      const rows = Array.isArray(data) ? data : [];
+      return rows.filter(isWarningActive);
+    }
+
+    // Rain warnings carry a precomputed `pahang` scope (SEKSYEN-aware);
+    // thunderstorm/other data.gov.my warnings are parsed on the fly.
+    function pahangScopeOf(w) {
+      return w.source === 'rain' ? w.pahang : extractPahangDistricts(w);
+    }
+
+    function computeWarningState(warnings) {
+      const districts = new Set();
+      let scope = null; // null | 'district' | 'state'
+
+      warnings.forEach(w => {
+        const parsed = pahangScopeOf(w);
+        if (parsed.scope === 'marine' || parsed.scope === null) return; // no land district affected
+        if (parsed.scope === 'state') {
+          scope = 'state'; // state scope wins visually — union still tracked below
+        } else if (scope !== 'state') {
+          scope = 'district';
+        }
+        parsed.districts.forEach(d => districts.add(d));
+      });
+
+      return { scope, districts };
+    }
+
+    function renderBanner(warnings) {
+      const banner = document.getElementById('warning-banner');
+      if (!warnings.length) {
+        banner.classList.remove('has-warning');
+        banner.innerHTML = '';
+        return;
+      }
+
+      banner.classList.add('has-warning');
+      banner.innerHTML = warnings
+        .slice()
+        .sort((a, b) => new Date(b.warning_issue?.issued || 0) - new Date(a.warning_issue?.issued || 0))
+        .map((w, i) => {
+          const parsed = pahangScopeOf(w);
+          const districtsText = parsed.scope === 'marine'
+            ? 'Perairan Pahang sahaja (bukan kawasan darat)'
+            : parsed.scope === 'state'
+              ? 'Seluruh Pahang'
+              : (parsed.districts.length ? parsed.districts.join(', ') : 'Pahang');
+          const icon = w.source === 'rain' ? '🌧️' : parsed.scope === 'marine' ? '🌊' : '⚠️';
+          const validText = formatValidTo(w.valid_to);
+          const heading = w.heading_bm || w.warning_issue?.title_bm || 'Amaran Cuaca';
+          const detail = [w.text_bm, w.instruction_bm].filter(Boolean).join('\n\n');
+
+          return `<div class="warning-item" onclick="this.classList.toggle('expanded')" data-idx="${i}">
+            <div class="warning-item-head">
+              <span>${icon} ${escapeHtml(heading)}</span>
+              ${validText ? `<span class="warning-item-valid">Sah sehingga ${escapeHtml(validText)}</span>` : ''}
+            </div>
+            <div class="warning-item-districts">Kawasan: ${escapeHtml(districtsText)}</div>
+            <div class="warning-item-detail">${escapeHtml(detail)}</div>
+          </div>`;
+        })
+        .join('');
+    }
+
+    // Builds a fixture `activeWarnings` array from ?testWarning=, or
+    // returns undefined when the param is absent/unrecognized so callers
+    // fall back to the live API. Fixtures run through the exact same
+    // extractPahangDistricts()/computeWarningState() code path as real
+    // API data — this only replaces the network fetch, never the logic
+    // being tested.
+    function getTestWarningFixture() {
+      if (!TEST_WARNING_PARAM) return undefined;
+
+      const now = new Date();
+      const base = {
+        warning_issue: { issued: now.toISOString(), title_en: 'Thunderstorms Warning', title_bm: 'Amaran Ribut Petir' },
+        valid_from: now.toISOString(),
+        valid_to: new Date(now.getTime() + 3600000).toISOString(), // +1 hour
+        heading_bm: 'Amaran Ribut Petir (UJIAN)',
+        heading_en: 'Thunderstorms Warning (TEST)',
+        instruction_bm: 'Ini adalah data ujian dari ?testWarning=, bukan amaran sebenar.',
+      };
+
+      if (TEST_WARNING_PARAM === 'none') return [];
+
+      if (TEST_WARNING_PARAM === 'state') {
+        return [{ ...base, text_en: 'Test warning affecting Pahang generally.', text_bm: 'Amaran ujian yang menjejaskan Pahang secara umum.' }];
+      }
+
+      if (TEST_WARNING_PARAM === 'marine') {
+        return [{ ...base, text_en: 'Thunderstorms expected over the waters of Pahang, Terengganu.', text_bm: 'Ribut petir dijangka di kawasan perairan Pahang, Terengganu.' }];
+      }
+
+      if (TEST_WARNING_PARAM.startsWith('district:')) {
+        const list = TEST_WARNING_PARAM.slice('district:'.length).split(',').map(s => s.trim()).filter(Boolean).join(', ');
+        return [{ ...base, text_en: `Thunderstorms Warning for Pahang (${list})`, text_bm: `Amaran Ribut Petir untuk Pahang (${list})` }];
+      }
+
+      // rain / rain:Temerloh,Maran — continuous-rain fixture, built as a
+      // real metapi2-shaped payload and run through the SAME
+      // normalizeRainWarnings()/parseRainPahang() path as proxy data,
+      // including a SEKSYEN C termination section that must be ignored.
+      if (TEST_WARNING_PARAM === 'rain' || TEST_WARNING_PARAM.startsWith('rain:')) {
+        const list = TEST_WARNING_PARAM.startsWith('rain:')
+          ? TEST_WARNING_PARAM.slice('rain:'.length).split(',').map(s => s.trim()).filter(Boolean).join(', ')
+          : null;
+        const areaEn = list ? `Pahang (${list})` : 'the state of Pahang';
+        const areaBm = list ? `Pahang (${list})` : 'negeri Pahang';
+        const metShaped = {
+          results: [{
+            date: base.warning_issue.issued,
+            datatype: 'RAIN',
+            value: {
+              heading: { en: 'Continuous Rain Warning (Alert) (TEST)', ms: 'Amaran Hujan Berterusan (Waspada) (UJIAN)' },
+              text: {
+                en: { warning: `SECTION A: CONTINUOUS RAIN WARNING (ALERT)\nContinuous rain is expected to occur over ${areaEn} (TEST DATA).\nSECTION C: TERMINATION OF CONTINUOUS RAIN WARNING\nContinuous Rain Warning (Alert) for Pahang (Rompin) is now terminated.` },
+                ms: { warning: `SEKSYEN A: AMARAN HUJAN BERTERUSAN (WASPADA)\nHujan berterusan dijangka berlaku di ${areaBm} (DATA UJIAN).\nSEKSYEN C: PENAMATAN AMARAN HUJAN BERTERUSAN\nAmaran Hujan Berterusan (Waspada) untuk Pahang (Rompin) kini ditamatkan.` },
+              },
+            },
+            attributes: {
+              title: { en: 'Continuous Rain Warning (Alert) (TEST)', ms: 'Amaran Hujan Berterusan (Waspada) (UJIAN)' },
+              timestamp: base.warning_issue.issued,
+              valid_from: base.valid_from,
+              valid_to: base.valid_to,
+            },
+          }],
+        };
+        return normalizeRainWarnings(metShaped);
+      }
+
+      console.warn('[weather] Unknown ?testWarning= value, falling back to live API:', TEST_WARNING_PARAM);
+      return undefined;
+    }
+
+    function initTestModeBanner() {
+      if (!TEST_WARNING_PARAM) return;
+      const el = document.getElementById('test-mode-banner');
+      el.classList.add('active');
+      el.textContent = `🧪 MOD UJIAN AKTIF — testWarning=${TEST_WARNING_PARAM} (data ujian, bukan amaran sebenar)`;
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Leaflet control (top-right) — mirrors the plan's "info-box" summary.
+    function addInfoControl() {
+      const InfoControl = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function () {
+          const div = L.DomUtil.create('div', 'info-box');
+          infoControlDiv = div;
+          updateInfoControl();
+          return div;
+        }
+      });
+      map.addControl(new InfoControl());
+    }
+
+    function updateInfoControl() {
+      if (!infoControlDiv) return;
+      const timeText = lastCheckedAt
+        ? lastCheckedAt.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })
+        : '—';
+
+      if (activeWarnings.length) {
+        infoControlDiv.innerHTML = `<strong>⚠️ ${activeWarnings.length} amaran aktif</strong><br>Dikemaskini ${timeText}`;
+      } else {
+        infoControlDiv.innerHTML = `Tiada amaran aktif ketika ini<br>Dikemaskini ${timeText}`;
+      }
+    }
+
+    function updateFooter() {
+      const footer = document.getElementById('page-footer');
+      const timeText = lastCheckedAt
+        ? lastCheckedAt.toLocaleString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+        : '—';
+      footer.textContent = `Sumber data: MET Malaysia / data.gov.my · Dikemaskini ${timeText} · Auto setiap 3 minit`;
+    }
+
+    async function refreshWarnings() {
+      lastCheckedAt = new Date();
+
+      const fixture = getTestWarningFixture();
+      if (fixture !== undefined) {
+        activeWarnings = fixture.filter(isWarningActive);
+        const state = computeWarningState(activeWarnings);
+        warningScope = state.scope;
+        warningDistricts = state.districts;
+      } else {
+        // Two independent sources, fetched in parallel — either failing
+        // alone must not take down the other (rain proxy 404s under local
+        // static servers by design; data.gov.my can have its own bad day).
+        const [thunder, rain] = await Promise.allSettled([
+          fetchActiveWarnings(),
+          fetchRainWarnings(),
+        ]);
+
+        if (thunder.status === 'rejected' && rain.status === 'rejected') {
+          console.warn('[weather] Both warning sources failed:', thunder.reason?.message, rain.reason?.message);
+          // Leave the previously-known state on screen rather than clearing
+          // it to a false "no warning" on a transient failure.
+        } else {
+          if (thunder.status === 'rejected') console.warn('[weather] data.gov.my warnings failed:', thunder.reason?.message);
+          if (rain.status === 'rejected') console.warn('[weather] rain proxy failed (expected under local static server):', rain.reason?.message);
+          activeWarnings = [
+            ...(thunder.status === 'fulfilled' ? thunder.value : []),
+            ...(rain.status === 'fulfilled' ? rain.value : []),
+          ];
+          const state = computeWarningState(activeWarnings);
+          warningScope = state.scope;
+          warningDistricts = state.districts;
+        }
+      }
+
+      repaintMap();
+      renderBanner(activeWarnings);
+      updateInfoControl();
+      updateFooter();
+    }
+
+    // =========================================================
+    // Boot + refresh loop
+    // =========================================================
+    initTestModeBanner();
+    loadGeoJSON();
+
+    // No point polling on an interval when serving a static fixture —
+    // ?testWarning= is meant to be reloaded manually to test a new value.
+    if (!TEST_WARNING_PARAM) {
+      setInterval(() => {
+        if (geojsonLayer) refreshWarnings();
+      }, REFRESH_MS);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && geojsonLayer) refreshWarnings();
+      });
+    }
   </script>
+
 </body>
 
 </html>
