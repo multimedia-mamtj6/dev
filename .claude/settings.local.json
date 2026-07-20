@@ -9,7 +9,8 @@
       "Bash(grep -o '<span class=\"el-image\" uk-icon=\"icon: calendar;\"[^/]*/></span>.\\\\{0,300\\\\}\\\\|<span class=\"el-image\" uk-icon=\"icon: calendar;\".\\\\{0,300\\\\}')",
       "Bash(grep -o '<h1 class=\"uk-h2 uk-heading-divider uk-margin-small\"[^>]*>.\\\\{0,150\\\\}')",
       "Bash(git check-ignore *)",
-      "Bash(gh repo *)"
+      "Bash(gh repo *)",
+      "Bash(pkill -f \"http.server 8123\")"
     ]
   }
 }

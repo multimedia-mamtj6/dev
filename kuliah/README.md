@@ -47,6 +47,13 @@ Read-only lecture schedule display. Reads from the published JSON.
 /kuliah/jadual/index.html
 ```
 
+**Features:**
+- Dual view: desktop grid calendar / mobile "today card" + scrollable day list
+- Mobile today-card day-select dropdown — jump to any day in the viewed month, not just today/tomorrow
+- On a day with both Subuh and Maghrib, a small toggle button lets the visitor swap which session displays first (session-only, resets on reload)
+- Hijri date shown per day (`api.waktusolat.app`, with an offline calculator fallback)
+- PDF export (`?file=pdf`)
+
 ### `paparan/` — Digital Signage
 
 Drives a physical screen at the mosque. Reads the same published JSON as `jadual/`.

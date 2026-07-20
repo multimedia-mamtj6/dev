@@ -9,6 +9,7 @@ const MONTH_NAMES = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
     'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
 
 let cachedSenaraiHari = null;
+let swapSessionOrder = false; // session-only view mode; resets to false on every hard reload
 let hijriRequestId = 0; // guards against a slow response overwriting a newer day selection
 const hijriMonthCache = {}; // "YYYY-M" → prayers[] from api.waktusolat.app (one fetch covers the whole month)
 
@@ -373,15 +374,18 @@ async function renderTodayCard(senaraiHari, selectedDate = null) {
     const isTomorrow = targetDateString === tomorrowString;
 
     let cardBody = '';
+    let bothSessions = false;
     if (targetData && (targetData.subuh || targetData.maghrib)) {
-        if (targetData.subuh) {
-            cardBody += createMobileLectureBlock('Subuh', targetData.subuh);
-            cardBody += buildPosterHtml('subuh', targetData.subuh);
-        }
-        if (targetData.maghrib) {
-            cardBody += createMobileLectureBlock('Maghrib', targetData.maghrib);
-            cardBody += buildPosterHtml('maghrib', targetData.maghrib);
-        }
+        bothSessions = !!(targetData.subuh && targetData.maghrib);
+
+        const subuhHtml = targetData.subuh
+            ? createMobileLectureBlock('Subuh', targetData.subuh) + buildPosterHtml('subuh', targetData.subuh)
+            : '';
+        const maghribHtml = targetData.maghrib
+            ? createMobileLectureBlock('Maghrib', targetData.maghrib) + buildPosterHtml('maghrib', targetData.maghrib)
+            : '';
+
+        cardBody = (swapSessionOrder && bothSessions) ? (maghribHtml + subuhHtml) : (subuhHtml + maghribHtml);
     } else if (isTomorrow && !targetData) {
         cardBody = `<div class="no-kuliah-today">Data jadual untuk esok belum tersedia.</div>`;
     } else {
@@ -391,6 +395,10 @@ async function renderTodayCard(senaraiHari, selectedDate = null) {
 
     const holidayHtml = targetData && targetData.cuti_umum
         ? `<span class="mobile-holiday-label">${escapeHtml(targetData.cuti_umum)}</span>` : '';
+
+    const swapToggleHtml = bothSessions
+        ? `<button type="button" class="swap-session-toggle" aria-label="Tukar susunan paparan Subuh dan Maghrib">⇅ Tukar Susunan Subuh/Maghrib</button>`
+        : '';
 
     todayContainer.innerHTML = `
         <div class="today-card-top-bar"></div>
@@ -406,11 +414,20 @@ async function renderTodayCard(senaraiHari, selectedDate = null) {
             </div>
             ${holidayHtml}
         </div>
-        <div class="today-card-body">${cardBody}</div>`;
+        <div class="today-card-body">${cardBody}</div>
+        ${swapToggleHtml}`;
 
     todayContainer.querySelector('.day-select').addEventListener('change', async function () {
         await renderTodayCard(cachedSenaraiHari, this.value);
     });
+
+    const swapBtn = todayContainer.querySelector('.swap-session-toggle');
+    if (swapBtn) {
+        swapBtn.addEventListener('click', async () => {
+            swapSessionOrder = !swapSessionOrder;
+            await renderTodayCard(cachedSenaraiHari, targetDateString);
+        });
+    }
 
     // Fire-and-forget — the Hijri line fills in whenever the API (or the
     // calculator fallback) answers. Never block the month card list on it.

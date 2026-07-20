@@ -733,6 +733,33 @@ main {
         font-style: italic;
     }
 
+    /* ---- Swap Subuh/Maghrib order toggle ---- */
+    .swap-session-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.55rem 1rem;
+        background: transparent;
+        border: 1.5px dashed #bbf7d0;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: #16a34a;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+        margin: 0 0 0.6rem;
+    }
+
+    .swap-session-toggle:hover {
+        border-color: #16a34a;
+        background-color: #f0fdf4;
+    }
+
     /* ---- Monthly card list ---- */
     #mobile-card-list {
         padding: 0 1rem;
