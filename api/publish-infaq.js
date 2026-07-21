@@ -1,8 +1,11 @@
 // Vercel serverless function: POST /api/publish-infaq
-// Reads infaq_projects/infaq_donations/infaq_expenses from Supabase, computes
-// the published JSON (weekly/monthly/yearly rollups + active project
-// progress — never stored pre-summed, always derived from raw rows), and
-// commits infaq/data/data.json + infaq/data/perbelanjaan.json to GitHub.
+// Reads infaq_projects/infaq_kutipan_mingguan/infaq_projek_kutipan/
+// infaq_perbelanjaan_bulanan from Supabase, computes the published JSON
+// (weekly/monthly/yearly rollups + active project progress — never stored
+// pre-summed, always derived from raw rows), and commits 3 files to GitHub:
+// infaq/data/monthly.json, infaq/data/daily.json, infaq/data/perbelanjaan.json.
+// Shapes mirror the real infaq.mamtj6.com reference site exactly, so this
+// system can later drop-in replace that site's manual Sheet workflow.
 // Modeled directly on api/publish.js — same auth/env-var/GitHub-push shape,
 // but this publish is always a full "as of now" snapshot, no month param.
 //
@@ -21,35 +24,35 @@ const MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // Malaysia is UTC+8, no DST
 // ── Pure helpers (kept dependency-free for ad-hoc local testing, same
 // philosophy as api/publish.js's exported functions) ────────────────────────
 
-function computeMonthTotal(rows, dateField, year, month) {
-    const prefix = `${year}-${String(month).padStart(2, '0')}`;
-    return rows.filter(r => r[dateField].startsWith(prefix)).reduce((s, r) => s + Number(r.amount), 0);
+function sumJumlah(rows) {
+    return rows.reduce((s, r) => s + Number(r.jumlah), 0);
 }
 
-function computeYearTotal(rows, dateField, year) {
-    const prefix = String(year);
-    return rows.filter(r => r[dateField].startsWith(prefix)).reduce((s, r) => s + Number(r.amount), 0);
+function filterTahunBulan(rows, tahun, bulan) {
+    return rows.filter(r => r.tahun === tahun && r.bulan === bulan);
 }
 
-// Minggu1..Minggu5 — day 1-7 / 8-14 / 15-21 / 22-28 / 29-31, matching the
-// reference schema's week definition exactly.
-function computeWeekBuckets(donationRows, year, month) {
-    const prefix = `${year}-${String(month).padStart(2, '0')}`;
+function filterTahun(rows, tahun) {
+    return rows.filter(r => r.tahun === tahun);
+}
+
+// Each row already IS one week's total (infaq_kutipan_mingguan) — no
+// day-of-month math needed, just place each row's jumlah into its bucket.
+// Missing weeks (no row) stay 0, matching the source Sheet's "-" cells.
+function buildMingguBuckets(weekRowsForOneMonth) {
     const buckets = { Minggu1: 0, Minggu2: 0, Minggu3: 0, Minggu4: 0, Minggu5: 0 };
-    donationRows.filter(r => r.donation_date.startsWith(prefix)).forEach(r => {
-        const day = parseInt(r.donation_date.slice(8, 10), 10);
-        const weekIdx = Math.min(5, Math.ceil(day / 7));
-        buckets[`Minggu${weekIdx}`] += Number(r.amount);
-    });
+    weekRowsForOneMonth.forEach(r => { buckets[`Minggu${r.minggu}`] = Number(r.jumlah); });
     return buckets;
 }
 
-function computeYearlyGraf(rows, dateField, year) {
+// 12-length yearly array. Works whether rows are already one-per-month
+// (perbelanjaan) or still one-per-week and need summing up (kutipan) —
+// accumulation (+=) handles both uniformly.
+function buildYearlyGraf(rows, year) {
     const data = new Array(12).fill(0);
     rows.forEach(r => {
-        if (!r[dateField].startsWith(String(year))) return;
-        const month = parseInt(r[dateField].slice(5, 7), 10);
-        data[month - 1] += Number(r.amount);
+        if (r.tahun !== year) return;
+        data[r.bulan - 1] += Number(r.jumlah);
     });
     return { tahun: String(year), labels: BULAN_SHORT.slice(), data };
 }
@@ -65,14 +68,14 @@ function computeCumulative(dataArray) {
 // callers omit the `projek` key entirely in that case.
 function computeProjectProgress(project, donationsForProject) {
     if (!project) return null;
-    const terkumpul = donationsForProject.reduce((s, r) => s + Number(r.amount), 0);
+    const terkumpul = sumJumlah(donationsForProject);
     const target = Number(project.target_amount);
     const peratusan = target > 0 ? Math.round((terkumpul / target) * 100) : 0;
     return { NamaProjek: project.name, SasaranKutipan: target, JumlahTerkumpul: terkumpul, Peratusan: peratusan };
 }
 
 // GET-sha-then-PUT against the GitHub Contents API — same pattern as
-// api/publish.js, factored out here since this endpoint pushes 2 files.
+// api/publish.js, factored out here since this endpoint pushes 3 files.
 async function pushJsonToGitHub(ghHeaders, githubRepo, filePath, jsonObj, commitMessage) {
     const contentsRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${filePath}`, { headers: ghHeaders });
     if (!contentsRes.ok && contentsRes.status !== 404) {
@@ -138,50 +141,76 @@ module.exports = async function handler(req, res) {
     let lastMonthYear = year, lastMonth = month - 1;
     if (lastMonth < 1) { lastMonth = 12; lastMonthYear = year - 1; }
 
-    const fetchFrom = `${lastMonthYear}-01-01`;
-    const fetchTo   = `${year}-12-31`;
     const sbHeaders = { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}`, 'Accept': 'application/json' };
 
     // ── 3. Fetch from Supabase (service-role — see setup.sql §8 for the
-    // explicit SELECT grant this depends on) ────────────────────────────────
-    const [projectRes, donationRes, expenseRes] = await Promise.all([
+    // explicit SELECT grant this depends on). Tables are small/pre-aggregated
+    // now, so no date-range windowing is needed — fetch everything. ─────────
+    const [projectRes, kutipanRes, perbelanjaanRes] = await Promise.all([
         fetch(`${supabaseUrl}/rest/v1/infaq_projects?select=*&is_active=eq.true`, { headers: sbHeaders }),
-        fetch(`${supabaseUrl}/rest/v1/infaq_donations?select=amount,donation_date,project_id&donation_date=gte.${fetchFrom}&donation_date=lte.${fetchTo}`, { headers: sbHeaders }),
-        fetch(`${supabaseUrl}/rest/v1/infaq_expenses?select=amount,expense_date&expense_date=gte.${fetchFrom}&expense_date=lte.${fetchTo}`, { headers: sbHeaders }),
+        fetch(`${supabaseUrl}/rest/v1/infaq_kutipan_mingguan?select=tahun,bulan,minggu,jumlah`, { headers: sbHeaders }),
+        fetch(`${supabaseUrl}/rest/v1/infaq_perbelanjaan_bulanan?select=tahun,bulan,jumlah`, { headers: sbHeaders }),
     ]);
     if (!projectRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_projects', details: await projectRes.text() });
-    if (!donationRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_donations', details: await donationRes.text() });
-    if (!expenseRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_expenses', details: await expenseRes.text() });
+    if (!kutipanRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_kutipan_mingguan', details: await kutipanRes.text() });
+    if (!perbelanjaanRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_perbelanjaan_bulanan', details: await perbelanjaanRes.text() });
 
     const activeProject = (await projectRes.json())[0] || null;
-    const donationRows  = await donationRes.json();
-    const expenseRows   = await expenseRes.json();
-    const projectDonations = activeProject ? donationRows.filter(r => r.project_id === activeProject.id) : [];
+    const kutipanRows      = await kutipanRes.json();
+    const perbelanjaanRows = await perbelanjaanRes.json();
 
-    // ── 4. Compute data.json (donations) ────────────────────────────────────
+    let projectDonations = [];
+    if (activeProject) {
+        const projekRes = await fetch(
+            `${supabaseUrl}/rest/v1/infaq_projek_kutipan?select=tarikh,jumlah,keterangan&project_id=eq.${activeProject.id}&order=tarikh.asc`,
+            { headers: sbHeaders }
+        );
+        if (!projekRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_projek_kutipan', details: await projekRes.text() });
+        projectDonations = await projekRes.json();
+    }
+
+    // ── 4. Compute monthly.json (general infaq) ─────────────────────────────
     const bulanIniLabel   = `${BULAN[month - 1]} ${year}`;
     const bulanLepasLabel = `${BULAN[lastMonth - 1]} ${lastMonthYear}`;
-    const projectProgress = computeProjectProgress(activeProject, projectDonations);
 
-    const dataJson = {
-        ...(projectProgress ? { projek: projectProgress } : {}),
+    const monthlyJson = {
         ringkasan: {
             kutipan: {
-                bulanIni:   { bulan: bulanIniLabel, jumlah: computeMonthTotal(donationRows, 'donation_date', year, month) },
-                bulanLepas: { bulan: bulanLepasLabel, jumlah: computeMonthTotal(donationRows, 'donation_date', lastMonthYear, lastMonth) },
-                tahunIni:   { tahun: String(year), jumlah: computeYearTotal(donationRows, 'donation_date', year) },
+                bulanIni:   { bulan: bulanIniLabel,   jumlah: sumJumlah(filterTahunBulan(kutipanRows, year, month)) },
+                bulanLepas: { bulan: bulanLepasLabel, jumlah: sumJumlah(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)) },
+                tahunIni:   { tahun: String(year),     jumlah: sumJumlah(filterTahun(kutipanRows, year)) },
+                tahunLepas: { tahun: String(year - 1), jumlah: sumJumlah(filterTahun(kutipanRows, year - 1)) },
             },
         },
-        paparanBulanIni: computeWeekBuckets(donationRows, year, month),
+        paparanBulanIni: {
+            Tahun: year, Bulan: BULAN[month - 1].toUpperCase(),
+            ...buildMingguBuckets(filterTahunBulan(kutipanRows, year, month)),
+            JumlahBulanan: sumJumlah(filterTahunBulan(kutipanRows, year, month)),
+        },
+        paparanBulanLepas: {
+            Tahun: lastMonthYear, Bulan: BULAN[lastMonth - 1].toUpperCase(),
+            ...buildMingguBuckets(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)),
+            JumlahBulanan: sumJumlah(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)),
+        },
         graf: {
-            [String(year)]:     computeYearlyGraf(donationRows, 'donation_date', year),
-            [String(year - 1)]: computeYearlyGraf(donationRows, 'donation_date', year - 1),
+            [String(year)]:     buildYearlyGraf(kutipanRows, year),
+            [String(year - 1)]: buildYearlyGraf(kutipanRows, year - 1),
         },
         tarikhKemaskini: new Date().toISOString(),
     };
 
-    // ── 5. Compute perbelanjaan.json (expenses) ─────────────────────────────
-    const expenseGrafThisYear = computeYearlyGraf(expenseRows, 'expense_date', year);
+    // ── 5. Compute daily.json (active project's individual donations) ──────
+    const projectProgress = computeProjectProgress(activeProject, projectDonations);
+    const dailyJson = {
+        ...(projectProgress ? { projek: projectProgress } : {}),
+        paparanHarian: projectDonations.map(r => ({
+            tarikh: r.tarikh, jumlah: Number(r.jumlah), keterangan: r.keterangan || '',
+        })),
+        tarikhKemaskini: new Date().toISOString(),
+    };
+
+    // ── 6. Compute perbelanjaan.json (expenses) ─────────────────────────────
+    const expenseGrafThisYear = buildYearlyGraf(perbelanjaanRows, year);
     const cumulativeThisYear  = computeCumulative(expenseGrafThisYear.data);
 
     // January edge case: "bulan lepas" is December of the PREVIOUS year, so
@@ -191,34 +220,34 @@ module.exports = async function handler(req, res) {
     if (lastMonthYear === year) {
         bulanLepasKumulatif = cumulativeThisYear[lastMonth - 1];
     } else {
-        const prevYearGraf = computeYearlyGraf(expenseRows, 'expense_date', lastMonthYear);
+        const prevYearGraf = buildYearlyGraf(perbelanjaanRows, lastMonthYear);
         bulanLepasKumulatif = computeCumulative(prevYearGraf.data)[lastMonth - 1];
     }
 
     const perbelanjaanJson = {
         ringkasan: {
             perbelanjaan: {
-                tahunIni:   { tahun: year,     jumlah: computeYearTotal(expenseRows, 'expense_date', year) },
-                tahunLepas: { tahun: year - 1, jumlah: computeYearTotal(expenseRows, 'expense_date', year - 1) },
-                bulanIni:   { bulan: bulanIniLabel,   jumlah: computeMonthTotal(expenseRows, 'expense_date', year, month) },
-                bulanLepas: { bulan: bulanLepasLabel, jumlah: computeMonthTotal(expenseRows, 'expense_date', lastMonthYear, lastMonth) },
+                tahunIni:   { tahun: year,     jumlah: sumJumlah(filterTahun(perbelanjaanRows, year)) },
+                tahunLepas: { tahun: year - 1, jumlah: sumJumlah(filterTahun(perbelanjaanRows, year - 1)) },
+                bulanIni:   { bulan: bulanIniLabel,   jumlah: sumJumlah(filterTahunBulan(perbelanjaanRows, year, month)) },
+                bulanLepas: { bulan: bulanLepasLabel, jumlah: sumJumlah(filterTahunBulan(perbelanjaanRows, lastMonthYear, lastMonth)) },
             },
         },
         paparanBulanIni: {
             Tahun: year, Bulan: bulanIniLabel,
-            Jumlah: computeMonthTotal(expenseRows, 'expense_date', year, month),
+            Jumlah: sumJumlah(filterTahunBulan(perbelanjaanRows, year, month)),
             JumlahKumulatif: cumulativeThisYear[month - 1],
         },
         paparanBulanLepas: {
             Tahun: lastMonthYear, Bulan: bulanLepasLabel,
-            Jumlah: computeMonthTotal(expenseRows, 'expense_date', lastMonthYear, lastMonth),
+            Jumlah: sumJumlah(filterTahunBulan(perbelanjaanRows, lastMonthYear, lastMonth)),
             JumlahKumulatif: bulanLepasKumulatif,
         },
         graf: { [String(year)]: { ...expenseGrafThisYear, dataKumulatif: cumulativeThisYear } },
         tarikhKemaskini: new Date().toISOString(),
     };
 
-    // ── 6. Push both files to GitHub ────────────────────────────────────────
+    // ── 7. Push all 3 files to GitHub ────────────────────────────────────────
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo  = process.env.GITHUB_REPO;
     if (!githubToken || !githubRepo) {
@@ -231,19 +260,20 @@ module.exports = async function handler(req, res) {
         'Content-Type':         'application/json',
     };
 
-    // Two sequential commits, not one atomic multi-file commit via the Git
+    // Three sequential commits, not one atomic multi-file commit via the Git
     // Trees API — simpler, matches this repo's existing complexity level.
-    // A partial failure (data.json commits, perbelanjaan.json fails) is
-    // low-stakes and idempotently fixed by re-clicking Terbitkan.
-    let dataCommit, perbelanjaanCommit;
+    // A partial failure is low-stakes and idempotently fixed by re-clicking
+    // Terbitkan.
+    let monthlyCommit, dailyCommit, perbelanjaanCommit;
     try {
-        dataCommit = await pushJsonToGitHub(ghHeaders, githubRepo, 'infaq/data/data.json', dataJson, '[Admin] Terbitkan ringkasan infaq');
+        monthlyCommit      = await pushJsonToGitHub(ghHeaders, githubRepo, 'infaq/data/monthly.json', monthlyJson, '[Admin] Terbitkan kutipan mingguan infaq');
+        dailyCommit        = await pushJsonToGitHub(ghHeaders, githubRepo, 'infaq/data/daily.json', dailyJson, '[Admin] Terbitkan kutipan projek infaq');
         perbelanjaanCommit = await pushJsonToGitHub(ghHeaders, githubRepo, 'infaq/data/perbelanjaan.json', perbelanjaanJson, '[Admin] Terbitkan perbelanjaan infaq');
     } catch (e) {
         return res.status(500).json({ error: 'Failed to push to GitHub', details: e.message });
     }
 
-    // ── 7. Activity log (never blocks the response) ────────────────────────
+    // ── 8. Activity log (never blocks the response) ────────────────────────
     try {
         let actorName = null;
         if (actorEmail) {
@@ -261,7 +291,7 @@ module.exports = async function handler(req, res) {
                 actor_name:   actorName,
                 action:       'publish',
                 target_label: bulanIniLabel,
-                detail:       `Kutipan: RM ${dataJson.ringkasan.kutipan.bulanIni.jumlah.toFixed(2)}; Perbelanjaan: RM ${perbelanjaanJson.ringkasan.perbelanjaan.bulanIni.jumlah.toFixed(2)}`,
+                detail:       `Kutipan: RM ${monthlyJson.ringkasan.kutipan.bulanIni.jumlah.toFixed(2)}; Perbelanjaan: RM ${perbelanjaanJson.ringkasan.perbelanjaan.bulanIni.jumlah.toFixed(2)}`,
             }),
         });
     } catch (e) {
@@ -271,19 +301,21 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
         success: true,
         commitUrls: {
-            data: dataCommit.commit?.html_url ?? null,
+            monthly: monthlyCommit.commit?.html_url ?? null,
+            daily: dailyCommit.commit?.html_url ?? null,
             perbelanjaan: perbelanjaanCommit.commit?.html_url ?? null,
         },
         published: {
-            kutipanBulanIni: dataJson.ringkasan.kutipan.bulanIni.jumlah,
+            kutipanBulanIni: monthlyJson.ringkasan.kutipan.bulanIni.jumlah,
             perbelanjaanBulanIni: perbelanjaanJson.ringkasan.perbelanjaan.bulanIni.jumlah,
         },
     });
 };
 
-module.exports.computeMonthTotal      = computeMonthTotal;
-module.exports.computeYearTotal       = computeYearTotal;
-module.exports.computeWeekBuckets     = computeWeekBuckets;
-module.exports.computeYearlyGraf      = computeYearlyGraf;
+module.exports.sumJumlah              = sumJumlah;
+module.exports.filterTahunBulan       = filterTahunBulan;
+module.exports.filterTahun            = filterTahun;
+module.exports.buildMingguBuckets     = buildMingguBuckets;
+module.exports.buildYearlyGraf        = buildYearlyGraf;
 module.exports.computeCumulative      = computeCumulative;
 module.exports.computeProjectProgress = computeProjectProgress;

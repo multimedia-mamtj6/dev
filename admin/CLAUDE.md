@@ -17,10 +17,16 @@ two independent modules as of 2026-07-19:
   access to the live published schedule ("Lihat Terbitan" dropdown), and bulk
   month actions ("Tindakan Bulan": duplicate the previous month forward, or
   clear a month entirely).
-- **`admin/infaq/`** — donation/expense tracking. Individual donation and
-  expense entries are logged as raw rows; weekly/monthly/yearly rollups and
-  active-project progress are always **computed**, never typed in directly
-  (see `api/publish-infaq.js`).
+- **`admin/infaq/`** — donation/expense tracking, redesigned 2026-07-21 to
+  match the mosque's real recording pattern (from the live `infaq.mamtj6.com`
+  Sheet, not an assumed shape): general infaq is logged as one lump sum per
+  week (`infaq_kutipan_mingguan`), expenses as one lump sum per month
+  (`infaq_perbelanjaan_bulanan`) — both sparse, upserted, never
+  hand-aggregated into a total. Only project-earmarked donations
+  (`infaq_projek_kutipan`) are genuinely individual dated rows. Every
+  further rollup (monthly/yearly totals, `graf`, active-project progress)
+  is still always **computed**, never typed in directly (see
+  `api/publish-infaq.js`).
 
 Shared/cross-module concerns (login, nav shell, admin-user management,
 activity-log viewer) stay flat at `admin/` root — see File Structure below.
@@ -60,13 +66,17 @@ admin/
     dashboard.html/.js ← Monthly calendar + day editor modal, Terbitkan
     ustaz.html/.js     ← Penceramah CRUD
 
-  infaq/           ← Module: donation/expense tracking (new 2026-07-19)
-    infaq-common.js    ← Shared across this module: requireInfaqAccess(), formatRM(),
-                          INFAQ_METHOD_LABELS, populateProjectSelect()
+  infaq/           ← Module: donation/expense tracking (new 2026-07-19, schema redesigned 2026-07-21)
+    infaq-common.js    ← Shared across this module: requireInfaqAccess(), formatRM(), BULAN_MY
     ringkasan.html/.js ← Module landing page: stat cards, active-project progress, Terbitkan
-    kutipan.html/.js   ← Donation entries CRUD (paginated/filtered, like userlog.js)
-    perbelanjaan.html/.js ← Expense entries CRUD (paginated/filtered, same shape as kutipan)
-    projek.html/.js    ← Fundraising project settings CRUD (small list, like ustaz.js)
+    kutipan.html/.js   ← General infaq: one row per week (tahun/bulan/minggu), upsert on save,
+                          fetch-all-once + client-side year filter (small table, not paginated)
+    perbelanjaan.html/.js ← Expenses: one row per month (tahun/bulan), same upsert/fetch-all shape
+    projek.html/.js    ← Fundraising project settings CRUD (small list, like ustaz.js) — each row
+                          links to projek-kutipan.html for that project's individual donations
+    projek-kutipan.html/.js ← ONE project's individual dated donations (?project=<id> in the URL) —
+                          paginated/filtered like the old kutipan.js, since this is the only infaq
+                          table that's genuinely per-deposit
 
 admin/dashboard.html, admin/ustaz.html  ← 2 zero-JS redirect stubs → admin/kuliah/... (old bare
                                             /admin/ URLs, pre-module-restructure, kept working)
@@ -77,8 +87,10 @@ kuliah/
   paparan/         ← Digital signage (see kuliah/CLAUDE.md)
   data/jadual_lengkap_v2.json ← Published data admin/kuliah/ writes, that jadual/paparan read
 
-infaq/data/data.json, infaq/data/perbelanjaan.json ← Published data admin/infaq/ writes
-                                                        (api/publish-infaq.js) — no reader yet
+infaq/data/monthly.json, infaq/data/daily.json, infaq/data/perbelanjaan.json ← Published data
+    admin/infaq/ writes (api/publish-infaq.js) — no reader yet. Shapes deliberately mirror the
+    real infaq.mamtj6.com reference site's own file names/structure, so this system could later
+    drop in and replace that site's manual Sheet-editing workflow without a reshape.
 ```
 
 ## Supabase Schema
@@ -118,32 +130,41 @@ id uuid PK, name text NOT NULL, target_amount numeric(12,2),
 is_active boolean DEFAULT false, completed_at timestamptz,
 created_at timestamptz, updated_at timestamptz
 
--- infaq_donations: ONE ROW PER RAW DEPOSIT — every rollup (weekly/monthly/
--- yearly/graf) is computed from these by api/publish-infaq.js, never typed
--- in directly. project_id nullable: most donations are ordinary weekly
--- infaq (not earmarked); only donations explicitly tied to a project count
--- toward that project's JumlahTerkumpul.
-id uuid PK, project_id uuid FK→infaq_projects(id) ON DELETE SET NULL,
-amount numeric(12,2), donation_date date NOT NULL,
-method text CHECK ('tunai'|'online'|'qr'|'lain'), note text,
-created_at timestamptz, updated_at timestamptz
+-- infaq_kutipan_mingguan: general infaq, ONE ROW PER WEEK ACTUALLY COLLECTED
+-- (matches the real Sheet — a lump sum per week, never per-donor). Sparse
+-- by design: a week with nothing collected has no row. Upserted on
+-- (tahun, bulan, minggu) — recording an existing week replaces its total.
+id uuid PK, tahun integer NOT NULL, bulan integer CHECK (1-12) NOT NULL,
+minggu integer CHECK (1-5) NOT NULL, jumlah numeric(12,2) CHECK (> 0) NOT NULL,
+created_at timestamptz, updated_at timestamptz, UNIQUE(tahun, bulan, minggu)
 
--- infaq_expenses: one row per raw mosque expense, same auto-aggregation principle
-id uuid PK, amount numeric(12,2), expense_date date NOT NULL,
-category text, description text NOT NULL,
-created_at timestamptz, updated_at timestamptz
+-- infaq_projek_kutipan: individual dated donations earmarked to ONE
+-- project — the only infaq table that's genuinely per-deposit. project_id
+-- is required (general infaq never touches this table at all).
+id uuid PK, project_id uuid FK→infaq_projects(id) NOT NULL,
+tarikh date NOT NULL, jumlah numeric(12,2) CHECK (> 0) NOT NULL,
+keterangan text, created_at timestamptz, updated_at timestamptz
+
+-- infaq_perbelanjaan_bulanan: expenses, ONE ROW PER MONTH TOTAL — the real
+-- Sheet never tracked category/description per expense, only a monthly
+-- lump sum, so this matches exactly. Same sparse/upsert principle as
+-- infaq_kutipan_mingguan.
+id uuid PK, tahun integer NOT NULL, bulan integer CHECK (1-12) NOT NULL,
+jumlah numeric(12,2) CHECK (> 0) NOT NULL,
+created_at timestamptz, updated_at timestamptz, UNIQUE(tahun, bulan)
 
 -- infaq_activity_log: SEPARATE from activity_log by deliberate choice
 -- (independent auditability for money data) — otherwise identical shape
 id uuid PK, created_at timestamptz,
 actor_email text NOT NULL, actor_name text,
-action text NOT NULL,       -- infaq_donation_create/update/delete |
-                             -- infaq_expense_create/update/delete |
+action text NOT NULL,       -- infaq_kutipan_mingguan_create/update/delete |
+                             -- infaq_projek_kutipan_create/update/delete |
+                             -- infaq_perbelanjaan_create/update/delete |
                              -- infaq_project_create/update/delete/activate | publish
 target_label text, detail text
 ```
 
-RLS is ON on all tables. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_donations`/`infaq_expenses` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`.
+RLS is ON on all tables. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`.
 
 ## Data Flow
 
@@ -157,15 +178,19 @@ kuliah: Admin edits day in admin/kuliah/dashboard.html
   → pushes to GitHub via API (GITHUB_TOKEN env var)
   → Vercel serves updated JSON
 
-infaq: Admin logs raw entries in admin/infaq/kutipan.html and perbelanjaan.html
-  → insert to Supabase `infaq_donations` / `infaq_expenses` (raw rows, never
-    pre-summed totals)
+infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
+  total in perbelanjaan.html, or an individual project donation in
+  projek-kutipan.html
+  → upsert to Supabase `infaq_kutipan_mingguan` (tahun,bulan,minggu) /
+    `infaq_perbelanjaan_bulanan` (tahun,bulan), or insert to
+    `infaq_projek_kutipan` (genuinely one row per deposit) — none of these
+    are ever hand-aggregated into a further total
   → click Terbitkan on admin/infaq/ringkasan.html
   → POST /api/publish-infaq  (Bearer: session token, no month param — always
     a full as-of-now snapshot)
-  → api/publish-infaq.js reads infaq_projects/donations/expenses (service role),
-    COMPUTES weekly/monthly/yearly rollups + active-project progress
-  → pushes infaq/data/data.json + infaq/data/perbelanjaan.json to GitHub
+  → api/publish-infaq.js reads all 4 infaq tables (service role), COMPUTES
+    weekly/monthly/yearly rollups + active-project progress
+  → pushes infaq/data/monthly.json + daily.json + perbelanjaan.json to GitHub
   → no public reader yet — see What This Is
 ```
 
@@ -226,7 +251,9 @@ infaq: Admin logs raw entries in admin/infaq/kutipan.html and perbelanjaan.html
 
 **Activity log (`activity_log` table + `logActivity()` in app.js, viewed at `userlog.html`, super_admin only):** every mutating admin action inserts one row right after its write succeeds — schedule day edits, bulk duplicate/clear (one summary row each, not per-date), ustaz create/update/delete, admin-account create/update/delete, and Terbitkan/publish (logged server-side from `api/publish.js` using its existing service-role client, since that write happens outside the browser). `target_label`/`detail` are always plain-text snapshots (an ustaz's `short_name`, an admin's email, a month label) — **never** a live foreign key — so history stays readable even after the referenced ustaz/admin is later renamed or deleted. Each call-site captures its "before" value from an already-loaded in-memory cache (`scheduleMap`, `allUstaz`, `allUsers`) rather than an extra query, builds a diff string via a small pure `build*DiffText()` helper local to that page's JS file, and skips the insert entirely if nothing actually changed (no no-op log rows). `logActivity()` never throws or toasts — a logging failure must never make an admin think their actual save/delete/publish failed.
 
-**Infaq: donations/expenses are always raw rows, rollups are always computed, never typed in (2026-07-19 design decision):** `admin/infaq/kutipan.js`/`perbelanjaan.js` only ever insert one row per deposit/expense as it happens — there is no UI anywhere to directly type in a weekly/monthly/yearly total. Every rollup (`paparanBulanIni`'s Minggu1-5 buckets, `ringkasan.kutipan`/`.perbelanjaan`'s month/year totals, `graf`'s 12-month series, `dataKumulatif`'s running sum) is computed by `api/publish-infaq.js`'s pure, exported helper functions (`computeMonthTotal`, `computeYearTotal`, `computeWeekBuckets`, `computeYearlyGraf`, `computeCumulative`, `computeProjectProgress` — same "exported for unit-testing without a live deploy" convention as `api/publish.js`) at Terbitkan time. `admin/infaq/ringkasan.html`'s stat cards preview simple independent sums client-side — deliberately NOT a client-side reimplementation of the full week-bucket/graf logic, same separation of concerns `dashboard.js` already has from `api/publish.js`.
+**Infaq schema matches the real Sheet, not an assumed shape (redesigned 2026-07-21):** the original 2026-07-19 build assumed every donation/expense is entered as an individual raw row. The user then shared the actual live data behind `infaq.mamtj6.com` — general infaq is recorded as **one lump sum per week** (`Tahun/Bulan/Minggu1-5`), expenses as **one lump sum per month**, and only project-earmarked "tabung" donations are genuinely individual dated entries. The schema was rebuilt to match: `infaq_kutipan_mingguan` (tahun/bulan/minggu/jumlah), `infaq_perbelanjaan_bulanan` (tahun/bulan/jumlah), `infaq_projek_kutipan` (tarikh/jumlah/keterangan, project_id required). This was a clean rebuild, not a migration — the original schema was never run against live Supabase. Higher-level rollups (`paparanBulanIni`'s Minggu1-5 buckets, `ringkasan.kutipan`/`.perbelanjaan`'s month/year totals, `graf`'s 12-month series, `dataKumulatif`'s running sum) are still always computed by `api/publish-infaq.js`'s pure, exported helper functions (`sumJumlah`, `filterTahunBulan`, `filterTahun`, `buildMingguBuckets`, `buildYearlyGraf`, `computeCumulative`, `computeProjectProgress` — same "exported for unit-testing without a live deploy" convention as `api/publish.js`) at Terbitkan time, never typed in directly. `admin/infaq/ringkasan.html`'s stat cards preview simple independent sums client-side — deliberately NOT a client-side reimplementation of the full week-bucket/graf logic, same separation of concerns `dashboard.js` already has from `api/publish.js`.
+
+**Infaq's weekly/monthly entry pages upsert, they don't insert-only:** `kutipan.js`'s save (on `tahun,bulan,minggu`) and `perbelanjaan.js`'s save (on `tahun,bulan`) both use Supabase `.upsert(payload, { onConflict: '...' })`, not `.insert()`. This matches the real workflow — the committee just records "this week's/month's total," they shouldn't need to remember whether a row already exists for that period. Both pages fetch their entire table once and filter/sum client-side (year filter) rather than server-side pagination — the old per-donation `kutipan.js` needed pagination because it was unbounded; these tables grow by ~1 row/week or ~1 row/month, small enough to hold entirely in memory.
 
 **Infaq project activation must deactivate-then-activate, in that order (partial unique index enforces at most one active project):** `admin/infaq/projek.js`'s `confirmActivate()` runs two sequential `UPDATE`s — the currently-active project first (`is_active: false, completed_at: now()`), then the target (`is_active: true`) — never the reverse, or briefly (between the two statements, if reordered) two rows would both need `is_active = true`, violating `idx_infaq_projects_one_active`. New projects are created with `is_active: false` always — activating is a separate, explicit step, so creating a draft project can never silently deactivate whatever's currently live.
 

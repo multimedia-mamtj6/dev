@@ -13,16 +13,16 @@ let deletingId   = null;
 
 // ─── Load and render ──────────────────────────────────────────────────────────
 // Projects are a small, bounded list (like ustaz) — but "Terkumpul" needs a
-// sum over infaq_donations, so one extra query fetches every project-linked
-// donation's amount in a single round-trip and reduces it client-side into
-// a per-project total, rather than one query per project.
+// sum over infaq_projek_kutipan, so one extra query fetches every
+// project-linked donation's jumlah in a single round-trip and reduces it
+// client-side into a per-project total, rather than one query per project.
 async function loadProjects() {
     const tbody = document.getElementById('project-tbody');
     tbody.innerHTML = '<tr><td colspan="6" class="state-cell">Memuatkan...</td></tr>';
 
     const [{ data: projects, error: projError }, { data: donations, error: donError }] = await Promise.all([
         db.from('infaq_projects').select('*').order('is_active', { ascending: false }).order('created_at', { ascending: false }),
-        db.from('infaq_donations').select('project_id, amount').not('project_id', 'is', null),
+        db.from('infaq_projek_kutipan').select('project_id, jumlah'),
     ]);
 
     if (projError) {
@@ -32,7 +32,7 @@ async function loadProjects() {
     if (donError) console.error('Gagal memuatkan jumlah kutipan projek:', donError.message);
 
     const totals = {};
-    (donations || []).forEach(d => { totals[d.project_id] = (totals[d.project_id] || 0) + Number(d.amount); });
+    (donations || []).forEach(d => { totals[d.project_id] = (totals[d.project_id] || 0) + Number(d.jumlah); });
 
     allProjects = (projects || []).map(p => ({ ...p, terkumpul: totals[p.id] || 0 }));
     renderTable();
@@ -57,6 +57,7 @@ function renderTable() {
                 : '<span style="color:var(--text-muted)">Selesai</span>'}</td>
             <td data-label="">
                 <div class="actions">
+                    <a class="btn btn-ghost btn-sm" href="projek-kutipan.html?project=${encodeURIComponent(p.id)}">Lihat Kutipan</a>
                     ${p.is_active ? '' : `<button class="btn btn-ghost btn-sm" onclick="openActivateModal('${escapeHtml(p.id)}')">Jadikan Aktif</button>`}
                     <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(p.id)}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(p.id)}')">Padam</button>
@@ -233,7 +234,7 @@ async function confirmDelete() {
     // data-integrity loss worth blocking client-side — same reasoning
     // admin/kuliah/ustaz.js's schedule-reference guard uses.
     const { count, error: countErr } = await db
-        .from('infaq_donations')
+        .from('infaq_projek_kutipan')
         .select('id', { count: 'exact', head: true })
         .eq('project_id', deletingId);
 

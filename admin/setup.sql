@@ -210,13 +210,25 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON activity_log TO service_role;
 -- ── 8. Infaq module ──────────────────────────────────────────────────────────
 -- Donation/expense tracking for admin/infaq/. Not run automatically — run
 -- this manually in the Supabase SQL editor, same as every section above.
+--
+-- REDESIGNED 2026-07-21 to match the mosque's real recording pattern (the
+-- live infaq.mamtj6.com Sheet), replacing an earlier per-row donation/
+-- expense model. If your database already ran that earlier version —
+-- it created infaq_projects/infaq_donations/infaq_expenses/
+-- infaq_activity_log — do NOT re-run this whole section: infaq_projects
+-- and infaq_activity_log are unchanged below (their CREATE POLICY
+-- statements will error, "already exists," since Postgres has no
+-- IF NOT EXISTS for policies), so only run the three new CREATE TABLE
+-- blocks (infaq_kutipan_mingguan / infaq_projek_kutipan /
+-- infaq_perbelanjaan_bulanan) plus their own indexes/RLS/policies/grants,
+-- then see §8b at the end of this section to drop the now-unused
+-- infaq_donations/infaq_expenses tables.
 
 -- infaq_projects: named fundraising campaigns with a target. History is
 -- kept — rows are never overwritten when a project ends, only is_active
--- flips. Donations are NOT required to belong to a project (most are
--- ordinary weekly infaq, counted in kutipan rollups regardless of project);
--- only donations an admin explicitly earmarks also count toward a
--- project's JumlahTerkumpul.
+-- flips. General/unearmarked infaq (infaq_kutipan_mingguan) never touches
+-- this table at all — only donations explicitly recorded against a
+-- project (infaq_projek_kutipan) count toward its JumlahTerkumpul.
 CREATE TABLE IF NOT EXISTS infaq_projects (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name          TEXT NOT NULL,
@@ -233,58 +245,82 @@ CREATE TABLE IF NOT EXISTS infaq_projects (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_infaq_projects_one_active
     ON infaq_projects (is_active) WHERE is_active = true;
 
--- infaq_donations: one row per raw deposit/count, as it happens. Every
--- rollup (weekly/monthly/yearly/graf) and the active project's progress
--- are COMPUTED from these rows by api/publish-infaq.js — never typed in
--- directly, so the arithmetic-mismatch problems a hand-maintained
--- spreadsheet is prone to can't happen here.
-CREATE TABLE IF NOT EXISTS infaq_donations (
-    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id     UUID REFERENCES infaq_projects(id) ON DELETE SET NULL,
-    amount         NUMERIC(12,2) NOT NULL CHECK (amount > 0),
-    donation_date  DATE NOT NULL,
-    method         TEXT NOT NULL DEFAULT 'tunai' CHECK (method IN ('tunai','online','qr','lain')),
-    note           TEXT,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- infaq_kutipan_mingguan: general infaq, one row per week actually
+-- collected (matches how the committee really records it — a single lump
+-- sum per week, never per-donor). Sparse by design: a week with nothing
+-- collected simply has no row, matching the source Sheet's "-" cells.
+-- JumlahBulanan/graf/ringkasan are always computed by summing rows in
+-- api/publish-infaq.js — never typed in directly.
+CREATE TABLE IF NOT EXISTS infaq_kutipan_mingguan (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tahun      INTEGER NOT NULL,
+    bulan      INTEGER NOT NULL CHECK (bulan BETWEEN 1 AND 12),
+    minggu     INTEGER NOT NULL CHECK (minggu BETWEEN 1 AND 5),
+    jumlah     NUMERIC(12,2) NOT NULL CHECK (jumlah > 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (tahun, bulan, minggu)
 );
 
--- infaq_expenses: one row per raw mosque expense, same auto-aggregation
--- principle as donations.
-CREATE TABLE IF NOT EXISTS infaq_expenses (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    amount        NUMERIC(12,2) NOT NULL CHECK (amount > 0),
-    expense_date  DATE NOT NULL,
-    category      TEXT,
-    description   TEXT NOT NULL,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- infaq_projek_kutipan: individual dated donations earmarked to ONE
+-- project (e.g. a building-fund tabung) — unlike general infaq, these are
+-- genuinely tracked per deposit. project_id is required: general,
+-- unearmarked infaq belongs in infaq_kutipan_mingguan instead. No
+-- ON DELETE CASCADE — admin/infaq/projek.js blocks project deletion while
+-- any donation still references it, so history is never silently lost.
+CREATE TABLE IF NOT EXISTS infaq_projek_kutipan (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES infaq_projects(id),
+    tarikh     DATE NOT NULL,
+    jumlah     NUMERIC(12,2) NOT NULL CHECK (jumlah > 0),
+    keterangan TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_infaq_donations_date       ON infaq_donations(donation_date);
-CREATE INDEX IF NOT EXISTS idx_infaq_donations_project_id ON infaq_donations(project_id);
-CREATE INDEX IF NOT EXISTS idx_infaq_expenses_date        ON infaq_expenses(expense_date);
+-- infaq_perbelanjaan_bulanan: expenses, one row per month total — the real
+-- Sheet never tracked category/description per expense, only a monthly
+-- lump sum, so this matches that exactly. Same sparse-by-design principle
+-- as infaq_kutipan_mingguan.
+CREATE TABLE IF NOT EXISTS infaq_perbelanjaan_bulanan (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tahun      INTEGER NOT NULL,
+    bulan      INTEGER NOT NULL CHECK (bulan BETWEEN 1 AND 12),
+    jumlah     NUMERIC(12,2) NOT NULL CHECK (jumlah > 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (tahun, bulan)
+);
 
-ALTER TABLE infaq_projects  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE infaq_donations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE infaq_expenses  ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_infaq_kutipan_mingguan_tahun_bulan ON infaq_kutipan_mingguan(tahun, bulan);
+CREATE INDEX IF NOT EXISTS idx_infaq_projek_kutipan_project_id    ON infaq_projek_kutipan(project_id);
+CREATE INDEX IF NOT EXISTS idx_infaq_projek_kutipan_tarikh        ON infaq_projek_kutipan(tarikh);
+CREATE INDEX IF NOT EXISTS idx_infaq_perbelanjaan_bulanan_tahun   ON infaq_perbelanjaan_bulanan(tahun);
+
+ALTER TABLE infaq_projects             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE infaq_kutipan_mingguan     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE infaq_projek_kutipan       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE infaq_perbelanjaan_bulanan ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "auth_all_infaq_projects" ON infaq_projects
     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_infaq_donations" ON infaq_donations
+CREATE POLICY "auth_all_infaq_kutipan_mingguan" ON infaq_kutipan_mingguan
     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_infaq_expenses" ON infaq_expenses
+CREATE POLICY "auth_all_infaq_projek_kutipan" ON infaq_projek_kutipan
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bulanan
     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_projects  TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_donations TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_expenses  TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_projects             TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_kutipan_mingguan     TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_projek_kutipan       TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_perbelanjaan_bulanan TO authenticated;
 
--- api/publish-infaq.js reads all three via the service-role key to compute
+-- api/publish-infaq.js reads all four via the service-role key to compute
 -- the published JSON — per §3's rule (new tables never inherit grants),
 -- this must be explicit, not assumed. Read-only: publish never writes to
--- these three tables, so SELECT is all service_role needs here.
-GRANT SELECT ON infaq_projects, infaq_donations, infaq_expenses TO service_role;
+-- these tables, so SELECT is all service_role needs here.
+GRANT SELECT ON infaq_projects, infaq_kutipan_mingguan, infaq_projek_kutipan, infaq_perbelanjaan_bulanan TO service_role;
 
 -- infaq_activity_log: a SEPARATE table from activity_log (kuliah's), by
 -- deliberate choice — independent auditability for money data. Same
@@ -312,3 +348,14 @@ CREATE POLICY "auth_all_infaq_activity_log" ON infaq_activity_log
 -- still needs the grant).
 GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_activity_log TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_activity_log TO service_role;
+
+
+-- ── 8b. One-time cleanup: pre-2026-07-21 infaq tables ─────────────────────────
+-- Only relevant if your database ran the OLD version of §8 (see the note at
+-- the top of §8) — drops the per-row donation/expense tables that version
+-- created, now unused after the redesign. Safe no-op (IF EXISTS) on a
+-- database that never had them, e.g. a fresh setup that only ever ran the
+-- current §8 above. Irreversible — check Supabase's Table Editor first if
+-- you're not sure whether infaq_donations/infaq_expenses hold real data.
+DROP TABLE IF EXISTS infaq_donations CASCADE;
+DROP TABLE IF EXISTS infaq_expenses CASCADE;

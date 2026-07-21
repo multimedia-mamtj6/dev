@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perbelanjaan Infaq — Admin MAMTJ6</title>
+  <title>Kutipan Projek — Admin MAMTJ6</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/admin/style.css">
@@ -21,29 +21,27 @@
       <a href="/admin/kuliah/ustaz.html" data-module="kuliah">Penceramah</a>
       <a href="ringkasan.html" data-module="infaq">Ringkasan</a>
       <a href="kutipan.html" data-module="infaq">Kutipan</a>
-      <a href="perbelanjaan.html" class="active" data-module="infaq">Perbelanjaan</a>
-      <a href="projek.html" data-module="infaq">Projek</a>
+      <a href="perbelanjaan.html" data-module="infaq">Perbelanjaan</a>
+      <a href="projek.html" class="active" data-module="infaq">Projek</a>
       <span class="spacer"></span>
       <button class="logout-btn" onclick="signOut()">Log Keluar</button>
     </div>
   </nav>
 
   <div class="page">
-    <div class="section-header">
-      <h1 class="section-title">Perbelanjaan Masjid</h1>
-      <button class="btn btn-primary" onclick="openAddModal()">+ Catat Perbelanjaan</button>
-    </div>
-    <p style="color:var(--text-muted);margin-top:-0.75rem;margin-bottom:1.25rem">
-      Direkodkan sebagai satu jumlah bagi setiap bulan — bukan setiap bil/resit.
-    </p>
-
-    <div class="filter-bar">
-      <div class="form-group">
-        <label for="filter-year">Tahun</label>
-        <select id="filter-year" onchange="applyYearFilter()"></select>
+    <div id="project-header">
+      <p style="margin-top:-0.5rem"><a href="projek.html">&larr; Kembali ke Projek</a></p>
+      <div class="section-header">
+        <h1 class="section-title">Kutipan: <span id="project-name">—</span></h1>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Catat Kutipan</button>
       </div>
-      <div class="form-group filter-actions" style="margin-left:auto">
-        <span style="color:var(--text-muted);font-size:0.875rem">Jumlah Tahunan: <strong id="year-total" style="color:var(--text)">RM 0.00</strong></span>
+      <p style="color:var(--text-muted);margin-top:-0.75rem">Status: <strong id="project-status">—</strong></p>
+
+      <div class="card" style="padding:1rem 1.25rem;margin-bottom:1.25rem">
+        <div class="infaq-progress-track">
+          <div class="infaq-progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <p id="progress-text" style="color:var(--text-muted);font-size:0.875rem;margin-top:0.5rem">RM 0.00 daripada RM 0.00 (0%)</p>
       </div>
     </div>
 
@@ -51,62 +49,51 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Bulan</th>
-            <th style="width:150px">Jumlah</th>
+            <th style="width:110px">Tarikh</th>
+            <th style="width:140px">Jumlah</th>
+            <th>Keterangan</th>
             <th style="width:120px">Tindakan</th>
           </tr>
         </thead>
-        <tbody id="expense-tbody">
+        <tbody id="donation-tbody">
           <tr>
-            <td colspan="3" class="state-cell">Memuatkan...</td>
+            <td colspan="4" class="state-cell">Memuatkan...</td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn-ghost" id="load-more-btn" onclick="loadMore()" style="display:none">Tunjuk 50 lagi</button>
+    </div>
   </div>
 
   <!-- ── Add / Edit modal ── -->
-  <div class="modal-overlay" id="expense-modal" onclick="handleOverlay(event)">
+  <div class="modal-overlay" id="donation-modal" onclick="handleOverlay(event)">
     <div class="modal">
       <div class="modal-header">
-        <span class="modal-title" id="expense-modal-title">Catat Perbelanjaan Bulanan</span>
+        <span class="modal-title" id="donation-modal-title">Catat Kutipan</span>
         <button class="modal-close" onclick="closeModal()">&times;</button>
       </div>
 
       <input type="hidden" id="edit-id">
 
       <div class="form-group">
-        <label for="edit-tahun">Tahun*</label>
-        <input type="number" id="edit-tahun" min="2000" max="2100" step="1">
+        <label for="edit-date">Tarikh*</label>
+        <input type="date" id="edit-date">
       </div>
       <div class="form-group">
-        <label for="edit-bulan">Bulan*</label>
-        <select id="edit-bulan">
-          <option value="1">Januari</option>
-          <option value="2">Februari</option>
-          <option value="3">Mac</option>
-          <option value="4">April</option>
-          <option value="5">Mei</option>
-          <option value="6">Jun</option>
-          <option value="7">Julai</option>
-          <option value="8">Ogos</option>
-          <option value="9">September</option>
-          <option value="10">Oktober</option>
-          <option value="11">November</option>
-          <option value="12">Disember</option>
-        </select>
+        <label for="edit-amount">Jumlah (RM)*</label>
+        <input type="number" id="edit-amount" min="0.01" step="0.01" placeholder="0.00">
       </div>
       <div class="form-group">
-        <label for="edit-jumlah">Jumlah (RM)*</label>
-        <input type="number" id="edit-jumlah" min="0.01" step="0.01" placeholder="0.00">
+        <label for="edit-keterangan">Keterangan</label>
+        <textarea id="edit-keterangan" rows="2" placeholder="Cth: Kutipan Tabung (Fizikal, 12/7/2026)"></textarea>
       </div>
-      <p style="color:var(--text-muted);font-size:0.8125rem;margin-top:-0.5rem">
-        Merekod bulan yang sudah wujud akan menggantikan jumlah sedia ada bagi bulan tersebut.
-      </p>
 
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
-        <button class="btn btn-primary" id="save-btn" onclick="saveRow()">Simpan</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveDonation()">Simpan</button>
       </div>
     </div>
   </div>
@@ -115,11 +102,11 @@
   <div class="modal-overlay" id="delete-modal" onclick="handleDeleteOverlay(event)">
     <div class="modal" style="max-width:360px">
       <div class="modal-header">
-        <span class="modal-title">Padam Rekod Perbelanjaan</span>
+        <span class="modal-title">Padam Rekod Kutipan</span>
         <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
       </div>
       <p style="color:var(--text-muted);margin-bottom:1.25rem">
-        Adakah anda pasti mahu memadam rekod perbelanjaan
+        Adakah anda pasti mahu memadam rekod kutipan
         <strong id="delete-label" style="color:var(--text)"></strong>? Tindakan ini tidak boleh diundur.
       </p>
       <div class="modal-footer">
@@ -131,7 +118,7 @@
 
   <script src="/admin/app.js"></script>
   <script src="/admin/infaq/infaq-common.js"></script>
-  <script src="/admin/infaq/perbelanjaan.js"></script>
+  <script src="/admin/infaq/projek-kutipan.js"></script>
 </body>
 
 </html>

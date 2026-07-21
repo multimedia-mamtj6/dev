@@ -30,27 +30,21 @@
 
   <div class="page">
     <div class="section-header">
-      <h1 class="section-title">Kutipan Infaq</h1>
+      <h1 class="section-title">Kutipan Infaq Mingguan</h1>
       <button class="btn btn-primary" onclick="openAddModal()">+ Catat Kutipan</button>
     </div>
+    <p style="color:var(--text-muted);margin-top:-0.75rem;margin-bottom:1.25rem">
+      Kutipan am (tabung Jumaat/harian), direkodkan sebagai satu jumlah bagi setiap minggu — bukan setiap penderma.
+      Untuk kutipan khas sesuatu projek, gunakan halaman <a href="projek.html">Projek</a>.
+    </p>
 
     <div class="filter-bar">
       <div class="form-group">
-        <label for="filter-from">Dari</label>
-        <input type="date" id="filter-from" onchange="applyFilters()">
+        <label for="filter-year">Tahun</label>
+        <select id="filter-year" onchange="applyYearFilter()"></select>
       </div>
-      <div class="form-group">
-        <label for="filter-to">Hingga</label>
-        <input type="date" id="filter-to" onchange="applyFilters()">
-      </div>
-      <div class="form-group">
-        <label for="filter-project">Projek</label>
-        <select id="filter-project" onchange="applyFilters()">
-          <option value="">Semua</option>
-        </select>
-      </div>
-      <div class="form-group filter-actions">
-        <button class="btn btn-ghost btn-sm" onclick="resetFilters()">Reset</button>
+      <div class="form-group filter-actions" style="margin-left:auto">
+        <span style="color:var(--text-muted);font-size:0.875rem">Jumlah Tahunan: <strong id="year-total" style="color:var(--text)">RM 0.00</strong></span>
       </div>
     </div>
 
@@ -58,68 +52,74 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width:110px">Tarikh</th>
-            <th style="width:120px">Jumlah</th>
-            <th style="width:110px">Kaedah</th>
-            <th>Projek</th>
-            <th>Nota</th>
+            <th style="width:90px">Tahun</th>
+            <th style="width:130px">Bulan</th>
+            <th style="width:110px">Minggu</th>
+            <th style="width:130px">Jumlah</th>
             <th style="width:120px">Tindakan</th>
           </tr>
         </thead>
-        <tbody id="donation-tbody">
+        <tbody id="kutipan-tbody">
           <tr>
-            <td colspan="6" class="state-cell">Memuatkan...</td>
+            <td colspan="5" class="state-cell">Memuatkan...</td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <div style="text-align:center;margin-top:1rem">
-      <button class="btn btn-ghost" id="load-more-btn" onclick="loadMore()" style="display:none">Tunjuk 50 lagi</button>
-    </div>
   </div>
 
   <!-- ── Add / Edit modal ── -->
-  <div class="modal-overlay" id="donation-modal" onclick="handleOverlay(event)">
+  <div class="modal-overlay" id="kutipan-modal" onclick="handleOverlay(event)">
     <div class="modal">
       <div class="modal-header">
-        <span class="modal-title" id="donation-modal-title">Catat Kutipan</span>
+        <span class="modal-title" id="kutipan-modal-title">Catat Kutipan Mingguan</span>
         <button class="modal-close" onclick="closeModal()">&times;</button>
       </div>
 
       <input type="hidden" id="edit-id">
 
       <div class="form-group">
-        <label for="edit-date">Tarikh*</label>
-        <input type="date" id="edit-date">
+        <label for="edit-tahun">Tahun*</label>
+        <input type="number" id="edit-tahun" min="2000" max="2100" step="1">
       </div>
       <div class="form-group">
-        <label for="edit-amount">Jumlah (RM)*</label>
-        <input type="number" id="edit-amount" min="0.01" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group">
-        <label for="edit-method">Kaedah</label>
-        <select id="edit-method">
-          <option value="tunai">Tunai / Tabung</option>
-          <option value="online">Pindahan Bank</option>
-          <option value="qr">QR / DuitNow</option>
-          <option value="lain">Lain-lain</option>
+        <label for="edit-bulan">Bulan*</label>
+        <select id="edit-bulan">
+          <option value="1">Januari</option>
+          <option value="2">Februari</option>
+          <option value="3">Mac</option>
+          <option value="4">April</option>
+          <option value="5">Mei</option>
+          <option value="6">Jun</option>
+          <option value="7">Julai</option>
+          <option value="8">Ogos</option>
+          <option value="9">September</option>
+          <option value="10">Oktober</option>
+          <option value="11">November</option>
+          <option value="12">Disember</option>
         </select>
       </div>
       <div class="form-group">
-        <label for="edit-project">Projek <span style="font-weight:400;color:var(--text-muted)">(jika kutipan ini untuk projek tertentu)</span></label>
-        <select id="edit-project">
-          <option value="">— Kutipan Am (bukan projek) —</option>
+        <label for="edit-minggu">Minggu*</label>
+        <select id="edit-minggu">
+          <option value="1">Minggu 1</option>
+          <option value="2">Minggu 2</option>
+          <option value="3">Minggu 3</option>
+          <option value="4">Minggu 4</option>
+          <option value="5">Minggu 5</option>
         </select>
       </div>
       <div class="form-group">
-        <label for="edit-note">Nota</label>
-        <textarea id="edit-note" rows="2" placeholder="Cth: Kutipan Jumaat, kotak tabung utama"></textarea>
+        <label for="edit-jumlah">Jumlah (RM)*</label>
+        <input type="number" id="edit-jumlah" min="0.01" step="0.01" placeholder="0.00">
       </div>
+      <p style="color:var(--text-muted);font-size:0.8125rem;margin-top:-0.5rem">
+        Merekod minggu yang sudah wujud akan menggantikan jumlah sedia ada bagi minggu tersebut.
+      </p>
 
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
-        <button class="btn btn-primary" id="save-btn" onclick="saveDonation()">Simpan</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveRow()">Simpan</button>
       </div>
     </div>
   </div>
