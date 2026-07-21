@@ -12,13 +12,13 @@ let currentAdmin = null;
 async function requireAuth() {
     const { data: { session } } = await db.auth.getSession();
     if (!session) {
-        window.location.replace('/kuliah/admin/index.html');
+        window.location.replace('/admin/index.html');
         return null;
     }
     const { data } = await db.from('admins').select('*').eq('email', session.user.email).single();
     if (!data) {
         await db.auth.signOut();
-        window.location.replace('/kuliah/admin/index.html?denied=1');
+        window.location.replace('/admin/index.html?denied=1');
         return null;
     }
     currentAdmin = data;
@@ -66,7 +66,7 @@ async function signInWithGoogle() {
     const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin + '/kuliah/admin/dashboard.html'
+            redirectTo: window.location.origin + '/admin/dashboard.html'
         }
     });
     if (error) {
@@ -77,7 +77,7 @@ async function signInWithGoogle() {
 
 async function signOut() {
     await db.auth.signOut();
-    window.location.replace('/kuliah/admin/index.html');
+    window.location.replace('/admin/index.html');
 }
 
 // ─── Toast notifications ──────────────────────────────────────────────────────

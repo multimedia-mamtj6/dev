@@ -6,7 +6,7 @@ let pendingDeleteEmail = null;
     if (!session) return;
     if (currentAdmin.role !== 'super_admin') {
         showToast('Akses ditolak. Halaman ini hanya untuk Super Admin.', 'error');
-        setTimeout(() => window.location.replace('/kuliah/admin/dashboard.html'), 2000);
+        setTimeout(() => window.location.replace('/admin/dashboard.html'), 2000);
         return;
     }
     await loadUsers();
