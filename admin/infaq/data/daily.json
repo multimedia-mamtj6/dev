@@ -1,0 +1,666 @@
+{
+  "projek": {
+    "NamaProjek": "Infaq Tabung Bangunan Tambahan MAMTJ6",
+    "SasaranKutipan": 250000,
+    "JumlahTerkumpul": 176314,
+    "Peratusan": 71
+  },
+  "paparanHarian": [
+    {
+      "tarikh": "2024-03-29",
+      "jumlah": 3053,
+      "keterangan": "Kutipan Tabung (Fizikal)"
+    },
+    {
+      "tarikh": "2024-04-03",
+      "jumlah": 3037,
+      "keterangan": "Kutipan Tabung (Fizikal, 2/4/2024)"
+    },
+    {
+      "tarikh": "2024-04-08",
+      "jumlah": 3849,
+      "keterangan": "Kutipan Tabung (Fizikal, 5/4/2024)"
+    },
+    {
+      "tarikh": "2024-04-08",
+      "jumlah": 4689,
+      "keterangan": "Kutipan Tabung (Fizikal, 8/4/2024)"
+    },
+    {
+      "tarikh": "2024-04-15",
+      "jumlah": 2737,
+      "keterangan": "Kutipan Tabung (Fizikal, 10/4/2024)"
+    },
+    {
+      "tarikh": "2024-04-15",
+      "jumlah": 4,
+      "keterangan": "Kutipan Tabung (Fizikal, 13/4/2024)"
+    },
+    {
+      "tarikh": "2024-04-15",
+      "jumlah": 776,
+      "keterangan": "Kutipan Tabung (Fizikal, 13/4/2024)"
+    },
+    {
+      "tarikh": "2024-04-30",
+      "jumlah": 2477,
+      "keterangan": "Kutipan Tabung (Fizikal, 19/4/2024)"
+    },
+    {
+      "tarikh": "2024-04-30",
+      "jumlah": 1932,
+      "keterangan": "Kutipan Tabung (Fizikal, 26/4/2024)"
+    },
+    {
+      "tarikh": "2024-05-07",
+      "jumlah": 1521,
+      "keterangan": "Kutipan Tabung (Fizikal, 3/5/2024)"
+    },
+    {
+      "tarikh": "2024-05-14",
+      "jumlah": 1502,
+      "keterangan": "Kutipan Tabung (Fizikal, 12/5/2024)"
+    },
+    {
+      "tarikh": "2024-05-23",
+      "jumlah": 1134,
+      "keterangan": "Kutipan Tabung (Fizikal, 17/5/2024)"
+    },
+    {
+      "tarikh": "2024-05-27",
+      "jumlah": 2097,
+      "keterangan": "Kutipan Tabung (Fizikal, 24/5/2024)"
+    },
+    {
+      "tarikh": "2024-06-04",
+      "jumlah": 1429,
+      "keterangan": "Kutipan Tabung (Fizikal, 31/5/2024)"
+    },
+    {
+      "tarikh": "2024-06-10",
+      "jumlah": 1563,
+      "keterangan": "Kutipan Tabung (Fizikal, 7/6/2024)"
+    },
+    {
+      "tarikh": "2024-06-18",
+      "jumlah": 1303,
+      "keterangan": "Kutipan Tabung (Fizikal, 14/6/2024)"
+    },
+    {
+      "tarikh": "2024-06-30",
+      "jumlah": 2331,
+      "keterangan": "Kutipan Tabung (Fizikal, 21/6/2024)"
+    },
+    {
+      "tarikh": "2024-07-01",
+      "jumlah": 1231,
+      "keterangan": "Kutipan Tabung (Fizikal, 28/6/2024)"
+    },
+    {
+      "tarikh": "2024-07-15",
+      "jumlah": 2535,
+      "keterangan": "Kutipan Tabung (Fizikal, 12/7/2024)"
+    },
+    {
+      "tarikh": "2024-07-22",
+      "jumlah": 345,
+      "keterangan": "Kutipan Tabung (Fizikal, 17/7/2024)"
+    },
+    {
+      "tarikh": "2024-07-22",
+      "jumlah": 1233,
+      "keterangan": "Kutipan Tabung (Fizikal, 19/7/2024)"
+    },
+    {
+      "tarikh": "2024-08-01",
+      "jumlah": 277.8,
+      "keterangan": "Kutipan Tabung (Fizikal, syiling 17/7/2024)"
+    },
+    {
+      "tarikh": "2024-08-01",
+      "jumlah": 1542,
+      "keterangan": "Kutipan Tabung (Fizikal, 26/7/2024)"
+    },
+    {
+      "tarikh": "2024-08-06",
+      "jumlah": 1253,
+      "keterangan": "Kutipan Tabung (Fizikal, 2/8/2024)"
+    },
+    {
+      "tarikh": "2024-08-09",
+      "jumlah": 1574,
+      "keterangan": "Kutipan Tabung (Fizikal, 9/8/2024)"
+    },
+    {
+      "tarikh": "2024-08-20",
+      "jumlah": 1462,
+      "keterangan": "Kutipan Tabung (Fizikal, 16/8/2024)"
+    },
+    {
+      "tarikh": "2024-08-26",
+      "jumlah": 1750,
+      "keterangan": "Kutipan Tabung (Fizikal, 23/8/2024)"
+    },
+    {
+      "tarikh": "2024-09-02",
+      "jumlah": 1400,
+      "keterangan": "Kutipan Tabung (Fizikal, 30/8/2024)"
+    },
+    {
+      "tarikh": "2024-09-10",
+      "jumlah": 1199,
+      "keterangan": "Kutipan Tabung (Fizikal, 6/9/2024)"
+    },
+    {
+      "tarikh": "2024-09-19",
+      "jumlah": 1223,
+      "keterangan": "Kutipan Tabung (Fizikal, 13/9/2024)"
+    },
+    {
+      "tarikh": "2024-09-24",
+      "jumlah": 2088,
+      "keterangan": "Kutipan Tabung (Fizikal, 20/9/2024)"
+    },
+    {
+      "tarikh": "2024-09-30",
+      "jumlah": 1565.2,
+      "keterangan": "Kutipan Tabung (Fizikal, 27/9/2024)"
+    },
+    {
+      "tarikh": "2024-10-09",
+      "jumlah": 1294,
+      "keterangan": "Kutipan Tabung (Fizikal, 4/10/2024)"
+    },
+    {
+      "tarikh": "2024-10-14",
+      "jumlah": 1300,
+      "keterangan": "Kutipan Tabung (Fizikal, 11/10/2024)"
+    },
+    {
+      "tarikh": "2024-10-21",
+      "jumlah": 1275,
+      "keterangan": "Kutipan Tabung (Fizikal, 18/10/2024)"
+    },
+    {
+      "tarikh": "2024-10-28",
+      "jumlah": 1113,
+      "keterangan": "Kutipan Tabung (Fizikal, 25/10/2024)"
+    },
+    {
+      "tarikh": "2024-11-04",
+      "jumlah": 1297,
+      "keterangan": "Kutipan Tabung (Fizikal, 1/11/2024)"
+    },
+    {
+      "tarikh": "2024-11-14",
+      "jumlah": 1222,
+      "keterangan": "Kutipan Tabung (Fizikal, 8/11/2024)"
+    },
+    {
+      "tarikh": "2024-11-18",
+      "jumlah": 1176,
+      "keterangan": "Kutipan Tabung (Fizikal, 15/11/2024)"
+    },
+    {
+      "tarikh": "2024-11-22",
+      "jumlah": 1681,
+      "keterangan": "Kutipan Tabung (Fizikal, 22/11/2024)"
+    },
+    {
+      "tarikh": "2024-12-02",
+      "jumlah": 1679,
+      "keterangan": "Kutipan Tabung (Fizikal, 1/12/2024)"
+    },
+    {
+      "tarikh": "2024-12-06",
+      "jumlah": 757,
+      "keterangan": "Kutipan Tabung (Fizikal, 6/12/2024)"
+    },
+    {
+      "tarikh": "2024-12-20",
+      "jumlah": 1128,
+      "keterangan": "Kutipan Tabung (Fizikal, 13/12/2024) [tarikh dibetulkan drpd 2022-12-20]"
+    },
+    {
+      "tarikh": "2024-12-23",
+      "jumlah": 1315,
+      "keterangan": "Kutipan Tabung (Fizikal, 20/12/2024)"
+    },
+    {
+      "tarikh": "2024-12-31",
+      "jumlah": 1071,
+      "keterangan": "Kutipan Tabung (Fizikal, 27/12/2024)"
+    },
+    {
+      "tarikh": "2025-01-06",
+      "jumlah": 1528,
+      "keterangan": "Kutipan Tabung (Fizikal, 3/01/2025)"
+    },
+    {
+      "tarikh": "2025-01-14",
+      "jumlah": 1409,
+      "keterangan": "Tabung (Fizikal, 10/01/2025 & Syilling 31/12/2024)"
+    },
+    {
+      "tarikh": "2025-01-21",
+      "jumlah": 1432,
+      "keterangan": "Tabung (Fizikal, 17/01/2025 & Jualan barang terpakai 20/01/2025)"
+    },
+    {
+      "tarikh": "2025-01-27",
+      "jumlah": 1232,
+      "keterangan": "Tabung (Fizikal, 24/01/2025)"
+    },
+    {
+      "tarikh": "2025-02-05",
+      "jumlah": 1099,
+      "keterangan": "Tabung (Fizikal, 31/01/2025)"
+    },
+    {
+      "tarikh": "2025-02-10",
+      "jumlah": 1410,
+      "keterangan": "Tabung (Fizikal, 07/02/2025)"
+    },
+    {
+      "tarikh": "2025-02-14",
+      "jumlah": 1292,
+      "keterangan": "Tabung (Fizikal, 14/02/2025)"
+    },
+    {
+      "tarikh": "2025-02-24",
+      "jumlah": 1261,
+      "keterangan": "Tabung (Fizikal, 21/02/2025)"
+    },
+    {
+      "tarikh": "2025-03-03",
+      "jumlah": 1234,
+      "keterangan": "Tabung (Fizikal, 28/02/2025)"
+    },
+    {
+      "tarikh": "2025-03-03",
+      "jumlah": 1300,
+      "keterangan": "Infaq seorang jemaah (2/03/2025)"
+    },
+    {
+      "tarikh": "2025-03-07",
+      "jumlah": 2068,
+      "keterangan": "Tabung (Fizikal, 7/03/2025)"
+    },
+    {
+      "tarikh": "2025-03-17",
+      "jumlah": 1463,
+      "keterangan": "Tabung (Fizikal, 14/03/2025)"
+    },
+    {
+      "tarikh": "2025-03-24",
+      "jumlah": 2046,
+      "keterangan": "Tabung (Fizikal, 21/03/2025)"
+    },
+    {
+      "tarikh": "2025-03-26",
+      "jumlah": 200,
+      "keterangan": "Infaq muslimah PPGPT (25/03/2025)"
+    },
+    {
+      "tarikh": "2025-03-30",
+      "jumlah": 500,
+      "keterangan": "Infaq jemaah (30/03/2025)"
+    },
+    {
+      "tarikh": "2025-04-05",
+      "jumlah": 200,
+      "keterangan": "Infaq jemaah (5/04/2025)"
+    },
+    {
+      "tarikh": "2025-04-07",
+      "jumlah": 3067,
+      "keterangan": "Tabung (Fizikal, 28/03/2025)"
+    },
+    {
+      "tarikh": "2025-04-08",
+      "jumlah": 1992,
+      "keterangan": "Tabung (Fizikal, 4/04/2025)"
+    },
+    {
+      "tarikh": "2025-04-11",
+      "jumlah": 1112,
+      "keterangan": "Tabung (Fizikal, 11/04/2025)"
+    },
+    {
+      "tarikh": "2025-04-18",
+      "jumlah": 1152,
+      "keterangan": "Tabung (Fizikal, 18/04/2025)"
+    },
+    {
+      "tarikh": "2025-04-28",
+      "jumlah": 1249,
+      "keterangan": "Tabung (Fizikal, 25/04/2025)"
+    },
+    {
+      "tarikh": "2025-05-05",
+      "jumlah": 1333,
+      "keterangan": "Tabung (Fizikal, 2/05/2025)"
+    },
+    {
+      "tarikh": "2025-05-09",
+      "jumlah": 1065,
+      "keterangan": "Tabung (Fizikal, 9/05/2025)"
+    },
+    {
+      "tarikh": "2025-05-19",
+      "jumlah": 896,
+      "keterangan": "Tabung (Fizikal, 16/05/2025)"
+    },
+    {
+      "tarikh": "2025-05-28",
+      "jumlah": 1160,
+      "keterangan": "Tabung (Fizikal, 23/05/2025)"
+    },
+    {
+      "tarikh": "2025-06-03",
+      "jumlah": 966,
+      "keterangan": "Tabung (Fizikal, 30/05/2025)"
+    },
+    {
+      "tarikh": "2025-06-09",
+      "jumlah": 2187,
+      "keterangan": "Tabung (Fizikal, 6/06/2025)"
+    },
+    {
+      "tarikh": "2025-06-18",
+      "jumlah": 1725,
+      "keterangan": "Tabung (Fizikal, 13/06/2025)"
+    },
+    {
+      "tarikh": "2025-06-24",
+      "jumlah": 1195,
+      "keterangan": "Tabung (Fizikal, 20/06/2025)"
+    },
+    {
+      "tarikh": "2025-07-02",
+      "jumlah": 1427,
+      "keterangan": "Tabung (Fizikal, 27/06/2025)"
+    },
+    {
+      "tarikh": "2025-07-06",
+      "jumlah": 2100,
+      "keterangan": "Infaq jemaah (serahan cek, 1/7/2025)"
+    },
+    {
+      "tarikh": "2025-07-07",
+      "jumlah": 1205,
+      "keterangan": "Tabung (Fizikal, 4/07/2025)"
+    },
+    {
+      "tarikh": "2025-07-14",
+      "jumlah": 1186,
+      "keterangan": "Tabung (Fizikal, 11/07/2025)"
+    },
+    {
+      "tarikh": "2025-07-22",
+      "jumlah": 1477,
+      "keterangan": "Tabung (Fizikal, 18/07/2025)"
+    },
+    {
+      "tarikh": "2025-07-29",
+      "jumlah": 739,
+      "keterangan": "Tabung (Fizikal, 25/07/2025)"
+    },
+    {
+      "tarikh": "2025-08-04",
+      "jumlah": 1199,
+      "keterangan": "Tabung (Fizikal, 01/08/2025)"
+    },
+    {
+      "tarikh": "2025-08-11",
+      "jumlah": 839,
+      "keterangan": "Tabung (Fizikal, 08/08/2025)"
+    },
+    {
+      "tarikh": "2025-08-19",
+      "jumlah": 1410,
+      "keterangan": "Tabung (Fizikal, 15/08/2025)"
+    },
+    {
+      "tarikh": "2025-08-27",
+      "jumlah": 1067,
+      "keterangan": "Tabung (Fizikal, 22/08/2025)"
+    },
+    {
+      "tarikh": "2025-09-02",
+      "jumlah": 2482,
+      "keterangan": "Tabung (Fizikal, 29/08/2025)"
+    },
+    {
+      "tarikh": "2025-09-09",
+      "jumlah": 1003,
+      "keterangan": "Tabung (Fizikal, 5/09/2025)"
+    },
+    {
+      "tarikh": "2025-09-18",
+      "jumlah": 1282,
+      "keterangan": "Tabung (Fizikal, 12/09/2025)"
+    },
+    {
+      "tarikh": "2025-09-23",
+      "jumlah": 924,
+      "keterangan": "Tabung (Fizikal, 19/09/2025)"
+    },
+    {
+      "tarikh": "2025-09-30",
+      "jumlah": 1147,
+      "keterangan": "Tabung (Fizikal, 26/09/2025)"
+    },
+    {
+      "tarikh": "2025-10-06",
+      "jumlah": 1055,
+      "keterangan": "Tabung (Fizikal, 3/10/2025)"
+    },
+    {
+      "tarikh": "2025-10-14",
+      "jumlah": 964,
+      "keterangan": "Tabung (Fizikal, 10/10/2025)"
+    },
+    {
+      "tarikh": "2025-10-14",
+      "jumlah": 381,
+      "keterangan": "Tabung (Fizikal, Syiling 3/10/2025)"
+    },
+    {
+      "tarikh": "2025-10-21",
+      "jumlah": 1001,
+      "keterangan": "Tabung (Fizikal, 17/10/2025)"
+    },
+    {
+      "tarikh": "2025-10-27",
+      "jumlah": 1030,
+      "keterangan": "Tabung (Fizikal, 24/10/2025)"
+    },
+    {
+      "tarikh": "2025-11-04",
+      "jumlah": 1429,
+      "keterangan": "Tabung (Fizikal, 31/10/2025)"
+    },
+    {
+      "tarikh": "2025-11-10",
+      "jumlah": 1240,
+      "keterangan": "Tabung (Fizikal, 7/11/2025)"
+    },
+    {
+      "tarikh": "2025-11-20",
+      "jumlah": 1013,
+      "keterangan": "Tabung (Fizikal, 14/11/2025)"
+    },
+    {
+      "tarikh": "2025-11-24",
+      "jumlah": 1139,
+      "keterangan": "Tabung (Fizikal, 21/11/2025)"
+    },
+    {
+      "tarikh": "2025-12-01",
+      "jumlah": 1171,
+      "keterangan": "Tabung (Fizikal, 28/11/2025)"
+    },
+    {
+      "tarikh": "2025-12-08",
+      "jumlah": 1108,
+      "keterangan": "Tabung (Fizikal, 5/12/2025)"
+    },
+    {
+      "tarikh": "2025-12-19",
+      "jumlah": 1241,
+      "keterangan": "Tabung (Fizikal, 12/12/2025)"
+    },
+    {
+      "tarikh": "2025-12-19",
+      "jumlah": 1040,
+      "keterangan": "Tabung (Fizikal, 19/12/2025)"
+    },
+    {
+      "tarikh": "2025-12-31",
+      "jumlah": 844,
+      "keterangan": "Tabung (Fizikal, 26/12/2025)"
+    },
+    {
+      "tarikh": "2026-01-05",
+      "jumlah": 2391,
+      "keterangan": "Tabung (Fizikal & tunai, 2/1/2026)"
+    },
+    {
+      "tarikh": "2026-01-12",
+      "jumlah": 855,
+      "keterangan": "Tabung (Fizikal, 9/1/2026)"
+    },
+    {
+      "tarikh": "2026-01-16",
+      "jumlah": 869,
+      "keterangan": "Tabung (Fizikal, 16/1/2026)"
+    },
+    {
+      "tarikh": "2026-01-28",
+      "jumlah": 1003,
+      "keterangan": "Tabung (Fizikal, 23/1/2026)"
+    },
+    {
+      "tarikh": "2026-02-02",
+      "jumlah": 1006,
+      "keterangan": "Tabung (Fizikal, 30/1/2026)"
+    },
+    {
+      "tarikh": "2026-02-09",
+      "jumlah": 1123,
+      "keterangan": "Tabung (Fizikal, 6/02/2026)"
+    },
+    {
+      "tarikh": "2026-02-16",
+      "jumlah": 1160,
+      "keterangan": "Tabung (Fizikal, 6/02/2026)"
+    },
+    {
+      "tarikh": "2026-03-19",
+      "jumlah": 500,
+      "keterangan": "Infaq Jemaah (Fizikal, 19/03/2026)"
+    },
+    {
+      "tarikh": "2026-03-25",
+      "jumlah": 670,
+      "keterangan": "Tabung (Fizikal, 21/03/2026), 1 syawal"
+    },
+    {
+      "tarikh": "2026-03-30",
+      "jumlah": 1411,
+      "keterangan": "Tabung (Fizikal, 27/03/2026)"
+    },
+    {
+      "tarikh": "2026-04-03",
+      "jumlah": 911,
+      "keterangan": "Tabung (Fizikal, 3/04/2026)"
+    },
+    {
+      "tarikh": "2026-04-10",
+      "jumlah": 1065,
+      "keterangan": "Tabung (Fizikal, 10/04/2026)"
+    },
+    {
+      "tarikh": "2026-04-20",
+      "jumlah": 1002,
+      "keterangan": "Tabung (Fizikal, 17/04/2026)"
+    },
+    {
+      "tarikh": "2026-04-24",
+      "jumlah": 1159,
+      "keterangan": "Tabung (Fizikal, 20/04/2026)"
+    },
+    {
+      "tarikh": "2026-05-05",
+      "jumlah": 1208,
+      "keterangan": "Tabung (Fizikal, 1/05/2026)"
+    },
+    {
+      "tarikh": "2026-05-08",
+      "jumlah": 1172,
+      "keterangan": "Tabung (Fizikal, 8/05/2026)"
+    },
+    {
+      "tarikh": "2026-05-15",
+      "jumlah": 1131,
+      "keterangan": "Tabung (Fizikal, 15/05/2026)"
+    },
+    {
+      "tarikh": "2026-05-25",
+      "jumlah": 1586,
+      "keterangan": "Tabung (Fizikal, 22/05/2026)"
+    },
+    {
+      "tarikh": "2026-06-03",
+      "jumlah": 1216,
+      "keterangan": "Tabung (Fizikal, 29/05/2026)"
+    },
+    {
+      "tarikh": "2026-06-08",
+      "jumlah": 1030,
+      "keterangan": "Tabung (Fizikal, 5/06/2026)"
+    },
+    {
+      "tarikh": "2026-06-15",
+      "jumlah": 1198,
+      "keterangan": "Tabung (Fizikal, 12/06/2026)"
+    },
+    {
+      "tarikh": "2026-06-22",
+      "jumlah": 1107,
+      "keterangan": "Tabung (Fizikal, 19/06/2026)"
+    },
+    {
+      "tarikh": "2026-07-01",
+      "jumlah": 1047,
+      "keterangan": "Tabung (Fizikal, 26/06/2026)"
+    },
+    {
+      "tarikh": "2026-07-07",
+      "jumlah": 1099,
+      "keterangan": "Tabung (Fizikal, 3/07/2026)"
+    },
+    {
+      "tarikh": "2026-07-12",
+      "jumlah": 1000,
+      "keterangan": "Infaq Jemaah (Tunai, 12/07/2026)"
+    },
+    {
+      "tarikh": "2026-07-12",
+      "jumlah": 600,
+      "keterangan": "Infaq Jemaah (Tunai, 12/07/2026)"
+    },
+    {
+      "tarikh": "2026-07-20",
+      "jumlah": 2209,
+      "keterangan": "Tabung (Fizikal, 17/7/2026)"
+    },
+    {
+      "tarikh": "2026-07-20",
+      "jumlah": 250,
+      "keterangan": "Infaq Jemaah (Tunai, 20/07/2026)"
+    }
+  ],
+  "tarikhKemaskini": "2026-07-21T08:59:47.052Z"
+}
