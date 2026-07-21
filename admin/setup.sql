@@ -132,8 +132,8 @@ CREATE POLICY "auth_delete_kuliah_assets" ON storage.objects
 --
 -- In Supabase Dashboard → Authentication → URL Configuration:
 --   Add these redirect URLs (replace with your actual domain):
---     https://dev.mamtj6.com/kuliah/admin/dashboard.html
---     http://localhost:8000/kuliah/admin/dashboard.html    ← for local dev
+--     https://dev.mamtj6.com/admin/dashboard.html
+--     http://localhost:8000/admin/dashboard.html    ← for local dev
 
 
 -- ── 5b. Bootstrap the first super_admin (manual, one-time) ────────────────────
@@ -166,7 +166,7 @@ ON CONFLICT (short_name) DO NOTHING;
 -- Records who changed what across the dashboard (schedule edits, ustaz CRUD,
 -- admin-account CRUD, Terbitkan/publish). Written by the client (and by
 -- api/publish.js server-side for the publish action) right after each
--- successful write — see kuliah/admin/app.js's logActivity(). Not run
+-- successful write — see admin/app.js's logActivity(). Not run
 -- automatically; run this manually in the Supabase SQL editor.
 
 CREATE TABLE IF NOT EXISTS activity_log (

@@ -1,23 +1,28 @@
 # kuliah
 
-Admin dashboard and public schedule view for Masjid Al-Mukhlisin lecture schedule.
+Public schedule view and digital signage for Masjid Al-Mukhlisin lecture schedule.
+The admin CMS dashboard moved to root `admin/` on 2026-07-19 — see `admin/README`-equivalent
+docs (`admin/CLAUDE.md`, `admin/developer.md`) for that side.
 
 ## Sub-projects
 
-### `admin/` — CMS Dashboard
+### `admin/` (root, not under `kuliah/`) — CMS Dashboard
 
-Full admin interface for committee members to manage the lecture schedule.
+Full admin interface for committee members to manage the lecture schedule. Documented in
+`admin/CLAUDE.md` and `admin/developer.md`, not here — this file only covers the two
+public-facing sub-projects below.
 
 **Access:**
 ```
-/kuliah/admin/index.html      ← Login (Google OAuth)
-/kuliah/admin/dashboard.html  ← Monthly schedule editor
-/kuliah/admin/ustaz.html      ← Penceramah management
-/kuliah/admin/users.html      ← Admin user accounts (super_admin only)
-/kuliah/admin/userlog.html    ← Activity log / changelog (super_admin only)
+/admin/index.html      ← Login (Google OAuth)
+/admin/dashboard.html  ← Monthly schedule editor
+/admin/ustaz.html      ← Penceramah management
+/admin/users.html      ← Admin user accounts (super_admin only)
+/admin/userlog.html    ← Activity log / changelog (super_admin only)
 ```
 
-Live at: `dev.mamtj6.com/kuliah/admin/`
+Live at: `dev.mamtj6.com/admin/`. Old `/kuliah/admin/...` URLs redirect here automatically
+(zero-JS stubs kept for any bookmarks/links still pointing at the pre-move path).
 
 **Features:**
 - Google OAuth login — only pre-registered emails can access
@@ -81,11 +86,11 @@ The old per-page URLs (`today_subuh.html` etc.) still work — they're zero-JS r
 
 ## Development
 
-See [`developer.md`](developer.md) for full setup, file map, and architecture.
+See `admin/developer.md` for the admin dashboard's setup/file map/architecture.
 
 ```bash
 python -m http.server
-# Open http://localhost:8000/kuliah/admin/index.html
+# Open http://localhost:8000/kuliah/jadual/index.html
 ```
 
 ---

@@ -1,11 +1,13 @@
-# kuliah/admin — Developer Guide
+# admin — Developer Guide
+
+_Moved here from `kuliah/admin/` on 2026-07-19 — see `admin/plan.md` and `admin/CLAUDE.md`._
 
 ## Quick start
 
 ```bash
 # From repo root
 python -m http.server
-# Open http://localhost:8000/kuliah/admin/index.html
+# Open http://localhost:8000/admin/index.html
 ```
 
 Admin pages fetch from Supabase — they work on `file://` for layout but auth and data require HTTP.
@@ -200,7 +202,7 @@ Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
 {
   "headers": [
     {
-      "source": "/kuliah/admin/(.*)",
+      "source": "/admin/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
   ]
