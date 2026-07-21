@@ -23,24 +23,51 @@ async function requireAuth() {
     }
     currentAdmin = data;
     _injectSuperAdminNav();
+    _hideUnauthorizedModuleLinks();
     return session;
 }
 
+// Every module's dashboard sits at a different depth now (admin/kuliah/,
+// admin/infaq/) — used for the OAuth return URL and any "no access, go
+// somewhere sane" redirect. Returns null when the admin has no module
+// access at all; callers must show a message in that case, never redirect
+// (redirecting to another gated/denied page is how you get a bounce loop).
+function defaultLandingPageFor(admin) {
+    if (!admin) return null;
+    if (admin.role === 'super_admin' || admin.permissions?.kuliah) return '/admin/kuliah/dashboard.html';
+    if (admin.permissions?.infaq) return '/admin/infaq/ringkasan.html';
+    return null;
+}
+
 // Inject "Pengguna" / "Log Aktiviti" nav links for super_admin (non-super admins never see them)
+// NOTE: hrefs must be absolute (/admin/users.html) — this gets injected into
+// pages living a level deeper now (admin/kuliah/*, admin/infaq/*), where a
+// bare-relative href would resolve into the wrong directory under cleanUrls.
 function _injectSuperAdminNav() {
     if (currentAdmin?.role !== 'super_admin') return;
     const navLinks = document.querySelector('.nav-links');
     if (!navLinks) return;
     const spacer = navLinks.querySelector('.spacer');
     [
-        { href: 'users.html',   label: 'Pengguna' },
-        { href: 'userlog.html', label: 'Log Aktiviti' },
+        { href: '/admin/users.html',   label: 'Pengguna' },
+        { href: '/admin/userlog.html', label: 'Log Aktiviti' },
     ].forEach(({ href, label }) => {
         if (navLinks.querySelector(`a[href="${href}"]`)) return;
         const link = document.createElement('a');
         link.href = href;
         link.textContent = label;
         navLinks.insertBefore(link, spacer);
+    });
+}
+
+// Hides nav links tagged data-module="kuliah"/"infaq" the current admin
+// can't use. super_admin always sees everything. Runs after
+// _injectSuperAdminNav() so it also covers pages with no module links at
+// all (users.html/userlog.html — nothing to hide, no-op there).
+function _hideUnauthorizedModuleLinks() {
+    if (currentAdmin?.role === 'super_admin') return;
+    document.querySelectorAll('.nav-links a[data-module]').forEach(a => {
+        if (!currentAdmin?.permissions?.[a.dataset.module]) a.style.display = 'none';
     });
 }
 
@@ -66,7 +93,7 @@ async function signInWithGoogle() {
     const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin + '/admin/dashboard.html'
+            redirectTo: window.location.origin + '/admin/kuliah/dashboard.html'
         }
     });
     if (error) {
@@ -159,13 +186,14 @@ function formatRelativeMY(iso) {
 }
 
 // ─── Activity log ─────────────────────────────────────────────────────────────
-// Fire-and-forget insert into activity_log, called right after a mutating write
-// already succeeded. Never throws/toasts — a logging failure must not make the
-// admin think their actual save/delete/publish failed when it didn't.
-async function logActivity(action, targetLabel, detail) {
+// Fire-and-forget insert into activity_log (or infaq_activity_log — infaq is
+// a deliberately separate table, see admin/setup.sql), called right after a
+// mutating write already succeeded. Never throws/toasts — a logging failure
+// must not make the admin think their actual save/delete/publish failed.
+async function logActivity(action, targetLabel, detail, table = 'activity_log') {
     if (!currentAdmin) return;
     try {
-        const { error } = await db.from('activity_log').insert({
+        const { error } = await db.from(table).insert({
             actor_email:  currentAdmin.email,
             actor_name:   currentAdmin.name || null,
             action,

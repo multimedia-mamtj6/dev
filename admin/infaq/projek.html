@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projek Infaq — Admin MAMTJ6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+
+<body>
+
+  <nav id="main-nav">
+    <span class="brand">Admin Kuliah</span>
+    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <div class="nav-links">
+      <a href="/admin/kuliah/dashboard.html" data-module="kuliah">Jadual</a>
+      <a href="/admin/kuliah/ustaz.html" data-module="kuliah">Penceramah</a>
+      <a href="ringkasan.html" data-module="infaq">Ringkasan</a>
+      <a href="kutipan.html" data-module="infaq">Kutipan</a>
+      <a href="perbelanjaan.html" data-module="infaq">Perbelanjaan</a>
+      <a href="projek.html" class="active" data-module="infaq">Projek</a>
+      <span class="spacer"></span>
+      <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="section-header">
+      <h1 class="section-title">Projek Kutipan</h1>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Tambah Projek</button>
+    </div>
+
+    <p style="margin-bottom:1rem;font-size:0.8125rem;color:var(--text-muted)">
+      Kutipan am (tiada projek) tetap dikira dalam ringkasan bulanan/tahunan tanpa mengira senarai ini.
+      Hanya satu projek boleh aktif pada satu masa — jumlah terkumpul projek aktif dikira daripada
+      kutipan yang dikaitkan dengannya sahaja.
+    </p>
+
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nama Projek</th>
+            <th style="width:120px">Sasaran</th>
+            <th style="width:120px">Terkumpul</th>
+            <th style="width:90px">Peratusan</th>
+            <th style="width:90px">Status</th>
+            <th style="width:190px">Tindakan</th>
+          </tr>
+        </thead>
+        <tbody id="project-tbody">
+          <tr>
+            <td colspan="6" class="state-cell">Memuatkan...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Add / Edit modal ── -->
+  <div class="modal-overlay" id="project-modal" onclick="handleOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="project-modal-title">Tambah Projek</span>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+
+      <input type="hidden" id="edit-id">
+
+      <div class="form-group">
+        <label for="edit-name">Nama Projek*</label>
+        <input type="text" id="edit-name" placeholder="Cth: Pembinaan Dewan Serbaguna MAMTJ6">
+      </div>
+      <div class="form-group">
+        <label for="edit-target">Sasaran Kutipan (RM)*</label>
+        <input type="number" id="edit-target" min="1" step="0.01" placeholder="500000">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveProject()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Activate confirm modal ── -->
+  <div class="modal-overlay" id="activate-modal" onclick="handleActivateOverlay(event)">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <span class="modal-title">Jadikan Projek Aktif</span>
+        <button class="modal-close" onclick="closeActivateModal()">&times;</button>
+      </div>
+      <p id="activate-modal-text" style="color:var(--text-muted);margin-bottom:1.25rem"></p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeActivateModal()">Batal</button>
+        <button class="btn btn-primary" id="confirm-activate-btn" onclick="confirmActivate()">Jadikan Aktif</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete confirm modal ── -->
+  <div class="modal-overlay" id="delete-modal" onclick="handleDeleteOverlay(event)">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-header">
+        <span class="modal-title">Padam Projek</span>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:1.25rem">
+        Adakah anda pasti mahu memadam projek
+        <strong id="delete-name" style="color:var(--text)"></strong>? Tindakan ini tidak boleh diundur.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+        <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Padam</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin/app.js"></script>
+  <script src="/admin/infaq/infaq-common.js"></script>
+  <script src="/admin/infaq/projek.js"></script>
+</body>
+
+</html>

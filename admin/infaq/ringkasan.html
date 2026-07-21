@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ringkasan Infaq — Admin MAMTJ6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+
+<body>
+
+  <nav id="main-nav">
+    <span class="brand">Admin Kuliah</span>
+    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <div class="nav-links">
+      <a href="/admin/kuliah/dashboard.html" data-module="kuliah">Jadual</a>
+      <a href="/admin/kuliah/ustaz.html" data-module="kuliah">Penceramah</a>
+      <a href="ringkasan.html" class="active" data-module="infaq">Ringkasan</a>
+      <a href="kutipan.html" data-module="infaq">Kutipan</a>
+      <a href="perbelanjaan.html" data-module="infaq">Perbelanjaan</a>
+      <a href="projek.html" data-module="infaq">Projek</a>
+      <span class="spacer"></span>
+      <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="section-header">
+      <h1 class="section-title">Ringkasan Infaq</h1>
+      <button class="btn btn-primary" id="publish-btn" onclick="publishInfaq()">Terbitkan</button>
+    </div>
+
+    <p style="margin-top:0.25rem;margin-bottom:0.5rem;font-size:0.75rem;color:var(--text-muted)">
+      Tekan <strong>Terbitkan</strong> untuk mengira semula ringkasan daripada rekod kutipan/perbelanjaan
+      dan menghantarnya ke laman web.
+    </p>
+    <p class="schedule-actions-note" id="last-published-note" style="display:none;font-weight:600"></p>
+
+    <h2 class="infaq-section-subtitle">Kutipan</h2>
+    <div class="infaq-stat-grid">
+      <div class="card infaq-stat-card">
+        <span class="infaq-stat-label">Bulan Ini</span>
+        <span class="infaq-stat-value" id="stat-kutipan-ini">—</span>
+      </div>
+      <div class="card infaq-stat-card">
+        <span class="infaq-stat-label">Bulan Lepas</span>
+        <span class="infaq-stat-value" id="stat-kutipan-lepas">—</span>
+      </div>
+      <div class="card infaq-stat-card">
+        <span class="infaq-stat-label">Tahun Ini</span>
+        <span class="infaq-stat-value" id="stat-kutipan-tahun">—</span>
+      </div>
+    </div>
+
+    <h2 class="infaq-section-subtitle">Perbelanjaan</h2>
+    <div class="infaq-stat-grid">
+      <div class="card infaq-stat-card">
+        <span class="infaq-stat-label">Bulan Ini</span>
+        <span class="infaq-stat-value" id="stat-belanja-ini">—</span>
+      </div>
+      <div class="card infaq-stat-card">
+        <span class="infaq-stat-label">Bulan Lepas</span>
+        <span class="infaq-stat-value" id="stat-belanja-lepas">—</span>
+      </div>
+      <div class="card infaq-stat-card">
+        <span class="infaq-stat-label">Tahun Ini</span>
+        <span class="infaq-stat-value" id="stat-belanja-tahun">—</span>
+      </div>
+    </div>
+
+    <h2 class="infaq-section-subtitle">Projek Aktif</h2>
+    <div class="card" id="project-card" style="display:none;padding:1.25rem">
+      <h3 style="margin:0 0 0.75rem;font-size:0.9375rem" id="project-name"></h3>
+      <div class="infaq-progress-track">
+        <div class="infaq-progress-fill" id="project-progress-fill" style="width:0%"></div>
+      </div>
+      <p style="margin-top:0.5rem;color:var(--text-muted);font-size:0.8125rem" id="project-progress-text"></p>
+      <a href="projek.html" style="font-size:0.8125rem">Urus projek →</a>
+    </div>
+    <div class="card" id="no-project-card">
+      <div class="state-cell">Tiada projek aktif ketika ini. <a href="projek.html">Tetapkan satu →</a></div>
+    </div>
+  </div>
+
+  <script src="/admin/app.js"></script>
+  <script src="/admin/infaq/infaq-common.js"></script>
+  <script src="/admin/infaq/ringkasan.js"></script>
+</body>
+
+</html>

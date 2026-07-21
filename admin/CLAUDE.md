@@ -8,19 +8,29 @@ architecture reference; the plan file is a one-time historical record.
 
 ## What this is
 
-`admin/` is a full CMS admin dashboard for MAMTJ6 mosque lecture schedule
-management. Committee members log in with Google OAuth and manage:
-- Monthly lecture schedules (subuh + maghrib sessions per day)
-- Ustaz (penceramah) list with poster images
-- Admin user accounts (super_admin only)
-- Quick access to the live published schedule ("Lihat Terbitan" dropdown: view/export PDF, current + next month only)
-- Bulk month actions ("Tindakan Bulan" dropdown: duplicate the previous month's ustaz assignments forward, or clear a month's data entirely)
+`admin/` is a full CMS admin dashboard for MAMTJ6 mosque management, hosting
+two independent modules as of 2026-07-19:
 
-It sits at the repo root because it's becoming a multi-module hub (kuliah now,
-other modules planned later) — `kuliah/admin/` would have been misleading
-once it hosted non-kuliah modules. `kuliah/jadual/` is the public-facing
-read-only schedule view that reads from the same published JSON — see
-`kuliah/CLAUDE.md` for that side.
+- **`admin/kuliah/`** — lecture schedule management. Committee members log in
+  with Google OAuth and manage: monthly lecture schedules (subuh + maghrib
+  sessions per day), the ustaz (penceramah) list with poster images, quick
+  access to the live published schedule ("Lihat Terbitan" dropdown), and bulk
+  month actions ("Tindakan Bulan": duplicate the previous month forward, or
+  clear a month entirely).
+- **`admin/infaq/`** — donation/expense tracking. Individual donation and
+  expense entries are logged as raw rows; weekly/monthly/yearly rollups and
+  active-project progress are always **computed**, never typed in directly
+  (see `api/publish-infaq.js`).
+
+Shared/cross-module concerns (login, nav shell, admin-user management,
+activity-log viewer) stay flat at `admin/` root — see File Structure below.
+It sits at the repo root, rather than under `kuliah/`, specifically *because*
+it's a multi-module hub — `kuliah/admin/` would have been misleading once it
+hosted non-kuliah modules. `kuliah/jadual/` is the public-facing read-only
+schedule view that reads kuliah's published JSON — see `kuliah/CLAUDE.md` for
+that side. **infaq has no public-facing page yet** — its published JSON lands
+in this repo (`infaq/data/`) but nothing reads it publicly yet, by deliberate
+choice (see `admin/infaq/`'s own history in `admin/DEV_NOTES.MD`).
 
 ## Tech Stack
 
@@ -33,28 +43,42 @@ read-only schedule view that reads from the same published JSON — see
 
 ```
 admin/
-  index.html       ← Login page (Google OAuth)
-  app.js           ← Shared: Supabase client, auth, toast, nav injection
-  style.css        ← All admin styles (desktop + mobile ≤640px)
-  dashboard.html   ← Monthly calendar + day editor modal
-  dashboard.js     ← Calendar render, day save, publish
-  ustaz.html       ← Penceramah CRUD
-  ustaz.js         ← Ustaz load/sort/save/delete, poster upload/URL/remove
-  users.html       ← Admin user management (super_admin only)
-  users.js         ← User CRUD
-  userlog.html     ← Activity log / changelog (super_admin only)
-  userlog.js       ← Log load/render/paginate
-  setup.sql        ← Supabase schema reference (do not run blindly)
+  index.html       ← Login page (Google OAuth) — shared, module-agnostic
+  app.js           ← Shared: Supabase client, auth, toast, nav injection/hiding,
+                      defaultLandingPageFor(), logActivity(action, label, detail, table)
+  style.css        ← All admin styles (desktop + mobile ≤640px), incl. infaq stat cards/progress bar
+  users.html/.js   ← Admin user management (super_admin only) — perm-kuliah + perm-infaq checkboxes
+  userlog.html/.js ← Activity log viewer for `activity_log` (super_admin only) — kuliah only, does
+                      NOT yet show infaq_activity_log rows (flagged, not built — see DEV_NOTES)
+  setup.sql        ← Supabase schema reference for ALL tables, both modules (do not run blindly)
   database.md      ← Full database docs: setup from scratch, schema, RLS/GRANT model, troubleshooting
   DEV_NOTES.MD     ← Session-to-session context memo (read before touching anything)
   developer.md     ← Developer setup and architecture guide
-  plan.md          ← One-time record of the kuliah/admin/ → admin/ move (2026-07-19)
+  plan.md          ← Historical record of the kuliah/admin/ → admin/ move (2026-07-19)
 
+  kuliah/          ← Module: lecture schedule (moved here from admin/ root 2026-07-19)
+    dashboard.html/.js ← Monthly calendar + day editor modal, Terbitkan
+    ustaz.html/.js     ← Penceramah CRUD
+
+  infaq/           ← Module: donation/expense tracking (new 2026-07-19)
+    infaq-common.js    ← Shared across this module: requireInfaqAccess(), formatRM(),
+                          INFAQ_METHOD_LABELS, populateProjectSelect()
+    ringkasan.html/.js ← Module landing page: stat cards, active-project progress, Terbitkan
+    kutipan.html/.js   ← Donation entries CRUD (paginated/filtered, like userlog.js)
+    perbelanjaan.html/.js ← Expense entries CRUD (paginated/filtered, same shape as kutipan)
+    projek.html/.js    ← Fundraising project settings CRUD (small list, like ustaz.js)
+
+admin/dashboard.html, admin/ustaz.html  ← 2 zero-JS redirect stubs → admin/kuliah/... (old bare
+                                            /admin/ URLs, pre-module-restructure, kept working)
 kuliah/
-  admin/           ← 5 zero-JS meta-refresh redirect stubs → /admin/... (old URLs kept working)
+  admin/           ← 5 zero-JS meta-refresh redirect stubs → /admin/... (URLs from BEFORE the
+                      kuliah/admin/ → admin/ move, kept working)
   jadual/          ← Public schedule view (see kuliah/CLAUDE.md)
   paparan/         ← Digital signage (see kuliah/CLAUDE.md)
-  data/jadual_lengkap_v2.json ← Published data this dashboard writes, that jadual/paparan read
+  data/jadual_lengkap_v2.json ← Published data admin/kuliah/ writes, that jadual/paparan read
+
+infaq/data/data.json, infaq/data/perbelanjaan.json ← Published data admin/infaq/ writes
+                                                        (api/publish-infaq.js) — no reader yet
 ```
 
 ## Supabase Schema
@@ -79,21 +103,52 @@ subuh_pending boolean DEFAULT false,   -- "Belum Ditetapkan", mutually exclusive
 maghrib_pending boolean DEFAULT false,
 cuti_umum text, updated_at timestamptz
 
--- activity_log: accountability changelog (see Key Patterns below)
+-- activity_log: accountability changelog for the kuliah module (see Key Patterns below)
 id uuid PK, created_at timestamptz,
 actor_email text NOT NULL, actor_name text,
 action text NOT NULL,       -- schedule_day_edit | schedule_duplicate | schedule_clear |
                              -- ustaz_create | ustaz_update | ustaz_delete |
                              -- admin_create | admin_update | admin_delete | publish
 target_label text, detail text  -- both plain-text snapshots, never FKs
+
+-- infaq_projects: named fundraising campaigns, history kept (rows never
+-- overwritten, only is_active flips). At most one active at a time
+-- (partial unique index on is_active WHERE true).
+id uuid PK, name text NOT NULL, target_amount numeric(12,2),
+is_active boolean DEFAULT false, completed_at timestamptz,
+created_at timestamptz, updated_at timestamptz
+
+-- infaq_donations: ONE ROW PER RAW DEPOSIT — every rollup (weekly/monthly/
+-- yearly/graf) is computed from these by api/publish-infaq.js, never typed
+-- in directly. project_id nullable: most donations are ordinary weekly
+-- infaq (not earmarked); only donations explicitly tied to a project count
+-- toward that project's JumlahTerkumpul.
+id uuid PK, project_id uuid FK→infaq_projects(id) ON DELETE SET NULL,
+amount numeric(12,2), donation_date date NOT NULL,
+method text CHECK ('tunai'|'online'|'qr'|'lain'), note text,
+created_at timestamptz, updated_at timestamptz
+
+-- infaq_expenses: one row per raw mosque expense, same auto-aggregation principle
+id uuid PK, amount numeric(12,2), expense_date date NOT NULL,
+category text, description text NOT NULL,
+created_at timestamptz, updated_at timestamptz
+
+-- infaq_activity_log: SEPARATE from activity_log by deliberate choice
+-- (independent auditability for money data) — otherwise identical shape
+id uuid PK, created_at timestamptz,
+actor_email text NOT NULL, actor_name text,
+action text NOT NULL,       -- infaq_donation_create/update/delete |
+                             -- infaq_expense_create/update/delete |
+                             -- infaq_project_create/update/delete/activate | publish
+target_label text, detail text
 ```
 
-RLS is ON on all tables. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var).
+RLS is ON on all tables. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_donations`/`infaq_expenses` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`.
 
 ## Data Flow
 
 ```
-Admin edits day in dashboard.html
+kuliah: Admin edits day in admin/kuliah/dashboard.html
   → upsert to Supabase `schedule` (date is the conflict key)
   → click Terbitkan (publish)
   → POST /api/publish?month=YYYY-MM  (Bearer: session token)
@@ -101,26 +156,40 @@ Admin edits day in dashboard.html
   → builds jadual_lengkap_v2.json
   → pushes to GitHub via API (GITHUB_TOKEN env var)
   → Vercel serves updated JSON
+
+infaq: Admin logs raw entries in admin/infaq/kutipan.html and perbelanjaan.html
+  → insert to Supabase `infaq_donations` / `infaq_expenses` (raw rows, never
+    pre-summed totals)
+  → click Terbitkan on admin/infaq/ringkasan.html
+  → POST /api/publish-infaq  (Bearer: session token, no month param — always
+    a full as-of-now snapshot)
+  → api/publish-infaq.js reads infaq_projects/donations/expenses (service role),
+    COMPUTES weekly/monthly/yearly rollups + active-project progress
+  → pushes infaq/data/data.json + infaq/data/perbelanjaan.json to GitHub
+  → no public reader yet — see What This Is
 ```
 
 ## Key Patterns
 
-**Nav HTML — always use this structure on all pages:**
+**Nav HTML — always use this structure on all pages, with `data-module` on every module-specific link:**
 ```html
 <nav id="main-nav">
   <span class="brand">Admin Kuliah</span>
   <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
   <div class="nav-links">
-    <a href="dashboard.html">Jadual</a>
-    <a href="ustaz.html">Penceramah</a>
+    <a href="dashboard.html" data-module="kuliah">Jadual</a>          <!-- absolute /admin/kuliah/... from OUTSIDE admin/kuliah/ -->
+    <a href="ustaz.html" data-module="kuliah">Penceramah</a>
+    <a href="/admin/infaq/ringkasan.html" data-module="infaq">Infaq</a>
     <span class="spacer"></span>
     <button class="logout-btn" onclick="signOut()">Log Keluar</button>
   </div>
 </nav>
 ```
-`_injectSuperAdminNav()` in app.js inserts both "Pengguna" and "Log Aktiviti" links before `.spacer` inside `.nav-links`, each independently guarded against double-injection — so `users.html`/`userlog.html` can hardcode their own link (matching every other page's convention of hardcoding its own active link) while `dashboard.html`/`ustaz.html` gain both purely via injection. If you restructure nav or add a third super_admin-only page, update that function's array.
+`_injectSuperAdminNav()` in app.js inserts both "Pengguna" and "Log Aktiviti" links (absolute `/admin/users.html`/`/admin/userlog.html` — see the cleanUrls note below for why) before `.spacer` inside `.nav-links`, each independently guarded against double-injection — so `users.html`/`userlog.html` can hardcode their own link while every module page gains both purely via injection. `_hideUnauthorizedModuleLinks()` (also in app.js, runs right after) hides any `[data-module]` link the current admin can't use — `super_admin` always sees everything; everyone else needs `permissions.<module>` truthy. If you restructure nav or add a third module, update both functions.
 
-**Any HTML `href`/`src`, and any JS-driven navigation (`window.location.replace`/`.href`), under `admin/` must use absolute root-relative paths (`/admin/...`), never a bare/relative filename — this is a repo-wide landmine, hit multiple times in different folders (see `kuliah/CLAUDE.md` for the `kuliah/paparan/` recurrence):** Vercel's `cleanUrls: true` serves a directory's `index.html` at the bare directory path with **no trailing slash** (`/admin`, not `/admin/`). Per standard URL relative-resolution rules, any relative reference from a slash-less path treats the last path segment (`admin`) as a filename to be *replaced*, not a directory to append to. Session 7 (back when this lived at `kuliah/admin/`): `index.html`'s relative `window.location.replace('dashboard.html')` resolved to `/kuliah/dashboard.html` (404) instead of `/kuliah/admin/dashboard.html` — fixed by switching to absolute paths everywhere in `app.js`/`index.html`/`users.js`/`userlog.js`. Those absolute paths were re-swept to `/admin/...` when the folder moved to root on 2026-07-19 (see `admin/plan.md`). **Treat this as a mandatory check for any brand-new HTML entry point added under `admin/` — a relative asset path will work perfectly under local `python -m http.server` and under Live Server, and only break once deployed to Vercel, so local testing alone will not catch it.**
+**Any HTML `href`/`src`, and any JS-driven navigation (`window.location.replace`/`.href`), under `admin/` must use absolute root-relative paths (`/admin/...` or `/admin/kuliah/...`/`/admin/infaq/...`), never a bare/relative filename — this is a repo-wide landmine, hit multiple times in different folders (see `kuliah/CLAUDE.md` for the `kuliah/paparan/` recurrence):** Vercel's `cleanUrls: true` serves a directory's `index.html` at the bare directory path with **no trailing slash** (`/admin`, `/admin/kuliah`). Per standard URL relative-resolution rules, any relative reference from a slash-less path treats the last path segment as a filename to be *replaced*, not a directory to append to. Session 7 (back when this lived at `kuliah/admin/`): `index.html`'s relative `window.location.replace('dashboard.html')` resolved one level too high — fixed with absolute paths. Those absolute paths were re-swept to `/admin/...` on the 2026-07-19 root move (`admin/plan.md`), then re-swept AGAIN the same day to `/admin/kuliah/...` for the module restructure (dashboard.html/ustaz.js moved a level deeper) — **this is now a recurring cost of any future path change, not a one-time fix; grep for the old path every time you move something.** `admin/infaq/`'s landing page is deliberately named `ringkasan.html`, not `index.html`, specifically to avoid a THIRD instance of this bug (an `index.html` under `admin/infaq/` would itself be served at the bare slash-less `/admin/infaq` path). **Treat this as a mandatory check for any brand-new HTML entry point added under `admin/` — a relative asset path will work perfectly under local `python -m http.server` and under Live Server, and only break once deployed to Vercel, so local testing alone will not catch it.**
+
+**Module permission gate (`permissions.kuliah`/`permissions.infaq` on `admins`, added 2026-07-19):** `admin/infaq/*.js` pages call `requireInfaqAccess()` (in `admin/infaq/infaq-common.js`) right after `requireAuth()` — denies and redirects unless `role === 'super_admin'` or `permissions.infaq` is truthy. **`admin/kuliah/` pages have NO equivalent gate yet** — `permissions.kuliah` exists in the schema and is editable in `users.html`, but nothing checks it, a deliberately deferred half-measure (see `admin/DEV_NOTES.MD`) — don't assume kuliah is actually access-controlled just because infaq is. `defaultLandingPageFor(admin)` (app.js) is the shared "where does this admin land" helper — `/admin/kuliah/dashboard.html` if they have kuliah access or are super_admin, else `/admin/infaq/ringkasan.html` if they have infaq access, else `null` (caller must show a message, **never** redirect on `null` — redirecting to another gated page is exactly how you get a bounce loop between two denied pages).
 
 **Mobile breakpoints:**
 - `≤768px` — tablet compact
@@ -156,6 +225,14 @@ Admin edits day in dashboard.html
 **"Belum Ditetapkan" pending slots (session 8):** a Subuh/Maghrib slot can be marked pending instead of assigned an ustaz — for a day known to have Kuliah/Ceramah Khas where the speaker/topic isn't decided yet. Day-editor modal (`dashboard.html`) has a checkbox per session (`subuh-pending-check`/`maghrib-pending-check`) under each ustaz `<select>`; checking it disables+clears that select (`toggleSubuhPending()`/`toggleMaghribPending()` in `dashboard.js`). `saveDay()` writes `schedule.subuh_pending`/`maghrib_pending` (booleans, mutually exclusive with the matching `*_ustaz_id` — checking pending forces the id to `null`). `api/publish.js` maps a pending slot to a `{ pending: true }` marker object in the published JSON instead of an ustaz object or `null` — this is truthy, so it automatically routes correctly through every existing "is this day/session empty" check with zero changes to that logic. `kuliah/jadual/script.js` renders it as a dashed-border "Ceramah Khas — Akan Diumumkan" block; `kuliah/paparan/script.js` shows the same message on the signage screen (see `kuliah/CLAUDE.md` for the rendering side). The point of the whole feature: the public schedule must show *that* a slot exists without ever showing placeholder/undetermined ustaz info as if it were real.
 
 **Activity log (`activity_log` table + `logActivity()` in app.js, viewed at `userlog.html`, super_admin only):** every mutating admin action inserts one row right after its write succeeds — schedule day edits, bulk duplicate/clear (one summary row each, not per-date), ustaz create/update/delete, admin-account create/update/delete, and Terbitkan/publish (logged server-side from `api/publish.js` using its existing service-role client, since that write happens outside the browser). `target_label`/`detail` are always plain-text snapshots (an ustaz's `short_name`, an admin's email, a month label) — **never** a live foreign key — so history stays readable even after the referenced ustaz/admin is later renamed or deleted. Each call-site captures its "before" value from an already-loaded in-memory cache (`scheduleMap`, `allUstaz`, `allUsers`) rather than an extra query, builds a diff string via a small pure `build*DiffText()` helper local to that page's JS file, and skips the insert entirely if nothing actually changed (no no-op log rows). `logActivity()` never throws or toasts — a logging failure must never make an admin think their actual save/delete/publish failed.
+
+**Infaq: donations/expenses are always raw rows, rollups are always computed, never typed in (2026-07-19 design decision):** `admin/infaq/kutipan.js`/`perbelanjaan.js` only ever insert one row per deposit/expense as it happens — there is no UI anywhere to directly type in a weekly/monthly/yearly total. Every rollup (`paparanBulanIni`'s Minggu1-5 buckets, `ringkasan.kutipan`/`.perbelanjaan`'s month/year totals, `graf`'s 12-month series, `dataKumulatif`'s running sum) is computed by `api/publish-infaq.js`'s pure, exported helper functions (`computeMonthTotal`, `computeYearTotal`, `computeWeekBuckets`, `computeYearlyGraf`, `computeCumulative`, `computeProjectProgress` — same "exported for unit-testing without a live deploy" convention as `api/publish.js`) at Terbitkan time. `admin/infaq/ringkasan.html`'s stat cards preview simple independent sums client-side — deliberately NOT a client-side reimplementation of the full week-bucket/graf logic, same separation of concerns `dashboard.js` already has from `api/publish.js`.
+
+**Infaq project activation must deactivate-then-activate, in that order (partial unique index enforces at most one active project):** `admin/infaq/projek.js`'s `confirmActivate()` runs two sequential `UPDATE`s — the currently-active project first (`is_active: false, completed_at: now()`), then the target (`is_active: true`) — never the reverse, or briefly (between the two statements, if reordered) two rows would both need `is_active = true`, violating `idx_infaq_projects_one_active`. New projects are created with `is_active: false` always — activating is a separate, explicit step, so creating a draft project can never silently deactivate whatever's currently live.
+
+**Infaq's January cumulative edge case (see `api/publish-infaq.js`'s pure functions, unit-tested):** `perbelanjaan.json`'s `paparanBulanLepas.JumlahKumulatif` is a running sum *within one calendar year* (resets at the year boundary). When "now" is January, "bulan lepas" is December of the **previous** year — its cumulative must be computed from that previous year's own 12-month series (`computeYearlyGraf(...,  lastMonthYear)` → `computeCumulative(...)[11]`), never read from the current (new) year's array, which would just show January's own total or zero. Get this wrong and the December-cumulative figure silently resets to near-zero every January 1st.
+
+**`logActivity()` now takes an optional 4th param for the target table (app.js):** `logActivity(action, targetLabel, detail, table = 'activity_log')` — every pre-existing call site is unaffected (table defaults to kuliah's `activity_log`); `admin/infaq/*.js` pass `'infaq_activity_log'` explicitly. **`userlog.html` does NOT show `infaq_activity_log` rows** — every infaq accountability entry is currently write-only (nothing displays it), a known gap flagged in `admin/DEV_NOTES.MD`, not yet built.
 
 ## Sensitive Files
 

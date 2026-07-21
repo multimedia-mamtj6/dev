@@ -15,8 +15,9 @@
   <span class="brand">Admin Kuliah</span>
   <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
   <div class="nav-links">
-    <a href="dashboard.html" class="active">Jadual</a>
-    <a href="ustaz.html">Penceramah</a>
+    <a href="dashboard.html" class="active" data-module="kuliah">Jadual</a>
+    <a href="ustaz.html" data-module="kuliah">Penceramah</a>
+    <a href="/admin/infaq/ringkasan.html" data-module="infaq">Infaq</a>
     <span class="spacer"></span>
     <button class="logout-btn" onclick="signOut()">Log Keluar</button>
   </div>
@@ -173,6 +174,6 @@
 </div>
 
 <script src="/admin/app.js"></script>
-<script src="/admin/dashboard.js"></script>
+<script src="/admin/kuliah/dashboard.js"></script>
 </body>
 </html>

@@ -36,6 +36,13 @@ index.html                          ← Hub/landing page (ticker, links to sub-p
 
 admin/                               ← CMS: Google-OAuth admin dashboard (multi-module hub),
                                         see admin/CLAUDE.md — moved here from kuliah/admin/ on 2026-07-19
+  kuliah/                            ← Module: lecture schedule CRUD (dashboard/ustaz)
+  infaq/                             ← Module: donation/expense tracking, added 2026-07-19 —
+                                        publishes infaq/data/*.json, no public reader yet
+
+infaq/data/data.json, infaq/data/perbelanjaan.json
+                                     ← Published by admin/infaq/ (api/publish-infaq.js) — donation/
+                                        expense rollups computed from raw Supabase rows, never typed in
 
 kuliah/                              ← Official lecture-schedule public surface (Supabase-backed)
   admin/                             ← 5 zero-JS redirect stubs → /admin/... (old URLs, pre-2026-07-19)

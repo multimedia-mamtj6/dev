@@ -15,8 +15,9 @@
   <span class="brand">Admin Kuliah</span>
   <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
   <div class="nav-links">
-    <a href="dashboard.html">Jadual</a>
-    <a href="ustaz.html">Penceramah</a>
+    <a href="/admin/kuliah/dashboard.html" data-module="kuliah">Jadual</a>
+    <a href="/admin/kuliah/ustaz.html" data-module="kuliah">Penceramah</a>
+    <a href="/admin/infaq/ringkasan.html" data-module="infaq">Infaq</a>
     <a href="users.html" class="active">Pengguna</a>
     <a href="userlog.html">Log Aktiviti</a>
     <span class="spacer"></span>
@@ -80,6 +81,10 @@
         <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400;color:var(--text)">
           <input type="checkbox" id="perm-kuliah">
           Jadual Kuliah
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400;color:var(--text)">
+          <input type="checkbox" id="perm-infaq">
+          Kutipan Infaq
         </label>
       </div>
     </div>

@@ -14,9 +14,16 @@ CREATE TABLE IF NOT EXISTS admins (
     email       TEXT UNIQUE NOT NULL,
     name        TEXT,
     role        TEXT NOT NULL DEFAULT 'editor' CHECK (role IN ('editor', 'super_admin')),
-    permissions JSONB NOT NULL DEFAULT '{"kuliah": true}'::jsonb,
+    permissions JSONB NOT NULL DEFAULT '{"kuliah": true, "infaq": false}'::jsonb,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Migration for a database created before the infaq module existed — the
+-- CREATE TABLE above only sets the default for brand-new rows on a
+-- from-scratch database. Existing admin rows keep whatever `permissions`
+-- they already have (no infaq key at all, which every permissions.infaq
+-- check below treats the same as false) until edited via users.html.
+ALTER TABLE admins ALTER COLUMN permissions SET DEFAULT '{"kuliah": true, "infaq": false}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS ustaz (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -132,8 +139,8 @@ CREATE POLICY "auth_delete_kuliah_assets" ON storage.objects
 --
 -- In Supabase Dashboard → Authentication → URL Configuration:
 --   Add these redirect URLs (replace with your actual domain):
---     https://dev.mamtj6.com/admin/dashboard.html
---     http://localhost:8000/admin/dashboard.html    ← for local dev
+--     https://dev.mamtj6.com/admin/kuliah/dashboard.html
+--     http://localhost:8000/admin/kuliah/dashboard.html    ← for local dev
 
 
 -- ── 5b. Bootstrap the first super_admin (manual, one-time) ────────────────────
@@ -142,12 +149,13 @@ CREATE POLICY "auth_delete_kuliah_assets" ON storage.objects
 -- chicken-and-egg. Break the loop by inserting the very first row directly:
 --
 -- INSERT INTO admins (email, name, role, permissions) VALUES
---     ('your-email@gmail.com', 'Your Name', 'super_admin', '{"kuliah": true}'::jsonb);
+--     ('your-email@gmail.com', 'Your Name', 'super_admin', '{"kuliah": true, "infaq": true}'::jsonb);
 --
 -- The email must exactly match the Google account you'll log in with. After
--- this one row exists, log in once — you'll land in dashboard.html with the
--- "Pengguna" and "Log Aktiviti" nav links visible — and manage every admin
--- after that through users.html normally. Never need to run this insert again.
+-- this one row exists, log in once — you'll land in kuliah/dashboard.html
+-- with the "Pengguna" and "Log Aktiviti" nav links visible — and manage
+-- every admin after that through users.html normally. Never need to run
+-- this insert again.
 
 
 -- ── 6. Sample data (optional) ─────────────────────────────────────────────────
@@ -197,3 +205,110 @@ CREATE POLICY "auth_all_activity_log" ON activity_log
 -- two log paths fails silently.
 GRANT SELECT, INSERT, UPDATE, DELETE ON activity_log TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON activity_log TO service_role;
+
+
+-- ── 8. Infaq module ──────────────────────────────────────────────────────────
+-- Donation/expense tracking for admin/infaq/. Not run automatically — run
+-- this manually in the Supabase SQL editor, same as every section above.
+
+-- infaq_projects: named fundraising campaigns with a target. History is
+-- kept — rows are never overwritten when a project ends, only is_active
+-- flips. Donations are NOT required to belong to a project (most are
+-- ordinary weekly infaq, counted in kutipan rollups regardless of project);
+-- only donations an admin explicitly earmarks also count toward a
+-- project's JumlahTerkumpul.
+CREATE TABLE IF NOT EXISTS infaq_projects (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name          TEXT NOT NULL,
+    target_amount NUMERIC(12,2) NOT NULL CHECK (target_amount > 0),
+    is_active     BOOLEAN NOT NULL DEFAULT false,
+    completed_at  TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- At most one active project at a time. admin/infaq/projek.js's "Jadikan
+-- Aktif" action must deactivate the current one BEFORE activating a new
+-- one (two sequential updates) so this index is never transiently violated.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_infaq_projects_one_active
+    ON infaq_projects (is_active) WHERE is_active = true;
+
+-- infaq_donations: one row per raw deposit/count, as it happens. Every
+-- rollup (weekly/monthly/yearly/graf) and the active project's progress
+-- are COMPUTED from these rows by api/publish-infaq.js — never typed in
+-- directly, so the arithmetic-mismatch problems a hand-maintained
+-- spreadsheet is prone to can't happen here.
+CREATE TABLE IF NOT EXISTS infaq_donations (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id     UUID REFERENCES infaq_projects(id) ON DELETE SET NULL,
+    amount         NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+    donation_date  DATE NOT NULL,
+    method         TEXT NOT NULL DEFAULT 'tunai' CHECK (method IN ('tunai','online','qr','lain')),
+    note           TEXT,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- infaq_expenses: one row per raw mosque expense, same auto-aggregation
+-- principle as donations.
+CREATE TABLE IF NOT EXISTS infaq_expenses (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    amount        NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+    expense_date  DATE NOT NULL,
+    category      TEXT,
+    description   TEXT NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_infaq_donations_date       ON infaq_donations(donation_date);
+CREATE INDEX IF NOT EXISTS idx_infaq_donations_project_id ON infaq_donations(project_id);
+CREATE INDEX IF NOT EXISTS idx_infaq_expenses_date        ON infaq_expenses(expense_date);
+
+ALTER TABLE infaq_projects  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE infaq_donations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE infaq_expenses  ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all_infaq_projects" ON infaq_projects
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all_infaq_donations" ON infaq_donations
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all_infaq_expenses" ON infaq_expenses
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_projects  TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_donations TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_expenses  TO authenticated;
+
+-- api/publish-infaq.js reads all three via the service-role key to compute
+-- the published JSON — per §3's rule (new tables never inherit grants),
+-- this must be explicit, not assumed. Read-only: publish never writes to
+-- these three tables, so SELECT is all service_role needs here.
+GRANT SELECT ON infaq_projects, infaq_donations, infaq_expenses TO service_role;
+
+-- infaq_activity_log: a SEPARATE table from activity_log (kuliah's), by
+-- deliberate choice — independent auditability for money data. Same
+-- plain-text-snapshot shape/reasoning as activity_log (see §7).
+CREATE TABLE IF NOT EXISTS infaq_activity_log (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_email  TEXT NOT NULL,
+    actor_name   TEXT,
+    action       TEXT NOT NULL,
+    target_label TEXT,
+    detail       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_infaq_activity_log_created_at ON infaq_activity_log(created_at DESC);
+
+ALTER TABLE infaq_activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all_infaq_activity_log" ON infaq_activity_log
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Both grants required, same reasoning as activity_log's: `authenticated`
+-- for browser writes (admin/infaq/*.js), `service_role` for
+-- api/publish-infaq.js's own log insert (server-side, bypasses RLS but
+-- still needs the grant).
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_activity_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_activity_log TO service_role;

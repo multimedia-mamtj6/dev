@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perbelanjaan Infaq — Admin MAMTJ6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+
+<body>
+
+  <nav id="main-nav">
+    <span class="brand">Admin Kuliah</span>
+    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <div class="nav-links">
+      <a href="/admin/kuliah/dashboard.html" data-module="kuliah">Jadual</a>
+      <a href="/admin/kuliah/ustaz.html" data-module="kuliah">Penceramah</a>
+      <a href="ringkasan.html" data-module="infaq">Ringkasan</a>
+      <a href="kutipan.html" data-module="infaq">Kutipan</a>
+      <a href="perbelanjaan.html" class="active" data-module="infaq">Perbelanjaan</a>
+      <a href="projek.html" data-module="infaq">Projek</a>
+      <span class="spacer"></span>
+      <button class="logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="section-header">
+      <h1 class="section-title">Perbelanjaan Masjid</h1>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Catat Perbelanjaan</button>
+    </div>
+
+    <div class="filter-bar">
+      <div class="form-group">
+        <label for="filter-from">Dari</label>
+        <input type="date" id="filter-from" onchange="applyFilters()">
+      </div>
+      <div class="form-group">
+        <label for="filter-to">Hingga</label>
+        <input type="date" id="filter-to" onchange="applyFilters()">
+      </div>
+      <div class="form-group filter-actions">
+        <button class="btn btn-ghost btn-sm" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:110px">Tarikh</th>
+            <th style="width:120px">Jumlah</th>
+            <th style="width:130px">Kategori</th>
+            <th>Perihal</th>
+            <th style="width:120px">Tindakan</th>
+          </tr>
+        </thead>
+        <tbody id="expense-tbody">
+          <tr>
+            <td colspan="5" class="state-cell">Memuatkan...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn-ghost" id="load-more-btn" onclick="loadMore()" style="display:none">Tunjuk 50 lagi</button>
+    </div>
+  </div>
+
+  <!-- ── Add / Edit modal ── -->
+  <div class="modal-overlay" id="expense-modal" onclick="handleOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="expense-modal-title">Catat Perbelanjaan</span>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+
+      <input type="hidden" id="edit-id">
+
+      <div class="form-group">
+        <label for="edit-date">Tarikh*</label>
+        <input type="date" id="edit-date">
+      </div>
+      <div class="form-group">
+        <label for="edit-amount">Jumlah (RM)*</label>
+        <input type="number" id="edit-amount" min="0.01" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label for="edit-category">Kategori</label>
+        <input type="text" id="edit-category" placeholder="Cth: Utiliti, Penyelenggaraan">
+      </div>
+      <div class="form-group">
+        <label for="edit-description">Perihal*</label>
+        <textarea id="edit-description" rows="2" placeholder="Cth: Bil elektrik TNB bulan Julai"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveExpense()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete confirm modal ── -->
+  <div class="modal-overlay" id="delete-modal" onclick="handleDeleteOverlay(event)">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-header">
+        <span class="modal-title">Padam Rekod Perbelanjaan</span>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:1.25rem">
+        Adakah anda pasti mahu memadam rekod perbelanjaan
+        <strong id="delete-label" style="color:var(--text)"></strong>? Tindakan ini tidak boleh diundur.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+        <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Padam</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin/app.js"></script>
+  <script src="/admin/infaq/infaq-common.js"></script>
+  <script src="/admin/infaq/perbelanjaan.js"></script>
+</body>
+
+</html>

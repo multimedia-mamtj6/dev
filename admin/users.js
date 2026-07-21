@@ -6,7 +6,7 @@ let pendingDeleteEmail = null;
     if (!session) return;
     if (currentAdmin.role !== 'super_admin') {
         showToast('Akses ditolak. Halaman ini hanya untuk Super Admin.', 'error');
-        setTimeout(() => window.location.replace('/admin/dashboard.html'), 2000);
+        setTimeout(() => window.location.replace(defaultLandingPageFor(currentAdmin) || '/admin/index.html'), 2000);
         return;
     }
     await loadUsers();
@@ -74,6 +74,7 @@ function openAddModal() {
     document.getElementById('edit-name').value = '';
     document.getElementById('edit-role').value = 'editor';
     document.getElementById('perm-kuliah').checked = true;
+    document.getElementById('perm-infaq').checked = false;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -88,6 +89,7 @@ function openEditModal(email) {
     document.getElementById('edit-name').value = u.name || '';
     document.getElementById('edit-role').value = u.role;
     document.getElementById('perm-kuliah').checked = u.permissions?.kuliah !== false;
+    document.getElementById('perm-infaq').checked = u.permissions?.infaq === true;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -142,7 +144,10 @@ async function saveUser() {
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
     const name  = document.getElementById('edit-name').value.trim();
     const role  = document.getElementById('edit-role').value;
-    const perms = { kuliah: document.getElementById('perm-kuliah').checked };
+    const perms = {
+        kuliah: document.getElementById('perm-kuliah').checked,
+        infaq:  document.getElementById('perm-infaq').checked,
+    };
     const before = originalEmail ? allUsers.find(u => u.email === originalEmail) : null;
 
     if (!email) { showToast('Sila masukkan e-mel.', 'error'); return; }
