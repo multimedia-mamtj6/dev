@@ -64,14 +64,25 @@ function renderTable() {
         return;
     }
 
-    // Monthly subtotals shown in the summary bar above the table, not as
-    // grouped rows — a colspan row doesn't survive the mobile card-per-row
-    // layout (see style.css's data-table breakpoint), so keep every <tr>
-    // uniform instead.
     document.getElementById('year-total').textContent = formatRM(rows.reduce((s, r) => s + Number(r.jumlah), 0));
 
-    tbody.innerHTML = rows.map(r => `
-        <tr>
+    // rows are already ordered tahun desc, bulan desc, minggu desc, so
+    // same-month rows are always adjacent within one year's filtered list —
+    // a single forward scan is enough to group them and inject one
+    // month-subtotal row per group. `.group-row` has its own mobile CSS
+    // override (style.css) so it renders as a single full-width band
+    // instead of the normal per-cell card layout.
+    let html = '';
+    let lastBulan = null;
+    rows.forEach(r => {
+        if (r.bulan !== lastBulan) {
+            const monthTotal = rows.filter(x => x.bulan === r.bulan).reduce((s, x) => s + Number(x.jumlah), 0);
+            html += `<tr class="group-row">
+                <td colspan="5">${escapeHtml(BULAN_MY[r.bulan - 1])} ${r.tahun} — Jumlah Bulanan: ${escapeHtml(formatRM(monthTotal))}</td>
+            </tr>`;
+            lastBulan = r.bulan;
+        }
+        html += `<tr>
             <td data-label="Tahun">${r.tahun}</td>
             <td data-label="Bulan">${escapeHtml(BULAN_MY[r.bulan - 1])}</td>
             <td data-label="Minggu">Minggu ${r.minggu}</td>
@@ -82,8 +93,9 @@ function renderTable() {
                     <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(r.id)}')">Padam</button>
                 </div>
             </td>
-        </tr>
-    `).join('');
+        </tr>`;
+    });
+    tbody.innerHTML = html;
 }
 
 // ─── Add modal ────────────────────────────────────────────────────────────────

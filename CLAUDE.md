@@ -38,12 +38,11 @@ admin/                               ← CMS: Google-OAuth admin dashboard (mult
                                         see admin/CLAUDE.md — moved here from kuliah/admin/ on 2026-07-19
   kuliah/                            ← Module: lecture schedule CRUD (dashboard/ustaz)
   infaq/                             ← Module: donation/expense tracking, added 2026-07-19 —
-                                        publishes infaq/data/*.json, no public reader yet
-
-infaq/data/monthly.json, infaq/data/daily.json, infaq/data/perbelanjaan.json
-                                     ← Published by admin/infaq/ (api/publish-infaq.js) — donation/
-                                        expense rollups always computed, never typed in. Shapes mirror
-                                        the real infaq.mamtj6.com reference site's own file structure
+    data/monthly.json, data/daily.json, data/perbelanjaan.json
+                                        ← Published by api/publish-infaq.js, no public reader yet.
+                                        Donation/expense rollups always computed, never typed in.
+                                        Shapes mirror the real infaq.mamtj6.com reference site's
+                                        own file structure
 
 kuliah/                              ← Official lecture-schedule public surface (Supabase-backed)
   admin/                             ← 5 zero-JS redirect stubs → /admin/... (old URLs, pre-2026-07-19)

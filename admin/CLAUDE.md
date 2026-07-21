@@ -35,8 +35,8 @@ it's a multi-module hub — `kuliah/admin/` would have been misleading once it
 hosted non-kuliah modules. `kuliah/jadual/` is the public-facing read-only
 schedule view that reads kuliah's published JSON — see `kuliah/CLAUDE.md` for
 that side. **infaq has no public-facing page yet** — its published JSON lands
-in this repo (`infaq/data/`) but nothing reads it publicly yet, by deliberate
-choice (see `admin/infaq/`'s own history in `admin/DEV_NOTES.MD`).
+in this repo (`admin/infaq/data/`) but nothing reads it publicly yet, by
+deliberate choice (see `admin/infaq/`'s own history in `admin/DEV_NOTES.MD`).
 
 ## Tech Stack
 
@@ -77,6 +77,12 @@ admin/
     projek-kutipan.html/.js ← ONE project's individual dated donations (?project=<id> in the URL) —
                           paginated/filtered like the old kutipan.js, since this is the only infaq
                           table that's genuinely per-deposit
+    data/monthly.json, data/daily.json, data/perbelanjaan.json ← Published data admin/infaq/
+                          writes (api/publish-infaq.js) — no reader yet. Under admin/ (not
+                          top-level infaq/, unlike kuliah's own data/ convention) since there's no
+                          public consumer — colocated with the module that produces it. Field/key
+                          shapes still deliberately mirror the real infaq.mamtj6.com reference
+                          site's own structure, so a future public page or path migration stays cheap.
 
 admin/dashboard.html, admin/ustaz.html  ← 2 zero-JS redirect stubs → admin/kuliah/... (old bare
                                             /admin/ URLs, pre-module-restructure, kept working)
@@ -86,11 +92,6 @@ kuliah/
   jadual/          ← Public schedule view (see kuliah/CLAUDE.md)
   paparan/         ← Digital signage (see kuliah/CLAUDE.md)
   data/jadual_lengkap_v2.json ← Published data admin/kuliah/ writes, that jadual/paparan read
-
-infaq/data/monthly.json, infaq/data/daily.json, infaq/data/perbelanjaan.json ← Published data
-    admin/infaq/ writes (api/publish-infaq.js) — no reader yet. Shapes deliberately mirror the
-    real infaq.mamtj6.com reference site's own file names/structure, so this system could later
-    drop in and replace that site's manual Sheet-editing workflow without a reshape.
 ```
 
 ## Supabase Schema
@@ -190,7 +191,7 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
     a full as-of-now snapshot)
   → api/publish-infaq.js reads all 4 infaq tables (service role), COMPUTES
     weekly/monthly/yearly rollups + active-project progress
-  → pushes infaq/data/monthly.json + daily.json + perbelanjaan.json to GitHub
+  → pushes admin/infaq/data/monthly.json + daily.json + perbelanjaan.json to GitHub
   → no public reader yet — see What This Is
 ```
 

@@ -3,9 +3,12 @@
 // infaq_perbelanjaan_bulanan from Supabase, computes the published JSON
 // (weekly/monthly/yearly rollups + active project progress — never stored
 // pre-summed, always derived from raw rows), and commits 3 files to GitHub:
-// infaq/data/monthly.json, infaq/data/daily.json, infaq/data/perbelanjaan.json.
-// Shapes mirror the real infaq.mamtj6.com reference site exactly, so this
-// system can later drop-in replace that site's manual Sheet workflow.
+// admin/infaq/data/monthly.json, admin/infaq/data/daily.json,
+// admin/infaq/data/perbelanjaan.json — under admin/ (not top-level infaq/,
+// unlike kuliah's convention) since there's no public consumer yet; this
+// keeps the published data colocated with the module that produces it.
+// Field/key shapes still mirror the real infaq.mamtj6.com reference site
+// exactly, so a future public page (or migrating the path) stays cheap.
 // Modeled directly on api/publish.js — same auth/env-var/GitHub-push shape,
 // but this publish is always a full "as of now" snapshot, no month param.
 //
@@ -266,9 +269,9 @@ module.exports = async function handler(req, res) {
     // Terbitkan.
     let monthlyCommit, dailyCommit, perbelanjaanCommit;
     try {
-        monthlyCommit      = await pushJsonToGitHub(ghHeaders, githubRepo, 'infaq/data/monthly.json', monthlyJson, '[Admin] Terbitkan kutipan mingguan infaq');
-        dailyCommit        = await pushJsonToGitHub(ghHeaders, githubRepo, 'infaq/data/daily.json', dailyJson, '[Admin] Terbitkan kutipan projek infaq');
-        perbelanjaanCommit = await pushJsonToGitHub(ghHeaders, githubRepo, 'infaq/data/perbelanjaan.json', perbelanjaanJson, '[Admin] Terbitkan perbelanjaan infaq');
+        monthlyCommit      = await pushJsonToGitHub(ghHeaders, githubRepo, 'admin/infaq/data/monthly.json', monthlyJson, '[Admin] Terbitkan kutipan mingguan infaq');
+        dailyCommit        = await pushJsonToGitHub(ghHeaders, githubRepo, 'admin/infaq/data/daily.json', dailyJson, '[Admin] Terbitkan kutipan projek infaq');
+        perbelanjaanCommit = await pushJsonToGitHub(ghHeaders, githubRepo, 'admin/infaq/data/perbelanjaan.json', perbelanjaanJson, '[Admin] Terbitkan perbelanjaan infaq');
     } catch (e) {
         return res.status(500).json({ error: 'Failed to push to GitHub', details: e.message });
     }
