@@ -72,11 +72,24 @@ The email must exactly match the Google account you'll log in with. After this o
 5. Check `userlog.html` shows the ustaz-create and day-edit rows you just made — confirms `activity_log` writes work.
 6. `Terbitkan` only works where a Vercel serverless runtime actually runs `/api/publish` — it will fail locally with a connection-error toast, that's expected (see [Troubleshooting](#4-troubleshooting)).
 
+### 1.7 Set up the infaq module (optional — separate from the kuliah setup above)
+
+`admin/infaq/` (donation/expense tracking) is a second, independent module — skip this section entirely if you only need the lecture-schedule side. Its schema lives in `setup.sql` §8, run separately from §1-7 above:
+
+1. In the Supabase SQL Editor, select and run `setup.sql` §8 in full (the `── 8. Infaq module ──` header through the end of that section) — **as one paste, not statement-by-statement.** Running it piecemeal can trip Supabase's own SQL Editor lint warning ("creates a table without enabling Row Level Security") on the `infaq_projects`/`infaq_kutipan_mingguan`/etc. `CREATE TABLE` statements individually, because the linter only sees the one statement you selected — it doesn't know the matching `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and `CREATE POLICY` exist later in the same section. Selecting and running the whole section together resolves this; the warning is a false alarm in that case, not a real gap.
+2. **If your database already ran an earlier version of §8** (one that created `infaq_donations`/`infaq_expenses` — the per-row donation/expense model, replaced 2026-07-21 by the pre-aggregated tables in the current §8), don't re-run the whole section — `infaq_projects`/`infaq_activity_log`'s `CREATE POLICY` statements will error ("already exists," Postgres has no `IF NOT EXISTS` for policies). Run only the three new `CREATE TABLE` blocks (`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan`) plus their own indexes/RLS/policies/grants, then run §8b (next step) to clean up the old tables.
+3. Run §8b (`DROP TABLE IF EXISTS infaq_donations, infaq_expenses`) — only relevant if step 2 applied to you; safe no-op otherwise. **Irreversible** — check Supabase's Table Editor first if those tables might hold real data you want to keep.
+4. Optional: `admin/import-legacy-infaq-data.sql` bulk-imports historical donation/expense data transcribed from a Sheet — see that file's own header comment before running it (Section C, the project + its donations, is **not** idempotent — running it twice creates duplicate rows).
+5. In `users.html`, grant `permissions.infaq` to whichever admins need it (unlike `permissions.kuliah`, this defaults to `false` on new rows — see [§2](#admins) below).
+6. Verify: log in as an admin with `permissions.infaq`, confirm the "Infaq" nav links appear and `ringkasan.html` loads without a denied-redirect. Add a test row on `kutipan.html`, confirm it appears in Supabase's Table Editor.
+
+No new Vercel environment variables are needed — `api/publish-infaq.js` reuses the same `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`GITHUB_TOKEN`/`GITHUB_REPO` from [1.5](#15-configure-vercel-environment-variables).
+
 ---
 
 ## 2. Database structure
 
-Four tables, one storage bucket. No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and `activity_log` also from `api/publish.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs; all business logic lives in the client JS.
+Four kuliah tables + four infaq tables (§2.1 below), one storage bucket. No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and the two activity-log tables also from their respective `api/publish*.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs; all business logic lives in the client JS.
 
 ```
 admins ──────────────┐
@@ -89,6 +102,8 @@ ustaz ◄──────────── schedule
   (penceramah)         (one row per date)
 ```
 
+infaq's tables are documented separately in [§2.1](#21-infaq-tables) — independent of the diagram above, they don't reference `ustaz`/`schedule` at all.
+
 ### `admins`
 
 Who's allowed to log in, and what they can do. Checked by `app.js`'s `requireAuth()` after every Google OAuth login — an email not in this table gets signed out immediately and redirected to `index.html?denied=1`.
@@ -98,12 +113,12 @@ id          UUID PK
 email       TEXT UNIQUE NOT NULL   -- must match the Google account exactly
 name        TEXT                  -- display name, shown in nav/logs
 role        TEXT NOT NULL DEFAULT 'editor'  CHECK ('editor' | 'super_admin')
-permissions JSONB NOT NULL DEFAULT '{"kuliah": true}'
+permissions JSONB NOT NULL DEFAULT '{"kuliah": true, "infaq": false}'
 created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
 
 - `role = 'editor'` — can edit schedule + ustaz. `role = 'super_admin'` — also gets `users.html` (manage admins) and `userlog.html` (activity log).
-- `permissions` is a per-module flag object, currently only `{ kuliah: bool }` — reserved for future modules beyond the lecture schedule.
+- `permissions` is a per-module flag object — `{ kuliah: bool, infaq: bool }` as of the infaq module (2026-07-19). `kuliah` defaults `true` (opt-out), `infaq` defaults `false` (opt-in) — set per-admin in `users.html`. **`permissions.kuliah` is not actually enforced anywhere yet** (only `permissions.infaq` has a real gate, via `requireInfaqAccess()` in `admin/infaq/infaq-common.js`) — a known, deliberate half-measure, see `DEV_NOTES.MD`.
 - No `updated_at` column (unlike the other three tables) — nobody has needed to know when an admin's role last changed. If that becomes important, add it the same way `ustaz`/`schedule` have theirs.
 
 ### `ustaz`
@@ -173,6 +188,112 @@ Public bucket for ustaz poster images. Public read (anyone can view a poster URL
 
 ---
 
+## 2.1 Infaq tables
+
+Independent of the kuliah tables above — no foreign keys cross between the two groups, `infaq_projects` is the only table any of the others below reference. Added 2026-07-19, **rebuilt from scratch 2026-07-21** after comparing the original design against the mosque's real recording pattern (the live Sheet/JSON behind their separate, older `infaq.mamtj6.com` site) and finding it didn't match — see `DEV_NOTES.MD` session 11 for the full story. Nothing from the original design was ever run against live Supabase, so this was a clean rebuild, not a migration.
+
+```
+infaq_projects
+    ▲ (project_id — FK, NOT NULL)
+infaq_projek_kutipan
+
+infaq_kutipan_mingguan          infaq_perbelanjaan_bulanan
+  (no FK to anything)              (no FK to anything)
+```
+
+### `infaq_projects`
+
+Named fundraising campaigns with a target (e.g. a building fund). History is kept — rows are never overwritten when a project ends, only `is_active` flips.
+
+```sql
+id            UUID PK
+name          TEXT NOT NULL
+target_amount NUMERIC(12,2) NOT NULL CHECK (> 0)
+is_active     BOOLEAN NOT NULL DEFAULT false
+completed_at  TIMESTAMPTZ
+created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+```
+
+- **At most one active project at a time**, enforced by a partial unique index (`idx_infaq_projects_one_active`, `ON is_active WHERE is_active = true`). `admin/infaq/projek.js`'s "Jadikan Aktif" action must deactivate the currently-active project (setting `completed_at`) **before** activating the target — two sequential `UPDATE`s, always in that order, so the index is never transiently violated by two concurrently-true rows.
+- New projects are always created `is_active: false` — activating is a separate, explicit step, so drafting a new project can never silently deactivate whatever's currently live.
+- General/unearmarked infaq (`infaq_kutipan_mingguan`) never touches this table — only donations explicitly recorded against a project (`infaq_projek_kutipan`) count toward `JumlahTerkumpul`.
+
+### `infaq_kutipan_mingguan`
+
+General infaq (tabung Jumaat/harian) — **one row per week actually collected**, not per donor. This matches how the committee really records it: a single lump sum per week, exactly like the Sheet this schema was designed against.
+
+```sql
+id         UUID PK
+tahun      INTEGER NOT NULL
+bulan      INTEGER NOT NULL CHECK (1-12)
+minggu     INTEGER NOT NULL CHECK (1-5)
+jumlah     NUMERIC(12,2) NOT NULL CHECK (> 0)
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+UNIQUE (tahun, bulan, minggu)
+```
+
+- **Sparse by design** — a week with nothing collected simply has no row (matching the source Sheet's "-" cells), never a stored zero. Every rollup (`JumlahBulanan`, yearly `graf`, `ringkasan` totals) is computed by `api/publish-infaq.js`, never typed in.
+- `admin/infaq/kutipan.js` writes via **upsert** on `(tahun, bulan, minggu)`, not plain insert — recording an already-existing week replaces its total rather than erroring, matching the real workflow (the committee just records "this week's number," they shouldn't need to check whether it already exists).
+
+### `infaq_projek_kutipan`
+
+Individual dated donations earmarked to ONE project — the only infaq table that's genuinely per-deposit, because that's how the real project ("Tabung Bangunan Tambahan MAMTJ6") is actually tracked in the source data.
+
+```sql
+id         UUID PK
+project_id UUID NOT NULL REFERENCES infaq_projects(id)
+tarikh     DATE NOT NULL
+jumlah     NUMERIC(12,2) NOT NULL CHECK (> 0)
+keterangan TEXT
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+```
+
+- `project_id` is `NOT NULL` — general, unearmarked infaq lives in `infaq_kutipan_mingguan` instead, never here.
+- No `ON DELETE CASCADE` on the FK — `admin/infaq/projek.js`'s `confirmDelete()` blocks deleting a project while any donation still references it (a client-side guard; direct SQL could still bypass it, at which point the delete would simply fail on the FK constraint rather than silently orphaning rows).
+- No unique constraint — legitimate same-day duplicate donations exist in the real data (e.g. the tabung emptied twice in one collection run), so don't add one.
+- Edited via `admin/infaq/projek-kutipan.html?project=<id>` — reached by clicking "Lihat Kutipan" on a project's row in `projek.html`, not a standalone nav link.
+
+### `infaq_perbelanjaan_bulanan`
+
+Mosque expenses — **one row per month total**, not per bill/receipt. The real Sheet never tracked category or description per expense, only a monthly lump sum, so this matches exactly (a deliberate simplification from the original per-expense design).
+
+```sql
+id         UUID PK
+tahun      INTEGER NOT NULL
+bulan      INTEGER NOT NULL CHECK (1-12)
+jumlah     NUMERIC(12,2) NOT NULL CHECK (> 0)
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+UNIQUE (tahun, bulan)
+```
+
+- Same sparse-by-design + upsert-on-conflict pattern as `infaq_kutipan_mingguan`, just keyed on `(tahun, bulan)` only (no `minggu`).
+
+### `infaq_activity_log`
+
+A **separate** table from `activity_log` (kuliah's) — deliberate choice for independent auditability on money data. Otherwise identical shape/reasoning to `activity_log` above.
+
+```sql
+id           UUID PK
+created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+actor_email  TEXT NOT NULL
+actor_name   TEXT
+action       TEXT NOT NULL  -- infaq_kutipan_mingguan_create/update/delete |
+                             -- infaq_projek_kutipan_create/update/delete |
+                             -- infaq_perbelanjaan_create/update/delete |
+                             -- infaq_project_create/update/delete/activate | publish
+target_label TEXT
+detail       TEXT
+```
+
+- **Not yet shown anywhere in the UI** — `userlog.html` only reads kuliah's `activity_log`, so every infaq accountability row is currently write-only. Known gap, see `DEV_NOTES.MD`'s WHAT MIGHT COME NEXT.
+- Written by `logActivity(action, targetLabel, detail, 'infaq_activity_log')` — `app.js`'s shared `logActivity()` gained an optional 4th param (table name, defaults to kuliah's `activity_log`) specifically so infaq pages could reuse it without duplicating the function.
+
+---
+
 ## 3. RLS & permissions (the part that's easy to get wrong)
 
 Every table has Row Level Security **enabled**, with one permissive policy each (`FOR ALL TO authenticated USING (true) WITH CHECK (true)`) — any logged-in admin can read/write everything. There's no per-row restriction (e.g. editors can't be limited to only their own changes) — role-based restriction happens entirely client-side (`currentAdmin.role` checks in the JS, e.g. `users.js`/`userlog.js` redirect non-super_admins away).
@@ -184,6 +305,8 @@ Two roles matter here, and they need separate grants:
 - **`service_role`** — used only by `api/publish.js`, server-side, with the secret service-role key. This role bypasses RLS entirely but **still** needs its own `GRANT` — RLS-bypass and table-privilege-grant are two independent things in Postgres.
 
 **Rule for any future new table:** add both a `CREATE POLICY` and explicit `GRANT`s to `authenticated` (and `service_role` too, if anything server-side will ever touch it) in the same `setup.sql` block. Don't assume either is inherited.
+
+The infaq tables (§2.1) follow this exact same pattern — one permissive policy per table, explicit `GRANT`s to `authenticated`, and `service_role` grants for the three tables `api/publish-infaq.js` reads (`infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` — SELECT only, publish never writes them) plus full CRUD on `infaq_activity_log` (publish does write there).
 
 ---
 
@@ -205,6 +328,10 @@ Two roles matter here, and they need separate grants:
 | `users.html`/`userlog.html` briefly flash then redirect to `dashboard.html` | Logged in as `role = 'editor'`, not `super_admin` — both pages are gated client-side | Expected behavior if you're not a super_admin. To promote someone: `UPDATE admins SET role = 'super_admin' WHERE email = '...';` |
 | An admin's registered `name` shows up as their raw email address somewhere (e.g. the dashboard's "last published" note) even though `name` is set in `users.html` | `admins.email` doesn't case-match exactly what Google OAuth/Supabase Auth returns for that account — Postgres `text` equality is case-sensitive by default, so an exact-match (`eq`) lookup silently finds zero rows instead of erroring | Check `admins.email` in Supabase Table Editor for stray casing/whitespace vs. the actual Google account. The app's own lookups (`dashboard.js`, `api/publish.js`) already use case-insensitive `ilike` matching to guard against this, but a query written elsewhere with `eq` will still be affected |
 | Nobody can access `users.html` to add the first admin | The bootstrap chicken-and-egg problem | Insert the first row manually via SQL — see [1.4](#14-bootstrap-the-first-super_admin) |
+| Supabase SQL Editor shows "Potential issue detected — creates a table without enabling Row Level Security" while running part of `setup.sql` §8 | You selected/ran only a single `CREATE TABLE` statement in isolation — the matching `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and `CREATE POLICY` exist later in the same §8 section, so the linter (which only sees what you selected) can't see them | Cancel, then select and run the **entire** §8 section as one paste (see [1.7](#17-set-up-the-infaq-module-optional--separate-from-the-kuliah-setup-above)) — the warning doesn't apply once RLS-enable and the policy are part of the same run |
+| Running `setup.sql` §8 errors on `CREATE POLICY "auth_all_infaq_projects" ... already exists` (or `auth_all_infaq_activity_log`) | Your database already ran an earlier version of §8 (the one that created `infaq_donations`/`infaq_expenses`, replaced 2026-07-21) — `infaq_projects`/`infaq_activity_log` are unchanged between versions, so their policies already exist | Don't re-run the whole section — see step 2 of [1.7](#17-set-up-the-infaq-module-optional--separate-from-the-kuliah-setup-above) for exactly which statements to run instead |
+| `infaq_donations`/`infaq_expenses` still exist as tables but nothing in the app reads or writes them | Leftover from the pre-2026-07-21 schema, before the rebuild to match real Sheet data (see `DEV_NOTES.MD` session 11) | Harmless to leave (RLS-protected, just unused) — or run `setup.sql` §8b to drop them, after confirming in Table Editor they don't hold data you need |
+| A project's `Terkumpul`/`Peratusan` in `projek.html` looks lower than expected, or lower than a figure quoted elsewhere (e.g. an older manually-maintained Sheet/site for the same project) | This system always **computes** the total by summing `infaq_projek_kutipan` rows — if an older system's own summary figure had drifted from its own underlying records (a real, confirmed issue found in the source Sheet during the 2026-07-21 import, see `DEV_NOTES.MD` session 11), the computed total here will legitimately differ, and the computed one is the trustworthy one | Don't "correct" this by inserting an adjustment row — investigate whether donation entries are genuinely missing from `infaq_projek_kutipan` (add them if so) or whether the other figure was simply wrong |
 
 ---
 
@@ -216,3 +343,5 @@ Two roles matter here, and they need separate grants:
 - **`activity_log` growth:** unbounded by design (append-only, nothing in the app deletes rows). Trivial at this app's realistic scale — see the table's own notes in [§2](#activity_log). If it ever needs trimming, a manual `DELETE FROM activity_log WHERE created_at < ...` (or a proper retention policy) is the way, not a UI feature — deliberately not built into `userlog.html` (see `DEV_NOTES.MD` for why deleting log entries via the UI was considered and rejected).
 - **Backups:** handled by Supabase's own project-level backups (see Supabase Dashboard → Database → Backups) — not something this repo manages.
 - **Schema changes:** always update `setup.sql` to match live reality when you change something by hand in the SQL Editor — this file is the single source of truth for "how do I reproduce this database from nothing." A live schema that's drifted from `setup.sql` is exactly the gap that made the `admins` table missing in the first place.
+- **Bulk-importing historical infaq data:** `admin/import-legacy-infaq-data.sql` is a one-time script for seeding `infaq_kutipan_mingguan`/`infaq_perbelanjaan_bulanan`/`infaq_projects`/`infaq_projek_kutipan` from a transcribed Sheet. Sections A/B are idempotent (`ON CONFLICT DO NOTHING` against their unique constraints); Section C (the project + its donations) is **not** — it has no unique constraint to conflict against (legitimate same-day duplicate donations are expected in real data), so re-running it creates duplicate rows. Read the file's own header before reusing this pattern for a different dataset.
+- **infaq's `Jumlah Terkumpul`/rollups can legitimately disagree with an older, separately-maintained figure** (e.g. from a Sheet or a different site) — this system always computes from raw rows, so if an older system's own summary cell had drifted from its own underlying log (a real, confirmed case found 2026-07-21, see [§4 Troubleshooting](#4-troubleshooting)), don't "fix" the discrepancy by inserting an adjustment row here. Figure out which source is actually wrong first.

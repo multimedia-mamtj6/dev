@@ -29,9 +29,16 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/users.js` | `loadUsers()`, `renderUsers()`, `saveUser()`, `confirmDeleteUser()` |
 | `admin/userlog.html` | Activity log / changelog table + Admin/Tindakan/Dari/Hingga filter bar (super_admin only) |
 | `admin/userlog.js` | `loadLog()`, `renderLog()`, `populateFilterOptions()`, `applyFilters()`, `resetFilters()`, `loadMoreLog()` |
-| `admin/setup.sql` | Supabase schema reference |
-| `admin/database.md` | Full database docs — setup from scratch, schema, RLS/GRANT model, troubleshooting |
+| `admin/setup.sql` | Supabase schema reference, both modules |
+| `admin/database.md` | Full database docs — setup from scratch, schema (both modules), RLS/GRANT model, troubleshooting |
 | `DEV_NOTES.MD` | Session context memo — **read before touching anything** |
+| `admin/infaq/infaq-common.js` | Shared across infaq pages: `requireInfaqAccess()`, `formatRM()`, `BULAN_MY` |
+| `admin/infaq/ringkasan.html`/`.js` | Module landing page: stat cards, active-project progress bar, Terbitkan |
+| `admin/infaq/kutipan.html`/`.js` | General infaq: one row per week, upsert on save, month-grouped display |
+| `admin/infaq/perbelanjaan.html`/`.js` | Expenses: one row per month, same upsert shape as kutipan |
+| `admin/infaq/projek.html`/`.js` | Fundraising project settings CRUD, links to projek-kutipan.html per row |
+| `admin/infaq/projek-kutipan.html`/`.js` | ONE project's individual dated donations (`?project=<id>`), paginated |
+| `admin/import-legacy-infaq-data.sql` | One-time bulk import of historical infaq data — see its own header |
 
 ---
 
@@ -84,6 +91,10 @@ Base (desktop)           — everything above @media blocks
 Every JS-rendered `<td>` must have `data-label="..."`. Empty string is fine for action columns.
 
 **Trap:** The global desktop rule `.data-table tr:last-child td { border-bottom: none }` applies outside the media query and overrides mobile borders on the last row. The mobile block re-asserts borders to fix this.
+
+**Trap #2 (found 2026-07-21, adding `kutipan.js`'s month-subtotal row):** a `<tr>` with a single `colspan`'d `<td>` (no `data-label`) does NOT survive the card-per-row mobile transform above — the base rule still turns that one `<td>` into a `justify-content: space-between` flex row with an (empty) `::before` label, so it renders as an odd half-width sliver instead of a clean full-width band. Fix: give the grouping row its own class (`.group-row`) and add a mobile override *after* the base card-per-row block that sets `display: block` on both the `<tr>` and its `<td>`, and hides `::before` on it explicitly. See `admin/infaq/kutipan.js`'s month-grouping for the working example — reuse this pattern for any future subtotal/section-header row inside a `.data-table`.
+
+**Scoping an override without touching a shared class (found 2026-07-21):** `.filter-bar .form-group` is shared by every filter bar in `admin/` — `userlog.html`'s 4-filter bar genuinely needs it to `flex-grow`, so narrowing it for `kutipan.html`/`perbelanjaan.html`'s lone year-filter couldn't just edit the shared rule. Solved with `.filter-bar .form-group:has(#filter-year) { flex: 0 0 auto; width: 110px; }` — scoped by a `:has()` selector matching the specific control's `id`, not a new class added to every page. Reach for this pattern (rather than a new modifier class threaded through multiple HTML files) whenever a shared-class override only applies to one specific instance.
 
 ### Dropdown menu pattern
 ```css
@@ -149,6 +160,40 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 
 ---
 
+## infaq module JS (`admin/infaq/*.js`)
+
+Rebuilt from scratch 2026-07-21 to match the mosque's real recording pattern (see `admin/database.md` §2.1 and `DEV_NOTES.MD` session 11 for the full why). Deeper design rationale lives in `admin/CLAUDE.md`'s Key Patterns — this section is a function-level map, not the full story.
+
+### infaq-common.js
+- `requireInfaqAccess()` — called right after `requireAuth()` on every infaq page; denies + redirects unless `role === 'super_admin'` or `permissions.infaq` is truthy
+- `formatRM(amount)` — `'RM ' + toLocaleString('ms-MY', {...})`
+- `BULAN_MY` — array of Malay month names, index 0 = Januari
+
+### kutipan.js / perbelanjaan.js
+- Both fetch their **entire** table once on load (`allRows`) rather than paginating — these tables are small (~1 row/week or /month), unlike the unbounded per-donation model this replaced
+- `populateYearFilter()` — builds the year `<select>` from distinct years present in `allRows` (plus the current year if absent), client-side filter on change, no re-fetch
+- `saveRow()` — **upsert**, not insert, on the table's unique key (`tahun,bulan,minggu` for kutipan; `tahun,bulan` for perbelanjaan) — recording an already-existing period replaces its total instead of erroring
+- `renderTable()` (kutipan.js only) — groups consecutive same-month rows with a `.group-row` subtotal band; relies on rows already being sorted `tahun desc, bulan desc, minggu desc` from the query, so grouping is a single forward scan. `.group-row` has its own mobile CSS override in `style.css` — a plain `colspan` row does not survive the card-per-row mobile pattern (see [CSS architecture](#css-architecture) above)
+
+### projek.js
+- Small, bounded list (like `ustaz.js`) — but "Terkumpul" needs a sum over `infaq_projek_kutipan`, so one extra query fetches every project-linked donation's `jumlah` in one round-trip and reduces client-side into a per-project total, rather than one query per project
+- `confirmActivate()` — deactivates the current active project (`is_active: false, completed_at: now()`) **then** activates the target, two sequential `UPDATE`s always in that order (see `database.md` §2.1 for why)
+- `confirmDelete()` — blocks deletion while any `infaq_projek_kutipan` row still references the project (client-side guard, same pattern as `ustaz.js`'s schedule-reference check)
+- Each row's "Lihat Kutipan" link goes to `projek-kutipan.html?project=<id>`
+
+### projek-kutipan.js
+- Reads `project` from `new URLSearchParams(window.location.search)` — scopes every query to that one `project_id`
+- Paginated/filtered like the old (pre-rebuild) `kutipan.js` — this is the only infaq table that's genuinely unbounded per-row, since it's the one real per-deposit table left
+- `updateProgress()` — separate query summing all of this project's donations, drives the progress bar shown above the table
+
+### ringkasan.js
+- `loadStats()` — deliberately simple independent client-side sums over freshly-fetched rows, **not** a reimplementation of `api/publish-infaq.js`'s rollup logic (same separation of concerns `dashboard.js` already has from `api/publish.js` — this page previews, the serverless function computes the real published output)
+- `loadActiveProject()` — separate query for the active project's progress bar
+- `publishInfaq()` — POSTs to `/api/publish-infaq` with the session Bearer token, same pattern as `dashboard.js`'s `publishMonth()`
+- `loadLastPublishedInfaqNote()` — reads the latest `infaq_activity_log` row where `action = 'publish'`, same pattern as `dashboard.js`'s `loadLastPublishedNote()` but not month-scoped (infaq publish is always a full as-of-now snapshot)
+
+---
+
 ## Publish endpoint (`api/publish.js`)
 
 Vercel serverless function. Requires:
@@ -169,6 +214,20 @@ Note: `commitUrl` is returned but **not shown to the user** (removed from dashbo
 **Also writes an `activity_log` row on success:** after the GitHub push succeeds, `publish.js` looks up the acting admin's `name` from the `admins` table (via the `actorEmail` already extracted from the `/auth/v1/user` check, matched with `email=ilike.` rather than `eq.` — see the email-casing note below) and POSTs an `activity_log` row directly via the Supabase REST API using the service-role key — a second, small Supabase round-trip, deliberately kept cheap since Terbitkan is a rare action. Wrapped in try/catch so a logging failure can never turn a successful publish into an error response to the admin.
 
 **Email matching uses `ilike`, not `eq`:** `admins.email` may not casing-match exactly what Google OAuth/Supabase Auth returns (e.g. if it was typed by hand into `setup.sql`'s bootstrap insert), and Postgres `text` equality is case-sensitive by default — an `eq` mismatch fails silently (zero rows, no error) rather than erroring. Both this lookup and `dashboard.js`'s last-published-note fallback use case-insensitive matching for this reason.
+
+---
+
+## Publish endpoint (`api/publish-infaq.js`)
+
+Vercel serverless function, modeled directly on `api/publish.js` above — same auth block (Bearer session token, verified via a round-trip to Supabase's `/auth/v1/user`), same env vars, same GET-sha-then-PUT GitHub Contents API pattern. Differs in two ways: no `month` query param (infaq publish is always a full as-of-now snapshot), and it pushes **3 files** instead of one — `admin/infaq/data/monthly.json`, `daily.json`, `perbelanjaan.json` (three sequential commits via a local `pushJsonToGitHub()` helper, reused three times).
+
+Reads `infaq_projects` (active only), `infaq_kutipan_mingguan`, `infaq_perbelanjaan_bulanan` (all rows — small, pre-aggregated tables, no date-range windowing needed), and `infaq_projek_kutipan` (only for the active project, if any). Computes every rollup via pure, exported helper functions (`sumJumlah`, `filterTahunBulan`, `filterTahun`, `buildMingguBuckets`, `buildYearlyGraf`, `computeCumulative`, `computeProjectProgress`) — same "exported on `module.exports` for unit-testing with a plain Node script, no live deploy needed" convention as `api/publish.js`'s own helpers.
+
+**January edge case:** `perbelanjaan.json`'s `paparanBulanLepas.JumlahKumulatif` is a running sum *within one calendar year*. When "now" is January, "bulan lepas" is December of the **previous** year — its cumulative must come from that previous year's own 12-month series, not the current (new) year's array (which would just show near-zero). Handled explicitly, unit-tested, unchanged across the 2026-07-21 schema rebuild since the logic itself doesn't depend on which table the rows came from.
+
+**Output shapes deliberately mirror the real `infaq.mamtj6.com` reference site** (field names like `Minggu1`-`Minggu5`, `JumlahBulanan`, `paparanHarian`) — so this system could later drop in and replace that site's manual Sheet-editing workflow without reshaping the JSON. There is currently no reader for these files in this repo (no public infaq page yet).
+
+**Also writes an `infaq_activity_log` row on success** — same pattern/reasoning as `api/publish.js`'s `activity_log` write, `.ilike()` email matching included.
 
 ---
 
@@ -210,3 +269,5 @@ Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
 ```
 
 `no-store` (not `max-age=0, must-revalidate`) is required here — `must-revalidate` still lets mobile Chrome serve the page from back-forward cache (bfcache) with no network request at all, so a stale copy with old JS can resurface after backgrounding the app or navigating back. `no-store` disables bfcache for these routes and forces a full re-fetch every visit.
+
+Since `admin/infaq/data/*.json` (the infaq module's published output — see the `api/publish-infaq.js` section above) lives under `/admin/`, it inherits this same `no-store` rule automatically — no separate `vercel.json` entry was needed when that path was chosen 2026-07-21. A future public-facing consumer of that JSON would want its own caching decision, since `no-store` on every request isn't necessarily the right call for a public page.
