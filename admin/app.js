@@ -26,15 +26,16 @@ async function requireAuth() {
     return session;
 }
 
-// Every module's dashboard sits at a different depth now (admin/kuliah/,
-// admin/infaq/) — used for the OAuth return URL and any "no access, go
-// somewhere sane" redirect. Returns null when the admin has no module
+// Used for the OAuth return URL and any "no access, go somewhere sane"
+// redirect. Every admin with at least one module permission (or
+// super_admin) lands on the shared cross-module overview (admin/dashboard.js)
+// rather than a per-module page — it links onward to jadual.html/
+// ringkasan.html for full detail. Returns null when the admin has no module
 // access at all; callers must show a message in that case, never redirect
 // (redirecting to another gated/denied page is how you get a bounce loop).
 function defaultLandingPageFor(admin) {
     if (!admin) return null;
-    if (admin.role === 'super_admin' || admin.permissions?.kuliah) return '/admin/kuliah/jadual.html';
-    if (admin.permissions?.infaq) return '/admin/infaq/ringkasan.html';
+    if (admin.role === 'super_admin' || admin.permissions?.kuliah || admin.permissions?.infaq) return '/admin/dashboard.html';
     return null;
 }
 
@@ -48,6 +49,12 @@ function defaultLandingPageFor(admin) {
 // labels) can highlight its logical parent ("Projek") without any
 // filename-guessing.
 const MODULES = [
+    {
+        key: 'utama', label: 'Utama', permission: null, requiresSuperAdmin: false,
+        items: [
+            { label: 'Ringkasan Keseluruhan', href: '/admin/dashboard.html', match: ['/admin/dashboard.html'] },
+        ],
+    },
     {
         key: 'kuliah', label: 'Kuliah', permission: 'kuliah', requiresSuperAdmin: false,
         items: [
@@ -90,9 +97,13 @@ function renderSidebar() {
     if (!nav || !currentAdmin) return;
 
     const path = window.location.pathname;
+    // permission: null means "no specific module gate" — visible to any
+    // authenticated admin (unless requiresSuperAdmin), e.g. the shared
+    // Ringkasan overview link. Every other module still needs its own
+    // truthy currentAdmin.permissions[permission] (or super_admin).
     const canSeeModule = (m) => currentAdmin.role === 'super_admin'
         ? true
-        : (m.requiresSuperAdmin ? false : !!currentAdmin.permissions?.[m.permission]);
+        : (m.requiresSuperAdmin ? false : (m.permission === null || !!currentAdmin.permissions?.[m.permission]));
 
     nav.innerHTML = MODULES
         .filter(canSeeModule)
@@ -137,7 +148,7 @@ async function signInWithGoogle() {
     const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin + '/admin/kuliah/jadual.html'
+            redirectTo: window.location.origin + '/admin/dashboard.html'
         }
     });
     if (error) {

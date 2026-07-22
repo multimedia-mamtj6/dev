@@ -20,6 +20,7 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 |------|---------|
 | `admin/index.html` | Login page — Google OAuth via Supabase |
 | `admin/app.js` | Shared: Supabase client (`db`), `requireAuth()`, `signOut()`, `showToast()`, `escapeHtml()`, `MODULES` config + `renderSidebar()`, `toggleNav()`/`closeNav()` |
+| `admin/dashboard.html`/`.js` | Cross-module overview (2026-07-22) — universal post-login landing page, kuliah + infaq glimpse sections, links onward to `jadual.html`/`ringkasan.html` |
 | `admin/style.css` | All admin styles: desktop, ≤768px tablet, ≤640px mobile |
 | `admin/kuliah/jadual.html` | Monthly calendar grid + day editor modal + "Lihat Terbitan" and "Tindakan Bulan" dropdowns (renamed from `admin/kuliah/dashboard.html` 2026-07-22 — old path is now a redirect stub) |
 | `admin/kuliah/jadual.js` | `renderCalendar()`, `renderMobileDayList()`, `openModal()`, `saveDay()`, `publishMonth()`, `updateScheduleActions()` (real current/next month gating), `toggleMonthActionsMenu()`/`toggleScheduleActionsMenu()`, `openDuplicateModal()`/`confirmDuplicate()`, `openClearModal()`/`confirmClear()` |
@@ -122,13 +123,20 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `requireAuth()` — async; redirects on fail; sets `currentAdmin`
 - `showToast(msg, type, duration)` — type: `'success'` | `'error'`
 - `escapeHtml(str)` — XSS sanitiser, used everywhere user content is interpolated
-- `MODULES` — single source of truth for every sidebar link (module key, permission, super_admin-only flag, items with `href`+`match` pathnames); add an entry here to add a module or page, nowhere else
-- `renderSidebar()` — fills the (already-present, static) `#sidebar-nav` with module groups per `currentAdmin`'s role/permissions + active-item highlighting, from `MODULES`; called once from `requireAuth()`. Rebuilds from scratch every call, so it's naturally idempotent (no double-injection guard needed). Does NOT build the sidebar shell itself — that's static HTML/CSS, not JS (see CSS architecture section)
+- `MODULES` — single source of truth for every sidebar link (module key, permission, super_admin-only flag, items with `href`+`match` pathnames); add an entry here to add a module or page, nowhere else. A module's `permission` can be `null` (e.g. the `utama` entry pointing at `dashboard.html`) — meaning "visible to any authenticated admin, no specific module gate", not "visible to nobody"
+- `renderSidebar()` — fills the (already-present, static) `#sidebar-nav` with module groups per `currentAdmin`'s role/permissions + active-item highlighting, from `MODULES`; called once from `requireAuth()`. Rebuilds from scratch every call, so it's naturally idempotent (no double-injection guard needed). Does NOT build the sidebar shell itself — that's static HTML/CSS, not JS (see CSS architecture section). Its `canSeeModule` check treats `permission: null` as an explicit pass-through (still subject to `requiresSuperAdmin`), not the same as a missing/falsy permission match
 - `toggleNav()` / `closeNav()` — off-canvas sidebar open/close below the 768px breakpoint (toggles `.sidebar.open`/`.sidebar-backdrop.open`); no-ops visually above it since the sidebar is pinned open there regardless of the class
 - `isYasinEntry(ustaz)` — matches `/yasi+n/i` against `short_name + full_name` combined; detects the "Bacaan Yasiin & Tahlil" special ustaz entry regardless of spelling, used by `jadual.js` to color its calendar pills green
 - `logActivity(action, targetLabel, detail)` — fire-and-forget insert into `activity_log`, called right after a mutating Supabase write already succeeded. Never throws or toasts — a logging failure must not make the admin think their actual save/delete failed. Called from `jadual.js`, `ustaz.js`, `users.js` (and separately, server-side, from `api/publish.js`)
 - `formatDateTimeMY(iso)` — `toLocaleString('ms-MY', {...})` date+time formatter; shared by `jadual.js` (last-published note) and `userlog.js` (log table)
 - `formatRelativeMY(iso)` — Malay relative-time string (baru sahaja → minit → jam → hari → minggu → bulan lalu); used by `jadual.js`'s last-published note
+
+### dashboard.js (cross-module overview, added 2026-07-22 — not to be confused with the old `kuliah/jadual.js`, itself renamed from `dashboard.js` the same day)
+- Init block checks `currentAdmin.role`/`permissions.kuliah`/`permissions.infaq` and only fetches+shows each section the admin actually has access to; shows `#no-access-message` if neither (defensive — `defaultLandingPageFor()` shouldn't route a zero-access admin here at all)
+- `loadKuliahOverview()` — one month-bounded `schedule` fetch + one `ustaz` fetch (same query shape as `jadual.js`'s `loadMonth()`), then derives: today's session (`renderTodaySession()`), the next few upcoming days with something recorded (`renderUpcoming()`, rest-of-current-month only, doesn't reach into next month), a filled/total day count (`countFilledDays`-equivalent inline), and last-published status (`loadKuliahLastPublished()`, same `activity_log` query shape as `jadual.js`'s `loadLastPublishedNote()`)
+- `sessionText(ustazId, pending, ustazMap)` — small shared formatter: `"Belum Ditetapkan"` / ustaz short_name / `"Tiada Kuliah"`, used by both the today-card and the upcoming list
+- `loadInfaqOverview()` — bulan-ini-only kutipan/perbelanjaan sums (narrower than `ringkasan.js`'s `loadStats()`, which also computes bulan-lepas/tahun) plus the same active-project progress-bar query `ringkasan.js`'s `loadActiveProject()` uses
+- No writes, no Terbitkan button — purely read-only, same as `ringkasan.js`
 
 ### jadual.js (renamed from dashboard.js 2026-07-22)
 - `currentYear`, `currentMonth` — module-level state for month navigation (unrestricted — admin can browse any past/future month)

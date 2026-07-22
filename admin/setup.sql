@@ -139,8 +139,10 @@ CREATE POLICY "auth_delete_kuliah_assets" ON storage.objects
 --
 -- In Supabase Dashboard → Authentication → URL Configuration:
 --   Add these redirect URLs (replace with your actual domain):
---     https://dev.mamtj6.com/admin/kuliah/jadual.html
---     http://localhost:8000/admin/kuliah/jadual.html    ← for local dev
+--     https://dev.mamtj6.com/admin/dashboard.html
+--     http://localhost:8000/admin/dashboard.html    ← for local dev
+--   (dashboard.html is the OAuth redirectTo target as of 2026-07-22 — the
+--   universal cross-module overview page, replacing kuliah/jadual.html)
 
 
 -- ── 5b. Bootstrap the first super_admin (manual, one-time) ────────────────────
@@ -152,7 +154,7 @@ CREATE POLICY "auth_delete_kuliah_assets" ON storage.objects
 --     ('your-email@gmail.com', 'Your Name', 'super_admin', '{"kuliah": true, "infaq": true}'::jsonb);
 --
 -- The email must exactly match the Google account you'll log in with. After
--- this one row exists, log in once — you'll land in kuliah/jadual.html
+-- this one row exists, log in once — you'll land in admin/dashboard.html
 -- with the "Pengguna" and "Log Aktiviti" sidebar links visible — and manage
 -- every admin after that through users.html normally. Never need to run
 -- this insert again.

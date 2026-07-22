@@ -39,7 +39,7 @@ Follow `setup.sql`'s §5 comment block:
 
 1. Supabase Dashboard → Authentication → Providers → Google → enable it, paste your Google OAuth Client ID/Secret (create these at [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services → Credentials).
 2. Copy the Callback URL Supabase shows you, add it to your Google OAuth app's Authorised redirect URIs.
-3. Supabase Dashboard → Authentication → URL Configuration → add your redirect URLs (`https://<your-domain>/admin/kuliah/jadual.html`, plus `http://localhost:8000/admin/kuliah/jadual.html` for local dev).
+3. Supabase Dashboard → Authentication → URL Configuration → add your redirect URLs (`https://<your-domain>/admin/dashboard.html`, plus `http://localhost:8000/admin/dashboard.html` for local dev — `dashboard.html` is the OAuth `redirectTo` target as of 2026-07-22, replacing `admin/kuliah/jadual.html`).
 
 ### 1.4 Bootstrap the first super_admin
 
@@ -67,7 +67,7 @@ The email must exactly match the Google account you'll log in with. After this o
 
 1. Serve the site locally (`python -m http.server` from repo root) or visit the deployed URL, open `admin/index.html`.
 2. Log in with the Google account you bootstrapped in 1.4.
-3. You should land on `jadual.html` with **both** "Pengguna" and "Log Aktiviti" visible in the sidebar (proves the `super_admin` role and `renderSidebar()`'s permission gating are both working).
+3. You should land on `dashboard.html` (the cross-module overview) with **both** "Pengguna" and "Log Aktiviti" visible in the sidebar (proves the `super_admin` role and `renderSidebar()`'s permission gating are both working).
 4. Add a test ustaz on `ustaz.html`, assign them to a day on `jadual.html`, save — confirms `ustaz`/`schedule` writes work.
 5. Check `userlog.html` shows the ustaz-create and day-edit rows you just made — confirms `activity_log` writes work.
 6. `Terbitkan` only works where a Vercel serverless runtime actually runs `/api/publish` — it will fail locally with a connection-error toast, that's expected (see [Troubleshooting](#4-troubleshooting)).
@@ -327,7 +327,7 @@ The infaq tables (§2.1) follow this exact same pattern — one permissive polic
 | `Terbitkan` fails instantly with a connection-error toast | Testing under plain `python -m http.server` — no `/api` route exists outside a real Vercel deployment | Expected locally. Test publish only on an actual Vercel deployment (preview or production). |
 | `Terbitkan` fails: "Invalid or expired session" | The browser's Supabase session/JWT expired | Log out and back in, then retry |
 | `Terbitkan` fails: "Server misconfiguration: missing Supabase/GitHub env vars" | One or more of `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`GITHUB_TOKEN`/`GITHUB_REPO` isn't set in Vercel | Set them in Vercel Dashboard → Project → Settings → Environment Variables (see [1.5](#15-configure-vercel-environment-variables)), redeploy |
-| `users.html`/`userlog.html` briefly flash then redirect to `jadual.html` | Logged in as `role = 'editor'`, not `super_admin` — both pages are gated client-side | Expected behavior if you're not a super_admin. To promote someone: `UPDATE admins SET role = 'super_admin' WHERE email = '...';` |
+| `users.html`/`userlog.html` briefly flash then redirect to `dashboard.html` | Logged in as `role = 'editor'`, not `super_admin` — both pages are gated client-side | Expected behavior if you're not a super_admin. To promote someone: `UPDATE admins SET role = 'super_admin' WHERE email = '...';` |
 | An admin's registered `name` shows up as their raw email address somewhere (e.g. the dashboard's "last published" note) even though `name` is set in `users.html` | `admins.email` doesn't case-match exactly what Google OAuth/Supabase Auth returns for that account — Postgres `text` equality is case-sensitive by default, so an exact-match (`eq`) lookup silently finds zero rows instead of erroring | Check `admins.email` in Supabase Table Editor for stray casing/whitespace vs. the actual Google account. The app's own lookups (`jadual.js`, `api/publish.js`) already use case-insensitive `ilike` matching to guard against this, but a query written elsewhere with `eq` will still be affected |
 | Nobody can access `users.html` to add the first admin | The bootstrap chicken-and-egg problem | Insert the first row manually via SQL — see [1.4](#14-bootstrap-the-first-super_admin) |
 | Supabase SQL Editor shows "Potential issue detected — creates a table without enabling Row Level Security" while running part of `setup.sql` §8 | You selected/ran only a single `CREATE TABLE` statement in isolation — the matching `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and `CREATE POLICY` exist later in the same §8 section, so the linter (which only sees what you selected) can't see them | Cancel, then select and run the **entire** §8 section as one paste (see [1.7](#17-set-up-the-infaq-module-optional--separate-from-the-kuliah-setup-above)) — the warning doesn't apply once RLS-enable and the policy are part of the same run |

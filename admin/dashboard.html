@@ -1,9 +1,106 @@
 <!DOCTYPE html>
 <html lang="ms">
+
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=/admin/kuliah/jadual.html">
-<title>Jadual Kuliah</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ringkasan — Admin MAMTJ6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
-<body></body>
+
+<body>
+
+  <div class="sidebar-mobile-topbar">
+    <button class="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <span>Admin MAMTJ6</span>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeNav()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">Admin MAMTJ6</div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </aside>
+
+  <div class="admin-content">
+  <div class="page">
+    <div class="section-header">
+      <h1 class="section-title">Ringkasan</h1>
+    </div>
+
+    <!-- ── Kuliah glimpse ── -->
+    <div id="kuliah-overview" style="display:none">
+      <div class="section-header-row">
+        <h2 class="subsection-title">Kuliah</h2>
+        <a href="/admin/kuliah/jadual.html" class="goto-link">Ke Jadual &rarr;</a>
+      </div>
+
+      <div class="card" style="padding:1.25rem;margin-bottom:0.75rem">
+        <h3 style="margin:0 0 0.5rem;font-size:0.9375rem" id="kuliah-today-label">—</h3>
+        <p style="margin:0 0 0.125rem;font-size:0.875rem;color:var(--text-muted)" id="kuliah-today-subuh">Memuatkan...</p>
+        <p style="margin:0;font-size:0.875rem;color:var(--text-muted)" id="kuliah-today-maghrib"></p>
+      </div>
+
+      <div class="card" style="padding:1.25rem;margin-bottom:0.75rem">
+        <h3 style="margin:0 0 0.5rem;font-size:0.8125rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em">Akan Datang</h3>
+        <div id="kuliah-upcoming-list" class="state-cell">Memuatkan...</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <span class="stat-label">Bulan Ini</span>
+          <span class="stat-value" id="kuliah-month-completion">—</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-label">Penerbitan</span>
+          <span class="stat-value" id="kuliah-last-published" style="font-size:0.8125rem">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Infaq glimpse ── -->
+    <div id="infaq-overview" style="display:none">
+      <div class="section-header-row">
+        <h2 class="subsection-title">Infaq</h2>
+        <a href="/admin/infaq/ringkasan.html" class="goto-link">Ke Ringkasan Infaq &rarr;</a>
+      </div>
+
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <span class="stat-label">Kutipan Bulan Ini</span>
+          <span class="stat-value" id="infaq-kutipan-ini">—</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-label">Perbelanjaan Bulan Ini</span>
+          <span class="stat-value" id="infaq-belanja-ini">—</span>
+        </div>
+      </div>
+
+      <div class="card" id="infaq-project-card" style="display:none;padding:1.25rem;margin-top:0.75rem">
+        <h3 style="margin:0 0 0.75rem;font-size:0.9375rem" id="infaq-project-name"></h3>
+        <div class="progress-track">
+          <div class="progress-fill" id="infaq-project-progress-fill" style="width:0%"></div>
+        </div>
+        <p style="margin-top:0.5rem;color:var(--text-muted);font-size:0.8125rem" id="infaq-project-progress-text"></p>
+      </div>
+      <div class="card" id="infaq-no-project-card" style="display:none;margin-top:0.75rem">
+        <div class="state-cell">Tiada projek aktif ketika ini.</div>
+      </div>
+    </div>
+
+    <div class="card" id="no-access-message" style="display:none;padding:1.25rem">
+      Tiada akses modul. Hubungi Super Admin.
+    </div>
+  </div>
+  </div>
+
+  <script src="/admin/app.js"></script>
+  <script src="/admin/infaq/infaq-common.js"></script>
+  <script src="/admin/dashboard.js"></script>
+</body>
+
 </html>
