@@ -284,13 +284,15 @@ actor_name   TEXT
 action       TEXT NOT NULL  -- infaq_kutipan_mingguan_create/update/delete |
                              -- infaq_projek_kutipan_create/update/delete |
                              -- infaq_perbelanjaan_create/update/delete |
-                             -- infaq_project_create/update/delete/activate | publish
+                             -- infaq_project_create/update/delete/activate |
+                             -- publish_monthly | publish_daily | publish_perbelanjaan
 target_label TEXT
 detail       TEXT
 ```
 
 - **Not yet shown anywhere in the UI** — `userlog.html` only reads kuliah's `activity_log`, so every infaq accountability row is currently write-only. Known gap, see `DEV_NOTES.MD`'s WHAT MIGHT COME NEXT.
 - Written by `logActivity(action, targetLabel, detail, 'infaq_activity_log')` — `app.js`'s shared `logActivity()` gained an optional 4th param (table name, defaults to kuliah's `activity_log`) specifically so infaq pages could reuse it without duplicating the function.
+- **`publish_monthly`/`publish_daily`/`publish_perbelanjaan` (2026-07-22) are 3 distinct actions, not one shared `publish`** — `api/publish-infaq.js` publishes each of its 3 output files independently (`?target=monthly|daily|perbelanjaan`), each logging its own row, so `ringkasan.html` can show 3 separate "last published" notes instead of one combined one.
 
 ---
 

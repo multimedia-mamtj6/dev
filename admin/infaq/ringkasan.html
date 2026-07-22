@@ -31,16 +31,17 @@
   <div class="page">
     <div class="section-header">
       <h1 class="section-title">Ringkasan Infaq</h1>
-      <button class="btn btn-primary" id="publish-btn" onclick="publishInfaq()">Terbitkan</button>
     </div>
-
-    <p style="margin-top:0.25rem;margin-bottom:0.5rem;font-size:0.75rem;color:var(--text-muted)">
-      Tekan <strong>Terbitkan</strong> untuk mengira semula ringkasan daripada rekod kutipan/perbelanjaan
-      dan menghantarnya ke laman web.
+    <p style="margin-top:-0.5rem;margin-bottom:1rem;font-size:0.75rem;color:var(--text-muted)">
+      Setiap bahagian diterbitkan berasingan — kemas kini kutipan tidak menghantar semula perbelanjaan
+      atau kutipan projek, dan sebaliknya.
     </p>
-    <p class="schedule-actions-note" id="last-published-note" style="display:none;font-weight:600"></p>
 
-    <h2 class="infaq-section-subtitle">Kutipan</h2>
+    <div class="infaq-publish-section-header">
+      <h2 class="infaq-section-subtitle">Kutipan</h2>
+      <button class="btn btn-primary btn-sm" id="publish-monthly-btn" onclick="publishInfaq('monthly', 'publish-monthly-btn')">Terbitkan Kutipan</button>
+    </div>
+    <p class="schedule-actions-note" id="last-published-monthly" style="display:none;font-weight:600;font-size:0.8125rem"></p>
     <div class="infaq-stat-grid">
       <div class="card infaq-stat-card">
         <span class="infaq-stat-label">Bulan Ini</span>
@@ -56,7 +57,11 @@
       </div>
     </div>
 
-    <h2 class="infaq-section-subtitle">Perbelanjaan</h2>
+    <div class="infaq-publish-section-header">
+      <h2 class="infaq-section-subtitle">Perbelanjaan</h2>
+      <button class="btn btn-primary btn-sm" id="publish-perbelanjaan-btn" onclick="publishInfaq('perbelanjaan', 'publish-perbelanjaan-btn')">Terbitkan Perbelanjaan</button>
+    </div>
+    <p class="schedule-actions-note" id="last-published-perbelanjaan" style="display:none;font-weight:600;font-size:0.8125rem"></p>
     <div class="infaq-stat-grid">
       <div class="card infaq-stat-card">
         <span class="infaq-stat-label">Bulan Ini</span>
@@ -72,7 +77,11 @@
       </div>
     </div>
 
-    <h2 class="infaq-section-subtitle">Projek Aktif</h2>
+    <div class="infaq-publish-section-header">
+      <h2 class="infaq-section-subtitle">Projek Aktif</h2>
+      <button class="btn btn-primary btn-sm" id="publish-daily-btn" onclick="publishInfaq('daily', 'publish-daily-btn')">Terbitkan Kutipan Projek</button>
+    </div>
+    <p class="schedule-actions-note" id="last-published-daily" style="display:none;font-weight:600;font-size:0.8125rem"></p>
     <div class="card" id="project-card" style="display:none;padding:1.25rem">
       <h3 style="margin:0 0 0.75rem;font-size:0.9375rem" id="project-name"></h3>
       <div class="infaq-progress-track">

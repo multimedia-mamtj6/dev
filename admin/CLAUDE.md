@@ -161,7 +161,8 @@ actor_email text NOT NULL, actor_name text,
 action text NOT NULL,       -- infaq_kutipan_mingguan_create/update/delete |
                              -- infaq_projek_kutipan_create/update/delete |
                              -- infaq_perbelanjaan_create/update/delete |
-                             -- infaq_project_create/update/delete/activate | publish
+                             -- infaq_project_create/update/delete/activate |
+                             -- publish_monthly | publish_daily | publish_perbelanjaan
 target_label text, detail text
 ```
 
@@ -186,12 +187,14 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
     `infaq_perbelanjaan_bulanan` (tahun,bulan), or insert to
     `infaq_projek_kutipan` (genuinely one row per deposit) — none of these
     are ever hand-aggregated into a further total
-  → click Terbitkan on admin/infaq/ringkasan.html
-  → POST /api/publish-infaq  (Bearer: session token, no month param — always
-    a full as-of-now snapshot)
-  → api/publish-infaq.js reads all 4 infaq tables (service role), COMPUTES
-    weekly/monthly/yearly rollups + active-project progress
-  → pushes admin/infaq/data/monthly.json + daily.json + perbelanjaan.json to GitHub
+  → click one of 3 independent Terbitkan buttons on admin/infaq/ringkasan.html
+    (Kutipan / Perbelanjaan / Projek Aktif — each publishes only its own file)
+  → POST /api/publish-infaq?target=monthly|daily|perbelanjaan (Bearer: session
+    token, no month param — always a full as-of-now snapshot of that ONE file)
+  → api/publish-infaq.js reads only the Supabase table(s) that target needs
+    (service role), COMPUTES weekly/monthly/yearly rollups + active-project
+    progress for that file only
+  → pushes exactly ONE of admin/infaq/data/{monthly,daily,perbelanjaan}.json to GitHub
   → no public reader yet — see What This Is
 ```
 
@@ -258,9 +261,11 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
 
 **Infaq project activation must deactivate-then-activate, in that order (partial unique index enforces at most one active project):** `admin/infaq/projek.js`'s `confirmActivate()` runs two sequential `UPDATE`s — the currently-active project first (`is_active: false, completed_at: now()`), then the target (`is_active: true`) — never the reverse, or briefly (between the two statements, if reordered) two rows would both need `is_active = true`, violating `idx_infaq_projects_one_active`. New projects are created with `is_active: false` always — activating is a separate, explicit step, so creating a draft project can never silently deactivate whatever's currently live.
 
-**Infaq's January cumulative edge case (see `api/publish-infaq.js`'s pure functions, unit-tested):** `perbelanjaan.json`'s `paparanBulanLepas.JumlahKumulatif` is a running sum *within one calendar year* (resets at the year boundary). When "now" is January, "bulan lepas" is December of the **previous** year — its cumulative must be computed from that previous year's own 12-month series (`computeYearlyGraf(...,  lastMonthYear)` → `computeCumulative(...)[11]`), never read from the current (new) year's array, which would just show January's own total or zero. Get this wrong and the December-cumulative figure silently resets to near-zero every January 1st.
+**Infaq's January cumulative edge case (see `api/publish-infaq.js`'s pure functions, unit-tested):** `perbelanjaan.json`'s `paparanBulanLepas.JumlahKumulatif` is a running sum *within one calendar year* (resets at the year boundary). When "now" is January, "bulan lepas" is December of the **previous** year — its cumulative must be computed from that previous year's own 12-month series (`buildYearlyGraf(rows, lastMonthYear)` → `computeCumulative(...)[11]`), never read from the current (new) year's array, which would just show January's own total or zero. Get this wrong and the December-cumulative figure silently resets to near-zero every January 1st.
 
 **`logActivity()` now takes an optional 4th param for the target table (app.js):** `logActivity(action, targetLabel, detail, table = 'activity_log')` — every pre-existing call site is unaffected (table defaults to kuliah's `activity_log`); `admin/infaq/*.js` pass `'infaq_activity_log'` explicitly. **`userlog.html` does NOT show `infaq_activity_log` rows** — every infaq accountability entry is currently write-only (nothing displays it), a known gap flagged in `admin/DEV_NOTES.MD`, not yet built.
+
+**Infaq's 3 publish targets are fully independent, not one combined publish (2026-07-22):** `admin/infaq/ringkasan.html` has 3 separate "Terbitkan" buttons (Kutipan/Perbelanjaan/Projek Aktif), each POSTing `/api/publish-infaq?target=monthly|daily|perbelanjaan` — the endpoint fetches only the Supabase table(s) that one target needs and pushes only that one file, so recording an expense never requires also recomputing/republishing kutipan data or vice versa. Each target logs its own `infaq_activity_log` action (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) and drives its own "last published" note (`ringkasan.js`'s `loadLastPublishedInfaqNote(action, elId)`, now parameterized rather than one shared note). If you add a 4th infaq output file in the future, follow this same shape — a new `TARGETS` entry in `api/publish-infaq.js`, a new button + note pair on `ringkasan.html`, not a return to one combined endpoint.
 
 ## Sensitive Files
 

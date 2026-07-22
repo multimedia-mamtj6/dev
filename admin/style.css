@@ -389,6 +389,14 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary)
   letter-spacing: 0.02em;
   margin: 1.5rem 0 0.5rem;
 }
+.infaq-publish-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.infaq-publish-section-header .infaq-section-subtitle { margin: 0; }
 .infaq-section-subtitle:first-of-type { margin-top: 0; }
 
 .infaq-stat-grid {
