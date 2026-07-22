@@ -14,6 +14,19 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Cross-document view transitions ── */
+/* Smooths the blank flash between full-page navigations (this is a
+   multi-page app — every nav link is a real page load, not client-side
+   routing) into a soft crossfade instead of a hard cut. Progressive
+   enhancement: unsupported browsers (no Chromium 126+) just ignore this
+   at-rule and get today's normal navigation — nothing to fall back to
+   manually. .sidebar gets its own view-transition-name below so the
+   browser treats it as a continuous element across the navigation
+   rather than part of the full-page crossfade. */
+@view-transition {
+  navigation: auto;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg);
@@ -48,6 +61,7 @@ body {
   width: 256px;
   background: #0f172a;
   color: #cbd5e1;
+  view-transition-name: admin-sidebar;
   display: flex;
   flex-direction: column;
 }
