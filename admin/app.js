@@ -78,23 +78,53 @@ const SIDEBAR_LINK_BASE  = 'block px-3 py-1.5 rounded-md text-sm transition-colo
 const SIDEBAR_LINK_IDLE  = 'text-slate-300 hover:bg-white/10 hover:text-white';
 const SIDEBAR_LINK_ACTIVE = 'bg-green-600 text-white font-medium';
 
-// Builds the whole sidebar (desktop-persistent / mobile-off-canvas) + its
-// mobile topbar + backdrop from MODULES + currentAdmin, and mounts it into
-// #sidebar-root. Rebuilds from scratch every call, so unlike the old
-// _injectSuperAdminNav()'s per-link double-injection guard, this is
-// naturally idempotent. Called once from requireAuth() after currentAdmin
-// is populated — every page's own markup is just the empty mount div plus
-// the Tailwind Play CDN <script> tag in <head>.
-function renderSidebar() {
+// Builds the static sidebar chrome (topbar/backdrop/aside frame, an empty
+// #sidebar-nav placeholder inside it) and mounts it into #sidebar-root.
+// Deliberately has no dependency on currentAdmin/auth — called once, at
+// script-load time (see the top-level call below), so the sidebar panel
+// paints immediately on every navigation instead of waiting on the
+// Supabase session round-trip in requireAuth(). Without this split, the
+// panel didn't exist until auth resolved, which on a traditional
+// multi-page app (a fresh JS context + fresh network round-trip on every
+// single click) was visible as the sidebar flickering in on every page.
+function renderSidebarShell() {
     const root = document.getElementById('sidebar-root');
-    if (!root || !currentAdmin) return;
+    if (!root) return;
+    root.innerHTML = `
+        <div class="md:hidden sticky top-0 z-40 flex items-center gap-3 bg-slate-900 text-white px-4 h-14">
+            <button onclick="toggleNav()" aria-label="Menu" class="p-1.5 -ml-1.5 rounded hover:bg-white/10 text-xl leading-none">&#9776;</button>
+            <span class="font-semibold text-sm">Admin MAMTJ6</span>
+        </div>
+        <div id="sidebar-backdrop" onclick="closeNav()" class="hidden md:hidden fixed inset-0 bg-black/50 z-40"></div>
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transition-transform duration-200 md:translate-x-0 bg-slate-900 text-slate-200 flex flex-col">
+            <div class="h-14 flex items-center px-4 font-semibold text-white border-b border-white/10 shrink-0">Admin MAMTJ6</div>
+            <nav id="sidebar-nav" class="flex-1 overflow-y-auto py-3 px-2 space-y-4"></nav>
+            <div class="border-t border-white/10 p-2 shrink-0">
+                <button onclick="signOut()" class="w-full text-left px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-white/10 hover:text-white">Log Keluar</button>
+            </div>
+        </aside>
+    `;
+}
+// app.js's own <script> tag sits at the end of <body>, after #sidebar-root
+// in every page's markup, so by the time this line runs the mount point
+// already exists in the DOM — no DOMContentLoaded wrapper needed.
+renderSidebarShell();
+
+// Fills the shell's #sidebar-nav with the actual module groups from
+// MODULES + currentAdmin — the only part that genuinely depends on auth.
+// Called from requireAuth() once currentAdmin is populated. Rebuilds from
+// scratch every call, so unlike the old _injectSuperAdminNav()'s per-link
+// double-injection guard, this is naturally idempotent.
+function renderSidebar() {
+    const nav = document.getElementById('sidebar-nav');
+    if (!nav || !currentAdmin) return;
 
     const path = window.location.pathname;
     const canSeeModule = (m) => currentAdmin.role === 'super_admin'
         ? true
         : (m.requiresSuperAdmin ? false : !!currentAdmin.permissions?.[m.permission]);
 
-    const groupsHtml = MODULES
+    nav.innerHTML = MODULES
         .filter(canSeeModule)
         .map(m => `
             <div>
@@ -106,25 +136,10 @@ function renderSidebar() {
             </div>
         `).join('');
 
-    root.innerHTML = `
-        <div class="md:hidden sticky top-0 z-40 flex items-center gap-3 bg-slate-900 text-white px-4 h-14">
-            <button id="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu" class="p-1.5 -ml-1.5 rounded hover:bg-white/10 text-xl leading-none">&#9776;</button>
-            <span class="font-semibold text-sm">Admin MAMTJ6</span>
-        </div>
-        <div id="sidebar-backdrop" onclick="closeNav()" class="hidden md:hidden fixed inset-0 bg-black/50 z-40"></div>
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transition-transform duration-200 md:translate-x-0 bg-slate-900 text-slate-200 flex flex-col">
-            <div class="h-14 flex items-center px-4 font-semibold text-white border-b border-white/10 shrink-0">Admin MAMTJ6</div>
-            <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-4">${groupsHtml}</nav>
-            <div class="border-t border-white/10 p-2 shrink-0">
-                <button onclick="signOut()" class="w-full text-left px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-white/10 hover:text-white">Log Keluar</button>
-            </div>
-        </aside>
-    `;
-
     // Full page navigation closes the drawer naturally on unload, but
     // closing explicitly avoids a visible flash of the open drawer during
     // a slow navigation.
-    root.querySelectorAll('#sidebar a').forEach(a => a.addEventListener('click', closeNav));
+    nav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
 }
 
 // Off-canvas sidebar toggle (mobile). Desktop (md:) keeps the sidebar
