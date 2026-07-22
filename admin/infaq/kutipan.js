@@ -13,7 +13,10 @@ let deletingId = null;
     const session = await requireAuth();
     if (!session) return;
     if (!(await requireInfaqAccess())) return;
-    await loadRows();
+    await Promise.all([
+        loadRows(),
+        loadLastPublishedInfaqNote('publish_monthly', 'last-published-monthly'),
+    ]);
 })();
 
 async function loadRows() {

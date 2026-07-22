@@ -34,6 +34,15 @@ async function loadProject() {
     document.getElementById('project-name').textContent = project.name;
     document.getElementById('project-status').textContent = project.is_active ? 'Aktif' : 'Selesai';
     document.getElementById('project-status').style.color = project.is_active ? 'var(--primary)' : 'var(--text-muted)';
+
+    // daily.json always reflects whichever ONE project is currently active —
+    // only show the publish control here when that's this project, so
+    // Terbitkan is never offered from a completed project's page (it would
+    // silently publish a different project's data, not this one).
+    if (project.is_active) {
+        document.getElementById('publish-daily-btn').style.display = '';
+        await loadLastPublishedInfaqNote('publish_daily', 'last-published-daily');
+    }
 }
 
 // ─── Load and render ──────────────────────────────────────────────────────────

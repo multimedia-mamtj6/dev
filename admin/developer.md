@@ -32,12 +32,12 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/setup.sql` | Supabase schema reference, both modules |
 | `admin/database.md` | Full database docs — setup from scratch, schema (both modules), RLS/GRANT model, troubleshooting |
 | `DEV_NOTES.MD` | Session context memo — **read before touching anything** |
-| `admin/infaq/infaq-common.js` | Shared across infaq pages: `requireInfaqAccess()`, `formatRM()`, `BULAN_MY` |
-| `admin/infaq/ringkasan.html`/`.js` | Module landing page: stat cards, active-project progress bar, Terbitkan |
-| `admin/infaq/kutipan.html`/`.js` | General infaq: one row per week, upsert on save, month-grouped display |
-| `admin/infaq/perbelanjaan.html`/`.js` | Expenses: one row per month, same upsert shape as kutipan |
+| `admin/infaq/infaq-common.js` | Shared across infaq pages: `requireInfaqAccess()`, `formatRM()`, `BULAN_MY`, `publishInfaq()`/`loadLastPublishedInfaqNote()` |
+| `admin/infaq/ringkasan.html`/`.js` | Module landing page: stat cards + active-project progress bar only — read-only, no Terbitkan |
+| `admin/infaq/kutipan.html`/`.js` | General infaq: one row per week, upsert on save, month-grouped display, owns `monthly` Terbitkan |
+| `admin/infaq/perbelanjaan.html`/`.js` | Expenses: one row per month, same upsert shape as kutipan, owns `perbelanjaan` Terbitkan |
 | `admin/infaq/projek.html`/`.js` | Fundraising project settings CRUD, links to projek-kutipan.html per row |
-| `admin/infaq/projek-kutipan.html`/`.js` | ONE project's individual dated donations (`?project=<id>`), paginated |
+| `admin/infaq/projek-kutipan.html`/`.js` | ONE project's individual dated donations (`?project=<id>`), paginated, owns `daily` Terbitkan (shown only for the active project) |
 | `admin/import-legacy-infaq-data.sql` | One-time bulk import of historical infaq data — see its own header |
 
 ---
@@ -168,12 +168,16 @@ Rebuilt from scratch 2026-07-21 to match the mosque's real recording pattern (se
 - `requireInfaqAccess()` — called right after `requireAuth()` on every infaq page; denies + redirects unless `role === 'super_admin'` or `permissions.infaq` is truthy
 - `formatRM(amount)` — `'RM ' + toLocaleString('ms-MY', {...})`
 - `BULAN_MY` — array of Malay month names, index 0 = Januari
+- `publishInfaq(target, btnId)` — POSTs to `/api/publish-infaq?target=...` with the session Bearer token, same pattern as `dashboard.js`'s `publishMonth()`; moved here (from `ringkasan.js`) 2026-07-22 so `kutipan.js`/`perbelanjaan.js`/`projek-kutipan.js` can each call it with their own `target`/`btnId` instead of the button living on a central page
+- `loadLastPublishedInfaqNote(action, elId)` — reads the latest `infaq_activity_log` row for the given `action` (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) into the given note element, same pattern as `dashboard.js`'s `loadLastPublishedNote()` but not month-scoped (each publish is always a full as-of-now snapshot of just that one file)
+- `PUBLISH_BUTTON_LABELS` / `PUBLISH_NOTE_TARGETS` — lookup objects keyed by `btnId`/`target` respectively, used by the two functions above
 
 ### kutipan.js / perbelanjaan.js
 - Both fetch their **entire** table once on load (`allRows`) rather than paginating — these tables are small (~1 row/week or /month), unlike the unbounded per-donation model this replaced
 - `populateYearFilter()` — builds the year `<select>` from distinct years present in `allRows` (plus the current year if absent), client-side filter on change, no re-fetch
 - `saveRow()` — **upsert**, not insert, on the table's unique key (`tahun,bulan,minggu` for kutipan; `tahun,bulan` for perbelanjaan) — recording an already-existing period replaces its total instead of erroring
 - `renderTable()` (kutipan.js only) — groups consecutive same-month rows with a `.group-row` subtotal band; relies on rows already being sorted `tahun desc, bulan desc, minggu desc` from the query, so grouping is a single forward scan. `.group-row` has its own mobile CSS override in `style.css` — a plain `colspan` row does not survive the card-per-row mobile pattern (see [CSS architecture](#css-architecture) above)
+- Init block calls `loadLastPublishedInfaqNote('publish_monthly'|'publish_perbelanjaan', 'last-published-monthly'|'last-published-perbelanjaan')` alongside `loadRows()` — each page's own Terbitkan status, shown right next to its own "+ Catat" button
 
 ### projek.js
 - Small, bounded list (like `ustaz.js`) — but "Terkumpul" needs a sum over `infaq_projek_kutipan`, so one extra query fetches every project-linked donation's `jumlah` in one round-trip and reduces client-side into a per-project total, rather than one query per project
@@ -185,12 +189,12 @@ Rebuilt from scratch 2026-07-21 to match the mosque's real recording pattern (se
 - Reads `project` from `new URLSearchParams(window.location.search)` — scopes every query to that one `project_id`
 - Paginated/filtered like the old (pre-rebuild) `kutipan.js` — this is the only infaq table that's genuinely unbounded per-row, since it's the one real per-deposit table left
 - `updateProgress()` — separate query summing all of this project's donations, drives the progress bar shown above the table
+- `loadProject()` — also toggles the `daily` Terbitkan button + note (`#publish-daily-btn`/`#last-published-daily`), shown only when `project.is_active` — `daily.json` always reflects whichever ONE project is currently active, so publishing from a completed project's page would silently publish a different project's data; hidden by default in the HTML, `display:''`'d here on the active-project branch
 
 ### ringkasan.js
 - `loadStats()` — deliberately simple independent client-side sums over freshly-fetched rows, **not** a reimplementation of `api/publish-infaq.js`'s rollup logic (same separation of concerns `dashboard.js` already has from `api/publish.js` — this page previews, the serverless function computes the real published output)
 - `loadActiveProject()` — separate query for the active project's progress bar
-- `publishInfaq(target, btnId)` — POSTs to `/api/publish-infaq?target=...` with the session Bearer token, same pattern as `dashboard.js`'s `publishMonth()`; called from 3 separate buttons (`publish-monthly-btn`/`publish-perbelanjaan-btn`/`publish-daily-btn`), one per section — **not** one combined "Terbitkan" (split 2026-07-22, see `admin/CLAUDE.md`)
-- `loadLastPublishedInfaqNote(action, elId)` — reads the latest `infaq_activity_log` row for the given `action` (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) into the given note element; called 3× on load (`PUBLISH_NOTE_TARGETS` maps each `target` string to its `[action, elId]` pair), same pattern as `dashboard.js`'s `loadLastPublishedNote()` but not month-scoped (each publish is always a full as-of-now snapshot of just that one file)
+- No publish logic here — the 3 Terbitkan buttons moved to their respective data pages 2026-07-22 (see `admin/CLAUDE.md`'s Key Patterns); this page is now a pure read-only overview
 
 ---
 
@@ -219,7 +223,7 @@ Note: `commitUrl` is returned but **not shown to the user** (removed from dashbo
 
 ## Publish endpoint (`api/publish-infaq.js`)
 
-Vercel serverless function, modeled directly on `api/publish.js` above — same auth block (Bearer session token, verified via a round-trip to Supabase's `/auth/v1/user`), same env vars, same GET-sha-then-PUT GitHub Contents API pattern. Differs in two ways: no `month` query param (each publish is always a full as-of-now snapshot), and it requires a **required** `?target=monthly|daily|perbelanjaan` query param (400 if missing/invalid) — **3 independent publishes, not one combined endpoint** (split 2026-07-22, see `admin/CLAUDE.md`'s Key Patterns for why). Each request fetches only the Supabase table(s) that one target needs, computes only that one JSON, and pushes only that one file — `admin/infaq/data/monthly.json`, `daily.json`, or `perbelanjaan.json` (never all 3 in one request). A `TARGETS` lookup object at the top of the file maps each target to its output file path, commit message, and `infaq_activity_log` action name (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) — extend that object (plus a new button/note pair on `ringkasan.html`) if a 4th output file is ever needed.
+Vercel serverless function, modeled directly on `api/publish.js` above — same auth block (Bearer session token, verified via a round-trip to Supabase's `/auth/v1/user`), same env vars, same GET-sha-then-PUT GitHub Contents API pattern. Differs in two ways: no `month` query param (each publish is always a full as-of-now snapshot), and it requires a **required** `?target=monthly|daily|perbelanjaan` query param (400 if missing/invalid) — **3 independent publishes, not one combined endpoint** (split 2026-07-22, see `admin/CLAUDE.md`'s Key Patterns for why). Each request fetches only the Supabase table(s) that one target needs, computes only that one JSON, and pushes only that one file — `admin/infaq/data/monthly.json`, `daily.json`, or `perbelanjaan.json` (never all 3 in one request). A `TARGETS` lookup object at the top of the file maps each target to its output file path, commit message, and `infaq_activity_log` action name (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) — extend that object (plus a new button/note pair on whichever page owns that data) if a 4th output file is ever needed.
 
 Reads only what its target needs: `target=monthly` → `infaq_kutipan_mingguan` (all rows — small, pre-aggregated, no date-range windowing needed); `target=daily` → `infaq_projects` (active only) + `infaq_projek_kutipan` (only for that active project, if any); `target=perbelanjaan` → `infaq_perbelanjaan_bulanan` (all rows). Computes every rollup via pure, exported helper functions (`sumJumlah`, `filterTahunBulan`, `filterTahun`, `buildMingguBuckets`, `buildYearlyGraf`, `computeCumulative`, `computeProjectProgress`) — same "exported on `module.exports` for unit-testing with a plain Node script, no live deploy needed" convention as `api/publish.js`'s own helpers; these are shared across all 3 targets, unaffected by the target split.
 

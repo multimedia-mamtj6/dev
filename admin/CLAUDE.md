@@ -67,16 +67,22 @@ admin/
     ustaz.html/.js     ← Penceramah CRUD
 
   infaq/           ← Module: donation/expense tracking (new 2026-07-19, schema redesigned 2026-07-21)
-    infaq-common.js    ← Shared across this module: requireInfaqAccess(), formatRM(), BULAN_MY
-    ringkasan.html/.js ← Module landing page: stat cards, active-project progress, Terbitkan
+    infaq-common.js    ← Shared across this module: requireInfaqAccess(), formatRM(), BULAN_MY,
+                          publishInfaq()/loadLastPublishedInfaqNote() (Terbitkan, shared by the 3 pages below)
+    ringkasan.html/.js ← Module landing page: read-only stat cards + active-project progress only —
+                          no Terbitkan here, each data page publishes itself (see below)
     kutipan.html/.js   ← General infaq: one row per week (tahun/bulan/minggu), upsert on save,
-                          fetch-all-once + client-side year filter (small table, not paginated)
-    perbelanjaan.html/.js ← Expenses: one row per month (tahun/bulan), same upsert/fetch-all shape
+                          fetch-all-once + client-side year filter (small table, not paginated) —
+                          owns the `monthly` Terbitkan button
+    perbelanjaan.html/.js ← Expenses: one row per month (tahun/bulan), same upsert/fetch-all shape —
+                          owns the `perbelanjaan` Terbitkan button
     projek.html/.js    ← Fundraising project settings CRUD (small list, like ustaz.js) — each row
                           links to projek-kutipan.html for that project's individual donations
     projek-kutipan.html/.js ← ONE project's individual dated donations (?project=<id> in the URL) —
                           paginated/filtered like the old kutipan.js, since this is the only infaq
-                          table that's genuinely per-deposit
+                          table that's genuinely per-deposit — owns the `daily` Terbitkan button,
+                          shown only when viewing the currently-active project (daily.json always
+                          reflects whichever one project is active, never a completed one)
     data/monthly.json, data/daily.json, data/perbelanjaan.json ← Published data admin/infaq/
                           writes (api/publish-infaq.js) — no reader yet. Under admin/ (not
                           top-level infaq/, unlike kuliah's own data/ convention) since there's no
@@ -187,8 +193,9 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
     `infaq_perbelanjaan_bulanan` (tahun,bulan), or insert to
     `infaq_projek_kutipan` (genuinely one row per deposit) — none of these
     are ever hand-aggregated into a further total
-  → click one of 3 independent Terbitkan buttons on admin/infaq/ringkasan.html
-    (Kutipan / Perbelanjaan / Projek Aktif — each publishes only its own file)
+  → click Terbitkan on that same page (kutipan.html / perbelanjaan.html /
+    projek-kutipan.html each own their own button, right next to the data
+    they publish — no Terbitkan on ringkasan.html, which is read-only)
   → POST /api/publish-infaq?target=monthly|daily|perbelanjaan (Bearer: session
     token, no month param — always a full as-of-now snapshot of that ONE file)
   → api/publish-infaq.js reads only the Supabase table(s) that target needs
@@ -265,7 +272,7 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
 
 **`logActivity()` now takes an optional 4th param for the target table (app.js):** `logActivity(action, targetLabel, detail, table = 'activity_log')` — every pre-existing call site is unaffected (table defaults to kuliah's `activity_log`); `admin/infaq/*.js` pass `'infaq_activity_log'` explicitly. **`userlog.html` does NOT show `infaq_activity_log` rows** — every infaq accountability entry is currently write-only (nothing displays it), a known gap flagged in `admin/DEV_NOTES.MD`, not yet built.
 
-**Infaq's 3 publish targets are fully independent, not one combined publish (2026-07-22):** `admin/infaq/ringkasan.html` has 3 separate "Terbitkan" buttons (Kutipan/Perbelanjaan/Projek Aktif), each POSTing `/api/publish-infaq?target=monthly|daily|perbelanjaan` — the endpoint fetches only the Supabase table(s) that one target needs and pushes only that one file, so recording an expense never requires also recomputing/republishing kutipan data or vice versa. Each target logs its own `infaq_activity_log` action (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) and drives its own "last published" note (`ringkasan.js`'s `loadLastPublishedInfaqNote(action, elId)`, now parameterized rather than one shared note). If you add a 4th infaq output file in the future, follow this same shape — a new `TARGETS` entry in `api/publish-infaq.js`, a new button + note pair on `ringkasan.html`, not a return to one combined endpoint.
+**Infaq's 3 publish targets are fully independent, not one combined publish, and each lives on its own data page (2026-07-22):** `api/publish-infaq.js` requires `?target=monthly|daily|perbelanjaan`, fetches only the Supabase table(s) that one target needs, and pushes only that one file — so recording an expense never requires also recomputing/republishing kutipan data or vice versa. The Terbitkan button for each target sits on the page where that data is edited — `kutipan.html` (monthly), `perbelanjaan.html` (perbelanjaan), `projek-kutipan.html` (daily, shown only when viewing the currently-active project, since `daily.json` always reflects that one project) — **not** on `ringkasan.html`, which moved back to a read-only stats overview (2026-07-22, superseding the brief ringkasan-centric design from earlier the same day). The shared plumbing (`publishInfaq(target, btnId)`, `loadLastPublishedInfaqNote(action, elId)`, the `PUBLISH_BUTTON_LABELS`/`PUBLISH_NOTE_TARGETS` lookups) lives in `infaq-common.js` so all 3 pages call the same code. Each target logs its own `infaq_activity_log` action (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`). If you add a 4th infaq output file in the future, follow this same shape — a new `TARGETS` entry in `api/publish-infaq.js`, a new button + note pair on whichever page owns that data, not a return to one combined endpoint or a centralized publish page.
 
 ## Sensitive Files
 

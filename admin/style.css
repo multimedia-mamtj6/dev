@@ -389,15 +389,33 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary)
   letter-spacing: 0.02em;
   margin: 1.5rem 0 0.5rem;
 }
-.infaq-publish-section-header {
+.infaq-section-subtitle:first-of-type { margin-top: 0; }
+
+.infaq-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin: 1.5rem 0 0.5rem;
 }
-.infaq-publish-section-header .infaq-section-subtitle { margin: 0; }
-.infaq-section-subtitle:first-of-type { margin-top: 0; }
+.infaq-section-header .infaq-section-subtitle { margin: 0; }
+
+.infaq-goto-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.infaq-goto-link:hover { background: var(--primary); color: #fff; }
 
 .infaq-stat-grid {
   display: grid;

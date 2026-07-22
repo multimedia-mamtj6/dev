@@ -31,8 +31,12 @@
   <div class="page">
     <div class="section-header">
       <h1 class="section-title">Kutipan Infaq Mingguan</h1>
-      <button class="btn btn-primary" onclick="openAddModal()">+ Catat Kutipan</button>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="openAddModal()">+ Catat Kutipan</button>
+        <button class="btn btn-ghost" id="publish-monthly-btn" onclick="publishInfaq('monthly', 'publish-monthly-btn')">Terbitkan</button>
+      </div>
     </div>
+    <p class="schedule-actions-note" id="last-published-monthly" style="display:none;font-weight:600;font-size:0.8125rem"></p>
     <p style="color:var(--text-muted);margin-top:-0.75rem;margin-bottom:1.25rem">
       Kutipan am (tabung Jumaat/harian), direkodkan sebagai satu jumlah bagi setiap minggu — bukan setiap penderma.
       Untuk kutipan khas sesuatu projek, gunakan halaman <a href="projek.html">Projek</a>.

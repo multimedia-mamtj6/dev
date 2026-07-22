@@ -6,9 +6,6 @@
     await Promise.all([
         loadStats(),
         loadActiveProject(),
-        loadLastPublishedInfaqNote('publish_monthly', 'last-published-monthly'),
-        loadLastPublishedInfaqNote('publish_perbelanjaan', 'last-published-perbelanjaan'),
-        loadLastPublishedInfaqNote('publish_daily', 'last-published-daily'),
     ]);
 })();
 
@@ -68,85 +65,4 @@ async function loadActiveProject() {
     document.getElementById('project-progress-fill').style.width = `${Math.min(100, peratusan)}%`;
     document.getElementById('project-progress-text').textContent =
         `${formatRM(terkumpul)} daripada ${formatRM(project.target_amount)} (${peratusan}%)`;
-}
-
-// ─── Publish ──────────────────────────────────────────────────────────────────
-// Kutipan/Perbelanjaan/Projek Aktif each publish independently (2026-07-22) —
-// three separate buttons, three separate /api/publish-infaq?target=... calls,
-// three separate "last published" notes, each reading its own action value
-// from infaq_activity_log. Same pattern as admin/kuliah/dashboard.js's
-// loadLastPublishedNote(), but not month-scoped (each publish is always a
-// full as-of-now snapshot for that one file).
-const PUBLISH_BUTTON_LABELS = {
-    'publish-monthly-btn':      'Terbitkan Kutipan',
-    'publish-perbelanjaan-btn': 'Terbitkan Perbelanjaan',
-    'publish-daily-btn':        'Terbitkan Kutipan Projek',
-};
-
-async function loadLastPublishedInfaqNote(action, elId) {
-    const el = document.getElementById(elId);
-    const { data, error } = await db
-        .from('infaq_activity_log')
-        .select('created_at, actor_name, actor_email')
-        .eq('action', action)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-    if (error) { el.style.display = 'none'; return; }
-
-    if (!data || !data.length) {
-        el.textContent = 'Belum pernah diterbitkan.';
-    } else {
-        const row = data[0];
-        let who = row.actor_name;
-        if (!who) {
-            const { data: adminRow } = await db.from('admins').select('name').ilike('email', row.actor_email).single();
-            who = adminRow?.name || row.actor_email;
-        }
-        el.textContent = `Terakhir diterbitkan pada ${formatDateTimeMY(row.created_at)} (${formatRelativeMY(row.created_at)}) oleh ${who}`;
-    }
-    el.style.display = 'block';
-}
-
-const PUBLISH_NOTE_TARGETS = {
-    monthly:      ['publish_monthly', 'last-published-monthly'],
-    perbelanjaan: ['publish_perbelanjaan', 'last-published-perbelanjaan'],
-    daily:        ['publish_daily', 'last-published-daily'],
-};
-
-async function publishInfaq(target, btnId) {
-    const btn = document.getElementById(btnId);
-    const originalLabel = PUBLISH_BUTTON_LABELS[btnId];
-    btn.disabled  = true;
-    btn.innerHTML = '<span class="spinner"></span> Menerbitkan...';
-
-    const { data: { session } } = await db.auth.getSession();
-    if (!session) {
-        showToast('Sesi tamat. Sila log masuk semula.', 'error');
-        btn.disabled = false;
-        btn.textContent = originalLabel;
-        return;
-    }
-
-    try {
-        const res = await fetch(`/api/publish-infaq?target=${target}`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${session.access_token}` },
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-            const detail = data.details ? ` (${data.status}: ${data.details})` : '';
-            showToast('Gagal menerbitkan: ' + (data.error || res.statusText) + detail, 'error', 8000);
-        } else {
-            showToast('Berjaya diterbitkan!', 'success', 6000);
-            const [action, elId] = PUBLISH_NOTE_TARGETS[target];
-            await loadLastPublishedInfaqNote(action, elId);
-        }
-    } catch (err) {
-        showToast('Ralat sambungan: ' + err.message, 'error');
-    }
-
-    btn.disabled = false;
-    btn.textContent = originalLabel;
 }
