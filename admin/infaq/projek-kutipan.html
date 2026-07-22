@@ -9,25 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/admin/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body>
 
-  <nav id="main-nav">
-    <span class="brand">Admin Kuliah</span>
-    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
-    <div class="nav-links">
-      <a href="/admin/kuliah/dashboard.html" data-module="kuliah">Jadual</a>
-      <a href="/admin/kuliah/ustaz.html" data-module="kuliah">Penceramah</a>
-      <a href="ringkasan.html" data-module="infaq">Ringkasan</a>
-      <a href="kutipan.html" data-module="infaq">Kutipan</a>
-      <a href="perbelanjaan.html" data-module="infaq">Perbelanjaan</a>
-      <a href="projek.html" class="active" data-module="infaq">Projek</a>
-      <span class="spacer"></span>
-      <button class="logout-btn" onclick="signOut()">Log Keluar</button>
-    </div>
-  </nav>
+  <div id="sidebar-root"></div>
 
+  <div class="md:pl-64">
   <div class="page">
     <div id="project-header">
       <p style="margin-top:-0.5rem"><a href="projek.html">&larr; Kembali ke Projek</a></p>
@@ -70,6 +59,7 @@
     <div style="text-align:center;margin-top:1rem">
       <button class="btn btn-ghost" id="load-more-btn" onclick="loadMore()" style="display:none">Tunjuk 50 lagi</button>
     </div>
+  </div>
   </div>
 
   <!-- ── Add / Edit modal ── -->

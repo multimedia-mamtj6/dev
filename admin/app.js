@@ -22,8 +22,7 @@ async function requireAuth() {
         return null;
     }
     currentAdmin = data;
-    _injectSuperAdminNav();
-    _hideUnauthorizedModuleLinks();
+    renderSidebar();
     return session;
 }
 
@@ -39,52 +38,115 @@ function defaultLandingPageFor(admin) {
     return null;
 }
 
-// Inject "Pengguna" / "Log Aktiviti" nav links for super_admin (non-super admins never see them)
-// NOTE: hrefs must be absolute (/admin/users.html) — this gets injected into
-// pages living a level deeper now (admin/kuliah/*, admin/infaq/*), where a
-// bare-relative href would resolve into the wrong directory under cleanUrls.
-function _injectSuperAdminNav() {
-    if (currentAdmin?.role !== 'super_admin') return;
-    const navLinks = document.querySelector('.nav-links');
-    if (!navLinks) return;
-    const spacer = navLinks.querySelector('.spacer');
-    [
-        { href: '/admin/users.html',   label: 'Pengguna' },
-        { href: '/admin/userlog.html', label: 'Log Aktiviti' },
-    ].forEach(({ href, label }) => {
-        if (navLinks.querySelector(`a[href="${href}"]`)) return;
-        const link = document.createElement('a');
-        link.href = href;
-        link.textContent = label;
-        navLinks.insertBefore(link, spacer);
-    });
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+// Single source of truth for every nav link in the admin CMS — hrefs are
+// always absolute (/admin/...) since they only ever live here now, which
+// structurally rules out the relative-path-under-cleanUrls landmine that
+// used to require a comment on every hand-copied nav block. `match` lists
+// every pathname that should highlight an item as active, so a sub-page
+// like projek-kutipan.html (an infaq detail view, not one of the visible
+// labels) can highlight its logical parent ("Projek") without any
+// filename-guessing.
+const MODULES = [
+    {
+        key: 'kuliah', label: 'Kuliah', permission: 'kuliah', requiresSuperAdmin: false,
+        items: [
+            { label: 'Jadual',     href: '/admin/kuliah/dashboard.html', match: ['/admin/kuliah/dashboard.html'] },
+            { label: 'Penceramah', href: '/admin/kuliah/ustaz.html',     match: ['/admin/kuliah/ustaz.html'] },
+        ],
+    },
+    {
+        key: 'infaq', label: 'Infaq', permission: 'infaq', requiresSuperAdmin: false,
+        items: [
+            { label: 'Ringkasan',    href: '/admin/infaq/ringkasan.html',    match: ['/admin/infaq/ringkasan.html'] },
+            { label: 'Kutipan',      href: '/admin/infaq/kutipan.html',      match: ['/admin/infaq/kutipan.html'] },
+            { label: 'Perbelanjaan', href: '/admin/infaq/perbelanjaan.html', match: ['/admin/infaq/perbelanjaan.html'] },
+            { label: 'Projek',       href: '/admin/infaq/projek.html',
+              match: ['/admin/infaq/projek.html', '/admin/infaq/projek-kutipan.html'] },
+        ],
+    },
+    {
+        key: 'pentadbiran', label: 'Pentadbiran', permission: null, requiresSuperAdmin: true,
+        items: [
+            { label: 'Pengguna',     href: '/admin/users.html',   match: ['/admin/users.html'] },
+            { label: 'Log Aktiviti', href: '/admin/userlog.html', match: ['/admin/userlog.html'] },
+        ],
+    },
+];
+
+const SIDEBAR_LINK_BASE  = 'block px-3 py-1.5 rounded-md text-sm transition-colors';
+const SIDEBAR_LINK_IDLE  = 'text-slate-300 hover:bg-white/10 hover:text-white';
+const SIDEBAR_LINK_ACTIVE = 'bg-green-600 text-white font-medium';
+
+// Builds the whole sidebar (desktop-persistent / mobile-off-canvas) + its
+// mobile topbar + backdrop from MODULES + currentAdmin, and mounts it into
+// #sidebar-root. Rebuilds from scratch every call, so unlike the old
+// _injectSuperAdminNav()'s per-link double-injection guard, this is
+// naturally idempotent. Called once from requireAuth() after currentAdmin
+// is populated — every page's own markup is just the empty mount div plus
+// the Tailwind Play CDN <script> tag in <head>.
+function renderSidebar() {
+    const root = document.getElementById('sidebar-root');
+    if (!root || !currentAdmin) return;
+
+    const path = window.location.pathname;
+    const canSeeModule = (m) => currentAdmin.role === 'super_admin'
+        ? true
+        : (m.requiresSuperAdmin ? false : !!currentAdmin.permissions?.[m.permission]);
+
+    const groupsHtml = MODULES
+        .filter(canSeeModule)
+        .map(m => `
+            <div>
+                <div class="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">${m.label}</div>
+                ${m.items.map(item => {
+                    const active = item.match.includes(path);
+                    return `<a href="${item.href}" class="${SIDEBAR_LINK_BASE} ${active ? SIDEBAR_LINK_ACTIVE : SIDEBAR_LINK_IDLE}">${item.label}</a>`;
+                }).join('')}
+            </div>
+        `).join('');
+
+    root.innerHTML = `
+        <div class="md:hidden sticky top-0 z-40 flex items-center gap-3 bg-slate-900 text-white px-4 h-14">
+            <button id="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu" class="p-1.5 -ml-1.5 rounded hover:bg-white/10 text-xl leading-none">&#9776;</button>
+            <span class="font-semibold text-sm">Admin MAMTJ6</span>
+        </div>
+        <div id="sidebar-backdrop" onclick="closeNav()" class="hidden md:hidden fixed inset-0 bg-black/50 z-40"></div>
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transition-transform duration-200 md:translate-x-0 bg-slate-900 text-slate-200 flex flex-col">
+            <div class="h-14 flex items-center px-4 font-semibold text-white border-b border-white/10 shrink-0">Admin MAMTJ6</div>
+            <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-4">${groupsHtml}</nav>
+            <div class="border-t border-white/10 p-2 shrink-0">
+                <button onclick="signOut()" class="w-full text-left px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-white/10 hover:text-white">Log Keluar</button>
+            </div>
+        </aside>
+    `;
+
+    // Full page navigation closes the drawer naturally on unload, but
+    // closing explicitly avoids a visible flash of the open drawer during
+    // a slow navigation.
+    root.querySelectorAll('#sidebar a').forEach(a => a.addEventListener('click', closeNav));
 }
 
-// Hides nav links tagged data-module="kuliah"/"infaq" the current admin
-// can't use. super_admin always sees everything. Runs after
-// _injectSuperAdminNav() so it also covers pages with no module links at
-// all (users.html/userlog.html — nothing to hide, no-op there).
-function _hideUnauthorizedModuleLinks() {
-    if (currentAdmin?.role === 'super_admin') return;
-    document.querySelectorAll('.nav-links a[data-module]').forEach(a => {
-        if (!currentAdmin?.permissions?.[a.dataset.module]) a.style.display = 'none';
-    });
-}
-
-// Hamburger nav toggle (mobile)
+// Off-canvas sidebar toggle (mobile). Desktop (md:) keeps the sidebar
+// permanently visible via md:translate-x-0, so these classes are only ever
+// meaningful below that breakpoint.
 function toggleNav() {
-    const navLinks = document.querySelector('.nav-links');
-    if (navLinks) navLinks.classList.toggle('open');
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        document.getElementById('sidebar-backdrop')?.classList.remove('hidden');
+    } else {
+        closeNav();
+    }
 }
 
-// Close hamburger when a nav link is clicked
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.nav-links a').forEach(a => {
-        a.addEventListener('click', () => {
-            document.querySelector('.nav-links')?.classList.remove('open');
-        });
-    });
-});
+function closeNav() {
+    document.getElementById('sidebar')?.classList.add('-translate-x-full');
+    document.getElementById('sidebar')?.classList.remove('translate-x-0');
+    document.getElementById('sidebar-backdrop')?.classList.add('hidden');
+}
 
 async function signInWithGoogle() {
     const btn = document.getElementById('google-btn');

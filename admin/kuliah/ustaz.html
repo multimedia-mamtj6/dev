@@ -9,22 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/admin/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body>
 
-  <nav id="main-nav">
-    <span class="brand">Admin Kuliah</span>
-    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
-    <div class="nav-links">
-      <a href="dashboard.html" data-module="kuliah">Jadual</a>
-      <a href="ustaz.html" class="active" data-module="kuliah">Penceramah</a>
-      <a href="/admin/infaq/ringkasan.html" data-module="infaq">Infaq</a>
-      <span class="spacer"></span>
-      <button class="logout-btn" onclick="signOut()">Log Keluar</button>
-    </div>
-  </nav>
+  <div id="sidebar-root"></div>
 
+  <div class="md:pl-64">
   <div class="page">
     <div class="section-header">
       <h1 class="section-title">Senarai Penceramah</h1>
@@ -50,6 +42,7 @@
         </tbody>
       </table>
     </div>
+  </div>
   </div>
 
   <!-- ── Add / Edit modal ── -->
