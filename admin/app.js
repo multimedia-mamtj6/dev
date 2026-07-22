@@ -33,7 +33,7 @@ async function requireAuth() {
 // (redirecting to another gated/denied page is how you get a bounce loop).
 function defaultLandingPageFor(admin) {
     if (!admin) return null;
-    if (admin.role === 'super_admin' || admin.permissions?.kuliah) return '/admin/kuliah/dashboard.html';
+    if (admin.role === 'super_admin' || admin.permissions?.kuliah) return '/admin/kuliah/jadual.html';
     if (admin.permissions?.infaq) return '/admin/infaq/ringkasan.html';
     return null;
 }
@@ -51,7 +51,7 @@ const MODULES = [
     {
         key: 'kuliah', label: 'Kuliah', permission: 'kuliah', requiresSuperAdmin: false,
         items: [
-            { label: 'Jadual',     href: '/admin/kuliah/dashboard.html', match: ['/admin/kuliah/dashboard.html'] },
+            { label: 'Jadual',     href: '/admin/kuliah/jadual.html', match: ['/admin/kuliah/jadual.html'] },
             { label: 'Penceramah', href: '/admin/kuliah/ustaz.html',     match: ['/admin/kuliah/ustaz.html'] },
         ],
     },
@@ -137,7 +137,7 @@ async function signInWithGoogle() {
     const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin + '/admin/kuliah/dashboard.html'
+            redirectTo: window.location.origin + '/admin/kuliah/jadual.html'
         }
     });
     if (error) {

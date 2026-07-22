@@ -21,8 +21,8 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/index.html` | Login page — Google OAuth via Supabase |
 | `admin/app.js` | Shared: Supabase client (`db`), `requireAuth()`, `signOut()`, `showToast()`, `escapeHtml()`, `MODULES` config + `renderSidebar()`, `toggleNav()`/`closeNav()` |
 | `admin/style.css` | All admin styles: desktop, ≤768px tablet, ≤640px mobile |
-| `admin/dashboard.html` | Monthly calendar grid + day editor modal + "Lihat Terbitan" and "Tindakan Bulan" dropdowns |
-| `admin/dashboard.js` | `renderCalendar()`, `renderMobileDayList()`, `openModal()`, `saveDay()`, `publishMonth()`, `updateScheduleActions()` (real current/next month gating), `toggleMonthActionsMenu()`/`toggleScheduleActionsMenu()`, `openDuplicateModal()`/`confirmDuplicate()`, `openClearModal()`/`confirmClear()` |
+| `admin/kuliah/jadual.html` | Monthly calendar grid + day editor modal + "Lihat Terbitan" and "Tindakan Bulan" dropdowns (renamed from `admin/kuliah/dashboard.html` 2026-07-22 — old path is now a redirect stub) |
+| `admin/kuliah/jadual.js` | `renderCalendar()`, `renderMobileDayList()`, `openModal()`, `saveDay()`, `publishMonth()`, `updateScheduleActions()` (real current/next month gating), `toggleMonthActionsMenu()`/`toggleScheduleActionsMenu()`, `openDuplicateModal()`/`confirmDuplicate()`, `openClearModal()`/`confirmClear()` |
 | `admin/ustaz.html` | Penceramah list table + add/edit/delete modals |
 | `admin/ustaz.js` | `loadUstaz()`, `renderTable()`, `openEditModal()`, `saveUstaz()`, `removePoster()`, `confirmDelete()` |
 | `admin/users.html` | Admin user table + add/edit/delete modals (super_admin only) |
@@ -107,7 +107,7 @@ Every JS-rendered `<td>` must have `data-label="..."`. Empty string is fine for 
 .month-actions-menu.open { display: block; }
 .month-actions-item { display: block; width: 100%; text-align: left; ... }
 ```
-Toggle function calls `e.stopPropagation()`; a single shared `document.addEventListener('click', ...)` in `dashboard.js` closes all open menus. Both dropdowns in `dashboard.html` ("Tindakan Bulan" and "Lihat Terbitan") reuse this exact CSS — don't build a new dropdown pattern, extend this one.
+Toggle function calls `e.stopPropagation()`; a single shared `document.addEventListener('click', ...)` in `jadual.js` closes all open menus. Both dropdowns in `jadual.html` ("Tindakan Bulan" and "Lihat Terbitan") reuse this exact CSS — don't build a new dropdown pattern, extend this one.
 
 ### Ustaz modal two-column layout (`ustaz.html`)
 `.ustaz-form-columns` wraps two `.ustaz-form-col` divs (identity fields left, poster fields right), stacked by default (mobile, unchanged) and side-by-side at `@media screen and (min-width: 768px)` with a `1px solid var(--border)` divider on the poster column. The modal itself uses a `.modal-poster` class (480px → 700px at that same breakpoint) instead of an inline `max-width` style.
@@ -125,12 +125,12 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `MODULES` — single source of truth for every sidebar link (module key, permission, super_admin-only flag, items with `href`+`match` pathnames); add an entry here to add a module or page, nowhere else
 - `renderSidebar()` — fills the (already-present, static) `#sidebar-nav` with module groups per `currentAdmin`'s role/permissions + active-item highlighting, from `MODULES`; called once from `requireAuth()`. Rebuilds from scratch every call, so it's naturally idempotent (no double-injection guard needed). Does NOT build the sidebar shell itself — that's static HTML/CSS, not JS (see CSS architecture section)
 - `toggleNav()` / `closeNav()` — off-canvas sidebar open/close below the 768px breakpoint (toggles `.sidebar.open`/`.sidebar-backdrop.open`); no-ops visually above it since the sidebar is pinned open there regardless of the class
-- `isYasinEntry(ustaz)` — matches `/yasi+n/i` against `short_name + full_name` combined; detects the "Bacaan Yasiin & Tahlil" special ustaz entry regardless of spelling, used by `dashboard.js` to color its calendar pills green
-- `logActivity(action, targetLabel, detail)` — fire-and-forget insert into `activity_log`, called right after a mutating Supabase write already succeeded. Never throws or toasts — a logging failure must not make the admin think their actual save/delete failed. Called from `dashboard.js`, `ustaz.js`, `users.js` (and separately, server-side, from `api/publish.js`)
-- `formatDateTimeMY(iso)` — `toLocaleString('ms-MY', {...})` date+time formatter; shared by `dashboard.js` (last-published note) and `userlog.js` (log table)
-- `formatRelativeMY(iso)` — Malay relative-time string (baru sahaja → minit → jam → hari → minggu → bulan lalu); used by `dashboard.js`'s last-published note
+- `isYasinEntry(ustaz)` — matches `/yasi+n/i` against `short_name + full_name` combined; detects the "Bacaan Yasiin & Tahlil" special ustaz entry regardless of spelling, used by `jadual.js` to color its calendar pills green
+- `logActivity(action, targetLabel, detail)` — fire-and-forget insert into `activity_log`, called right after a mutating Supabase write already succeeded. Never throws or toasts — a logging failure must not make the admin think their actual save/delete failed. Called from `jadual.js`, `ustaz.js`, `users.js` (and separately, server-side, from `api/publish.js`)
+- `formatDateTimeMY(iso)` — `toLocaleString('ms-MY', {...})` date+time formatter; shared by `jadual.js` (last-published note) and `userlog.js` (log table)
+- `formatRelativeMY(iso)` — Malay relative-time string (baru sahaja → minit → jam → hari → minggu → bulan lalu); used by `jadual.js`'s last-published note
 
-### dashboard.js
+### jadual.js (renamed from dashboard.js 2026-07-22)
 - `currentYear`, `currentMonth` — module-level state for month navigation (unrestricted — admin can browse any past/future month)
 - `scheduleMap` — `{ 'YYYY-MM-DD': { subuh, maghrib, cuti_umum, subuh_pending, maghrib_pending } }` built from Supabase fetch
 - `renderCalendar()` — builds `#calendar-table` grid + calls `renderMobileDayList()`; a pending session renders a dashed `.session-tag.pending`/`.mdc-pending` "Belum Ditetapkan" tag ahead of the normal ustaz-name branch
@@ -173,8 +173,8 @@ Rebuilt from scratch 2026-07-21 to match the mosque's real recording pattern (se
 - `requireInfaqAccess()` — called right after `requireAuth()` on every infaq page; denies + redirects unless `role === 'super_admin'` or `permissions.infaq` is truthy
 - `formatRM(amount)` — `'RM ' + toLocaleString('ms-MY', {...})`
 - `BULAN_MY` — array of Malay month names, index 0 = Januari
-- `publishInfaq(target, btnId)` — POSTs to `/api/publish-infaq?target=...` with the session Bearer token, same pattern as `dashboard.js`'s `publishMonth()`; moved here (from `ringkasan.js`) 2026-07-22 so `kutipan.js`/`perbelanjaan.js`/`projek-kutipan.js` can each call it with their own `target`/`btnId` instead of the button living on a central page
-- `loadLastPublishedInfaqNote(action, elId)` — reads the latest `infaq_activity_log` row for the given `action` (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) into the given note element, same pattern as `dashboard.js`'s `loadLastPublishedNote()` but not month-scoped (each publish is always a full as-of-now snapshot of just that one file)
+- `publishInfaq(target, btnId)` — POSTs to `/api/publish-infaq?target=...` with the session Bearer token, same pattern as `jadual.js`'s `publishMonth()`; moved here (from `ringkasan.js`) 2026-07-22 so `kutipan.js`/`perbelanjaan.js`/`projek-kutipan.js` can each call it with their own `target`/`btnId` instead of the button living on a central page
+- `loadLastPublishedInfaqNote(action, elId)` — reads the latest `infaq_activity_log` row for the given `action` (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`) into the given note element, same pattern as `jadual.js`'s `loadLastPublishedNote()` but not month-scoped (each publish is always a full as-of-now snapshot of just that one file)
 - `PUBLISH_BUTTON_LABELS` / `PUBLISH_NOTE_TARGETS` — lookup objects keyed by `btnId`/`target` respectively, used by the two functions above
 
 ### kutipan.js / perbelanjaan.js
@@ -197,7 +197,7 @@ Rebuilt from scratch 2026-07-21 to match the mosque's real recording pattern (se
 - `loadProject()` — also toggles the `daily` Terbitkan button + note (`#publish-daily-btn`/`#last-published-daily`), shown only when `project.is_active` — `daily.json` always reflects whichever ONE project is currently active, so publishing from a completed project's page would silently publish a different project's data; hidden by default in the HTML, `display:''`'d here on the active-project branch
 
 ### ringkasan.js
-- `loadStats()` — deliberately simple independent client-side sums over freshly-fetched rows, **not** a reimplementation of `api/publish-infaq.js`'s rollup logic (same separation of concerns `dashboard.js` already has from `api/publish.js` — this page previews, the serverless function computes the real published output)
+- `loadStats()` — deliberately simple independent client-side sums over freshly-fetched rows, **not** a reimplementation of `api/publish-infaq.js`'s rollup logic (same separation of concerns `jadual.js` already has from `api/publish.js` — this page previews, the serverless function computes the real published output)
 - `loadActiveProject()` — separate query for the active project's progress bar
 - No publish logic here — the 3 Terbitkan buttons moved to their respective data pages 2026-07-22 (see `admin/CLAUDE.md`'s Key Patterns); this page is now a pure read-only overview
 
@@ -214,15 +214,15 @@ Reads schedule + ustaz from Supabase using service role. Fetches the existing `j
 
 **Pending slots (session 8):** a `senaraiHari` entry's `subuh`/`maghrib` field is `{ pending: true }` (not an ustaz object, not `null`) whenever `schedule.subuh_pending`/`maghrib_pending` is true for that row — read by both `kuliah/jadual/script.js` and `kuliah/paparan/script.js` to render a "Belum Ditetapkan"/"Akan Diumumkan" message instead of a name or nothing.
 
-Note: `commitUrl` is returned but **not shown to the user** (removed from dashboard.js — non-tech users don't need it).
+Note: `commitUrl` is returned but **not shown to the user** (removed from jadual.js — non-tech users don't need it).
 
 **Merges by absolute month key, not an overwrite:** publishing Ogos no longer wipes out Julai — each key in `months` is independent, and the endpoint rejects any `month` param that isn't the real-current/real-next `YYYY-MM`. `kuliah/jadual/script.js` looks up `jsonData.months[monthKey]` where `monthKey` comes from the URL (`baseDate`), never from the JSON content, so the title and the rendered data can no longer disagree with the URL. If a month key is entirely absent (never published yet), the public page shows an explicit "belum diterbitkan" message instead of rendering blank. The migration path for the old flat single-month schema, and the merge/prune logic itself, are exposed as pure functions on `module.exports` (`computeRealMonthKeys`, `inferMonthKeyFromTajuk`, `buildMonthsStoreFromExisting`, `mergeAndPruneMonthsStore`) specifically so they can be unit-tested with a plain Node script without needing a live Vercel deploy.
 
-**Local testing:** this endpoint only exists where a Vercel serverless runtime runs it — plain `python -m http.server` (this repo's documented local-dev method) has no `/api` route at all, so `Terbitkan` will fail locally with a connection-error toast. Everything else in `dashboard.js`/`ustaz.js`/`users.js` talks directly to Supabase and works identically local or deployed (same production project both ways).
+**Local testing:** this endpoint only exists where a Vercel serverless runtime runs it — plain `python -m http.server` (this repo's documented local-dev method) has no `/api` route at all, so `Terbitkan` will fail locally with a connection-error toast. Everything else in `jadual.js`/`ustaz.js`/`users.js` talks directly to Supabase and works identically local or deployed (same production project both ways).
 
 **Also writes an `activity_log` row on success:** after the GitHub push succeeds, `publish.js` looks up the acting admin's `name` from the `admins` table (via the `actorEmail` already extracted from the `/auth/v1/user` check, matched with `email=ilike.` rather than `eq.` — see the email-casing note below) and POSTs an `activity_log` row directly via the Supabase REST API using the service-role key — a second, small Supabase round-trip, deliberately kept cheap since Terbitkan is a rare action. Wrapped in try/catch so a logging failure can never turn a successful publish into an error response to the admin.
 
-**Email matching uses `ilike`, not `eq`:** `admins.email` may not casing-match exactly what Google OAuth/Supabase Auth returns (e.g. if it was typed by hand into `setup.sql`'s bootstrap insert), and Postgres `text` equality is case-sensitive by default — an `eq` mismatch fails silently (zero rows, no error) rather than erroring. Both this lookup and `dashboard.js`'s last-published-note fallback use case-insensitive matching for this reason.
+**Email matching uses `ilike`, not `eq`:** `admins.email` may not casing-match exactly what Google OAuth/Supabase Auth returns (e.g. if it was typed by hand into `setup.sql`'s bootstrap insert), and Postgres `text` equality is case-sensitive by default — an `eq` mismatch fails silently (zero rows, no error) rather than erroring. Both this lookup and `jadual.js`'s last-published-note fallback use case-insensitive matching for this reason.
 
 ---
 

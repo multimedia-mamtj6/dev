@@ -12,7 +12,7 @@
 // ─── Stat cards ───────────────────────────────────────────────────────────────
 // Deliberately simple client-side sums over fetched rows — NOT a reimplementation
 // of api/publish-infaq.js's week-bucket/graf logic (same separation of concerns
-// dashboard.js already has from api/publish.js: this page previews, the
+// jadual.js already has from api/publish.js: this page previews, the
 // serverless function computes the real published output). Both source
 // tables are already pre-aggregated by (tahun,bulan[,minggu]), so this is
 // just grouping/summing integers — no date-string range math needed.

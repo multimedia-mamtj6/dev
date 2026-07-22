@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jadual Kuliah — Admin MAMTJ6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<div class="sidebar-mobile-topbar">
+  <button class="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+  <span>Admin MAMTJ6</span>
+</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeNav()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">Admin MAMTJ6</div>
+  <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  <div class="sidebar-footer">
+    <button class="sidebar-logout-btn" onclick="signOut()">Log Keluar</button>
+  </div>
+</aside>
+
+<div class="admin-content">
+<div class="page">
+
+  <!-- Toolbar: month nav + publish button -->
+  <div class="toolbar">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="prevMonth()" title="Bulan sebelum">&#8249;</button>
+      <span class="month-label" id="month-label">—</span>
+      <button class="nav-btn" onclick="nextMonth()" title="Bulan depan">&#8250;</button>
+      <span class="month-tag" id="month-tag"></span>
+    </div>
+    <div class="spacer" style="flex:1"></div>
+    <div class="schedule-actions" id="schedule-actions" style="display:none">
+      <button type="button" class="btn btn-view-schedule" onclick="toggleScheduleActionsMenu(event)">
+        <span id="schedule-actions-label">Lihat Terbitan</span> &#9662;
+      </button>
+      <div class="month-actions-menu" id="schedule-actions-menu">
+        <a class="month-actions-item" id="view-schedule-btn" href="#" target="_blank" rel="noopener noreferrer">📅 Tunjukkan Jadual</a>
+        <a class="month-actions-item" id="export-pdf-btn" href="#" target="_blank" rel="noopener noreferrer">📄 Export PDF</a>
+      </div>
+    </div>
+    <div class="month-actions" id="month-actions">
+      <button type="button" class="btn btn-ghost" onclick="toggleMonthActionsMenu(event)">Tindakan Bulan &#9662;</button>
+      <div class="month-actions-menu" id="month-actions-menu">
+        <button type="button" class="month-actions-item" id="duplicate-month-btn" onclick="openDuplicateModal()">📋 <span id="duplicate-month-label">Salin Data</span></button>
+        <button type="button" class="month-actions-item danger" onclick="openClearModal()">🗑 Kosongkan Bulan Ini</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="publish-btn" onclick="publishMonth()">
+      Terbitkan
+    </button>
+  </div>
+
+  <p style="margin-top:0.75rem;margin-bottom:0.5rem;font-size:0.75rem;color:var(--text-muted)">
+    Klik mana-mana tarikh untuk mengedit kuliah atau menandakan cuti umum.
+    <span id="publish-hint">Tekan <strong>Terbitkan</strong> untuk menghantar jadual ke laman web.</span>
+  </p>
+
+  <p class="schedule-actions-note" id="last-published-note" style="display:none;font-weight:600"></p>
+
+  <p class="schedule-actions-note" id="schedule-actions-note" style="display:none">
+    💡 Nota: Jadual mengambil masa 1-2 minit untuk dikemaskini selepas diterbitkan.
+  </p>
+
+  <p class="schedule-actions-note" id="future-month-note" style="display:none">
+    💡 Nota: Sistem ini hanya menyokong papaparan untuk bulan semasa dan bulan hadapan sahaja. Anda boleh mengedit data untuk bulan ini untuk perancangan awal.
+  </p>
+
+  <!-- Calendar (desktop) -->
+  <div class="card" style="overflow-x:auto">
+    <table class="calendar" id="calendar-table">
+      <thead>
+        <tr>
+          <th>Ahad</th>
+          <th>Isnin</th>
+          <th>Selasa</th>
+          <th>Rabu</th>
+          <th>Khamis</th>
+          <th>Jumaat</th>
+          <th>Sabtu</th>
+        </tr>
+      </thead>
+      <tbody id="calendar-body">
+        <tr><td colspan="7" class="state-cell">Memuatkan jadual...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Calendar (mobile day list) -->
+  <div id="mobile-day-list" class="mobile-day-list"></div>
+</div>
+</div>
+
+<!-- ── Day editor modal ── -->
+<div class="modal-overlay" id="day-modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-date-label">—</span>
+      <button class="modal-close" onclick="closeModal()" title="Tutup">&times;</button>
+    </div>
+
+    <!-- Cuti umum -->
+    <div class="form-group">
+      <div class="toggle-row" style="margin-bottom:0.5rem">
+        <input type="checkbox" id="cuti-check" onchange="toggleCutiField()">
+        <label for="cuti-check">Hari Cuti Umum</label>
+      </div>
+      <input type="text" id="cuti-text" placeholder="Nama cuti (cth: Hari Raya Aidilfitri)"
+             style="display:none; margin-top:0.375rem">
+    </div>
+
+    <!-- Subuh ustaz -->
+    <div class="form-group">
+      <label for="subuh-select">Kuliah Subuh</label>
+      <select id="subuh-select">
+        <option value="">— Tiada Kuliah —</option>
+      </select>
+      <div class="toggle-row" style="margin-top:0.5rem">
+        <input type="checkbox" id="subuh-pending-check" onchange="toggleSubuhPending()">
+        <label for="subuh-pending-check">Belum Ditetapkan (Ceramah Khas)</label>
+      </div>
+    </div>
+
+    <!-- Maghrib ustaz -->
+    <div class="form-group">
+      <label for="maghrib-select">Kuliah Maghrib</label>
+      <select id="maghrib-select">
+        <option value="">— Tiada Kuliah —</option>
+      </select>
+      <div class="toggle-row" style="margin-top:0.5rem">
+        <input type="checkbox" id="maghrib-pending-check" onchange="toggleMaghribPending()">
+        <label for="maghrib-pending-check">Belum Ditetapkan (Ceramah Khas)</label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveDay()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Duplicate month confirm modal ── -->
+<div class="modal-overlay" id="duplicate-modal" onclick="handleDuplicateOverlay(event)">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Salin Data Bulan</span>
+      <button class="modal-close" onclick="closeDuplicateModal()">&times;</button>
+    </div>
+    <p id="duplicate-modal-text" style="color:var(--text-muted);margin-bottom:1.25rem"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDuplicateModal()">Batal</button>
+      <button class="btn btn-primary" id="confirm-duplicate-btn" onclick="confirmDuplicate()">Salin & Gantikan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Clear month confirm modal ── -->
+<div class="modal-overlay" id="clear-modal" onclick="handleClearOverlay(event)">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Kosongkan Jadual Bulan</span>
+      <button class="modal-close" onclick="closeClearModal()">&times;</button>
+    </div>
+    <p id="clear-modal-text" style="color:var(--text-muted);margin-bottom:1.25rem"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeClearModal()">Batal</button>
+      <button class="btn btn-danger" id="confirm-clear-btn" onclick="confirmClear()">Kosongkan</button>
+    </div>
+  </div>
+</div>
+
+<script src="/admin/app.js"></script>
+<script src="/admin/kuliah/jadual.js"></script>
+</body>
+</html>
