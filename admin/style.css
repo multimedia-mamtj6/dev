@@ -22,6 +22,127 @@ body {
   line-height: 1.5;
 }
 
+/* ── Sidebar ── */
+/* Static HTML/CSS, no JS dependency for paint — the shell (this whole
+   block) is identical on every admin page and lives directly in each
+   page's HTML, not injected. Only #sidebar-nav's contents (the actual
+   module links) are filled in by app.js's renderSidebar(), since that
+   part genuinely depends on the logged-in admin's permissions. */
+.sidebar-mobile-topbar {
+  display: none;
+}
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 150;
+}
+.sidebar-backdrop.open { display: block; }
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 200;
+  width: 256px;
+  background: #0f172a;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-brand {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem;
+}
+.sidebar-group { margin-bottom: 1rem; }
+.sidebar-group-label {
+  padding: 0 0.75rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+.sidebar-link {
+  display: block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-link:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+.sidebar-link.active { background: var(--primary); color: white; font-weight: 600; }
+.sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  flex-shrink: 0;
+}
+.sidebar-logout-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.sidebar-logout-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+
+.admin-content { min-height: 100vh; }
+@media (min-width: 769px) {
+  .admin-content { padding-left: 256px; }
+}
+@media (max-width: 768px) {
+  .sidebar-mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 140;
+    background: #0f172a;
+    color: white;
+    height: 52px;
+    padding: 0 1rem;
+  }
+  .sidebar-toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.25rem 0.375rem;
+    border-radius: 4px;
+    margin-left: -0.375rem;
+  }
+  .sidebar-toggle-btn:hover { background: rgba(255, 255, 255, 0.15); }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+}
+
 /* ── Page layout ── */
 .page { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 

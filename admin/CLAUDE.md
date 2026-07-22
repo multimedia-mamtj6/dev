@@ -41,7 +41,6 @@ deliberate choice (see `admin/infaq/`'s own history in `admin/DEV_NOTES.MD`).
 ## Tech Stack
 
 - Pure HTML5, CSS3, Vanilla JS (ES6+) — no npm, no build tools
-- Tailwind CSS via Play CDN (added 2026-07-22, sidebar shell only — see Key Patterns) alongside the existing hand-written `admin/style.css` for everything else; no `darkMode` config, `admin/` has no dark mode
 - Supabase — PostgreSQL, Auth (Google OAuth), Storage (kuliah-assets bucket)
 - Vercel — static hosting + `api/publish.js` serverless function
 - GitHub — published data store (JSON pushed via API from publish endpoint)
@@ -208,31 +207,41 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
 
 ## Key Patterns
 
-**Sidebar nav — one `MODULES` config + `renderSidebar()` in `app.js`, not per-page HTML (redesigned 2026-07-22):** the old flat top nav was hand-copy-pasted into all 9 admin pages and had already drifted (kuliah pages collapsed infaq into one link, infaq pages listed kuliah's links individually alongside all 4 of infaq's own — the exact clutter that prompted this redesign). Now every page's own markup is just two lines — a `<script src="https://cdn.tailwindcss.com"></script>` tag in `<head>` and an empty `<div id="sidebar-root"></div>` where the old `<nav id="main-nav">` block used to be, plus wrapping the page's existing `<div class="page">` in `<div class="md:pl-64">...</div>` so content clears the fixed sidebar on desktop:
+**Sidebar nav — static HTML/CSS shell + one `MODULES` config in `app.js` for the links (redesigned 2026-07-22, then again same day to drop Tailwind CDN):** the old flat top nav was hand-copy-pasted into all 9 admin pages and had already drifted (kuliah pages collapsed infaq into one link, infaq pages listed kuliah's links individually alongside all 4 of infaq's own — the exact clutter that prompted this redesign). A first pass built the whole sidebar via JS + Tailwind Play CDN, but on this multi-page app (every click is a full page reload, not client-side routing) the CDN's runtime JIT scan/style-generation on every single navigation was visibly slow and caused a flicker even after the JS-timing issue below was fixed — so the sidebar shell went back to plain static HTML/CSS (same mechanism as everything else on this site), and Tailwind CDN was dropped from `admin/` entirely. Every page now has the *same, identical, permission-agnostic* sidebar shell markup (topbar/backdrop/`<aside id="sidebar">` frame with an empty `<nav id="sidebar-nav">` placeholder) directly in its HTML — copied, but with zero drift risk since it never varies per page — plus its existing `<div class="page">` wrapped in `<div class="admin-content">` so content clears the fixed sidebar on desktop:
 ```html
 <head>
   ...
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-  <div id="sidebar-root"></div>
-  <div class="md:pl-64">
+  <div class="sidebar-mobile-topbar">
+    <button class="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <span>Admin MAMTJ6</span>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeNav()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">Admin MAMTJ6</div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </aside>
+  <div class="admin-content">
     <div class="page"> ... </div>
   </div>
-  <!-- modals stay outside the wrapper, unaffected by pl-64 -->
+  <!-- modals stay outside the wrapper, unaffected -->
   <script src="/admin/app.js"></script>
   ...
 </body>
 ```
-`renderSidebar()` (called once from `requireAuth()`) builds the entire sidebar — grouped by module, uppercase section headers, active-item highlighting, the super_admin-only "Pentadbiran" group, logout button, plus the mobile topbar/hamburger/backdrop — from a single `MODULES` array in `app.js`, and mounts it into `#sidebar-root`. Every href lives once in `MODULES`, always absolute (`/admin/...`), which structurally rules out the relative-path-under-cleanUrls landmine (below) for every nav link permanently. Each `MODULES` item carries a `match` array of every pathname that should highlight it active — this is how `projek-kutipan.html` (an infaq sub-page, not one of the 4 visible labels) highlights "Projek" as its active parent without any filename-guessing. **If you add a module or a page, add one entry to `MODULES` — that's the whole change now, not "update both `_injectSuperAdminNav()` and `_hideUnauthorizedModuleLinks()` and every page's hardcoded `class="active"`" like before.** Styled entirely with Tailwind Play CDN utility classes (dark `bg-slate-900` panel, no dark-mode toggle — `admin/` has none and this isn't one); `admin/style.css` itself was only ever reduced by this change (dead `nav`/`.nav-links`/`.nav-toggle` rules removed), never extended — everything inside `.page` on every page is untouched.
+All sidebar styling (colors, fixed positioning, the off-canvas mobile transform) lives in `admin/style.css`'s "Sidebar" section as plain hand-written CSS — it paints in the browser's normal blocking `<link>` pass, with zero JS/CDN dependency, exactly like every other page element. Only `#sidebar-nav`'s *contents* — the actual module links, which genuinely depend on the logged-in admin's permissions — are JS-rendered: `renderSidebar()` (called once from `requireAuth()`) builds them from a single `MODULES` array in `app.js`. Every href lives once in `MODULES`, always absolute (`/admin/...`), which structurally rules out the relative-path-under-cleanUrls landmine (below) for every nav link permanently. Each `MODULES` item carries a `match` array of every pathname that should highlight it active — this is how `projek-kutipan.html` (an infaq sub-page, not one of the 4 visible labels) highlights "Projek" as its active parent without any filename-guessing. **If you add a module or a page, add one entry to `MODULES` — that's the whole change now, not "update both `_injectSuperAdminNav()` and `_hideUnauthorizedModuleLinks()` and every page's hardcoded `class="active"`" like before.**
 
 **Any HTML `href`/`src`, and any JS-driven navigation (`window.location.replace`/`.href`), under `admin/` must use absolute root-relative paths (`/admin/...` or `/admin/kuliah/...`/`/admin/infaq/...`), never a bare/relative filename — this is a repo-wide landmine, hit multiple times in different folders (see `kuliah/CLAUDE.md` for the `kuliah/paparan/` recurrence):** Vercel's `cleanUrls: true` serves a directory's `index.html` at the bare directory path with **no trailing slash** (`/admin`, `/admin/kuliah`). Per standard URL relative-resolution rules, any relative reference from a slash-less path treats the last path segment as a filename to be *replaced*, not a directory to append to. Session 7 (back when this lived at `kuliah/admin/`): `index.html`'s relative `window.location.replace('dashboard.html')` resolved one level too high — fixed with absolute paths. Those absolute paths were re-swept to `/admin/...` on the 2026-07-19 root move (`admin/plan.md`), then re-swept AGAIN the same day to `/admin/kuliah/...` for the module restructure (dashboard.html/ustaz.js moved a level deeper) — **this is now a recurring cost of any future path change, not a one-time fix; grep for the old path every time you move something.** `admin/infaq/`'s landing page is deliberately named `ringkasan.html`, not `index.html`, specifically to avoid a THIRD instance of this bug (an `index.html` under `admin/infaq/` would itself be served at the bare slash-less `/admin/infaq` path). **Treat this as a mandatory check for any brand-new HTML entry point added under `admin/` — a relative asset path will work perfectly under local `python -m http.server` and under Live Server, and only break once deployed to Vercel, so local testing alone will not catch it.** (Nav links specifically are no longer at risk from this — the 2026-07-22 sidebar redesign centralized every nav href into `app.js`'s `MODULES` array, always written absolute, so there's no more per-page copy to regress. This still applies to everything else: redirects, form actions, fetch URLs, new pages.)
 
 **Module permission gate (`permissions.kuliah`/`permissions.infaq` on `admins`, added 2026-07-19):** `admin/infaq/*.js` pages call `requireInfaqAccess()` (in `admin/infaq/infaq-common.js`) right after `requireAuth()` — denies and redirects unless `role === 'super_admin'` or `permissions.infaq` is truthy. **`admin/kuliah/` pages have NO equivalent gate yet** — `permissions.kuliah` exists in the schema and is editable in `users.html`, but nothing checks it, a deliberately deferred half-measure (see `admin/DEV_NOTES.MD`) — don't assume kuliah is actually access-controlled just because infaq is. `defaultLandingPageFor(admin)` (app.js) is the shared "where does this admin land" helper — `/admin/kuliah/dashboard.html` if they have kuliah access or are super_admin, else `/admin/infaq/ringkasan.html` if they have infaq access, else `null` (caller must show a message, **never** redirect on `null` — redirecting to another gated page is exactly how you get a bounce loop between two denied pages).
 
 **Mobile breakpoints:**
-- `≤768px` — tablet compact; also where the sidebar goes off-canvas (Tailwind `md:` — the sidebar is `fixed` + translated out of view below this width, with a hamburger topbar + backdrop to open it, and `md:translate-x-0` pins it open permanently at/above it; deliberately aligned to the same breakpoint as the pre-existing tablet-compact zone rather than introducing a second one)
+- `≤768px` — tablet compact; also where the sidebar goes off-canvas (`admin/style.css`'s `@media (max-width: 768px)` sidebar rules — `.sidebar` gets `transform: translateX(-100%)` by default, `.sidebar.open` reverses it, toggled by `toggleNav()`/`closeNav()` in `app.js`; a `.sidebar-mobile-topbar` provides the hamburger below this width, hidden above it. Deliberately the same breakpoint as the pre-existing tablet-compact zone rather than a second one.)
 - `≤640px` — phone: card-per-row tables, day list calendar
 
 **Data table mobile pattern:** Every JS-rendered `<td>` needs `data-label="..."` for the card-per-row mobile layout. CSS reads `content: attr(data-label)` via `::before`.

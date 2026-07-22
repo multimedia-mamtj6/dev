@@ -8,13 +8,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/admin/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
 
-<div id="sidebar-root"></div>
+<div class="sidebar-mobile-topbar">
+  <button class="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+  <span>Admin MAMTJ6</span>
+</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeNav()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">Admin MAMTJ6</div>
+  <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  <div class="sidebar-footer">
+    <button class="sidebar-logout-btn" onclick="signOut()">Log Keluar</button>
+  </div>
+</aside>
 
-<div class="md:pl-64">
+<div class="admin-content">
 <div class="page">
   <div class="section-header">
     <h1 class="section-title">Urus Pengguna</h1>

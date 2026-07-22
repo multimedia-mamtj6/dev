@@ -74,44 +74,14 @@ const MODULES = [
     },
 ];
 
-const SIDEBAR_LINK_BASE  = 'block px-3 py-1.5 rounded-md text-sm transition-colors';
-const SIDEBAR_LINK_IDLE  = 'text-slate-300 hover:bg-white/10 hover:text-white';
-const SIDEBAR_LINK_ACTIVE = 'bg-green-600 text-white font-medium';
+// The sidebar's chrome (topbar/backdrop/aside frame, an empty #sidebar-nav
+// placeholder) is static HTML+CSS directly in each page (see admin/style.css'
+// "Sidebar" section) — not JS-generated. It paints in the browser's normal
+// blocking CSS pass, with no JS/CDN dependency, so there's nothing to wait
+// on and nothing to flicker in. Only the actual module links below (which
+// genuinely depend on the logged-in admin's permissions) are JS-rendered.
 
-// Builds the static sidebar chrome (topbar/backdrop/aside frame, an empty
-// #sidebar-nav placeholder inside it) and mounts it into #sidebar-root.
-// Deliberately has no dependency on currentAdmin/auth — called once, at
-// script-load time (see the top-level call below), so the sidebar panel
-// paints immediately on every navigation instead of waiting on the
-// Supabase session round-trip in requireAuth(). Without this split, the
-// panel didn't exist until auth resolved, which on a traditional
-// multi-page app (a fresh JS context + fresh network round-trip on every
-// single click) was visible as the sidebar flickering in on every page.
-function renderSidebarShell() {
-    const root = document.getElementById('sidebar-root');
-    if (!root) return;
-    root.innerHTML = `
-        <div class="md:hidden sticky top-0 z-40 flex items-center gap-3 bg-slate-900 text-white px-4 h-14">
-            <button onclick="toggleNav()" aria-label="Menu" class="p-1.5 -ml-1.5 rounded hover:bg-white/10 text-xl leading-none">&#9776;</button>
-            <span class="font-semibold text-sm">Admin MAMTJ6</span>
-        </div>
-        <div id="sidebar-backdrop" onclick="closeNav()" class="hidden md:hidden fixed inset-0 bg-black/50 z-40"></div>
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transition-transform duration-200 md:translate-x-0 bg-slate-900 text-slate-200 flex flex-col">
-            <div class="h-14 flex items-center px-4 font-semibold text-white border-b border-white/10 shrink-0">Admin MAMTJ6</div>
-            <nav id="sidebar-nav" class="flex-1 overflow-y-auto py-3 px-2 space-y-4"></nav>
-            <div class="border-t border-white/10 p-2 shrink-0">
-                <button onclick="signOut()" class="w-full text-left px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-white/10 hover:text-white">Log Keluar</button>
-            </div>
-        </aside>
-    `;
-}
-// app.js's own <script> tag sits at the end of <body>, after #sidebar-root
-// in every page's markup, so by the time this line runs the mount point
-// already exists in the DOM — no DOMContentLoaded wrapper needed.
-renderSidebarShell();
-
-// Fills the shell's #sidebar-nav with the actual module groups from
-// MODULES + currentAdmin — the only part that genuinely depends on auth.
+// Fills #sidebar-nav with the module groups from MODULES + currentAdmin.
 // Called from requireAuth() once currentAdmin is populated. Rebuilds from
 // scratch every call, so unlike the old _injectSuperAdminNav()'s per-link
 // double-injection guard, this is naturally idempotent.
@@ -127,11 +97,11 @@ function renderSidebar() {
     nav.innerHTML = MODULES
         .filter(canSeeModule)
         .map(m => `
-            <div>
-                <div class="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">${m.label}</div>
+            <div class="sidebar-group">
+                <div class="sidebar-group-label">${m.label}</div>
                 ${m.items.map(item => {
                     const active = item.match.includes(path);
-                    return `<a href="${item.href}" class="${SIDEBAR_LINK_BASE} ${active ? SIDEBAR_LINK_ACTIVE : SIDEBAR_LINK_IDLE}">${item.label}</a>`;
+                    return `<a href="${item.href}" class="sidebar-link${active ? ' active' : ''}">${item.label}</a>`;
                 }).join('')}
             </div>
         `).join('');
@@ -142,25 +112,22 @@ function renderSidebar() {
     nav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
 }
 
-// Off-canvas sidebar toggle (mobile). Desktop (md:) keeps the sidebar
-// permanently visible via md:translate-x-0, so these classes are only ever
-// meaningful below that breakpoint.
+// Off-canvas sidebar toggle (mobile, ≤768px — see admin/style.css). Desktop
+// keeps the sidebar permanently visible (no transform applied at all above
+// that breakpoint), so these are only ever meaningful below it.
 function toggleNav() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
-    if (sidebar.classList.contains('-translate-x-full')) {
-        sidebar.classList.remove('-translate-x-full');
-        sidebar.classList.add('translate-x-0');
-        document.getElementById('sidebar-backdrop')?.classList.remove('hidden');
-    } else {
-        closeNav();
+    if (sidebar.classList.contains('open')) closeNav();
+    else {
+        sidebar.classList.add('open');
+        document.getElementById('sidebar-backdrop')?.classList.add('open');
     }
 }
 
 function closeNav() {
-    document.getElementById('sidebar')?.classList.add('-translate-x-full');
-    document.getElementById('sidebar')?.classList.remove('translate-x-0');
-    document.getElementById('sidebar-backdrop')?.classList.add('hidden');
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('sidebar-backdrop')?.classList.remove('open');
 }
 
 async function signInWithGoogle() {
