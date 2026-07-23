@@ -96,7 +96,17 @@ function renderSidebar() {
     const nav = document.getElementById('sidebar-nav');
     if (!nav || !currentAdmin) return;
 
-    const path = window.location.pathname;
+    // vercel.json has cleanUrls: true, which REDIRECTS a request for
+    // /admin/kuliah/jadual.html to the extensionless /admin/kuliah/jadual —
+    // so on the real deploy, window.location.pathname never has a .html
+    // suffix, even though every MODULES `match` entry is written with one
+    // (matching this repo's own href/redirect convention everywhere else).
+    // Strip .html from both sides before comparing so this works whether
+    // the browser landed here with the extension (local python -m
+    // http.server, which does NOT perform that redirect) or without it
+    // (the live Vercel deploy) — this class of cleanUrls surprise is
+    // invisible locally by construction, see CLAUDE.md's cleanUrls landmine.
+    const path = window.location.pathname.replace(/\.html$/, '');
     // permission: null means "no specific module gate" — visible to any
     // authenticated admin (unless requiresSuperAdmin), e.g. the shared
     // Ringkasan overview link. Every other module still needs its own
@@ -111,7 +121,7 @@ function renderSidebar() {
             <div class="sidebar-group">
                 <div class="sidebar-group-label">${m.label}</div>
                 ${m.items.map(item => {
-                    const active = item.match.includes(path);
+                    const active = item.match.some(match => match.replace(/\.html$/, '') === path);
                     return `<a href="${item.href}" class="sidebar-link${active ? ' active' : ''}">${item.label}</a>`;
                 }).join('')}
             </div>
