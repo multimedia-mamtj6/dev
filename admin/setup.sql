@@ -254,6 +254,13 @@ CREATE TABLE IF NOT EXISTS infaq_projects (
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Migration for a database where infaq_projects already existed before
+-- this column was added — CREATE TABLE IF NOT EXISTS above is a no-op on
+-- an existing table. Nullable, no default: existing projects have no
+-- recorded launch date, filled in per-project via projek.html's Edit
+-- modal, never backfilled via SQL.
+ALTER TABLE infaq_projects ADD COLUMN IF NOT EXISTS launch_date DATE;
+
 -- At most one active project at a time. admin/infaq/projek.js's "Jadikan
 -- Aktif" action must deactivate the current one BEFORE activating a new
 -- one (two sequential updates) so this index is never transiently violated.

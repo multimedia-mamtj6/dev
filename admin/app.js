@@ -259,6 +259,15 @@ function formatDateMY(dateStr) {
     return `${d.getDate()} ${BULAN_MALAY[d.getMonth()]} ${d.getFullYear()} (${HARI_MALAY[d.getDay()]})`;
 }
 
+// Exact day count since a plain DATE string (not a timestamp) — distinct
+// from formatRelativeMY() (coarse minit/jam/hari/minggu/bulan buckets
+// meant for recent timestamps like "last published"), this stays precise
+// for a date that could be years in the past.
+function daysSince(dateStr) {
+    const ms = Date.now() - new Date(dateStr + 'T00:00:00').getTime();
+    return Math.floor(ms / 86400000);
+}
+
 function formatDateTimeMY(iso) {
     const d = new Date(iso);
     return d.toLocaleString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });

@@ -37,6 +37,15 @@ async function loadProject() {
     document.getElementById('project-status').textContent = project.is_active ? 'Aktif' : 'Selesai';
     document.getElementById('project-status').style.color = project.is_active ? 'var(--primary)' : 'var(--text-muted)';
 
+    const launchInfo = document.getElementById('project-launch-info');
+    if (project.launch_date) {
+        const days = daysSince(project.launch_date);
+        launchInfo.textContent = `Dilancarkan: ${formatDateMY(project.launch_date)} — ${days} hari sejak dilancarkan`;
+        launchInfo.style.display = '';
+    } else {
+        launchInfo.style.display = 'none';
+    }
+
     // daily.json always reflects whichever ONE project is currently active —
     // only show the publish control here when that's this project, so
     // Terbitkan is never offered from a completed project's page (it would

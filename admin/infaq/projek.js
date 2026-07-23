@@ -76,6 +76,7 @@ function openAddModal() {
     document.getElementById('edit-id').value     = '';
     document.getElementById('edit-name').value   = '';
     document.getElementById('edit-target').value = '';
+    document.getElementById('edit-launch-date').value = '';
     document.getElementById('project-modal').classList.add('open');
 }
 
@@ -87,6 +88,7 @@ function openEditModal(id) {
     document.getElementById('edit-id').value     = p.id;
     document.getElementById('edit-name').value   = p.name;
     document.getElementById('edit-target').value = p.target_amount;
+    document.getElementById('edit-launch-date').value = p.launch_date || '';
     document.getElementById('project-modal').classList.add('open');
 }
 
@@ -105,13 +107,19 @@ function buildProjectDiffText(before, after) {
     if (Number(before.target_amount) !== Number(after.target_amount)) {
         parts.push(`Sasaran: ${formatRM(before.target_amount)} → ${formatRM(after.target_amount)}`);
     }
+    if ((before.launch_date || null) !== (after.launch_date || null)) {
+        const b = before.launch_date ? formatDateMY(before.launch_date) : 'Tiada';
+        const a = after.launch_date  ? formatDateMY(after.launch_date)  : 'Tiada';
+        parts.push(`Tarikh Pelancaran: ${b} → ${a}`);
+    }
     return parts.length ? parts.join('; ') : null;
 }
 
 async function saveProject() {
-    const id     = document.getElementById('edit-id').value.trim();
-    const name   = document.getElementById('edit-name').value.trim();
-    const target = parseFloat(document.getElementById('edit-target').value);
+    const id         = document.getElementById('edit-id').value.trim();
+    const name       = document.getElementById('edit-name').value.trim();
+    const target     = parseFloat(document.getElementById('edit-target').value);
+    const launchDateInput = document.getElementById('edit-launch-date').value; // '' if blank
 
     if (!name) { showToast('Nama projek diperlukan', 'error'); document.getElementById('edit-name').focus(); return; }
     if (!target || target <= 0) { showToast('Sasaran mesti lebih daripada 0', 'error'); document.getElementById('edit-target').focus(); return; }
@@ -121,7 +129,11 @@ async function saveProject() {
     saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
 
     const before = id ? allProjects.find(p => p.id === id) : null;
-    const payload = { name, target_amount: target, updated_at: new Date().toISOString() };
+    // launch_date is always an explicit null or a date string, never
+    // undefined — so clearing a previously-set date on an update actually
+    // sends null and clears the column, rather than omitting the key and
+    // leaving the old value untouched.
+    const payload = { name, target_amount: target, launch_date: launchDateInput || null, updated_at: new Date().toISOString() };
 
     let error;
     if (id) {
