@@ -2,26 +2,26 @@
   "ringkasan": {
     "kutipan": {
       "bulanIni": {
-        "bulan": "Julai 2026",
+        "bulan": "JUL",
         "jumlah": 5147
       },
       "bulanLepas": {
-        "bulan": "Jun 2026",
+        "bulan": "JUN",
         "jumlah": 7452
       },
       "tahunIni": {
-        "tahun": "2026",
+        "tahun": 2026,
         "jumlah": 68408.8
       },
       "tahunLepas": {
-        "tahun": "2025",
+        "tahun": 2025,
         "jumlah": 105533
       }
     }
   },
   "paparanBulanIni": {
     "Tahun": 2026,
-    "Bulan": "JULAI",
+    "Bulan": "JUL",
     "Minggu1": 1642,
     "Minggu2": 1689,
     "Minggu3": 1816,
@@ -43,18 +43,18 @@
     "2025": {
       "tahun": "2025",
       "labels": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Ogo",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dis"
+        "JAN",
+        "FEB",
+        "MAC",
+        "APR",
+        "MEI",
+        "JUN",
+        "JUL",
+        "OGO",
+        "SEP",
+        "OKT",
+        "NOV",
+        "DIS"
       ],
       "data": [
         9623,
@@ -74,18 +74,18 @@
     "2026": {
       "tahun": "2026",
       "labels": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Ogo",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dis"
+        "JAN",
+        "FEB",
+        "MAC",
+        "APR",
+        "MEI",
+        "JUN",
+        "JUL",
+        "OGO",
+        "SEP",
+        "OKT",
+        "NOV",
+        "DIS"
       ],
       "data": [
         8012.8,
@@ -103,5 +103,5 @@
       ]
     }
   },
-  "tarikhKemaskini": "2026-07-22T08:56:36.929Z"
+  "tarikhKemaskini": "2026-07-23T04:22:02.686Z"
 }
