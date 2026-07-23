@@ -187,6 +187,14 @@ module.exports = async function handler(req, res) {
 
     // ── 3. Fetch only what this target needs, compute its JSON ─────────────
     let jsonOut, activityLabel, activityDetail;
+    // Only ever set by the `daily` branch below — data.json mirrors
+    // daily.json's `projek` (same source query, same publish click)
+    // deliberately, unlike the monthly/daily/perbelanjaan 3-way split: those
+    // are independent facts, but daily.json and data.json are two
+    // projections of the SAME fact (current active-project progress).
+    // Publishing them from separate buttons/targets would let them drift
+    // out of sync with each other. See admin/developer.md.
+    let extraPush = null;
 
     if (target === 'monthly') {
         const kutipanRes = await fetch(`${supabaseUrl}/rest/v1/infaq_kutipan_mingguan?select=tahun,bulan,minggu,jumlah`, { headers: sbHeaders });
@@ -212,10 +220,20 @@ module.exports = async function handler(req, res) {
                 ...buildMingguBuckets(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)),
                 JumlahBulanan: sumJumlah(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)),
             },
-            graf: {
-                [String(year)]:     buildYearlyGraf(kutipanRows, year),
-                [String(year - 1)]: buildYearlyGraf(kutipanRows, year - 1),
-            },
+            // Every year present in infaq_kutipan_mingguan, not just year/
+            // year - 1 — same reasoning as the perbelanjaan target's graf
+            // fix below: the reference frontend's year-dropdown just does
+            // Object.keys(graf), it was never hardcoded to 2 years, only
+            // this endpoint was. year/year - 1 stay as a floor even with no
+            // rows, matching prior behavior for the common case.
+            graf: (() => {
+                const grafYears = new Set(kutipanRows.map(r => r.tahun));
+                grafYears.add(year);
+                grafYears.add(year - 1);
+                const grafByYear = {};
+                grafYears.forEach(y => { grafByYear[String(y)] = buildYearlyGraf(kutipanRows, y); });
+                return grafByYear;
+            })(),
             tarikhKemaskini: new Date().toISOString(),
         };
         activityLabel  = activityMonthLabel;
@@ -246,6 +264,21 @@ module.exports = async function handler(req, res) {
         };
         activityLabel  = activeProject?.name || 'Tiada projek aktif';
         activityDetail = projectProgress ? `Terkumpul: RM ${projectProgress.JumlahTerkumpul.toFixed(2)}` : null;
+
+        // data.json feeds the real infaq.mamtj6.com reference site's
+        // homepage (loadDashboard()) — never fabricate it when there's no
+        // active project, same "never fabricated zeros" rule
+        // computeProjectProgress() itself already follows.
+        if (projectProgress) {
+            extraPush = {
+                file: 'admin/infaq/data/data.json',
+                commitMessage: '[Admin] Terbitkan projek infaq (data.json)',
+                jsonObj: {
+                    projek: { ...projectProgress, TarikhKemaskini: activeProject.updated_at },
+                    tarikhKemaskini: new Date().toISOString(),
+                },
+            };
+        }
 
     } else { // perbelanjaan
         const perbelanjaanRes = await fetch(`${supabaseUrl}/rest/v1/infaq_perbelanjaan_bulanan?select=tahun,bulan,jumlah`, { headers: sbHeaders });
@@ -302,7 +335,7 @@ module.exports = async function handler(req, res) {
         activityDetail = `Perbelanjaan: RM ${jsonOut.ringkasan.perbelanjaan.bulanIni.jumlah.toFixed(2)}`;
     }
 
-    // ── 4. Push the one file to GitHub ──────────────────────────────────────
+    // ── 4. Push the file(s) to GitHub ───────────────────────────────────────
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo  = process.env.GITHUB_REPO;
     if (!githubToken || !githubRepo) {
@@ -321,6 +354,17 @@ module.exports = async function handler(req, res) {
         commit = await pushJsonToGitHub(ghHeaders, githubRepo, file, jsonOut, commitMessage);
     } catch (e) {
         return res.status(500).json({ error: 'Failed to push to GitHub', details: e.message });
+    }
+
+    // data.json (target=daily only, see extraPush's assignment above) — a
+    // second commit from the same request/query, so it can never disagree
+    // with the daily.json commit that just landed.
+    if (extraPush) {
+        try {
+            await pushJsonToGitHub(ghHeaders, githubRepo, extraPush.file, extraPush.jsonObj, extraPush.commitMessage);
+        } catch (e) {
+            return res.status(500).json({ error: 'Failed to push data.json', details: e.message });
+        }
     }
 
     // ── 5. Activity log (never blocks the response) ────────────────────────

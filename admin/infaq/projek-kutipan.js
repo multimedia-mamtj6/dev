@@ -6,6 +6,7 @@ const DONATION_PAGE_SIZE = 50;
 
 let project     = null;
 let currentRows = [];   // last-loaded page, kept for edit/delete lookups
+let totalCount  = 0;    // all rows for this project, regardless of donationLimit — used to number rows stably (oldest = Bil. 1), refreshed every loadDonations() call so it never goes stale after an add/edit/delete
 let deletingId  = null;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -48,24 +49,47 @@ async function loadProject() {
 // ─── Load and render ──────────────────────────────────────────────────────────
 async function loadDonations() {
     const tbody = document.getElementById('donation-tbody');
-    tbody.innerHTML = '<tr><td colspan="4" class="state-cell">Memuatkan...</td></tr>';
+    const loadMoreBtn = document.getElementById('load-more-btn');
 
-    const { data, error } = await db
-        .from('infaq_projek_kutipan')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('tarikh', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(donationLimit);
+    // Only blank the table on the true first load (nothing on screen yet).
+    // Re-fetches triggered by loadMore()/save/delete keep the existing rows
+    // visible instead — collapsing to a 1-row placeholder mid-fetch shrinks
+    // the page out from under the scroll position (the browser clamps
+    // scroll to the new, much shorter height), which yanks a scrolled-down
+    // admin back to the top; it never restores after the table re-expands.
+    // Loading feedback for those re-fetches comes from the button itself.
+    const isInitialLoad = currentRows.length === 0;
+    if (isInitialLoad) {
+        tbody.innerHTML = '<tr><td colspan="5" class="state-cell">Memuatkan...</td></tr>';
+    } else if (loadMoreBtn.style.display !== 'none') {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Memuatkan...';
+    }
 
-    if (error) {
-        tbody.innerHTML = `<tr><td colspan="4" class="state-cell">Ralat: ${escapeHtml(error.message)}</td></tr>`;
+    const [pageRes, countRes] = await Promise.all([
+        db.from('infaq_projek_kutipan')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('tarikh', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(donationLimit),
+        db.from('infaq_projek_kutipan')
+            .select('id', { count: 'exact', head: true })
+            .eq('project_id', projectId),
+    ]);
+
+    loadMoreBtn.disabled = false;
+    loadMoreBtn.textContent = 'Tunjuk 50 lagi';
+
+    if (pageRes.error) {
+        tbody.innerHTML = `<tr><td colspan="5" class="state-cell">Ralat: ${escapeHtml(pageRes.error.message)}</td></tr>`;
         return;
     }
 
-    currentRows = data || [];
+    currentRows = pageRes.data || [];
+    totalCount  = countRes.count ?? currentRows.length;
     renderTable();
-    document.getElementById('load-more-btn').style.display = currentRows.length >= donationLimit ? '' : 'none';
+    loadMoreBtn.style.display = currentRows.length >= donationLimit ? '' : 'none';
     await updateProgress();
 }
 
@@ -82,11 +106,17 @@ async function updateProgress() {
 function renderTable() {
     const tbody = document.getElementById('donation-tbody');
     if (!currentRows.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="state-cell">Tiada rekod kutipan lagi. Klik "+ Catat Kutipan" untuk mula.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="state-cell">Tiada rekod kutipan lagi. Klik "+ Catat Kutipan" untuk mula.</td></tr>';
         return;
     }
-    tbody.innerHTML = currentRows.map(r => `
+    // currentRows is newest-first, so the top row (index 0) is the most
+    // recently recorded donation — it gets the highest Bil., and the last
+    // row gets the lowest. This makes each row's number a permanent,
+    // stable reference to that one record (oldest ever recorded = Bil. 1),
+    // rather than a display position that shifts as newer rows are added.
+    tbody.innerHTML = currentRows.map((r, idx) => `
         <tr>
+            <td data-label="Bil.">${totalCount - idx}</td>
             <td data-label="Tarikh">${escapeHtml(formatDateMY(r.tarikh))}</td>
             <td data-label="Jumlah"><strong>${escapeHtml(formatRM(r.jumlah))}</strong></td>
             <td data-label="Keterangan" style="color:var(--text-muted);font-size:0.8125rem">${escapeHtml(r.keterangan || '—')}</td>

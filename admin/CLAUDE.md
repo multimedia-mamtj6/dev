@@ -92,12 +92,15 @@ admin/
                           table that's genuinely per-deposit — owns the `daily` Terbitkan button,
                           shown only when viewing the currently-active project (daily.json always
                           reflects whichever one project is active, never a completed one)
-    data/monthly.json, data/daily.json, data/perbelanjaan.json ← Published data admin/infaq/
-                          writes (api/publish-infaq.js) — no reader yet. Under admin/ (not
-                          top-level infaq/, unlike kuliah's own data/ convention) since there's no
-                          public consumer — colocated with the module that produces it. Field/key
+    data/monthly.json, data/daily.json, data/perbelanjaan.json, data/data.json ← Published data
+                          admin/infaq/ writes (api/publish-infaq.js) — no reader yet. Under admin/
+                          (not top-level infaq/, unlike kuliah's own data/ convention) since there's
+                          no public consumer — colocated with the module that produces it. Field/key
                           shapes still deliberately mirror the real infaq.mamtj6.com reference
                           site's own structure, so a future public page or path migration stays cheap.
+                          data.json is written by the `daily` Terbitkan action alongside daily.json
+                          (2 files, 1 commit each, same request) rather than getting its own button —
+                          see admin/developer.md's Publish endpoint section for why.
 
 admin/ustaz.html  ← zero-JS redirect stub → admin/kuliah/ustaz.html (old bare /admin/ URL,
                      pre-module-restructure, kept working). admin/dashboard.html used to be a
