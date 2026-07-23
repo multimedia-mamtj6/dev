@@ -16,12 +16,11 @@ function formatRM(amount) {
 //   const session = await requireAuth();
 //   if (!session) return;
 //   if (!(await requireInfaqAccess())) return;
-// Toasts + redirects on denial and returns false; returns true if allowed.
+// Thin wrapper around app.js's generic requireModuleAccess() (added when the
+// same gate was extended to kuliah) — kept as its own name since every infaq
+// page's call site already reads requireInfaqAccess().
 async function requireInfaqAccess() {
-    if (currentAdmin.role === 'super_admin' || currentAdmin.permissions?.infaq) return true;
-    showToast('Akses ditolak. Anda tiada kebenaran modul Infaq.', 'error');
-    setTimeout(() => window.location.replace(defaultLandingPageFor(currentAdmin) || '/admin/index.html'), 2000);
-    return false;
+    return requireModuleAccess('infaq');
 }
 
 // ─── Publish (shared by kutipan.js / perbelanjaan.js / projek-kutipan.js) ──────

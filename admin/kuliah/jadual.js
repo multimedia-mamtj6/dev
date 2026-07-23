@@ -9,6 +9,7 @@ let editingDate = null; // date string currently open in modal
 async function init() {
     const session = await requireAuth();
     if (!session) return;
+    if (!(await requireModuleAccess('kuliah'))) return;
 
     const now = new Date();
     currentYear  = now.getFullYear();
@@ -32,6 +33,11 @@ async function loadMonth() {
 
     document.getElementById('calendar-body').innerHTML =
         '<tr><td colspan="7" class="state-cell">Memuatkan...</td></tr>';
+
+    // Salin Data / Kosongkan Bulan Ini — both write actions, hidden as a
+    // group for a viewer/under-permissioned editor (mirrors the write-gate
+    // pattern used everywhere else, see canWriteModule() in app.js).
+    document.getElementById('month-actions').style.display = canWriteModule('kuliah') ? '' : 'none';
 
     // Load ustaz list (needed for dropdowns and display)
     const { data: ustaz, error: ustazErr } = await db
@@ -217,8 +223,8 @@ async function updateScheduleActions() {
         return;
     }
     futureMonthNote.style.display = 'none';
-    publishBtn.style.display      = '';
-    publishHint.style.display     = '';
+    publishBtn.style.display      = canWriteModule('kuliah') ? '' : 'none';
+    publishHint.style.display     = canWriteModule('kuliah') ? '' : 'none';
 
     const query    = isRealNext ? '?bulan=depan' : '';
     const pdfQuery = isRealNext ? '?file=pdf&bulan=depan' : '?file=pdf';
@@ -488,6 +494,19 @@ function openModal(dateStr) {
     maghribPendingCheck.checked = !!row?.maghrib_pending;
     subuhSel.disabled   = subuhPendingCheck.checked;
     maghribSel.disabled = maghribPendingCheck.checked;
+
+    // Viewer (or an under-permissioned editor): the modal still opens so
+    // the day's assignment can be inspected, but every field becomes
+    // read-only and Save is hidden — there's nothing here they're allowed
+    // to write (see admin_can_write('kuliah') in setup.sql, the real
+    // enforcement this mirrors).
+    const readOnly = !canWriteModule('kuliah');
+    document.getElementById('cuti-check').disabled           = readOnly;
+    document.getElementById('cuti-text').disabled             = readOnly;
+    document.getElementById('subuh-pending-check').disabled   = readOnly;
+    document.getElementById('maghrib-pending-check').disabled = readOnly;
+    if (readOnly) { subuhSel.disabled = true; maghribSel.disabled = true; }
+    document.getElementById('save-btn').style.display = readOnly ? 'none' : '';
 
     document.getElementById('day-modal').classList.add('open');
 }

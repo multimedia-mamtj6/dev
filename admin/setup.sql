@@ -374,3 +374,168 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON infaq_activity_log TO service_role;
 -- you're not sure whether infaq_donations/infaq_expenses hold real data.
 DROP TABLE IF EXISTS infaq_donations CASCADE;
 DROP TABLE IF EXISTS infaq_expenses CASCADE;
+
+
+-- ── 9. Viewer role + write-gated RLS ───────────────────────────────────────────
+-- Adds a 3rd `role` value ('viewer') that can see whatever `permissions`
+-- already grants it, but can never write. Until now, EVERY policy in this
+-- file has been `FOR ALL ... USING (true) WITH CHECK (true)` — i.e. role
+-- and permissions were purely a client-side (admin/app.js) concern; any
+-- authenticated admin could INSERT/UPDATE/DELETE on any table via a raw
+-- Supabase API call regardless of role, including `admins` itself (a
+-- non-super_admin could grant themselves super_admin today). This section
+-- replaces the single permissive policy on every data table with 4
+-- separate policies (SELECT/INSERT/UPDATE/DELETE) so writes are actually
+-- enforced in Postgres, not just hidden in the UI. See admin/CLAUDE.md's
+-- "Module permission gate" and admin/database.md §3 for the client-side
+-- half (requireModuleAccess()/canWriteModule() in app.js) this pairs with.
+--
+-- Deliberately UNCHANGED: activity_log / infaq_activity_log (§7 / §8) keep
+-- their original open policy — logActivity() is fire-and-forget from many
+-- call sites across every role, and a viewer's real writes are already
+-- blocked on every data table above, so a spoofed log row from a direct
+-- API call is inert noise, not a security hole. Gating these risked
+-- silently swallowing a legitimate editor's own audit entry instead.
+--
+-- BEFORE RUNNING: the role CHECK below assumes Postgres auto-named the
+-- original inline constraint (§1) `admins_role_check`. Verify first:
+--   SELECT conname FROM pg_constraint WHERE conrelid = 'admins'::regclass AND contype = 'c';
+-- If the real name differs, substitute it in the DROP CONSTRAINT line.
+
+-- 9.1 Extend the role CHECK constraint.
+ALTER TABLE admins DROP CONSTRAINT IF EXISTS admins_role_check;
+ALTER TABLE admins ADD CONSTRAINT admins_role_check
+    CHECK (role IN ('editor', 'super_admin', 'viewer'));
+
+-- 9.2 RLS helper functions. SECURITY DEFINER: runs as the function owner,
+-- not the calling `authenticated` role — needed so this can read `admins`
+-- (itself RLS-protected) without recursing into the very policies it's
+-- used by. SET search_path = public closes the classic SECURITY DEFINER
+-- search_path-hijack hole. STABLE lets Postgres cache the result within
+-- one statement. ILIKE (not =) on email — same reasoning as
+-- api/publish.js's admin lookup and admin/app.js's client-side checks:
+-- admins.email may not casing-match what Google OAuth/auth.email()
+-- returns, and a plain `=` mismatch fails silently (zero rows, no error)
+-- rather than erroring.
+CREATE OR REPLACE FUNCTION public.admin_can_write(module_key text)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+    SELECT COALESCE(
+        (
+            SELECT role = 'super_admin'
+                   OR (role = 'editor' AND (permissions ->> module_key)::boolean IS TRUE)
+            FROM admins
+            WHERE email ILIKE auth.email()
+            LIMIT 1
+        ),
+        false
+    );
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_can_write(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.admin_can_write(text) TO authenticated;
+
+-- Separate helper for admins-table writes (super_admin-only, no module key).
+CREATE OR REPLACE FUNCTION public.admin_is_super_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+    SELECT COALESCE(
+        (SELECT role = 'super_admin' FROM admins WHERE email ILIKE auth.email() LIMIT 1),
+        false
+    );
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_is_super_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.admin_is_super_admin() TO authenticated;
+
+-- 9.3 admins: tighten writes to super_admin only. SELECT stays open —
+-- several pages read admins.name for "last published by" lookups
+-- regardless of the reading admin's own role (jadual.js's
+-- loadLastPublishedNote(), infaq-common.js's loadLastPublishedInfaqNote()).
+-- This closes the gap where any authenticated admin could otherwise write
+-- to `admins` directly via a raw API call — including self-promoting to
+-- super_admin — bypassing users.html's own client-side "must already be
+-- super_admin to load this page" gate entirely.
+DROP POLICY IF EXISTS "auth_all_admins" ON admins;
+
+CREATE POLICY "auth_select_admins" ON admins
+    FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "super_admin_insert_admins" ON admins
+    FOR INSERT TO authenticated WITH CHECK (public.admin_is_super_admin());
+
+CREATE POLICY "super_admin_update_admins" ON admins
+    FOR UPDATE TO authenticated
+    USING (public.admin_is_super_admin())
+    WITH CHECK (public.admin_is_super_admin());
+
+CREATE POLICY "super_admin_delete_admins" ON admins
+    FOR DELETE TO authenticated USING (public.admin_is_super_admin());
+
+-- 9.4 kuliah tables: SELECT open, writes gated on permissions.kuliah (or super_admin).
+DROP POLICY IF EXISTS "auth_all_ustaz" ON ustaz;
+CREATE POLICY "auth_select_ustaz" ON ustaz FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_ustaz" ON ustaz FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('kuliah'));
+CREATE POLICY "auth_update_ustaz" ON ustaz FOR UPDATE TO authenticated
+    USING (public.admin_can_write('kuliah')) WITH CHECK (public.admin_can_write('kuliah'));
+CREATE POLICY "auth_delete_ustaz" ON ustaz FOR DELETE TO authenticated
+    USING (public.admin_can_write('kuliah'));
+
+DROP POLICY IF EXISTS "auth_all_schedule" ON schedule;
+CREATE POLICY "auth_select_schedule" ON schedule FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_schedule" ON schedule FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('kuliah'));
+CREATE POLICY "auth_update_schedule" ON schedule FOR UPDATE TO authenticated
+    USING (public.admin_can_write('kuliah')) WITH CHECK (public.admin_can_write('kuliah'));
+CREATE POLICY "auth_delete_schedule" ON schedule FOR DELETE TO authenticated
+    USING (public.admin_can_write('kuliah'));
+
+-- 9.5 infaq tables: same shape, gated on permissions.infaq.
+DROP POLICY IF EXISTS "auth_all_infaq_projects" ON infaq_projects;
+CREATE POLICY "auth_select_infaq_projects" ON infaq_projects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_infaq_projects" ON infaq_projects FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_update_infaq_projects" ON infaq_projects FOR UPDATE TO authenticated
+    USING (public.admin_can_write('infaq')) WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_delete_infaq_projects" ON infaq_projects FOR DELETE TO authenticated
+    USING (public.admin_can_write('infaq'));
+
+DROP POLICY IF EXISTS "auth_all_infaq_kutipan_mingguan" ON infaq_kutipan_mingguan;
+CREATE POLICY "auth_select_infaq_kutipan_mingguan" ON infaq_kutipan_mingguan FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_infaq_kutipan_mingguan" ON infaq_kutipan_mingguan FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_update_infaq_kutipan_mingguan" ON infaq_kutipan_mingguan FOR UPDATE TO authenticated
+    USING (public.admin_can_write('infaq')) WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_delete_infaq_kutipan_mingguan" ON infaq_kutipan_mingguan FOR DELETE TO authenticated
+    USING (public.admin_can_write('infaq'));
+
+DROP POLICY IF EXISTS "auth_all_infaq_projek_kutipan" ON infaq_projek_kutipan;
+CREATE POLICY "auth_select_infaq_projek_kutipan" ON infaq_projek_kutipan FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_infaq_projek_kutipan" ON infaq_projek_kutipan FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_update_infaq_projek_kutipan" ON infaq_projek_kutipan FOR UPDATE TO authenticated
+    USING (public.admin_can_write('infaq')) WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_delete_infaq_projek_kutipan" ON infaq_projek_kutipan FOR DELETE TO authenticated
+    USING (public.admin_can_write('infaq'));
+
+DROP POLICY IF EXISTS "auth_all_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bulanan;
+CREATE POLICY "auth_select_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bulanan FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bulanan FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_update_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bulanan FOR UPDATE TO authenticated
+    USING (public.admin_can_write('infaq')) WITH CHECK (public.admin_can_write('infaq'));
+CREATE POLICY "auth_delete_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bulanan FOR DELETE TO authenticated
+    USING (public.admin_can_write('infaq'));
+
+-- 9.6 api/publish.js and api/publish-infaq.js are unaffected by all of the
+-- above — both use the service_role key server-side, which bypasses RLS
+-- entirely (RLS only ever applies to the `authenticated`/`anon` roles).

@@ -7,6 +7,8 @@ let pendingRemovePoster = false;
 async function init() {
     const session = await requireAuth();
     if (!session) return;
+    if (!(await requireModuleAccess('kuliah'))) return;
+    document.getElementById('add-ustaz-btn').style.display = canWriteModule('kuliah') ? '' : 'none';
     await loadUstaz();
     setupPosterPreview();
 }
@@ -48,10 +50,12 @@ function renderTable() {
             <td data-label="Nama Ringkas" style="color:var(--text-muted)">${escapeHtml(u.short_name)}</td>
             <td data-label="Tajuk Kuliah" style="color:var(--text-muted);font-size:0.8125rem">${escapeHtml(u.tajuk_kuliah || '—')}</td>
             <td data-label="">
+                ${canWriteModule('kuliah') ? `
                 <div class="actions">
                     <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(u.id)}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(u.id)}', '${escapeHtml(u.full_name)}')">Padam</button>
                 </div>
+                ` : ''}
             </td>
         </tr>
     `).join('');

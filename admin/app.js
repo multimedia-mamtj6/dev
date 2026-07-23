@@ -39,6 +39,35 @@ function defaultLandingPageFor(admin) {
     return null;
 }
 
+// ─── Module access / write gates ───────────────────────────────────────────────
+// The read half — generic version of the module-page gate every infaq page
+// already called as requireInfaqAccess() (now a 1-line wrapper around this,
+// see admin/infaq/infaq-common.js). Call right after requireAuth():
+//   const session = await requireAuth();
+//   if (!session) return;
+//   if (!(await requireModuleAccess('kuliah'))) return;
+// Toasts + redirects on denial and returns false; returns true if allowed.
+// A 'viewer' passes this exactly like 'editor' does — permissions decides
+// what a role can SEE, canWriteModule() below decides what it can DO.
+async function requireModuleAccess(moduleKey) {
+    if (currentAdmin.role === 'super_admin' || currentAdmin.permissions?.[moduleKey]) return true;
+    showToast(`Akses ditolak. Anda tiada kebenaran modul ${moduleKey}.`, 'error');
+    setTimeout(() => window.location.replace(defaultLandingPageFor(currentAdmin) || '/admin/index.html'), 2000);
+    return false;
+}
+
+// The write half — UI-level defense-in-depth, mirrors admin/setup.sql's
+// admin_can_write() SQL function 1:1 (that's the real enforcement; this is
+// just so a viewer/under-permissioned editor never sees a write control
+// that's doomed to fail against RLS). 'viewer' always falls through to
+// false here since the role check is an exact match on 'super_admin' or
+// 'editor', never 'viewer'.
+function canWriteModule(moduleKey) {
+    if (!currentAdmin) return false;
+    return currentAdmin.role === 'super_admin'
+        || (currentAdmin.role === 'editor' && !!currentAdmin.permissions?.[moduleKey]);
+}
+
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 // Single source of truth for every nav link in the admin CMS — hrefs are
 // always absolute (/admin/...) since they only ever live here now, which

@@ -36,6 +36,8 @@ function renderUsers() {
         const isSelf = u.email === currentAdmin.email;
         const roleLabel = u.role === 'super_admin'
             ? `<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:var(--primary);color:#fff">Super Admin</span>`
+            : u.role === 'viewer'
+            ? `<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:#dbeafe;color:#1d4ed8">Viewer</span>`
             : `<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:var(--border);color:var(--text)">Editor</span>`;
 
         let permLabel = '—';
@@ -109,6 +111,9 @@ function togglePermFields() {
     if (role === 'super_admin') {
         permGroup.style.display = 'none';
         hint.textContent = 'Super Admin boleh mengurus pengguna dan akses penuh ke semua modul.';
+    } else if (role === 'viewer') {
+        permGroup.style.display = '';
+        hint.textContent = 'Viewer boleh melihat data mengikut modul yang dibenarkan, tetapi tidak boleh menambah, mengedit, memadam atau menerbitkan.';
     } else {
         permGroup.style.display = '';
         hint.textContent = 'Editor boleh mengedit jadual dan data penceramah mengikut modul yang dibenarkan.';
@@ -116,7 +121,9 @@ function togglePermFields() {
 }
 
 function roleLabelMY(role) {
-    return role === 'super_admin' ? 'Super Admin' : 'Editor';
+    if (role === 'super_admin') return 'Super Admin';
+    if (role === 'viewer') return 'Viewer';
+    return 'Editor';
 }
 
 // Compares the pre-write admins row against the values about to be saved and

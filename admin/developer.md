@@ -124,6 +124,8 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `showToast(msg, type, duration)` — type: `'success'` | `'error'`
 - `escapeHtml(str)` — XSS sanitiser, used everywhere user content is interpolated
 - `MODULES` — single source of truth for every sidebar link (module key, permission, super_admin-only flag, items with `href`+`match` pathnames); add an entry here to add a module or page, nowhere else. A module's `permission` can be `null` (e.g. the `utama` entry pointing at `dashboard.html`) — meaning "visible to any authenticated admin, no specific module gate", not "visible to nobody"
+- `requireModuleAccess(moduleKey)` (added 2026-07-23) — async; the generic module-visibility gate, called right after `requireAuth()` on a module page (e.g. `jadual.js`/`ustaz.js` call `requireModuleAccess('kuliah')`). Denies + redirects unless `role === 'super_admin'` or `permissions.<moduleKey>` is truthy — `infaq-common.js`'s `requireInfaqAccess()` is now a 1-line wrapper around this rather than its own separate implementation
+- `canWriteModule(moduleKey)` (added 2026-07-23) — sync, no redirect; `true` for `role === 'super_admin'`, or `role === 'editor'` AND `permissions.<moduleKey>` truthy — always `false` for `role === 'viewer'`. Used across every module page to hide/disable Add/Edit/Delete/Terbitkan controls for a viewer or under-permissioned editor. UI-level only — mirrors, but does not replace, the real enforcement in `admin/setup.sql` §9's `admin_can_write()` SQL function
 - `renderSidebar()` — fills the (already-present, static) `#sidebar-nav` with module groups per `currentAdmin`'s role/permissions + active-item highlighting, from `MODULES`; called once from `requireAuth()`. Rebuilds from scratch every call, so it's naturally idempotent (no double-injection guard needed). Does NOT build the sidebar shell itself — that's static HTML/CSS, not JS (see CSS architecture section). Its `canSeeModule` check treats `permission: null` as an explicit pass-through (still subject to `requiresSuperAdmin`), not the same as a missing/falsy permission match
 - `toggleNav()` / `closeNav()` — off-canvas sidebar open/close below the 768px breakpoint (toggles `.sidebar.open`/`.sidebar-backdrop.open`); no-ops visually above it since the sidebar is pinned open there regardless of the class
 - `isYasinEntry(ustaz)` — matches `/yasi+n/i` against `short_name + full_name` combined; detects the "Bacaan Yasiin & Tahlil" special ustaz entry regardless of spelling, used by `jadual.js` to color its calendar pills green
@@ -139,6 +141,7 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - No writes, no Terbitkan button — purely read-only, same as `ringkasan.js`
 
 ### jadual.js (renamed from dashboard.js 2026-07-22)
+- `init()` calls `requireModuleAccess('kuliah')` right after `requireAuth()` (added 2026-07-23 — kuliah had no page-level gate before this). `canWriteModule('kuliah')` then hides `#month-actions` (`loadMonth()`) and the Terbitkan button/hint (`updateScheduleActions()`) for a viewer/under-permissioned editor; `openModal()` leaves the day-editor modal openable but disables every field and hides `#save-btn` when `!canWriteModule('kuliah')`, rather than blocking the modal from opening — a viewer can still inspect a day's assignment
 - `currentYear`, `currentMonth` — module-level state for month navigation (unrestricted — admin can browse any past/future month)
 - `scheduleMap` — `{ 'YYYY-MM-DD': { subuh, maghrib, cuti_umum, subuh_pending, maghrib_pending } }` built from Supabase fetch
 - `renderCalendar()` — builds `#calendar-table` grid + calls `renderMobileDayList()`; a pending session renders a dashed `.session-tag.pending`/`.mdc-pending` "Belum Ditetapkan" tag ahead of the normal ustaz-name branch
@@ -154,6 +157,7 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `openClearModal()` / `confirmClear()` — hard-deletes all `schedule` rows in the viewed month's date range, after confirmation
 
 ### ustaz.js
+- `init()` calls `requireModuleAccess('kuliah')` right after `requireAuth()` (added 2026-07-23, same gate as `jadual.js`). `#add-ustaz-btn` and each row's Edit/Padam (`renderTable()`) are hidden behind `canWriteModule('kuliah')`
 - `allUstaz` — sorted client-side with `localeCompare({ numeric: true })`; never use Supabase `.order()`
 - `pendingRemovePoster` — boolean flag; if true, `saveUstaz()` sets `poster_url: null`
 - `removePoster()` — sets flag, hides current poster block, clears inputs
@@ -162,6 +166,7 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 ### users.js
 - Only accessible if `currentAdmin.role === 'super_admin'` — redirects otherwise
 - `saveUser()` — insert or update in `admins` table; email is the conflict key for edits
+- Role `<select>` has 3 options as of 2026-07-23: `editor`/`viewer`/`super_admin` — `viewer` reuses `editor`'s permission-checkbox UI as-is (`togglePermFields()` only hides the checkboxes for `super_admin`) with its own hint text. `roleLabelMY(role)` and `renderUsers()`'s role-pill logic both got a 3rd branch for `viewer` at the same time — both previously hardcoded a `super_admin ? X : 'Editor'` binary that would have silently mislabeled a viewer as "Editor" everywhere (the users table, activity-log diff text via `buildUserDiffText()`, and the delete-confirmation log detail)
 
 ### userlog.js
 - Only accessible if `currentAdmin.role === 'super_admin'` — redirects otherwise, same pattern as `users.js`
@@ -179,7 +184,8 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 Rebuilt from scratch 2026-07-21 to match the mosque's real recording pattern (see `admin/database.md` §2.1 and `DEV_NOTES.MD` session 11 for the full why). Deeper design rationale lives in `admin/CLAUDE.md`'s Key Patterns — this section is a function-level map, not the full story.
 
 ### infaq-common.js
-- `requireInfaqAccess()` — called right after `requireAuth()` on every infaq page; denies + redirects unless `role === 'super_admin'` or `permissions.infaq` is truthy
+- `requireInfaqAccess()` — called right after `requireAuth()` on every infaq page; denies + redirects unless `role === 'super_admin'` or `permissions.infaq` is truthy. As of 2026-07-23 this is a 1-line wrapper around `app.js`'s generic `requireModuleAccess('infaq')` (added when the same gate was extended to kuliah) — every call site is unchanged
+- Every infaq page also calls `canWriteModule('infaq')` (`app.js`) to hide its Add/Catat/Tambah button, Terbitkan button, and per-row Edit/Padam actions for a viewer/under-permissioned editor — see each page's own bullet below for the specific controls gated
 - `formatRM(amount)` — `'RM ' + toLocaleString('ms-MY', {...})`
 - `BULAN_MY` — array of Malay month names, index 0 = Januari
 - `publishInfaq(target, btnId)` — POSTs to `/api/publish-infaq?target=...` with the session Bearer token, same pattern as `jadual.js`'s `publishMonth()`; moved here (from `ringkasan.js`) 2026-07-22 so `kutipan.js`/`perbelanjaan.js`/`projek-kutipan.js` can each call it with their own `target`/`btnId` instead of the button living on a central page

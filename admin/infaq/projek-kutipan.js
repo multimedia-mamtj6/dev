@@ -19,6 +19,7 @@ let deletingId  = null;
             '<p style="color:var(--text-muted)">Tiada projek dipilih. <a href="projek.html">Kembali ke senarai projek</a>.</p>';
         return;
     }
+    document.getElementById('add-donation-btn').style.display = canWriteModule('infaq') ? '' : 'none';
     await loadProject();
     await loadDonations();
 })();
@@ -41,7 +42,7 @@ async function loadProject() {
     // Terbitkan is never offered from a completed project's page (it would
     // silently publish a different project's data, not this one).
     if (project.is_active) {
-        document.getElementById('publish-daily-btn').style.display = '';
+        document.getElementById('publish-daily-btn').style.display = canWriteModule('infaq') ? '' : 'none';
         await loadLastPublishedInfaqNote('publish_daily', 'last-published-daily');
     }
 }
@@ -121,10 +122,12 @@ function renderTable() {
             <td data-label="Jumlah"><strong>${escapeHtml(formatRM(r.jumlah))}</strong></td>
             <td data-label="Keterangan" style="color:var(--text-muted);font-size:0.8125rem">${escapeHtml(r.keterangan || '—')}</td>
             <td data-label="">
+                ${canWriteModule('infaq') ? `
                 <div class="actions">
                     <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(r.id)}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(r.id)}')">Padam</button>
                 </div>
+                ` : ''}
             </td>
         </tr>
     `).join('');

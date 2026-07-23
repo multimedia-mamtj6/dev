@@ -8,6 +8,7 @@ let deletingId   = null;
     const session = await requireAuth();
     if (!session) return;
     if (!(await requireInfaqAccess())) return;
+    document.getElementById('add-projek-btn').style.display = canWriteModule('infaq') ? '' : 'none';
     await loadProjects();
 })();
 
@@ -58,9 +59,11 @@ function renderTable() {
             <td data-label="">
                 <div class="actions">
                     <a class="btn btn-ghost btn-sm" href="projek-kutipan.html?project=${encodeURIComponent(p.id)}">Lihat Kutipan</a>
-                    ${p.is_active ? '' : `<button class="btn btn-ghost btn-sm" onclick="openActivateModal('${escapeHtml(p.id)}')">Jadikan Aktif</button>`}
-                    <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(p.id)}')">Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(p.id)}')">Padam</button>
+                    ${canWriteModule('infaq') ? `
+                        ${p.is_active ? '' : `<button class="btn btn-ghost btn-sm" onclick="openActivateModal('${escapeHtml(p.id)}')">Jadikan Aktif</button>`}
+                        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(p.id)}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(p.id)}')">Padam</button>
+                    ` : ''}
                 </div>
             </td>
         </tr>`;

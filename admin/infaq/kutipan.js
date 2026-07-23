@@ -13,6 +13,9 @@ let deletingId = null;
     const session = await requireAuth();
     if (!session) return;
     if (!(await requireInfaqAccess())) return;
+    const canWrite = canWriteModule('infaq');
+    document.getElementById('add-kutipan-btn').style.display      = canWrite ? '' : 'none';
+    document.getElementById('publish-monthly-btn').style.display  = canWrite ? '' : 'none';
     await Promise.all([
         loadRows(),
         loadLastPublishedInfaqNote('publish_monthly', 'last-published-monthly'),
@@ -91,10 +94,12 @@ function renderTable() {
             <td data-label="Minggu">Minggu ${r.minggu}</td>
             <td data-label="Jumlah"><strong>${escapeHtml(formatRM(r.jumlah))}</strong></td>
             <td data-label="">
+                ${canWriteModule('infaq') ? `
                 <div class="actions">
                     <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(r.id)}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(r.id)}')">Padam</button>
                 </div>
+                ` : ''}
             </td>
         </tr>`;
     });
