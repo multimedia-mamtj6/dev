@@ -81,6 +81,19 @@ CREATE POLICY "auth_all_admins" ON admins
     WITH CHECK (true);
 GRANT SELECT, INSERT, UPDATE, DELETE ON admins TO authenticated;
 
+-- service_role needs its own SELECT grant too (found 2026-07-22, via
+-- userlog.html's merged log view surfacing that every "Terbitkan..." row
+-- showed a raw email instead of the registered admin name) — api/publish.js
+-- and api/publish-infaq.js both look up the publishing admin's name from
+-- this table using the service-role key (server-side, bypasses RLS but
+-- still needs the base grant, same as every other table in this file). This
+-- table predates that server-side lookup ever existing, so it was never
+-- added — a fresh table isn't the only way to hit the "GRANT, not just RLS"
+-- landmine documented in §7 below; an old table gaining a NEW caller/role
+-- can hit it too. The lookup failed silently (no error, just a null name
+-- falling back to the raw email) until this was traced.
+GRANT SELECT ON admins TO service_role;
+
 -- ustaz table policies
 CREATE POLICY "auth_all_ustaz" ON ustaz
     FOR ALL

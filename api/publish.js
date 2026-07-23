@@ -284,6 +284,11 @@ module.exports = async function handler(req, res) {
             if (adminRes.ok) {
                 const rows = await adminRes.json();
                 actorName = rows[0]?.name || null;
+            } else {
+                // Was silently swallowed before 2026-07-22 — a missing GRANT
+                // (or any other admins-lookup failure) fell back to the raw
+                // email with zero visibility. Log it so this doesn't hide again.
+                console.error('admins name lookup failed:', adminRes.status, await adminRes.text().catch(() => ''));
             }
         }
 

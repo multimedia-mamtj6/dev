@@ -165,9 +165,10 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 
 ### userlog.js
 - Only accessible if `currentAdmin.role === 'super_admin'` — redirects otherwise, same pattern as `users.js`
-- `ACTION_LABELS` — maps each `activity_log.action` value to its Malay display label
-- `loadLog()` — builds a Supabase query from the four filter state vars (`filterAdmin`/`filterAction`/`filterFrom`/`filterTo`), `order('created_at', {ascending:false}).limit(logLimit)`
-- `populateFilterOptions()` — fills the Tindakan filter from `ACTION_LABELS`, and the Admin filter from a live `db.from('admins').select('email,name')` query (so it only lists admins that still exist — deleted admins' past log rows remain visible under "Semua Admin", just not individually filterable by name anymore)
+- `LOG_SOURCES` (2026-07-22) — `[{ module, table, actionLabels }, ...]`, one entry per module's own activity-log table (`activity_log` for Kuliah, `infaq_activity_log` for Infaq); single source of truth for which tables this page merges, same "one config array, one generic renderer" pattern as `app.js`'s `MODULES` — add a future module's log by adding one entry here, nothing else changes
+- `loadLog()` — queries every `LOG_SOURCES` entry in parallel (each independently filtered by the four filter state vars and capped at `logLimit`), tags each returned row with `_module`/`_actionLabels`, merges all sources' rows, sorts by `created_at` descending, slices to `logLimit` — this reconstructs the true merged top-`logLimit` correctly since fetching top-`logLimit` from every source is always sufficient for a global top-`logLimit` (a source that errors returns `[]` instead of throwing, so one module's outage doesn't blank the page)
+- `renderLog(rows)` — renders the merged/sorted rows, including a `.log-module-badge` per row (`.log-module-kuliah`/`.log-module-infaq` in `style.css`) and looking up each row's action label from its own `_actionLabels` map (not a single shared `ACTION_LABELS` — different modules can reuse action-name strings without colliding)
+- `populateFilterOptions()` — fills the Tindakan filter from `LOG_SOURCES` (one `<optgroup>` per module), and the Admin filter from a live `db.from('admins').select('email,name')` query (so it only lists admins that still exist — deleted admins' past log rows remain visible under "Semua Admin", just not individually filterable by name anymore)
 - `applyFilters()` / `resetFilters()` — read the 4 filter controls into module state, reset `logLimit` to the page size, reload
 - `loadMoreLog()` — increments `logLimit` and refetches (simple limit-refetch pagination, not offset/cursor-based — avoids edge cases if new rows arrive between clicks)
 

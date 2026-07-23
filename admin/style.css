@@ -471,6 +471,18 @@ input[type="file"] {
    (userlog.html) needs to. */
 .filter-bar .form-group:has(#filter-year) { flex: 0 0 auto; min-width: 0; width: 110px; }
 
+/* ── userlog.html: module badge (Kuliah vs Infaq, merged activity_log + infaq_activity_log) ── */
+.log-module-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.log-module-badge.log-module-kuliah { background: #dbeafe; color: #1d4ed8; }
+.log-module-badge.log-module-infaq  { background: #dcfce7; color: #15803d; }
+
 .toggle-row { display: flex; align-items: center; gap: 0.625rem; }
 input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
 .toggle-row label { margin: 0; color: var(--text); font-weight: 400; cursor: pointer; }

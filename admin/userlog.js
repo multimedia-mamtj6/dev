@@ -6,18 +6,47 @@ let filterAction = '';
 let filterFrom   = '';
 let filterTo     = '';
 
-const ACTION_LABELS = {
-    schedule_day_edit:  'Edit Jadual Harian',
-    schedule_duplicate: 'Salin Data Bulan',
-    schedule_clear:     'Kosongkan Bulan',
-    ustaz_create:       'Tambah Penceramah',
-    ustaz_update:       'Kemaskini Penceramah',
-    ustaz_delete:       'Padam Penceramah',
-    admin_create:       'Tambah Pengguna',
-    admin_update:       'Kemaskini Pengguna',
-    admin_delete:       'Buang Pengguna',
-    publish:            'Terbitkan Jadual',
-};
+// One entry per module's own activity_log table — add a module here (table +
+// its own action-label map) to bring a future module's log into this page,
+// nothing else needs to change. Mirrors the MODULES config pattern in app.js.
+const LOG_SOURCES = [
+    {
+        module: 'Kuliah', table: 'activity_log',
+        actionLabels: {
+            schedule_day_edit:  'Edit Jadual Harian',
+            schedule_duplicate: 'Salin Data Bulan',
+            schedule_clear:     'Kosongkan Bulan',
+            ustaz_create:       'Tambah Penceramah',
+            ustaz_update:       'Kemaskini Penceramah',
+            ustaz_delete:       'Padam Penceramah',
+            admin_create:       'Tambah Pengguna',
+            admin_update:       'Kemaskini Pengguna',
+            admin_delete:       'Buang Pengguna',
+            publish:            'Terbitkan Jadual',
+        },
+    },
+    {
+        module: 'Infaq', table: 'infaq_activity_log',
+        actionLabels: {
+            infaq_kutipan_mingguan_create: 'Tambah Kutipan Mingguan',
+            infaq_kutipan_mingguan_update: 'Kemaskini Kutipan Mingguan',
+            infaq_kutipan_mingguan_delete: 'Padam Kutipan Mingguan',
+            infaq_perbelanjaan_create:     'Tambah Perbelanjaan',
+            infaq_perbelanjaan_update:     'Kemaskini Perbelanjaan',
+            infaq_perbelanjaan_delete:     'Padam Perbelanjaan',
+            infaq_projek_kutipan_create:   'Tambah Kutipan Projek',
+            infaq_projek_kutipan_update:   'Kemaskini Kutipan Projek',
+            infaq_projek_kutipan_delete:   'Padam Kutipan Projek',
+            infaq_project_create:          'Tambah Projek',
+            infaq_project_update:          'Kemaskini Projek',
+            infaq_project_activate:        'Aktifkan Projek',
+            infaq_project_delete:          'Padam Projek',
+            publish_monthly:               'Terbitkan Kutipan Mingguan',
+            publish_daily:                 'Terbitkan Kutipan Projek',
+            publish_perbelanjaan:          'Terbitkan Perbelanjaan',
+        },
+    },
+];
 
 (async () => {
     const session = await requireAuth();
@@ -33,9 +62,13 @@ const ACTION_LABELS = {
 async function populateFilterOptions() {
     const actionSelect = document.getElementById('filter-action');
     actionSelect.innerHTML = '<option value="">Semua Tindakan</option>' +
-        Object.entries(ACTION_LABELS).map(([value, label]) =>
-            `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`
-        ).join('');
+        LOG_SOURCES.map(source => `
+            <optgroup label="${escapeHtml(source.module)}">
+                ${Object.entries(source.actionLabels).map(([value, label]) =>
+                    `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`
+                ).join('')}
+            </optgroup>
+        `).join('');
 
     const { data, error } = await db.from('admins').select('email, name').order('email');
     if (error) return; // filter dropdown just stays admin-less; not worth blocking the page over
@@ -63,39 +96,56 @@ function resetFilters() {
     applyFilters();
 }
 
+// Fetches each module's log table independently (each capped at logLimit —
+// enough to guarantee the true merged top-`logLimit` rows are among them,
+// since a global top-N can never need more than N rows from any one source),
+// tags every row with which module/label-map it came from, then merges and
+// re-sorts by created_at so kuliah and infaq events interleave into one real
+// timeline instead of two separate lists. A source that errors degrades to
+// an empty list rather than blanking the whole page — same instinct as
+// populateFilterOptions()'s admin-dropdown fallback above.
 async function loadLog() {
     const tbody = document.getElementById('log-tbody');
-    tbody.innerHTML = '<tr><td colspan="5" class="state-cell">Memuatkan...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="state-cell">Memuatkan...</td></tr>';
 
-    let query = db.from('activity_log').select('*').order('created_at', { ascending: false }).limit(logLimit);
-    if (filterAdmin)  query = query.eq('actor_email', filterAdmin);
-    if (filterAction) query = query.eq('action', filterAction);
-    if (filterFrom)   query = query.gte('created_at', new Date(filterFrom + 'T00:00:00').toISOString());
-    if (filterTo)     query = query.lte('created_at', new Date(filterTo + 'T23:59:59').toISOString());
+    const results = await Promise.all(LOG_SOURCES.map(async (source) => {
+        let query = db.from(source.table).select('*').order('created_at', { ascending: false }).limit(logLimit);
+        if (filterAdmin)  query = query.eq('actor_email', filterAdmin);
+        if (filterAction) query = query.eq('action', filterAction);
+        if (filterFrom)   query = query.gte('created_at', new Date(filterFrom + 'T00:00:00').toISOString());
+        if (filterTo)     query = query.lte('created_at', new Date(filterTo + 'T23:59:59').toISOString());
 
-    const { data, error } = await query;
+        const { data, error } = await query;
+        if (error) {
+            console.error(`Gagal memuatkan log ${source.module}:`, error.message);
+            return [];
+        }
+        return (data || []).map(row => ({ ...row, _module: source.module, _actionLabels: source.actionLabels }));
+    }));
 
-    if (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="state-cell">Ralat: ${escapeHtml(error.message)}</td></tr>`;
-        return;
-    }
+    const merged = results
+        .flat()
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, logLimit);
 
-    renderLog(data || []);
-    document.getElementById('load-more-log-btn').style.display = (data || []).length >= logLimit ? '' : 'none';
+    renderLog(merged);
+    document.getElementById('load-more-log-btn').style.display =
+        results.some(rows => rows.length >= logLimit) ? '' : 'none';
 }
 
 function renderLog(rows) {
     const tbody = document.getElementById('log-tbody');
     if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="state-cell">Tiada aktiviti direkod.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="state-cell">Tiada aktiviti direkod.</td></tr>';
         return;
     }
 
     tbody.innerHTML = rows.map(r => `
         <tr>
             <td data-label="Masa">${escapeHtml(formatDateTimeMY(r.created_at))}</td>
+            <td data-label="Modul"><span class="log-module-badge log-module-${r._module.toLowerCase()}">${escapeHtml(r._module)}</span></td>
             <td data-label="Admin">${escapeHtml(r.actor_name || r.actor_email)}</td>
-            <td data-label="Tindakan">${escapeHtml(ACTION_LABELS[r.action] || r.action)}</td>
+            <td data-label="Tindakan">${escapeHtml(r._actionLabels[r.action] || r.action)}</td>
             <td data-label="Sasaran">${escapeHtml(r.target_label || '—')}</td>
             <td data-label="Butiran" style="color:var(--text-muted);font-size:0.8125rem">${escapeHtml(r.detail || '—')}</td>
         </tr>

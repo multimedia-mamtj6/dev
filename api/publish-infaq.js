@@ -303,7 +303,14 @@ module.exports = async function handler(req, res) {
                 `${supabaseUrl}/rest/v1/admins?select=name&email=ilike.${encodeURIComponent(actorEmail)}`,
                 { headers: sbHeaders }
             );
-            if (adminRes.ok) actorName = (await adminRes.json())[0]?.name || null;
+            if (adminRes.ok) {
+                actorName = (await adminRes.json())[0]?.name || null;
+            } else {
+                // Was silently swallowed before 2026-07-22 — a missing GRANT
+                // (or any other admins-lookup failure) fell back to the raw
+                // email with zero visibility. Log it so this doesn't hide again.
+                console.error('admins name lookup failed:', adminRes.status, await adminRes.text().catch(() => ''));
+            }
         }
         await fetch(`${supabaseUrl}/rest/v1/infaq_activity_log`, {
             method: 'POST',
