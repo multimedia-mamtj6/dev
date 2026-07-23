@@ -10,24 +10,24 @@
         "jumlah": 78152.43000000001
       },
       "bulanIni": {
-        "bulan": "Julai 2026",
+        "bulan": "JUL",
         "jumlah": 0
       },
       "bulanLepas": {
-        "bulan": "Jun 2026",
+        "bulan": "JUN",
         "jumlah": 0
       }
     }
   },
   "paparanBulanIni": {
     "Tahun": 2026,
-    "Bulan": "Julai 2026",
+    "Bulan": "JUL",
     "Jumlah": 0,
     "JumlahKumulatif": 0
   },
   "paparanBulanLepas": {
     "Tahun": 2026,
-    "Bulan": "Jun 2026",
+    "Bulan": "JUN",
     "Jumlah": 0,
     "JumlahKumulatif": 0
   },
@@ -35,18 +35,18 @@
     "2026": {
       "tahun": "2026",
       "labels": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Ogo",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dis"
+        "JAN",
+        "FEB",
+        "MAC",
+        "APR",
+        "MEI",
+        "JUN",
+        "JUL",
+        "OGO",
+        "SEP",
+        "OKT",
+        "NOV",
+        "DIS"
       ],
       "data": [
         0,
@@ -78,5 +78,5 @@
       ]
     }
   },
-  "tarikhKemaskini": "2026-07-22T08:56:47.250Z"
+  "tarikhKemaskini": "2026-07-23T04:22:13.939Z"
 }
