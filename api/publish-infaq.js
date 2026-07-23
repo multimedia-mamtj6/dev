@@ -252,19 +252,29 @@ module.exports = async function handler(req, res) {
         if (!perbelanjaanRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_perbelanjaan_bulanan', details: await perbelanjaanRes.text() });
         const perbelanjaanRows = await perbelanjaanRes.json();
 
-        const expenseGrafThisYear = buildYearlyGraf(perbelanjaanRows, year);
-        const cumulativeThisYear  = computeCumulative(expenseGrafThisYear.data);
+        // Publish a graf entry for EVERY year present in the table, not just
+        // the current one — the reference frontend's year-dropdown does
+        // Object.keys(graf) and shows whatever's there (see script.js's
+        // renderPastYearsExpenseCharts), it isn't hardcoded to 2 years. Current
+        // and previous year are always included even with zero rows, so
+        // paparanBulanIni/Lepas below always have a series to read from.
+        const grafYears = new Set(perbelanjaanRows.map(r => r.tahun));
+        grafYears.add(year);
+        grafYears.add(year - 1);
 
+        const grafByYear = {};
+        grafYears.forEach(y => {
+            const yearGraf = buildYearlyGraf(perbelanjaanRows, y);
+            grafByYear[String(y)] = { ...yearGraf, dataKumulatif: computeCumulative(yearGraf.data) };
+        });
+
+        const cumulativeThisYear = grafByYear[String(year)].dataKumulatif;
         // January edge case: "bulan lepas" is December of the PREVIOUS year,
         // so its cumulative must come from that year's own series, not
         // carried over from the current year's array (resets at the boundary).
-        let bulanLepasKumulatif;
-        if (lastMonthYear === year) {
-            bulanLepasKumulatif = cumulativeThisYear[lastMonth - 1];
-        } else {
-            const prevYearGraf = buildYearlyGraf(perbelanjaanRows, lastMonthYear);
-            bulanLepasKumulatif = computeCumulative(prevYearGraf.data)[lastMonth - 1];
-        }
+        // Safe unconditionally since grafByYear always has both year and
+        // year - 1, and lastMonthYear is always one of those two.
+        const bulanLepasKumulatif = grafByYear[String(lastMonthYear)].dataKumulatif[lastMonth - 1];
 
         jsonOut = {
             ringkasan: {
@@ -285,7 +295,7 @@ module.exports = async function handler(req, res) {
                 Jumlah: sumJumlah(filterTahunBulan(perbelanjaanRows, lastMonthYear, lastMonth)),
                 JumlahKumulatif: bulanLepasKumulatif,
             },
-            graf: { [String(year)]: { ...expenseGrafThisYear, dataKumulatif: cumulativeThisYear } },
+            graf: grafByYear,
             tarikhKemaskini: new Date().toISOString(),
         };
         activityLabel  = activityMonthLabel;
