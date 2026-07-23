@@ -26,7 +26,13 @@ const BULAN = [
     'Januari','Februari','Mac','April','Mei','Jun',
     'Julai','Ogos','September','Oktober','November','Disember'
 ];
-const BULAN_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+// Uppercase, Malay-correct abbreviations (NOT English "Mar" — Malay March is
+// "Mac") — verified 2026-07-22 directly against the real infaq.mamtj6.com
+// reference repo's live monthly.json/perbelanjaan.json output (its own
+// DATA_STRUCTURE.md doc is stale on this point, don't trust it over the
+// real files). Feeds both graf.<year>.labels AND every published `bulan`/
+// `Bulan` field below via bulanIniLabel/bulanLepasLabel.
+const BULAN_SHORT = ['JAN','FEB','MAC','APR','MEI','JUN','JUL','OGO','SEP','OKT','NOV','DIS'];
 
 const MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // Malaysia is UTC+8, no DST
 
@@ -162,8 +168,20 @@ module.exports = async function handler(req, res) {
     let lastMonthYear = year, lastMonth = month - 1;
     if (lastMonth < 1) { lastMonth = 12; lastMonthYear = year - 1; }
 
-    const bulanIniLabel   = `${BULAN[month - 1]} ${year}`;
-    const bulanLepasLabel = `${BULAN[lastMonth - 1]} ${lastMonthYear}`;
+    // Short, uppercase, no-year form (e.g. "JUN") — matches the real
+    // infaq.mamtj6.com reference site's published `bulan`/`Bulan` fields
+    // exactly (verified 2026-07-22 against its live output). Used for every
+    // externally-published bulan/Bulan field below.
+    const bulanIniLabel   = BULAN_SHORT[month - 1];
+    const bulanLepasLabel = BULAN_SHORT[lastMonth - 1];
+
+    // Separate, human-readable "Month Year" label — only for THIS admin
+    // CMS's own infaq_activity_log target_label (shown in userlog.html /
+    // the "last published" note), never published externally. Kept decoupled
+    // from bulanIniLabel so matching the external JSON's terser format
+    // doesn't regress the admin's own log readability. Both targets only
+    // ever log the current month's publish, so no "last month" variant needed.
+    const activityMonthLabel = `${BULAN[month - 1]} ${year}`;
 
     const sbHeaders = { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}`, 'Accept': 'application/json' };
 
@@ -180,17 +198,17 @@ module.exports = async function handler(req, res) {
                 kutipan: {
                     bulanIni:   { bulan: bulanIniLabel,   jumlah: sumJumlah(filterTahunBulan(kutipanRows, year, month)) },
                     bulanLepas: { bulan: bulanLepasLabel, jumlah: sumJumlah(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)) },
-                    tahunIni:   { tahun: String(year),     jumlah: sumJumlah(filterTahun(kutipanRows, year)) },
-                    tahunLepas: { tahun: String(year - 1), jumlah: sumJumlah(filterTahun(kutipanRows, year - 1)) },
+                    tahunIni:   { tahun: year,     jumlah: sumJumlah(filterTahun(kutipanRows, year)) },
+                    tahunLepas: { tahun: year - 1, jumlah: sumJumlah(filterTahun(kutipanRows, year - 1)) },
                 },
             },
             paparanBulanIni: {
-                Tahun: year, Bulan: BULAN[month - 1].toUpperCase(),
+                Tahun: year, Bulan: bulanIniLabel,
                 ...buildMingguBuckets(filterTahunBulan(kutipanRows, year, month)),
                 JumlahBulanan: sumJumlah(filterTahunBulan(kutipanRows, year, month)),
             },
             paparanBulanLepas: {
-                Tahun: lastMonthYear, Bulan: BULAN[lastMonth - 1].toUpperCase(),
+                Tahun: lastMonthYear, Bulan: bulanLepasLabel,
                 ...buildMingguBuckets(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)),
                 JumlahBulanan: sumJumlah(filterTahunBulan(kutipanRows, lastMonthYear, lastMonth)),
             },
@@ -200,7 +218,7 @@ module.exports = async function handler(req, res) {
             },
             tarikhKemaskini: new Date().toISOString(),
         };
-        activityLabel  = bulanIniLabel;
+        activityLabel  = activityMonthLabel;
         activityDetail = `Kutipan: RM ${jsonOut.ringkasan.kutipan.bulanIni.jumlah.toFixed(2)}`;
 
     } else if (target === 'daily') {
@@ -270,7 +288,7 @@ module.exports = async function handler(req, res) {
             graf: { [String(year)]: { ...expenseGrafThisYear, dataKumulatif: cumulativeThisYear } },
             tarikhKemaskini: new Date().toISOString(),
         };
-        activityLabel  = bulanIniLabel;
+        activityLabel  = activityMonthLabel;
         activityDetail = `Perbelanjaan: RM ${jsonOut.ringkasan.perbelanjaan.bulanIni.jumlah.toFixed(2)}`;
     }
 
