@@ -212,6 +212,7 @@ name          TEXT NOT NULL
 target_amount NUMERIC(12,2) NOT NULL CHECK (> 0)
 is_active     BOOLEAN NOT NULL DEFAULT false
 completed_at  TIMESTAMPTZ
+launch_date   DATE                -- optional, added 2026-07-23 (session 13)
 created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
@@ -219,6 +220,7 @@ updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 - **At most one active project at a time**, enforced by a partial unique index (`idx_infaq_projects_one_active`, `ON is_active WHERE is_active = true`). `admin/infaq/projek.js`'s "Jadikan Aktif" action must deactivate the currently-active project (setting `completed_at`) **before** activating the target — two sequential `UPDATE`s, always in that order, so the index is never transiently violated by two concurrently-true rows.
 - New projects are always created `is_active: false` — activating is a separate, explicit step, so drafting a new project can never silently deactivate whatever's currently live.
 - General/unearmarked infaq (`infaq_kutipan_mingguan`) never touches this table — only donations explicitly recorded against a project (`infaq_projek_kutipan`) count toward `JumlahTerkumpul`.
+- **`launch_date` (session 13, 2026-07-23)** — optional, filled in per-project via `projek.html`'s Edit modal, never backfilled via SQL. Exists because `infaq_projek_kutipan.jumlah` has a `CHECK (> 0)` constraint that blocks recording a real historical RM0 "launch marker" entry as a donation row — this field is the alternative home for that date. Drives `admin/infaq/projek-kutipan.js`'s "`X` hari sejak dilancarkan" display (`daysSince()` in `app.js`) — hidden entirely, not shown as a placeholder, when unset.
 
 ### `infaq_kutipan_mingguan`
 

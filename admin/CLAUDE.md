@@ -149,6 +149,7 @@ target_label text, detail text  -- both plain-text snapshots, never FKs
 -- (partial unique index on is_active WHERE true).
 id uuid PK, name text NOT NULL, target_amount numeric(12,2),
 is_active boolean DEFAULT false, completed_at timestamptz,
+launch_date date,  -- optional, added 2026-07-23 — see database.md
 created_at timestamptz, updated_at timestamptz
 
 -- infaq_kutipan_mingguan: general infaq, ONE ROW PER WEEK ACTUALLY COLLECTED
