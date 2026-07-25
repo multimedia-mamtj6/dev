@@ -56,7 +56,7 @@ async function loadActiveProject() {
     }
 
     const { data: donations } = await db.from('infaq_projek_kutipan').select('jumlah').eq('project_id', project.id);
-    const terkumpul = (donations || []).reduce((s, r) => s + Number(r.jumlah), 0);
+    const terkumpul = (donations || []).reduce((s, r) => s + Number(r.jumlah), 0) + Number(project.online_total || 0);
     const peratusan = project.target_amount > 0 ? Math.round((terkumpul / project.target_amount) * 100) : 0;
 
     document.getElementById('project-card').style.display = '';

@@ -106,11 +106,30 @@ async function loadDonations() {
 async function updateProgress() {
     if (!project) return;
     const { data } = await db.from('infaq_projek_kutipan').select('jumlah').eq('project_id', projectId);
-    const terkumpul = (data || []).reduce((s, r) => s + Number(r.jumlah), 0);
+    const fizikal   = (data || []).reduce((s, r) => s + Number(r.jumlah), 0);
+    const online    = Number(project.online_total || 0);
+    const terkumpul = fizikal + online;
     const peratusan = project.target_amount > 0 ? Math.round((terkumpul / project.target_amount) * 100) : 0;
     document.getElementById('progress-fill').style.width = `${Math.min(100, peratusan)}%`;
     document.getElementById('progress-text').textContent =
         `${formatRM(terkumpul)} daripada ${formatRM(project.target_amount)} (${peratusan}%)`;
+
+    // Breakdown line + Nota block only appear once an online total is
+    // actually recorded — otherwise "Terkumpul" is just the physical total
+    // and the existing progress-text line already says everything there is
+    // to say (no unexplained bigger number without this).
+    const breakdownEl = document.getElementById('progress-breakdown');
+    const notaEl       = document.getElementById('online-nota-card');
+    if (project.online_total) {
+        const updatedLabel = project.online_total_updated_at ? formatDateMY(project.online_total_updated_at) : 'Tiada tarikh';
+        breakdownEl.textContent = `Tabung Fizikal: ${formatRM(fizikal)} · Online: ${formatRM(online)} (dikemaskini ${updatedLabel}) · Jumlah: ${formatRM(terkumpul)} (${peratusan}%)`;
+        breakdownEl.style.display = '';
+        document.getElementById('online-nota-target').textContent = formatRM(project.target_amount);
+        notaEl.style.display = '';
+    } else {
+        breakdownEl.style.display = 'none';
+        notaEl.style.display = 'none';
+    }
 }
 
 function renderTable() {

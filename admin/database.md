@@ -213,6 +213,8 @@ target_amount NUMERIC(12,2) NOT NULL CHECK (> 0)
 is_active     BOOLEAN NOT NULL DEFAULT false
 completed_at  TIMESTAMPTZ
 launch_date   DATE                -- optional, added 2026-07-23 (session 13)
+online_total             NUMERIC(12,2)  -- optional, added 2026-07-24
+online_total_updated_at  DATE           -- optional, added 2026-07-24
 created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
@@ -221,6 +223,7 @@ updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 - New projects are always created `is_active: false` — activating is a separate, explicit step, so drafting a new project can never silently deactivate whatever's currently live.
 - General/unearmarked infaq (`infaq_kutipan_mingguan`) never touches this table — only donations explicitly recorded against a project (`infaq_projek_kutipan`) count toward `JumlahTerkumpul`.
 - **`launch_date` (session 13, 2026-07-23)** — optional, filled in per-project via `projek.html`'s Edit modal, never backfilled via SQL. Exists because `infaq_projek_kutipan.jumlah` has a `CHECK (> 0)` constraint that blocks recording a real historical RM0 "launch marker" entry as a donation row — this field is the alternative home for that date. Drives `admin/infaq/projek-kutipan.js`'s "`X` hari sejak dilancarkan" display (`daysSince()` in `app.js`) — hidden entirely, not shown as a placeholder, when unset.
+- **`online_total`/`online_total_updated_at` (2026-07-24)** — a second, non-itemized donation channel (direct bank transfers) that `infaq_projek_kutipan` structurally can't represent (that table is one row per physical-tabung deposit). Single overwritable figure + its own "last checked against the bank statement" date, same shape as `launch_date`, set via the same Edit modal. **Every "Terkumpul" computation in the codebase adds this on top of the summed `infaq_projek_kutipan` rows** — `projek.js`, `projek-kutipan.js`, `ringkasan.js`, `admin/dashboard.js`, and `api/publish-infaq.js`'s `computeProjectProgress()` — so the published `daily.json`/`data.json` and every admin-side view always agree. Treated as `0` wherever read if `NULL`. See `admin/CLAUDE.md`'s Key Patterns for the full reconciliation story (RM 176,314 physical + RM 20,427 online = RM 196,741, matching the reference site exactly).
 
 ### `infaq_kutipan_mingguan`
 

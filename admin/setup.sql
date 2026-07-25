@@ -261,6 +261,16 @@ CREATE TABLE IF NOT EXISTS infaq_projects (
 -- modal, never backfilled via SQL.
 ALTER TABLE infaq_projects ADD COLUMN IF NOT EXISTS launch_date DATE;
 
+-- Online (bank transfer) donation total — a second donation channel the
+-- physical-tabung-only infaq_projek_kutipan log never captured (see
+-- admin/infaq/online-donation-plan.md for the RM 20,427 reconciliation that
+-- motivated this). Single overwritable running total + its own "last
+-- checked against the bank statement" date, no history table — same
+-- shape/rationale as launch_date above. Both nullable, no default: treated
+-- as 0 wherever "Terkumpul" is computed if unset.
+ALTER TABLE infaq_projects ADD COLUMN IF NOT EXISTS online_total NUMERIC(12,2);
+ALTER TABLE infaq_projects ADD COLUMN IF NOT EXISTS online_total_updated_at DATE;
+
 -- At most one active project at a time. admin/infaq/projek.js's "Jadikan
 -- Aktif" action must deactivate the current one BEFORE activating a new
 -- one (two sequential updates) so this index is never transiently violated.

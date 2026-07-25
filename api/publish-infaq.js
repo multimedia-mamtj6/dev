@@ -89,7 +89,7 @@ function computeCumulative(dataArray) {
 // callers omit the `projek` key entirely in that case.
 function computeProjectProgress(project, donationsForProject) {
     if (!project) return null;
-    const terkumpul = sumJumlah(donationsForProject);
+    const terkumpul = sumJumlah(donationsForProject) + Number(project.online_total || 0);
     const target = Number(project.target_amount);
     const peratusan = target > 0 ? Math.round((terkumpul / target) * 100) : 0;
     return { NamaProjek: project.name, SasaranKutipan: target, JumlahTerkumpul: terkumpul, Peratusan: peratusan };
