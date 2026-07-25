@@ -122,8 +122,18 @@ async function updateProgress() {
     const breakdownEl = document.getElementById('progress-breakdown');
     const notaEl       = document.getElementById('online-nota-card');
     if (project.online_total) {
-        const updatedLabel = project.online_total_updated_at ? formatDateMY(project.online_total_updated_at) : 'Tiada tarikh';
-        breakdownEl.textContent = `Tabung Fizikal: ${formatRM(fizikal)} · Online: ${formatRM(online)} (dikemaskini ${updatedLabel}) · Jumlah: ${formatRM(terkumpul)} (${peratusan}%)`;
+        // Weekday-first phrasing ("Selasa, 30 Jun 2026") specifically for this
+        // line — deliberately not formatDateMY() (shared, used all over the
+        // codebase for launch_date/activity-log dates as "30 Jun 2026
+        // (Selasa)"); changing that shared helper's format would ripple into
+        // every other page that calls it, for a wording tweak only asked for
+        // here.
+        let updatedLabel = 'Tiada tarikh';
+        if (project.online_total_updated_at) {
+            const d = new Date(project.online_total_updated_at + 'T00:00:00');
+            updatedLabel = `${HARI_MALAY[d.getDay()]}, ${d.getDate()} ${BULAN_MALAY[d.getMonth()]} ${d.getFullYear()}`;
+        }
+        breakdownEl.innerHTML = `Tabung Fizikal: ${formatRM(fizikal)}<br>Online: ${formatRM(online)} (dikemaskini ${updatedLabel})`;
         breakdownEl.style.display = '';
         document.getElementById('online-nota-target').textContent = formatRM(project.target_amount);
         notaEl.style.display = '';
