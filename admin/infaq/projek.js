@@ -77,8 +77,6 @@ function openAddModal() {
     document.getElementById('edit-name').value   = '';
     document.getElementById('edit-target').value = '';
     document.getElementById('edit-launch-date').value = '';
-    document.getElementById('edit-online-total').value = '';
-    document.getElementById('edit-online-updated').value = '';
     document.getElementById('project-modal').classList.add('open');
 }
 
@@ -91,8 +89,6 @@ function openEditModal(id) {
     document.getElementById('edit-name').value   = p.name;
     document.getElementById('edit-target').value = p.target_amount;
     document.getElementById('edit-launch-date').value = p.launch_date || '';
-    document.getElementById('edit-online-total').value = p.online_total ?? '';
-    document.getElementById('edit-online-updated').value = p.online_total_updated_at || '';
     document.getElementById('project-modal').classList.add('open');
 }
 
@@ -116,12 +112,6 @@ function buildProjectDiffText(before, after) {
         const a = after.launch_date  ? formatDateMY(after.launch_date)  : 'Tiada';
         parts.push(`Tarikh Pelancaran: ${b} → ${a}`);
     }
-    if ((before.online_total || null) !== (after.online_total || null) ||
-        (before.online_total_updated_at || null) !== (after.online_total_updated_at || null)) {
-        const b = before.online_total ? `${formatRM(before.online_total)} (${before.online_total_updated_at ? formatDateMY(before.online_total_updated_at) : 'Tiada tarikh'})` : 'Tiada';
-        const a = after.online_total  ? `${formatRM(after.online_total)} (${after.online_total_updated_at ? formatDateMY(after.online_total_updated_at) : 'Tiada tarikh'})`  : 'Tiada';
-        parts.push(`Terkumpul (Online): ${b} → ${a}`);
-    }
     return parts.length ? parts.join('; ') : null;
 }
 
@@ -130,8 +120,6 @@ async function saveProject() {
     const name       = document.getElementById('edit-name').value.trim();
     const target     = parseFloat(document.getElementById('edit-target').value);
     const launchDateInput = document.getElementById('edit-launch-date').value; // '' if blank
-    const onlineTotalInput   = document.getElementById('edit-online-total').value;   // '' if blank
-    const onlineUpdatedInput = document.getElementById('edit-online-updated').value; // '' if blank
 
     if (!name) { showToast('Nama projek diperlukan', 'error'); document.getElementById('edit-name').focus(); return; }
     if (!target || target <= 0) { showToast('Sasaran mesti lebih daripada 0', 'error'); document.getElementById('edit-target').focus(); return; }
@@ -145,12 +133,7 @@ async function saveProject() {
     // undefined — so clearing a previously-set date on an update actually
     // sends null and clears the column, rather than omitting the key and
     // leaving the old value untouched.
-    const payload = {
-        name, target_amount: target, launch_date: launchDateInput || null,
-        online_total: onlineTotalInput ? parseFloat(onlineTotalInput) : null,
-        online_total_updated_at: onlineUpdatedInput || null,
-        updated_at: new Date().toISOString(),
-    };
+    const payload = { name, target_amount: target, launch_date: launchDateInput || null, updated_at: new Date().toISOString() };
 
     let error;
     if (id) {

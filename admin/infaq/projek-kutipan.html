@@ -47,6 +47,7 @@
         </div>
         <p id="progress-text" style="color:var(--text-muted);font-size:0.875rem;margin-top:0.5rem">RM 0.00 daripada RM 0.00 (0%)</p>
         <p id="progress-breakdown" style="color:var(--text-muted);font-size:0.8125rem;margin-top:0.25rem;display:none"></p>
+        <button class="btn btn-ghost btn-sm" id="edit-online-total-btn" onclick="openOnlineTotalModal()" style="display:none;margin-top:0.75rem">Kemaskini Jumlah Online</button>
       </div>
 
       <div class="card" id="online-nota-card" style="padding:1rem 1.25rem;margin-bottom:1.25rem;display:none">
@@ -113,6 +114,35 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
         <button class="btn btn-primary" id="save-btn" onclick="saveDonation()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Online total edit modal ── -->
+  <div class="modal-overlay" id="online-total-modal" onclick="handleOnlineTotalOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Kemaskini Jumlah Terkumpul (Online)</span>
+        <button class="modal-close" onclick="closeOnlineTotalModal()">&times;</button>
+      </div>
+
+      <p style="color:var(--text-muted);font-size:0.8125rem;margin-top:-0.5rem;margin-bottom:1rem">
+        Jumlah sumbangan terus ke akaun bank (bukan tabung fizikal) — satu angka terkumpul semasa, disemak
+        semula setiap kali penyata akaun bank diterima.
+      </p>
+
+      <div class="form-group">
+        <label for="edit-online-total-amount">Jumlah Terkumpul (RM)</label>
+        <input type="number" id="edit-online-total-amount" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label for="edit-online-total-date">Tarikh Kemaskini</label>
+        <input type="date" id="edit-online-total-date">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeOnlineTotalModal()">Batal</button>
+        <button class="btn btn-primary" id="save-online-total-btn" onclick="saveOnlineTotal()">Simpan</button>
       </div>
     </div>
   </div>

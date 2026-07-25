@@ -20,6 +20,7 @@ let deletingId  = null;
         return;
     }
     document.getElementById('add-donation-btn').style.display = canWriteModule('infaq') ? '' : 'none';
+    document.getElementById('edit-online-total-btn').style.display = canWriteModule('infaq') ? '' : 'none';
     await loadProject();
     await loadDonations();
 })();
@@ -130,6 +131,68 @@ async function updateProgress() {
         breakdownEl.style.display = 'none';
         notaEl.style.display = 'none';
     }
+}
+
+// ─── Online total edit modal ────────────────────────────────────────────────
+// Edits infaq_projects.online_total/online_total_updated_at directly from
+// this page (moved here from projek.js's Add/Edit modal by design — this is
+// where the figure is actually displayed, so it's where an admin expects to
+// update it; a project-settings modal on a different page was one extra
+// click removed from the number it affects).
+function openOnlineTotalModal() {
+    if (!project) return;
+    document.getElementById('edit-online-total-amount').value = project.online_total ?? '';
+    document.getElementById('edit-online-total-date').value   = project.online_total_updated_at || '';
+    document.getElementById('online-total-modal').classList.add('open');
+}
+
+function closeOnlineTotalModal() {
+    document.getElementById('online-total-modal').classList.remove('open');
+}
+
+function handleOnlineTotalOverlay(e) {
+    if (e.target === document.getElementById('online-total-modal')) closeOnlineTotalModal();
+}
+
+function buildOnlineTotalDiffText(before, after) {
+    if ((before.online_total || null) === (after.online_total || null) &&
+        (before.online_total_updated_at || null) === (after.online_total_updated_at || null)) {
+        return null;
+    }
+    const b = before.online_total ? `${formatRM(before.online_total)} (${before.online_total_updated_at ? formatDateMY(before.online_total_updated_at) : 'Tiada tarikh'})` : 'Tiada';
+    const a = after.online_total  ? `${formatRM(after.online_total)} (${after.online_total_updated_at ? formatDateMY(after.online_total_updated_at) : 'Tiada tarikh'})`  : 'Tiada';
+    return `Terkumpul (Online): ${b} → ${a}`;
+}
+
+async function saveOnlineTotal() {
+    if (!project) return;
+    const amountInput = document.getElementById('edit-online-total-amount').value;
+    const dateInput    = document.getElementById('edit-online-total-date').value;
+
+    const saveBtn = document.getElementById('save-online-total-btn');
+    saveBtn.disabled  = true;
+    saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+
+    const before = project;
+    const payload = {
+        online_total: amountInput ? parseFloat(amountInput) : null,
+        online_total_updated_at: dateInput || null,
+        updated_at: new Date().toISOString(),
+    };
+    const { error } = await db.from('infaq_projects').update(payload).eq('id', projectId);
+
+    saveBtn.disabled  = false;
+    saveBtn.textContent = 'Simpan';
+
+    if (error) { showToast('Gagal menyimpan: ' + error.message, 'error'); return; }
+
+    showToast('Jumlah terkumpul (online) dikemaskini', 'success');
+    const diff = buildOnlineTotalDiffText(before, { ...before, ...payload });
+    if (diff) await logActivity('infaq_project_update', project.name, diff, 'infaq_activity_log');
+
+    project = { ...project, ...payload };
+    closeOnlineTotalModal();
+    await updateProgress();
 }
 
 function renderTable() {
