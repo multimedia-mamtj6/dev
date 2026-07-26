@@ -522,6 +522,17 @@ main {
     display: none;
 }
 
+.lecture-block.has-poster {
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lecture-block.has-poster:hover {
+    background-color: rgba(15, 23, 42, 0.05);
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+    border-radius: 4px;
+}
+
 .poster-lightbox-img {
     max-width: 100%;
     max-height: 100%;

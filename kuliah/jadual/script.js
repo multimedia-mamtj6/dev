@@ -50,12 +50,14 @@ async function fetchScheduleData() {
    --------------------------------------------------------- */
 function createLectureBlock(type, sessionData) {
     const khasLabel = type === 'subuh' ? 'Kuliah Subuh Khas' : 'Kuliah Maghrib Khas';
+    const posterAttr = sessionData.poster_url ? ` data-poster-url="${escapeHtml(sessionData.poster_url)}"` : '';
+    const posterClass = sessionData.poster_url ? ' has-poster' : '';
 
     // Special case — slot reserved but ustaz/topic not decided yet
     if (sessionData.pending) {
         const label = sessionData.khas ? khasLabel : (type === 'subuh' ? 'Subuh' : 'Maghrib');
         const khasClass = sessionData.khas ? ' is-khas' : '';
-        return `<div class="lecture-block is-pending${khasClass}">
+        return `<div class="lecture-block is-pending${khasClass}${posterClass}"${posterAttr}>
                     <div class="lecture-time ${type}">${label}</div>
                     <div class="pending-label">Akan Diumumkan</div>
                 </div>`;
@@ -63,7 +65,7 @@ function createLectureBlock(type, sessionData) {
 
     // Special case — Bacaan Yasiin & Tahlil
     if (sessionData.nama_penceramah && sessionData.nama_penceramah.indexOf('Yasiin') !== -1) {
-        return `<div class="lecture-block yasin-block">
+        return `<div class="lecture-block yasin-block${posterClass}"${posterAttr}>
                     <div class="arabic-text" lang="ar" dir="rtl">باچاءن يسٓ دان تهليل</div>
                     <div class="yasin-title">BACAAN YASIIN &amp; TAHLIL</div>
                 </div>`;
@@ -71,7 +73,7 @@ function createLectureBlock(type, sessionData) {
 
     const label = sessionData.khas ? khasLabel : (type === 'subuh' ? 'Subuh' : 'Maghrib');
     const khasClass = sessionData.khas ? ' is-khas' : '';
-    return `<div class="lecture-block${khasClass}">
+    return `<div class="lecture-block${khasClass}${posterClass}"${posterAttr}>
                 <div class="lecture-time ${type}">${label}</div>
                 <div class="ustaz-name">${escapeHtml(sessionData.nama_penceramah)}</div>
                 <div class="lecture-title">${escapeHtml(sessionData.tajuk_kuliah)}</div>
@@ -361,10 +363,14 @@ function buildPosterHtml(type, session) {
     return `<div class="poster-section"><div class="poster-wrapper"><img class="poster-img" src="${escapeHtml(session.poster_url)}" alt="Poster Kuliah ${label}" loading="lazy"></div></div>`;
 }
 
-// Tap-to-enlarge lightbox for the today-card poster. Uses a delegated click
-// listener (attached once at boot) rather than per-image listeners, since
-// renderTodayCard() replaces the today-card's inner HTML on every day-select
-// change — delegation survives re-renders without needing re-attachment.
+// Tap-to-enlarge lightbox for poster images — the mobile today-card's
+// .poster-img, and the desktop calendar's .lecture-block cells (which carry
+// a data-poster-url attribute instead of an <img>, see createLectureBlock()).
+// Uses a delegated click listener (attached once at boot) rather than
+// per-element listeners, since both renderTodayCard() and
+// renderCalendarDesktop() replace their container's inner HTML on every
+// day-select/month change — delegation survives re-renders without needing
+// re-attachment.
 function initPosterLightbox() {
     const overlay = document.getElementById('poster-lightbox');
     const lightboxImg = document.getElementById('poster-lightbox-img');
@@ -384,7 +390,14 @@ function initPosterLightbox() {
 
     document.addEventListener('click', (e) => {
         const posterImg = e.target.closest('.poster-img');
-        if (posterImg) open(posterImg.src, posterImg.alt);
+        if (posterImg) {
+            open(posterImg.src, posterImg.alt);
+            return;
+        }
+        const posterCell = e.target.closest('.lecture-block[data-poster-url]');
+        if (posterCell) {
+            open(posterCell.dataset.posterUrl, posterCell.querySelector('.ustaz-name')?.textContent || '');
+        }
     });
     overlay.addEventListener('click', close); // backdrop or the enlarged image itself
     document.addEventListener('keydown', (e) => {
