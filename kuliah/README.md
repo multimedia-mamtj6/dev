@@ -8,40 +8,12 @@ docs (`admin/CLAUDE.md`, `admin/developer.md`) for that side.
 
 ### `admin/` (root, not under `kuliah/`) — CMS Dashboard
 
-Full admin interface for committee members to manage the lecture schedule. Documented in
-`admin/CLAUDE.md` and `admin/developer.md`, not here — this file only covers the two
-public-facing sub-projects below.
-
-**Access:**
-```
-/admin/index.html      ← Login (Google OAuth)
-/admin/dashboard.html  ← Monthly schedule editor
-/admin/ustaz.html      ← Penceramah management
-/admin/users.html      ← Admin user accounts (super_admin only)
-/admin/userlog.html    ← Activity log / changelog (super_admin only)
-```
-
-Live at: `dev.mamtj6.com/admin/`. Old `/kuliah/admin/...` URLs redirect here automatically
-(zero-JS stubs kept for any bookmarks/links still pointing at the pre-move path).
-
-**Features:**
-- Google OAuth login — only pre-registered emails can access
-- Monthly calendar view with day editor modal (subuh + maghrib ustaz, public holiday, or mark a slot "Belum Ditetapkan" for a known Ceramah Khas whose speaker/topic isn't decided yet)
-- Dual view: desktop grid calendar / mobile scrollable day list
-- Penceramah (ustaz) registry with poster images (upload file or URL), two-column layout on desktop
-- "Lihat Terbitan" — quick view/export-PDF links to the live published schedule (current + next month only)
-- "Tindakan Bulan" — duplicate the previous month's ustaz assignments forward, or clear a month's data, both with a confirmation safeguard
-- Publish schedule to GitHub (pushes `jadual_lengkap_v2.json`, keyed by month — publishing one month merges into the existing file and prunes stale months, current+next stay live simultaneously)
-- Shows when the current/next month was last published and by whom, right on the dashboard toolbar
-- Admin user management with role-based access (editor / super_admin)
-- Activity log — accountability changelog of every schedule edit, ustaz/admin-account change, and Terbitkan/publish, with filters by admin/action/date range
-- Fully responsive — desktop and mobile (≤640px hamburger nav, card-per-row tables)
-
-**Roles:**
-| Role | Can do |
-|------|--------|
-| editor | Edit schedule, manage ustaz |
-| super_admin | All of above + manage admin users |
+Full admin interface for committee members to manage the lecture schedule (and other
+modules — infaq, etc.). Documented in `admin/CLAUDE.md`, `admin/developer.md`, and
+`admin/database.md` — not duplicated here, since this file's own admin section has gone
+stale from real page moves/renames more than once already (no `admin/README.md` exists
+as of this writing — those three files are the current audience-appropriate docs). See
+them for current access URLs, features, and roles.
 
 ### `jadual/` — Public Schedule View
 
@@ -55,6 +27,8 @@ Read-only lecture schedule display. Reads from the published JSON.
 **Features:**
 - Dual view: desktop grid calendar / mobile "today card" + scrollable day list
 - Mobile today-card day-select dropdown — jump to any day in the viewed month, not just today/tomorrow
+- "Kuliah Khas" special-lecture labeling — a day flagged Khas relabels to "Kuliah Subuh/Maghrib Khas" (desktop cell + mobile badge), gets a distinct purple color, and lights up a legend entry on any month that has one
+- Tap/click any lecture with a poster (desktop cell or mobile card) to view it enlarged in a full-screen lightbox
 - On a day with both Subuh and Maghrib, a small toggle button lets the visitor swap which session displays first (session-only, resets on reload)
 - Hijri date shown per day (`api.waktusolat.app`, with an offline calculator fallback)
 - PDF export (`?file=pdf`)
