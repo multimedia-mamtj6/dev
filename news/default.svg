@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b3d2e"/>
+      <stop offset="1" stop-color="#06231a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect x="60" y="60" width="1800" height="960" fill="none" stroke="#c9a84c" stroke-width="3" opacity="0.85"/>
+  <rect x="76" y="76" width="1768" height="928" fill="none" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+  <text x="960" y="420" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" fill="#c9a84c" letter-spacing="6">أَهْلًا وَسَهْلًا</text>
+  <text x="960" y="530" text-anchor="middle" font-family="system-ui, 'Segoe UI', Roboto, sans-serif" font-size="44" fill="#e8e3d5" letter-spacing="14">SELAMAT DATANG KE</text>
+  <text x="960" y="640" text-anchor="middle" font-family="system-ui, 'Segoe UI', Roboto, sans-serif" font-size="92" font-weight="700" fill="#ffffff" letter-spacing="4">MASJID AL-MUKHLISIN</text>
+  <text x="960" y="730" text-anchor="middle" font-family="system-ui, 'Segoe UI', Roboto, sans-serif" font-size="52" fill="#e8e3d5" letter-spacing="8">TAMAN JAYA 6</text>
+  <line x1="660" y1="790" x2="1260" y2="790" stroke="#c9a84c" stroke-width="2" opacity="0.85"/>
+  <text x="960" y="860" text-anchor="middle" font-family="system-ui, 'Segoe UI', Roboto, sans-serif" font-size="34" fill="#c9a84c" letter-spacing="10">MAMTJ6</text>
+</svg>
