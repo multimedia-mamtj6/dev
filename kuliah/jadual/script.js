@@ -361,6 +361,37 @@ function buildPosterHtml(type, session) {
     return `<div class="poster-section"><div class="poster-wrapper"><img class="poster-img" src="${escapeHtml(session.poster_url)}" alt="Poster Kuliah ${label}" loading="lazy"></div></div>`;
 }
 
+// Tap-to-enlarge lightbox for the today-card poster. Uses a delegated click
+// listener (attached once at boot) rather than per-image listeners, since
+// renderTodayCard() replaces the today-card's inner HTML on every day-select
+// change — delegation survives re-renders without needing re-attachment.
+function initPosterLightbox() {
+    const overlay = document.getElementById('poster-lightbox');
+    const lightboxImg = document.getElementById('poster-lightbox-img');
+    if (!overlay || !lightboxImg) return;
+
+    function open(src, alt) {
+        lightboxImg.src = src;
+        lightboxImg.alt = alt || '';
+        overlay.hidden = false;
+        document.body.classList.add('no-scroll');
+    }
+    function close() {
+        overlay.hidden = true;
+        lightboxImg.src = '';
+        document.body.classList.remove('no-scroll');
+    }
+
+    document.addEventListener('click', (e) => {
+        const posterImg = e.target.closest('.poster-img');
+        if (posterImg) open(posterImg.src, posterImg.alt);
+    });
+    overlay.addEventListener('click', close); // backdrop or the enlarged image itself
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !overlay.hidden) close();
+    });
+}
+
 async function renderTodayCard(senaraiHari, selectedDate = null) {
     const todayContainer = document.getElementById('today-kuliah-card');
     if (!todayContainer) return;
@@ -526,6 +557,9 @@ async function loadHijriDate(targetDate = new Date()) {
    Boot
    --------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', async () => {
+    // 0. Poster tap-to-enlarge lightbox (independent of schedule data)
+    initPosterLightbox();
+
     // 1. URL params
     const urlParams = new URLSearchParams(window.location.search);
 

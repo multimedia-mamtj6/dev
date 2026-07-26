@@ -505,6 +505,50 @@ main {
 }
 
 /* =========================================================
+   Poster lightbox (tap-to-enlarge, mobile today-card)
+   ========================================================= */
+.poster-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.poster-lightbox[hidden] {
+    display: none;
+}
+
+.poster-lightbox-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.poster-lightbox-close {
+    position: fixed;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+body.no-scroll {
+    overflow: hidden;
+}
+
+/* =========================================================
    Responsive breakpoint — mobile
    ========================================================= */
 @media screen and (max-width: 768px) {
@@ -788,6 +832,7 @@ main {
         border-radius: 10px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        cursor: pointer;
     }
 
     .poster-img {
