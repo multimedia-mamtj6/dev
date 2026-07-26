@@ -741,6 +741,35 @@ main {
         color: #6b21a8;
     }
 
+    /* #today-kuliah-card .lecture-block-v2 sets border-bottom:none (below) to
+       strip the plain divider line these blocks normally use in the monthly
+       list — as an ID selector it outranks the 2-class .is-pending/.is-khas
+       border shorthand above on that one side, so within the today-card
+       specifically their bottom border silently disappears while the other 3
+       sides render fine. Restore it explicitly at matching specificity. */
+    #today-kuliah-card .lecture-block-v2.is-pending {
+        border-bottom: 1px dashed #fb923c;
+    }
+    #today-kuliah-card .lecture-block-v2.is-khas {
+        border-bottom: 1px solid #9333ea;
+    }
+    #today-kuliah-card .lecture-block-v2.is-pending.is-khas {
+        border-bottom-style: dashed;
+    }
+
+    /* Filled/bordered boxes (is-pending, is-khas) need their own real padding
+       and a gap before whatever comes next (poster or swap toggle) — the
+       today-card's default #today-kuliah-card .lecture-block-v2 padding above
+       (0.1rem) is tuned for plain borderless text, and with zero margin a
+       filled box butts directly against the poster below it. Rarely visible
+       for is-pending alone (a pending session usually has no poster yet), but
+       always visible for is-khas, which normally does. */
+    #today-kuliah-card .lecture-block-v2.is-pending,
+    #today-kuliah-card .lecture-block-v2.is-khas {
+        padding: 0.35rem 1rem;
+        margin-bottom: 0.6rem;
+    }
+
     /* ---- Poster image ---- */
     .poster-section {
         padding: 0;
