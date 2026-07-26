@@ -63,7 +63,7 @@ async function loadMonth() {
 
     const { data: rows, error: schedErr } = await db
         .from('schedule')
-        .select('date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id, subuh_pending, maghrib_pending')
+        .select('date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id, subuh_pending, maghrib_pending, subuh_khas, maghrib_khas')
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date');
@@ -495,6 +495,12 @@ function openModal(dateStr) {
     subuhSel.disabled   = subuhPendingCheck.checked;
     maghribSel.disabled = maghribPendingCheck.checked;
 
+    // Kuliah Khas — independent flag, NOT mutually exclusive with pending or
+    // an assigned ustaz (a Khas lecture can have a confirmed speaker, or be
+    // pending with no speaker decided yet), so the select is never disabled here.
+    document.getElementById('subuh-khas-check').checked   = !!row?.subuh_khas;
+    document.getElementById('maghrib-khas-check').checked = !!row?.maghrib_khas;
+
     // Viewer (or an under-permissioned editor): the modal still opens so
     // the day's assignment can be inspected, but every field becomes
     // read-only and Save is hidden — there's nothing here they're allowed
@@ -505,6 +511,8 @@ function openModal(dateStr) {
     document.getElementById('cuti-text').disabled             = readOnly;
     document.getElementById('subuh-pending-check').disabled   = readOnly;
     document.getElementById('maghrib-pending-check').disabled = readOnly;
+    document.getElementById('subuh-khas-check').disabled      = readOnly;
+    document.getElementById('maghrib-khas-check').disabled    = readOnly;
     if (readOnly) { subuhSel.disabled = true; maghribSel.disabled = true; }
     document.getElementById('save-btn').style.display = readOnly ? 'none' : '';
 
@@ -544,7 +552,7 @@ function toggleMaghribPending() {
 // ─── Save day ─────────────────────────────────────────────────────────────────
 // Compares the pre-write scheduleMap row against the values about to be saved and
 // returns a human-readable diff string, or null if nothing actually changed.
-function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti, afterSubuhPending, afterMaghribPending) {
+function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti, afterSubuhPending, afterMaghribPending, afterSubuhKhas, afterMaghribKhas) {
     const parts = [];
     const nameOf = u => u ? (u.short_name || u.full_name) : null;
 
@@ -558,6 +566,15 @@ function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti, after
     const afterMaghrib   = afterMaghribPending ? 'Belum Ditetapkan' : (afterMaghribId ? nameOf(ustazMap[afterMaghribId]) : null);
     if ((beforeMaghrib || null) !== (afterMaghrib || null)) {
         parts.push(`Maghrib: ${beforeMaghrib || 'Tiada'} → ${afterMaghrib || 'Tiada'}`);
+    }
+
+    // Khas is independent of which ustaz/pending value is set above, so it
+    // gets its own diff line rather than folding into the Subuh/Maghrib text.
+    if (!!before?.subuh_khas !== !!afterSubuhKhas) {
+        parts.push(`Kuliah Khas (Subuh): ${before?.subuh_khas ? 'Ya' : 'Tidak'} → ${afterSubuhKhas ? 'Ya' : 'Tidak'}`);
+    }
+    if (!!before?.maghrib_khas !== !!afterMaghribKhas) {
+        parts.push(`Kuliah Khas (Maghrib): ${before?.maghrib_khas ? 'Ya' : 'Tidak'} → ${afterMaghribKhas ? 'Ya' : 'Tidak'}`);
     }
 
     const beforeCuti = before?.cuti_umum || null;
@@ -577,6 +594,8 @@ async function saveDay() {
 
     const subuhPending   = document.getElementById('subuh-pending-check').checked;
     const maghribPending = document.getElementById('maghrib-pending-check').checked;
+    const subuhKhas      = document.getElementById('subuh-khas-check').checked;
+    const maghribKhas    = document.getElementById('maghrib-khas-check').checked;
     const subuhId   = subuhPending   ? null : (document.getElementById('subuh-select').value   || null);
     const maghribId = maghribPending ? null : (document.getElementById('maghrib-select').value || null);
     const hasCuti   = document.getElementById('cuti-check').checked;
@@ -590,6 +609,8 @@ async function saveDay() {
             maghrib_ustaz_id: maghribId,
             subuh_pending:    subuhPending,
             maghrib_pending:  maghribPending,
+            subuh_khas:       subuhKhas,
+            maghrib_khas:     maghribKhas,
             cuti_umum:        cutiText,
             updated_at:       new Date().toISOString(),
         },
@@ -605,7 +626,7 @@ async function saveDay() {
     }
 
     showToast('Berjaya disimpan', 'success');
-    const diff = buildDayDiffText(before, subuhId, maghribId, cutiText, subuhPending, maghribPending);
+    const diff = buildDayDiffText(before, subuhId, maghribId, cutiText, subuhPending, maghribPending, subuhKhas, maghribKhas);
     if (diff) await logActivity('schedule_day_edit', formatDateMY(editingDate), diff);
     closeModal();
     await loadMonth();

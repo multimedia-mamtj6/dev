@@ -333,6 +333,26 @@ main {
 }
 
 /* =========================================================
+   Special — Kuliah Khas
+   ========================================================= */
+.lecture-content:has(.lecture-block.is-khas) {
+    background-color: #f3e8ff;
+}
+
+.lecture-block.is-khas .lecture-time {
+    color: #6b21a8;
+}
+
+.lecture-block.is-pending.is-khas {
+    background-color: #f3e8ff;
+    border-color: #9333ea;
+}
+
+.lecture-block.is-pending.is-khas .pending-label {
+    color: #6b21a8;
+}
+
+/* =========================================================
    Special — Bacaan Yasiin & Tahlil
    ========================================================= */
 .yasin-block {
@@ -453,6 +473,11 @@ main {
 .today-legend {
     background-color: var(--today-highlight-bg);
     color: #333;
+}
+
+.khas-legend {
+    background-color: #f3e8ff;
+    color: #6b21a8;
 }
 
 .footer-link {
@@ -700,6 +725,20 @@ main {
         font-weight: 700;
         color: #c2410c;
         margin-top: 2px;
+    }
+
+    .lecture-block-v2.is-khas {
+        background-color: #f3e8ff;
+        border: 1px solid #9333ea;
+        border-radius: 6px;
+    }
+
+    .lecture-block-v2.is-pending.is-khas {
+        border-style: dashed;
+    }
+
+    .lecture-block-v2.is-khas .pending-label {
+        color: #6b21a8;
     }
 
     /* ---- Poster image ---- */

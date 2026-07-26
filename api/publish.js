@@ -162,7 +162,7 @@ module.exports = async function handler(req, res) {
     // ── 4. Fetch schedule rows ──────────────────────────────────────────────
     const schedRes = await fetch(
         `${supabaseUrl}/rest/v1/schedule` +
-        `?select=date,cuti_umum,subuh_ustaz_id,maghrib_ustaz_id,subuh_pending,maghrib_pending` +
+        `?select=date,cuti_umum,subuh_ustaz_id,maghrib_ustaz_id,subuh_pending,maghrib_pending,subuh_khas,maghrib_khas` +
         `&date=gte.${startDate}` +
         `&date=lte.${endDate}` +
         `&order=date`,
@@ -191,15 +191,17 @@ module.exports = async function handler(req, res) {
         const maghribUstaz = row.maghrib_ustaz_id ? ustazMap[row.maghrib_ustaz_id] : null;
         return {
             date:      row.date,
-            subuh:     row.subuh_pending ? { pending: true } : (subuhUstaz ? {
+            subuh:     row.subuh_pending ? { pending: true, ...(row.subuh_khas ? { khas: true } : {}) } : (subuhUstaz ? {
                 nama_penceramah: subuhUstaz.full_name,
                 tajuk_kuliah:    subuhUstaz.tajuk_kuliah || null,
                 poster_url:      subuhUstaz.poster_url  || null,
+                ...(row.subuh_khas ? { khas: true } : {}),
             } : null),
-            maghrib:   row.maghrib_pending ? { pending: true } : (maghribUstaz ? {
+            maghrib:   row.maghrib_pending ? { pending: true, ...(row.maghrib_khas ? { khas: true } : {}) } : (maghribUstaz ? {
                 nama_penceramah: maghribUstaz.full_name,
                 tajuk_kuliah:    maghribUstaz.tajuk_kuliah || null,
                 poster_url:      maghribUstaz.poster_url  || null,
+                ...(row.maghrib_khas ? { khas: true } : {}),
             } : null),
             cuti_umum: row.cuti_umum || null,
         };

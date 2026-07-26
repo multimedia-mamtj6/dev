@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS schedule (
     maghrib_ustaz_id UUID REFERENCES ustaz(id) ON DELETE SET NULL,
     subuh_pending    BOOLEAN NOT NULL DEFAULT false,  -- slot reserved but ustaz/topic not decided yet ("Belum Ditetapkan")
     maghrib_pending  BOOLEAN NOT NULL DEFAULT false,
+    subuh_khas       BOOLEAN NOT NULL DEFAULT false,  -- this session is a special "Kuliah Khas" lecture — independent of
+    maghrib_khas     BOOLEAN NOT NULL DEFAULT false,  -- *_pending (a Khas day can have a confirmed ustaz or be pending)
     cuti_umum        TEXT,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -52,6 +54,8 @@ CREATE TABLE IF NOT EXISTS schedule (
 -- existing table, it does not retroactively add new columns.
 ALTER TABLE schedule ADD COLUMN IF NOT EXISTS subuh_pending   BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE schedule ADD COLUMN IF NOT EXISTS maghrib_pending BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE schedule ADD COLUMN IF NOT EXISTS subuh_khas      BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE schedule ADD COLUMN IF NOT EXISTS maghrib_khas    BOOLEAN NOT NULL DEFAULT false;
 
 
 -- ── 2. Indexes ────────────────────────────────────────────────────────────────

@@ -49,12 +49,15 @@ async function fetchScheduleData() {
    Lecture block builders (return HTML strings)
    --------------------------------------------------------- */
 function createLectureBlock(type, sessionData) {
+    const khasLabel = type === 'subuh' ? 'Kuliah Subuh Khas' : 'Kuliah Maghrib Khas';
+
     // Special case — slot reserved but ustaz/topic not decided yet
     if (sessionData.pending) {
-        const label = type === 'subuh' ? 'Subuh' : 'Maghrib';
-        return `<div class="lecture-block is-pending">
+        const label = sessionData.khas ? khasLabel : (type === 'subuh' ? 'Subuh' : 'Maghrib');
+        const khasClass = sessionData.khas ? ' is-khas' : '';
+        return `<div class="lecture-block is-pending${khasClass}">
                     <div class="lecture-time ${type}">${label}</div>
-                    <div class="pending-label">Ceramah Khas — Akan Diumumkan</div>
+                    <div class="pending-label">Akan Diumumkan</div>
                 </div>`;
     }
 
@@ -66,8 +69,9 @@ function createLectureBlock(type, sessionData) {
                 </div>`;
     }
 
-    const label = type === 'subuh' ? 'Subuh' : 'Maghrib';
-    return `<div class="lecture-block">
+    const label = sessionData.khas ? khasLabel : (type === 'subuh' ? 'Subuh' : 'Maghrib');
+    const khasClass = sessionData.khas ? ' is-khas' : '';
+    return `<div class="lecture-block${khasClass}">
                 <div class="lecture-time ${type}">${label}</div>
                 <div class="ustaz-name">${escapeHtml(sessionData.nama_penceramah)}</div>
                 <div class="lecture-title">${escapeHtml(sessionData.tajuk_kuliah)}</div>
@@ -215,10 +219,11 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
    --------------------------------------------------------- */
 function createMobileLectureBlock(time, lecture) {
     const badgeClass = time.toLowerCase();
+    const khasClass = lecture.khas ? ' is-khas' : '';
     if (lecture.pending) {
-        return `<div class="lecture-block-v2 is-pending">
+        return `<div class="lecture-block-v2 is-pending${khasClass}">
                     <span class="session-badge ${badgeClass}">${time}</span>
-                    <div class="pending-label">Ceramah Khas — Akan Diumumkan</div>
+                    <div class="pending-label">Akan Diumumkan</div>
                 </div>`;
     }
     if (lecture.nama_penceramah && lecture.nama_penceramah.indexOf('Yasiin') !== -1) {
@@ -228,7 +233,7 @@ function createMobileLectureBlock(time, lecture) {
                     <div class="lecture-tajuk">BACAAN YASIIN &amp; TAHLIL</div>
                 </div>`;
     }
-    return `<div class="lecture-block-v2">
+    return `<div class="lecture-block-v2${khasClass}">
                 <span class="session-badge ${badgeClass}">${time}</span>
                 <div class="lecture-ustaz">${escapeHtml(lecture.nama_penceramah)}</div>
                 <div class="lecture-tajuk">${escapeHtml(lecture.tajuk_kuliah)}</div>
@@ -547,6 +552,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 5. Render desktop calendar + mobile view
     renderCalendarDesktop(senaraiHari, baseDate);
     await initializeMobileView(senaraiHari, baseDate, !monthData);
+
+    // 5b. Khas legend entry — only shown on a month that actually has one
+    const khasLegendEl = document.getElementById('khas-legend');
+    if (khasLegendEl) {
+        const hasKhas = senaraiHari.some(d => d.subuh?.khas || d.maghrib?.khas);
+        khasLegendEl.style.display = hasKhas ? '' : 'none';
+    }
 
     // 6. Auto-print for PDF context
     if (urlParams.get('file') === 'pdf') {

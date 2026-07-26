@@ -152,6 +152,8 @@ subuh_ustaz_id   UUID REFERENCES ustaz(id) ON DELETE SET NULL
 maghrib_ustaz_id UUID REFERENCES ustaz(id) ON DELETE SET NULL
 subuh_pending    BOOLEAN NOT NULL DEFAULT false   -- "Belum Ditetapkan" — see note below
 maghrib_pending  BOOLEAN NOT NULL DEFAULT false
+subuh_khas       BOOLEAN NOT NULL DEFAULT false   -- "Kuliah Khas" — see note below, added 2026-07-25
+maghrib_khas     BOOLEAN NOT NULL DEFAULT false
 cuti_umum        TEXT              -- public holiday label, optional
 created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -159,7 +161,8 @@ updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 - `date` is `UNIQUE` — every write from the dashboard is an `upsert` keyed on `date` (`onConflict: 'date'`), never a plain insert.
 - `ON DELETE SET NULL` on both ustaz FKs — if an ustaz row is ever deleted (bypassing the UI guard above), any schedule row that referenced them just goes back to "Tiada Kuliah" instead of erroring or cascading a delete.
-- **`subuh_pending`/`maghrib_pending` (added session 8) are mutually exclusive with their matching `*_ustaz_id`** — `jadual.js`'s `saveDay()` forces the ustaz id to `null` whenever its pending checkbox is checked, so a slot is never both "assigned" and "pending" at once. Used for a Ceramah Khas day where a slot is known to be happening but the speaker/topic isn't decided yet ("Belum Ditetapkan") — publishing writes `{ pending: true }` for that slot instead of an ustaz object or `null`, so the public page can show "Ceramah Khas — Akan Diumumkan" instead of either a name or nothing at all.
+- **`subuh_pending`/`maghrib_pending` (added session 8) are mutually exclusive with their matching `*_ustaz_id`** — `jadual.js`'s `saveDay()` forces the ustaz id to `null` whenever its pending checkbox is checked, so a slot is never both "assigned" and "pending" at once. Used for a slot known to be happening but whose speaker/topic isn't decided yet ("Belum Ditetapkan") — publishing writes `{ pending: true }` for that slot instead of an ustaz object or `null`. **Not Khas-specific** — despite originally being motivated by Khas days, this flag applies to any pending session; see the next bullet for the actual Khas concept.
+- **`subuh_khas`/`maghrib_khas` (added 2026-07-25) mark a session as a special "Kuliah Khas" lecture — independent of, and NOT mutually exclusive with, `*_pending`.** A Khas day can have a confirmed ustaz assigned, or be pending with no speaker decided yet — both are valid combinations, which is why this is a separate flag rather than folded into `*_pending`. Set via a checkbox in `jadual.js`'s day-editor modal, doesn't disable/clear the ustaz select (unlike the pending checkbox). `api/publish.js` merges `khas: true` onto whichever of the 3 existing session shapes (`{pending:true}`, an ustaz object, or `null`) already applies. On the public page, this changes the session label to "Kuliah Subuh/Maghrib Khas", colors the day cell purple, and — only on a month that actually has one — adds a "KULIAH KHAS" legend entry. See `kuliah/CLAUDE.md` for the public-page rendering details.
 - Month navigation in `jadual.js` is unrestricted (any past/future month), but only the **real current** and **real next** calendar month can ever be published (`api/publish.js` rejects any other `month` param) — editing further out is for early planning only.
 
 ### `activity_log`
