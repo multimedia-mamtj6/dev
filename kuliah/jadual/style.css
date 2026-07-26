@@ -695,6 +695,11 @@ main {
         color: #b45309;
     }
 
+    .session-badge.is-khas {
+        background: #9333ea;
+        color: #fff;
+    }
+
     .lecture-ustaz {
         font-size: 0.92rem;
         font-weight: 600;

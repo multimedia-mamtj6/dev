@@ -220,9 +220,12 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
 function createMobileLectureBlock(time, lecture) {
     const badgeClass = time.toLowerCase();
     const khasClass = lecture.khas ? ' is-khas' : '';
+    const badgeLabel = lecture.khas
+        ? (time === 'Subuh' ? 'Kuliah Subuh Khas' : 'Kuliah Maghrib Khas')
+        : time;
     if (lecture.pending) {
         return `<div class="lecture-block-v2 is-pending${khasClass}">
-                    <span class="session-badge ${badgeClass}">${time}</span>
+                    <span class="session-badge ${badgeClass}${khasClass}">${badgeLabel}</span>
                     <div class="pending-label">Akan Diumumkan</div>
                 </div>`;
     }
@@ -234,7 +237,7 @@ function createMobileLectureBlock(time, lecture) {
                 </div>`;
     }
     return `<div class="lecture-block-v2${khasClass}">
-                <span class="session-badge ${badgeClass}">${time}</span>
+                <span class="session-badge ${badgeClass}${khasClass}">${badgeLabel}</span>
                 <div class="lecture-ustaz">${escapeHtml(lecture.nama_penceramah)}</div>
                 <div class="lecture-tajuk">${escapeHtml(lecture.tajuk_kuliah)}</div>
             </div>`;
