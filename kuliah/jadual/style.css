@@ -7,7 +7,6 @@
    ========================================================= */
 :root {
     --week-bg: #EAF1DD;
-    --week-col-bg: #D9EAD3;
     --border-color: #000;
     --empty-cell-bg: #F2F2F2;
     --subuh-color: #0070C0;
@@ -143,31 +142,6 @@ main {
     height: 3.2vmin;
 }
 
-/* First header cell governs the week column width (table-layout: fixed) */
-.schedule-table thead th:first-child {
-    width: 2.4%;
-}
-
-/* Week-number column */
-.week-number-cell {
-    width: 2.4%;
-    background-color: var(--week-col-bg);
-    text-align: center;
-    vertical-align: middle;
-    color: #33421f;
-}
-
-.week-label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.4vmin;
-    line-height: 1.1;
-    letter-spacing: 0.02em;
-}
-
 /* =========================================================
    Day cells — 3-layer absolute stack
    ========================================================= */
@@ -175,7 +149,7 @@ main {
     position: relative;
     background-color: var(--date-header-bg);
     vertical-align: top;
-    width: 13.94%;
+    width: 14.2857%;
 }
 
 .day-cell.empty-cell {
@@ -214,8 +188,9 @@ main {
     font-weight: 500;
     border-radius: 4px;
     padding: 0.2vmin 0.8vmin;
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     text-align: center;
     line-height: 1.25;
     margin-right: 0.5vmin;
@@ -243,8 +218,10 @@ main {
     background-color: var(--empty-cell-bg);
 }
 
-/* Yasiin & Tahlil — green cell, white text */
-.lecture-content:has(.yasin-block) {
+/* Yasiin & Tahlil — solo day: green fills the whole cell.
+   When it shares the cell with another session, the block-level rule
+   below colors only its own slot instead (see .yasin-block). */
+.lecture-content:has(.yasin-block):not(:has(.lecture-block + .lecture-block)) {
     background-color: #c3ffc5;
 }
 
@@ -361,7 +338,9 @@ main {
     align-items: center;
     justify-content: center;
     gap: 0.4vmin;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    padding: 0.2vmin 0.4vmin;
 }
 
 .arabic-text {
@@ -376,6 +355,23 @@ main {
     font-size: 1.4vmin;
     letter-spacing: 0.04em;
     color: #000000;
+}
+
+/* Yasin isn't gated to a specific weekday — when it shares the cell with
+   another session, shrink to fit and color only its own slot (not the
+   whole cell) instead of overflowing the fixed-height cell */
+.lecture-content:has(.lecture-block + .lecture-block) .arabic-text {
+    font-size: 1.7vmin;
+}
+
+.lecture-content:has(.lecture-block + .lecture-block) .yasin-title {
+    font-size: 1.1vmin;
+}
+
+.lecture-content:has(.lecture-block + .lecture-block) .yasin-block {
+    gap: 0.15vmin;
+    background-color: #c3ffc5;
+    border-radius: 3px;
 }
 
 /* =========================================================
@@ -1072,10 +1068,6 @@ body.no-scroll {
         box-shadow: inset 0 0 0 1000px var(--week-bg);
     }
 
-    .week-number-cell {
-        box-shadow: inset 0 0 0 1000px var(--week-col-bg);
-    }
-
     .day-cell {
         box-shadow: inset 0 0 0 1000px var(--date-header-bg);
     }
@@ -1126,10 +1118,6 @@ body.no-scroll {
         font-weight: bold;
     }
 
-    .week-label {
-        font-size: 8pt;
-    }
-
     .date-number {
         position: absolute;
         top: 2pt;
@@ -1140,7 +1128,6 @@ body.no-scroll {
 
     .holiday-label {
         font-size: 6.5pt;
-        margin-top: 2pt;
         margin-right: 4pt;
     }
 

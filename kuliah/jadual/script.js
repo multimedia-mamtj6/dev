@@ -163,17 +163,6 @@ function buildDayCell(dayNumber, year, month, dataByDate, todayString) {
 }
 
 /* ---------------------------------------------------------
-   Week label cell (stacked characters — Xibo-safe, no rotation)
-   --------------------------------------------------------- */
-function buildWeekLabelCell(weekNumber) {
-    const chars = ['M', 'I', 'N', 'G', 'G', 'U'];
-    let spans = chars.map(c => `<span>${c}</span>`).join('');
-    spans += '<span>&nbsp;</span>';
-    spans += `<span>${weekNumber}</span>`;
-    return `<td class="week-number-cell"><div class="week-label">${spans}</div></td>`;
-}
-
-/* ---------------------------------------------------------
    Desktop calendar renderer
    --------------------------------------------------------- */
 function renderCalendarDesktop(senaraiHari, targetDate) {
@@ -205,7 +194,6 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
     let html = '';
     for (let row = 0; row < 5; row++) {
         html += '<tr>';
-        html += buildWeekLabelCell(row + 1);
         for (let col = 0; col < 7; col++) {
             const idx = row * 7 + col;
             html += buildDayCell(slots[idx], year, month, dataByDate, todayString);
