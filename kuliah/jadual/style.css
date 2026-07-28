@@ -225,6 +225,17 @@ main {
     background-color: #c3ffc5;
 }
 
+/* Base session block — flex:1 so two stacked sessions (e.g. a filled slot
+   next to a Slot Kosong placeholder, which is also flex:1) split the
+   cell's height evenly instead of the placeholder claiming all leftover space */
+.lecture-block {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 /* Adjacent lecture blocks separated by a soft divider */
 .lecture-block+.lecture-block {
     border-top: 1px solid var(--cell-border-inner);
