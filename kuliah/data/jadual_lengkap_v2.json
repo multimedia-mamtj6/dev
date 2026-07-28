@@ -142,9 +142,9 @@
           "date": "2026-08-13",
           "subuh": null,
           "maghrib": {
-            "nama_penceramah": "Tuan Haji Hazarudin",
-            "tajuk_kuliah": "Terjemahan Inti Sari Matan Al-Zubad",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/19_18.-Tuan-Haji-Hazarudin-bin-Haji-Baharudin.jpg"
+            "nama_penceramah": "Bacaan Yasiin & Tahlil",
+            "tajuk_kuliah": null,
+            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/01_0.-bacaan-yasin.png"
           },
           "cuti_umum": null
         },
@@ -294,9 +294,9 @@
           "date": "2026-08-27",
           "subuh": null,
           "maghrib": {
-            "nama_penceramah": "Bacaan Yasiin & Tahlil",
-            "tajuk_kuliah": null,
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/01_0.-bacaan-yasin.png"
+            "nama_penceramah": "Tuan Haji Hazarudin",
+            "tajuk_kuliah": "Terjemahan Inti Sari Matan Al-Zubad",
+            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/19_18.-Tuan-Haji-Hazarudin-bin-Haji-Baharudin.jpg"
           },
           "cuti_umum": null
         },
@@ -345,7 +345,7 @@
     "2026-07": {
       "infoJadual": {
         "tajukBulan": "BULAN JULAI 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 26/7/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 28/7/2026"
       },
       "senaraiHari": [
         {
@@ -638,11 +638,7 @@
         {
           "date": "2026-07-28",
           "subuh": null,
-          "maghrib": {
-            "nama_penceramah": "Ustaz Abdul Aziz",
-            "tajuk_kuliah": "Terjemahan Al-Azkar Imam An-Nawawi",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/05_4.-Ustaz-Abdul-Aziz.jpg"
-          },
+          "maghrib": null,
           "cuti_umum": null
         },
         {
