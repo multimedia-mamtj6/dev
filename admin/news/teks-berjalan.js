@@ -19,8 +19,8 @@ const TICKER_MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // Malaysia is UTC+8, no DST â€
     document.getElementById('save-settings-btn').style.display = canWrite ? '' : 'none';
     document.getElementById('setting-default-line').disabled = !canWrite;
 
-    updateMessageCounter = attachCharCounter('edit-message', 'edit-message-counter', 70);
-    updatePrefixCounter  = attachCharCounter('edit-prefix', 'edit-prefix-counter', 70);
+    updateMessageCounter = attachCharCounter('edit-message', 'edit-message-counter', 74);
+    updatePrefixCounter  = attachCharCounter('edit-prefix', 'edit-prefix-counter', 74);
 
     await Promise.all([
         loadTicker(),
@@ -214,13 +214,13 @@ async function saveTickerRow() {
         document.getElementById('edit-message').focus();
         return;
     }
-    if (kind === 'static' && message.length > 70) {
-        showToast('Teks baris maksimum 70 aksara (supaya tidak melilit pada paparan Xibo)', 'error');
+    if (kind === 'static' && message.length > 74) {
+        showToast('Teks baris maksimum 74 aksara (supaya tidak melilit pada paparan Xibo)', 'error');
         document.getElementById('edit-message').focus();
         return;
     }
-    if (kind === 'khutbah' && prefix.length > 70) {
-        showToast('Awalan maksimum 70 aksara', 'error');
+    if (kind === 'khutbah' && prefix.length > 74) {
+        showToast('Awalan maksimum 74 aksara', 'error');
         document.getElementById('edit-prefix').focus();
         return;
     }
