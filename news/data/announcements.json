@@ -2,20 +2,11 @@
   "default_image": "/news/default.svg",
   "announcements": [
     {
-      "title": "Contoh pengumuman teks (padam atau ubah tarikh untuk gunakan)",
-      "heading": "Pengumuman",
-      "text": "Kuliah Maghrib pada hari Isnin ini ditangguhkan.\nHarap maklum.",
-      "start_at": "2026-07-26",
-      "end_at": "2026-07-27",
-      "enabled": true
-    },
-    {
-      "title": "Contoh pengumuman teks (padam atau ubah tarikh untuk gunakan)",
-      "heading": "Pengumuman 3",
-      "image_url": "https://www.sinarharian.com.my/uploads/images/2024/09/03/2791386.jpg",
-      "text": "Kuliah Maghrib pada hari selasa ini ditangguhkan.Harap maklum.",
-      "start_at": "2026-07-26",
-      "end_at": "2026-07-27",
+      "title": "testing",
+      "heading": "Pengunguman 1",
+      "text": "Cubaan pengunguman",
+      "start_at": "2026-07-28T16:15:00",
+      "end_at": "2026-07-28T17:15:00",
       "enabled": true
     }
   ]
