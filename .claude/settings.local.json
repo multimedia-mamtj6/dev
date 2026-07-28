@@ -12,7 +12,11 @@
       "Bash(gh repo *)",
       "Bash(pkill -f \"http.server 8123\")",
       "Bash(python3 -c ' *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(git config *)",
+      "Bash(git-credential-manager --version)",
+      "Bash(git-credential-manager github *)",
+      "Bash(where git-credential-manager *)"
     ]
   }
 }
