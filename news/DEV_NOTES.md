@@ -9,48 +9,186 @@ the prompt (DO NOT DELETE)
 Session memo for the `news/` announcement display. Read `news/CLAUDE.md` for
 the architecture reference; this file is the session-to-session context.
 
-## Session 2 — 2026-07-28 (the CMS from session 1's deferred item got built — but in `admin/`, not here)
+## Session 2 — 2026-07-28 (the CMS from session 1's deferred item got built in one pass, then a full week-one support/iteration cycle happened in the same sitting)
 
-Session 1 ended by flagging `admin/news/` + `api/publish-news.js` as
-explicitly deferred future work. Two days later, a pre-written plan
-(`news/newplan.md`) for exactly that was implemented in full — see
-`admin/DEV_NOTES.MD` Session 15 for the actual build log, since almost
-none of the new code lives in this folder. **What changed in `news/`
-itself at first: nothing in `index.html`/`script.js`/`style.css`, exactly
-as session 1 designed it to.** The only things that changed initially
-here were `data/announcements.json` and `data/moving-text.json` gaining a
-real writer (previously hand-edited/Apps-Script-fed, now written by
-`api/publish-news.js`), and `moving-text/code.gs` being retired (superseded,
-not deleted — kept for history). If you're back in this folder wondering
-why a display bug doesn't reproduce with hand-edited JSON, check whether
-it's actually a publish-endpoint problem now (`admin/CLAUDE.md`/
-`admin/database.md`/`admin/developer.md`) before assuming it's this
-folder's own logic — the failure surface split in two.
+### What happened, in order
 
-**Same day, follow-up — that "zero display changes" claim above didn't
-survive contact with a real question.** The user noticed new
-announcements weren't showing up promptly and asked why — the answer was
-the two-tier design session 1 built on purpose: `reevaluate()` (60s) only
-ever re-checked the schedule against already-loaded data, and the
-`<meta http-equiv="refresh" content="600">` full-page reload was the ONLY
-thing that ever re-fetched the JSON, capping "how fast does a Terbitkan
-show up on the physical screen" at up to 10 minutes, with a visible reload
-blink every cycle regardless of whether anything changed. This was
-flagged as a known future improvement at the end of session 1 (see
-"Deliberately NOT built" below) and got built this session: `script.js`'s
-`initNewsDisplay()` interval now calls a new `refreshData()` first (silent
-background fetch, keeps the last-known-good data on failure) before
-`reevaluate()`, and the `<meta refresh>` tag was deleted from `index.html`
-entirely — one mechanism instead of two, verified with a quick vm-harness
-script (not committed, matches the pattern in `developer.md`) showing a
-simulated second tick correctly re-fetches and crossfades in changed
-content. **Lesson for next time: "the display page needs zero changes" was
-true for the CMS's own data shape, but not a permanent guarantee — a
-CMS changes how often content changes, which can expose a display-side
-design constant (a 10-minute reload) that was fine for hand-editing but
-not for a "click Terbitkan and expect it soon" workflow. Don't assume a
-migration's original "zero changes" scope claim stays true forever once
-the thing on the other end of it starts behaving differently.**
+Two very different halves. **First half: a big pre-planned build, executed
+mechanically.** A pre-written plan (`news/newplan.md`) for `admin/news/` +
+`api/publish-news.js` — session 1's explicitly-deferred item — was
+implemented in full, in one pass, no plan-mode cycle (the plan already
+existed, so it was straight to execution). See `admin/DEV_NOTES.MD`
+Session 15 for that build log in detail, since almost none of the new
+code lives in this folder — this folder only gained a real writer for
+`data/announcements.json`/`data/moving-text.json` (previously hand-edited/
+Apps-Script-fed) and lost `moving-text/code.gs` (retired, kept for
+history, not deleted).
+
+**Second half: everything a module's real first week looks like, compressed
+into one sitting.** Once the build was done, the conversation shifted into
+a long guided-setup-and-support cycle with a user who needed much more
+elementary hand-holding than session 1's user (exact click-by-click Vercel
+navigation, a literal PowerShell command to generate a secret, confusion
+about which field to fill in and why) — then, once things were running,
+a string of real small feature requests and real bug reports arrived, in
+this order: quick-link buttons to the published output → clarifying
+"permanent line" vs. "empty-ticker fallback" semantics (pure explanation,
+no code) → a feasibility Q&A on time-of-day scheduling (explicitly
+"answer only, don't touch code") → conceptual Q&A on what the cron is even
+for → "ok proceed, it is worth" → full day+hour+minute scheduling built →
+**two separate user-reported CSS bugs from screenshots** → a "why doesn't
+it refresh" question that traced back to session 1's own two-tier refresh
+design and got fixed by removing half of it.
+
+### The dynamic — read this to re-sync
+
+- **This user needs literal, step-by-step operational hand-holding** —
+  which exact button in a Vercel dialog, a runnable PowerShell one-liner to
+  paste, "what do I put in the Value field," "I don't understand" as a
+  direct, unembarrassed request to slow down and re-explain. This is a
+  notably more elementary support register than the "explains a symptom
+  precisely" user profile documented in `admin/DEV_NOTES.MD` — whether or
+  not it's the same actual person, **match the register the confusion
+  signals, don't assume prior-session technical fluency carries over.**
+  When they say "i dont understand," that's a real, sincere request to
+  restate more simply and concretely — not a sign to give up on them or a
+  request for a different kind of answer.
+- **Two clean, alternating gears, same as other sessions in this repo but
+  worth re-confirming here specifically:** an "explain-only, don't touch
+  code" gear (used explicitly, twice, in those exact words) for anything
+  conceptual/architectural — cron, scheduling precision, the reload
+  mechanism — answered as pure explanation with a stated tradeoff, no
+  files touched; and a "just do it" gear once they'd actually decided
+  ("ok proceed, it is worth," "ok done too," "implement the no 2"). Don't
+  pre-empt the explain-only gear by implementing before they've said go.
+- **Screenshots are still the real QA loop, now proven for a completely
+  different bug class than session 1.** Session 1's two real bugs were
+  crossfade/layout logic bugs, caught on the physical Xibo screen. This
+  session's two real bugs were both CSS/styling gaps in `admin/`, caught
+  from screenshots of the admin dashboard, not the signage screen. The
+  lesson generalizes: **whatever surface the user can actually see, they
+  will notice what's wrong with it before you do — take every screenshot
+  as ground truth, not a hypothesis to verify.**
+- Mood: patient and methodical through the setup slog (no frustration
+  visible even across a buggy command and a confusing dialog), genuinely
+  curious rather than just impatient-for-a-fix during the Q&A stretches —
+  asked "why" and "what is X for" as real questions wanting the mechanism,
+  not just reassurance. Reward that with real explanations, plainly worded,
+  concrete numbers over abstractions (e.g. "up to 10 minutes," not "a
+  while").
+
+### Bugs found & fixed (and the lessons)
+
+**BUG 1 — my own PowerShell one-liner was wrong, caught by the user
+just from reading its output.** `-join ((48..57)+(97..102)|Get-Random
+-Count 64|...)` was meant to produce a 64-char random hex string, but
+`Get-Random -Count N` against a 16-element array (10 digits + 6 letters)
+just returns all 16 shuffled once `N` exceeds the array's size — it does
+NOT sample with replacement. Produced a 16-char string, and the user
+pasted the literal output without me having to ask, which is what caught
+it. *Fix:* `(New-Guid).ToString('N') + (New-Guid).ToString('N')` — 64 hex
+chars, no combinatorics to get wrong.
+*Lesson:* **verify a generated command actually produces what it claims
+before handing it to a user who can't independently sanity-check the
+math** — they can (and did) spot a wrong-length output, but I should have
+caught the `-Count`-exceeds-array-size behavior myself first.
+
+**BUG 2 (near-miss, caught by me, never shipped) — a live-value false
+alarm from a screenshot.** A Vercel "Add Environment Variable" dialog
+screenshot showed `sk_live_a12…` in the Value field; I read that as a real
+Stripe live secret key and warned the user not to reuse it. It was almost
+certainly just placeholder/hint text in an empty field, and the user's
+confused "why stripe?" follow-up confirmed I'd alarmed them over nothing.
+*Lesson:* **don't assume screenshotted field content is user-entered
+data — placeholder/hint text is a real possibility, especially in an
+empty-looking field.** Ask before raising a security concern to a user who
+may not be certain what they're looking at either; a wrong alarm costs
+their trust and confuses more than it protects.
+
+**BUG 3 — `input[type="datetime-local"]` shipped completely unstyled,
+same recurring class of bug this repo has hit before.** Swapping
+`<input type="date">` for `<input type="datetime-local">` in both
+`admin/news/*.html` modals lost ALL app styling — no border-radius, no
+padding, no focus ring — because `admin/style.css`'s form-input selector
+list enumerates specific `input[type="..."]` values and `datetime-local`
+was never added to it. **This is the SECOND time a new HTML input type has
+shipped unstyled in this repo** — `admin/CLAUDE.md`'s CSS architecture
+notes already document `input[type="number"]`/`textarea` once being
+missing from this exact list. *Fix:* added `input[type="datetime-local"]`
+to both the base rule and the `:focus` rule.
+*Lesson:* **this selector-list pattern is a standing trap, not a one-off
+— any time a new HTML input `type` is introduced anywhere in `admin/`,
+grep `admin/style.css` for `input\[type=` and add it explicitly before
+ever showing it to the user.** Don't wait for a screenshot a third time.
+
+**BUG 4 — the newly-styled `datetime-local` fields then overflowed their
+box, still not a styling bug this time but a layout-width one.** Once
+BUG 3 was fixed, the Mula/Tamat fields were side-by-side in a
+`flex: 1` two-column row (~180px each in a 420px modal) — fine for a plain
+`date` input's short text, but `datetime-local` displays substantially
+more (`28/07/2026 12:00 AM` vs. `28/07/2026`), so the native
+calendar-picker icon overlapped the rounded border. *Fix:* stacked the two
+fields full-width (one per row) in both modals instead of side-by-side.
+*Lesson:* **swapping an input's `type` to one that displays more content
+is not a drop-in change for any layout that was width-constrained for the
+old type — re-check the container, don't just re-check the CSS
+selector.** BUG 3 and BUG 4 look like the same fix but are two genuinely
+different root causes (missing selector vs. insufficient width) that
+happened to surface back-to-back on the same field.
+
+**BUG 5 — the display's "zero changes needed" claim from session 1 quietly
+stopped being true, and normal use is what exposed it.** `news/script.js`'s
+`reevaluate()` (60s) only ever re-checked the active-window schedule
+against ALREADY-LOADED data; the `<meta http-equiv="refresh"
+content="600">` full-page reload was the ONLY thing that ever re-fetched
+`announcements.json`, so a fresh Terbitkan could take up to 10 minutes to
+appear, with a visible reload blink every cycle regardless of whether
+anything had actually changed. This was fine when edits were rare
+hand-edits (session 1); it stopped being fine the moment a CMS made
+publishing routine. *Fix:* `initNewsDisplay()`'s interval now calls a new
+`refreshData()` (silent background fetch, keeps last-known-good data on
+any failure) before `reevaluate()`, and the `<meta refresh>` tag was
+deleted from `index.html` entirely — one mechanism instead of two.
+Verified with a throwaway vm-harness script (not committed, same pattern
+as `developer.md`'s documented harness) showing a simulated second tick
+correctly re-fetches and crossfades in changed content.
+*Lesson:* **a "this migration needs zero changes on the other side" claim
+is only true for as long as the other side's usage pattern stays the
+same — revisit it when the thing driving the interaction gets faster or
+more frequent than the original design assumed, not just when a bug
+report arrives.** Flagged proactively afterward (not asked): removing the
+reload also removes a "self-healing" property for an unattended 24/7
+kiosk tab that `kuliah/paparan/`'s own `CLAUDE.md`/`DEV_NOTES_ARCHIVE.md`
+explicitly weighed and chose to KEEP for that exact reason — worth
+knowing this was a deliberate tradeoff, not an oversight, if the ticker
+tab is ever reported "stuck" after weeks of uptime.
+
+**BUG 6 (caught proactively before shipping, never actually broke
+anything) — the `DATE`→`TIMESTAMP` migration almost silently expired every
+existing scheduled row.** Postgres casts a bare `DATE` to `TIMESTAMP` at
+midnight (00:00) of that day. `end_at` used to mean "valid through the end
+of that day" — a naive `ALTER COLUMN end_at TYPE TIMESTAMP` with no
+`USING` clause would have silently reinterpreted every existing row's
+expiry as "already expired since midnight," up to 24 hours early, the
+moment the migration ran. Caught before handing the migration SQL to the
+user; fixed with `USING (end_at::timestamp + INTERVAL '23 hours 59
+minutes')` (only on `end_at` — `start_at`'s "start of that day" meaning
+survives a bare cast unchanged).
+*Lesson:* **any `DATE`→`TIMESTAMP` migration on a column whose meaning
+depends on which end of the day it represents needs an explicit `USING`
+clause — a bare type change is only safe for start-of-range columns,
+never end-of-range ones.**
+
+**Not-a-bug worth remembering:** the `<script src="/api/publish-news.js">`
+idea for the ticker preview panel — reusing the real endpoint's exact
+scheduling logic in the browser — is a real trap that was caught during
+design, before ever being built: any file under `api/` is a live Vercel
+serverless route, so a browser `GET` to it invokes the handler (hitting
+the fail-closed cron-auth branch), not the file's source. Solved by
+pulling the pure functions into `admin/news/publish-news-pure.js`, a plain
+static file outside `api/`. See `admin/CLAUDE.md`'s Key Patterns for the
+full writeup — worth remembering as the pattern for any future "preview
+what the server will compute" feature in this repo.
 
 ## Session 1 — 2026-07-26 (the whole thing was born today)
 
@@ -191,7 +329,7 @@ asserting against them.
   break/vanish; real announcements should use `/media/...` or Supabase
   Storage.
 
-### Current state at session end
+### Current state at session end (session 1)
 
 All green: 3 slide kinds working, fade-over-top crossfade, query routing,
 full fallback ladder, everything unit-tested (last suite 6/6, prior suites
@@ -200,3 +338,22 @@ active 2026-07-26..27 — **they expire tomorrow**, after which the screen
 shows default.svg until someone adds real content. Nothing committed to git
 yet this session as of this memo. No database, no secrets, no server code
 in this folder (hence no database.md — nothing to document there).
+
+---
+
+### Current state at session end (session 2, 2026-07-28)
+
+`news/` itself now differs from session 1's build in exactly two places,
+both covered above: `index.html` has no `<meta refresh>` anymore, and
+`script.js`'s `initNewsDisplay()` does a silent background refetch every
+`REEVAL_MS` instead of relying on a page reload. Everything else in this
+folder — slide kinds, crossfade, URL routing, fallback ladder — is
+untouched from session 1. `data/announcements.json`/`data/moving-text.json`
+now have a real writer (`api/publish-news.js`, via `admin/news/`) but the
+user had NOT yet run a real end-to-end Terbitkan against production
+Supabase/GitHub as of this memo — the CMS build, the schema, and the
+silent-refresh change are all code-complete and locally/harness-verified,
+not yet confirmed working on the live deploy. If picking this up next,
+check whether that first real publish has happened before assuming
+anything about live behavior — same "written, not yet exercised" caveat
+`admin/DEV_NOTES.MD` Session 15 already carries for the rest of the build.
