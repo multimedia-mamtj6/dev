@@ -240,8 +240,12 @@ action text NOT NULL,       -- infaq_kutipan_mingguan_create/update/delete |
 target_label text, detail text
 
 -- news_announcements → news/data/announcements.json (see admin/news/ above)
+-- start_at/end_at are TIMESTAMP, not DATE (changed 2026-07-28, same day as
+-- the rest of this module) — day+hour+minute scheduling, no seconds field.
+-- Naive/no-timezone, same "treat as Malaysia wall-clock" convention every
+-- other date-ish field in this repo already uses.
 id uuid PK, title text NOT NULL, heading text, body_text text,  -- body_text → published JSON "text"
-image_url text, start_at date, end_at date,
+image_url text, start_at timestamp, end_at timestamp,
 enabled boolean DEFAULT true, sort_order integer DEFAULT 0,
 created_at timestamptz, updated_at timestamptz,
 CHECK (image_url IS NOT NULL OR body_text IS NOT NULL)  -- mirrors news/script.js's isActive():
@@ -250,11 +254,12 @@ CHECK (image_url IS NOT NULL OR body_text IS NOT NULL)  -- mirrors news/script.j
 -- news_ticker → news/data/moving-text.json. Unlike announcements, this
 -- table's start_at/end_at/enabled are resolved SERVER-SIDE at publish time
 -- (api/publish-news.js's isActiveNow()), not by the display — Xibo's
--- DataSet widget has no JS of ours to filter live.
+-- DataSet widget has no JS of ours to filter live. Same TIMESTAMP change as
+-- news_announcements above.
 id uuid PK, message text NOT NULL,
 kind text DEFAULT 'static' CHECK (kind IN ('static','khutbah')),
 prefix text,                -- khutbah rows only, e.g. 'Khutbah Jumaat Minggu Ini: '
-start_at date, end_at date, enabled boolean DEFAULT true, sort_order integer DEFAULT 0,
+start_at timestamp, end_at timestamp, enabled boolean DEFAULT true, sort_order integer DEFAULT 0,
 created_at timestamptz, updated_at timestamptz
 
 -- news_settings: key/value store, avoids hardcoding defaults/URLs into
@@ -432,6 +437,8 @@ All sidebar styling (colors, fixed positioning, the off-canvas mobile transform)
 **The ticker preview panel's pure-logic file lives in `admin/news/`, not `api/` — a genuine repo-wide gotcha, not a style choice:** `admin/news/teks-berjalan.js` needs to run the *exact* scheduling logic `api/publish-news.js` runs (`isActiveNow()`, `buildMovingTextJson()`), so an admin can see what Xibo will actually receive before clicking Terbitkan. The natural move — `<script src="/api/publish-news.js">` — is a real trap: **any file under `api/` is a live Vercel serverless function route**, so a browser `GET` to that URL doesn't serve the file's source, it *invokes the handler* (hitting the fail-closed cron-auth branch and returning JSON, not runnable script). The fix was pulling the pure functions out into `admin/news/publish-news-pure.js` — an ordinary static file with zero Node/Vercel-only APIs, loaded as a plain global script in the browser and pulled in via `require()` from `api/publish-news.js` server-side. **If any future module wants a live client-side preview of server-computed publish logic, this is the pattern: put the pure logic in a static-served path, never inside `api/`.**
 
 **`news_settings`'s service_role grant is the one place a news RLS convention diverges from every other module (see Supabase Schema above):** `api/publish-news.js` isn't purely read-only against Supabase like `api/publish.js`/`api/publish-infaq.js` are — it also writes the khutbah fail-safe cache (`khutbah_last_title`/`khutbah_last_fetched_at`) back into `news_settings` on every successful CSV fetch, so `service_role` needs `INSERT, UPDATE` there in addition to `SELECT`, not the SELECT-only grant every other table's publish-read gets. Documented explicitly in `admin/setup.sql` §10 so it isn't "fixed" back to SELECT-only by someone pattern-matching against the other modules.
+
+**Minute-precision scheduling (`start_at`/`end_at` as `TIMESTAMP`, added same day as the rest of the module, 2026-07-28) — day+hour+minute, deliberately no seconds field:** both news tables started as `DATE` columns (whole-day granularity, matching `kuliah`'s `schedule.date`), then were changed to `TIMESTAMP` after the user confirmed the extra precision was worth it despite the ticker's real-world caveat (below). `admin/news/pengumuman.html`/`teks-berjalan.html`'s modals use `<input type="datetime-local">` (which has no seconds field by construction) instead of `<input type="date">`; the value round-trips as a plain `YYYY-MM-DDTHH:MM` string with no client-side Date-object parsing needed on save. **The date-only *string-comparison* design (see the "must agree with news/script.js" note above) survived the upgrade unchanged in spirit** — `publish-news-pure.js`'s `isActiveNow()` now compares `YYYY-MM-DDTHH:MM` strings via `mytDateTimeString()`/`normalizeBoundary()` instead of `YYYY-MM-DD` strings via `mytDateString()`, same lexicographic-comparison trick, just one more segment. `normalizeBoundary()` still expands a bare `YYYY-MM-DD` value (any pre-migration row, or a future hand-inserted one) to start-of-day/end-of-day exactly as before — full backward compatibility, no forced data cleanup. `news-common.js`'s `computeStatus()` (the admin table's Aktif/Akan Datang/Tamat label) got its own parallel `localDateTimeString()`/`normalizeBoundaryLocal()`, deliberately NOT sharing code with `publish-news-pure.js` — `pengumuman.html` never loads that file, so `news-common.js` (loaded by both pages) has to work standalone. **The live-precision caveat, explained to the user before this was built and accepted as worth it anyway:** announcements get real minute-level scheduling for free, since `news/script.js` already re-evaluates every 60 seconds client-side and its `parseLocalDate()` already accepted a full timestamp even before this change (zero display-side changes needed). The ticker does NOT — `moving-text.json` only updates when something republishes it, so a ticker line's precise start/end time only actually takes effect on the live screen at the next Terbitkan click or the next daily cron run (once/day on Vercel's Hobby plan), not the instant the clock ticks past it. The schema/UI support the precision either way; whether it's *visibly* real-time on the ticker specifically is a hosting-plan/cron-frequency question, not a code one — see the cron Key Patterns entry above.
 
 ## Sensitive Files
 

@@ -340,8 +340,8 @@ title      TEXT NOT NULL      -- internal label, also published as JSON "title"
 heading    TEXT
 body_text  TEXT               -- maps to published JSON "text"
 image_url  TEXT
-start_at   DATE
-end_at     DATE
+start_at   TIMESTAMP          -- day+hour+minute, changed from DATE 2026-07-28 — see note below
+end_at     TIMESTAMP
 enabled    BOOLEAN NOT NULL DEFAULT true
 sort_order INTEGER NOT NULL DEFAULT 0
 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -352,6 +352,7 @@ CHECK (image_url IS NOT NULL OR body_text IS NOT NULL)
 - The `CHECK` constraint mirrors `news/script.js`'s `isActive()`: an entry with neither an image nor text can never actually display anything, so it's rejected at the database rather than allowed to publish as a blank slide.
 - Images are uploaded to the `news-assets` Storage bucket (see below) or entered as a URL — same mutually-exclusive upload-or-URL pattern as `ustaz.poster_url`, reusing `ustaz.js`'s save logic verbatim (`admin/news/pengumuman.js`).
 - `sort_order` is a plain number field edited directly in the Add/Edit modal (unlike `news_ticker`'s ↑/↓ reorder buttons below) — announcements don't need drag-reordering since there are typically few of them at once.
+- **`start_at`/`end_at` were `DATE` at first launch, changed to `TIMESTAMP` the same day (2026-07-28)** once the user confirmed minute-level scheduling was worth having. `TIMESTAMP` (no time zone), not `TIMESTAMPTZ` — treated as a naive Malaysia wall-clock value, same convention every other date-ish field in this repo already uses (see root `CLAUDE.md`'s Date handling pattern). `admin/news/pengumuman.html`'s modal uses `<input type="datetime-local">` (day+hour+minute, no seconds field — matches exactly what was asked for). `news/script.js` needed **zero changes** to support this: its `parseLocalDate()` already accepted a full timestamp string, only expanding a bare `YYYY-MM-DD` value to a full day — this was true before the column type ever changed. See `admin/CLAUDE.md`'s Key Patterns for the full writeup, including the live migration SQL for a database that already ran the old `DATE` version of `setup.sql` §10.
 
 ### `news_ticker`
 
@@ -362,8 +363,8 @@ id         UUID PK
 message    TEXT NOT NULL
 kind       TEXT NOT NULL DEFAULT 'static' CHECK (kind IN ('static', 'khutbah'))
 prefix     TEXT               -- khutbah rows only, e.g. 'Khutbah Jumaat Minggu Ini: '
-start_at   DATE
-end_at     DATE
+start_at   TIMESTAMP          -- day+hour+minute, changed from DATE 2026-07-28 — see note above
+end_at     TIMESTAMP
 enabled    BOOLEAN NOT NULL DEFAULT true
 sort_order INTEGER NOT NULL DEFAULT 0
 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -372,6 +373,7 @@ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 - A `kind = 'khutbah'` row has no `message` — its published line is `prefix + <the resolved khutbah title>`, fetched from the same published CSV `khutbah/index.html` reads (`news_settings.khutbah_csv_url`). If that fetch fails for any reason, `api/publish-news.js` falls back to `news_settings.khutbah_last_title` (a cache it writes on every successful fetch); if that's empty too, the row is omitted entirely — it is never replaced with a placeholder or error text.
 - `sort_order` is changed only via `teks-berjalan.html`'s ↑/↓ buttons (two plain `UPDATE`s swapping adjacent rows' `sort_order`), not a manually-typed number — deliberately no drag-drop library, matching this repo's no-framework rule.
+- **Same `TIMESTAMP` change as `news_announcements`, but with a real practical caveat this table doesn't share:** `isActiveNow()` compares down to the minute now (`mytDateTimeString()`/`normalizeBoundary()` in `admin/news/publish-news-pure.js`), but that comparison only ever runs **at publish time** — a ticker line scheduled to start at, say, 3pm won't actually appear on the physical screen until the next Terbitkan click or the next cron run (once/day on Vercel's Hobby plan). The schema/UI support minute precision either way; whether it's genuinely live on the ticker depends on cron frequency, a hosting-plan question — see `database.md` §1.9.
 
 ### `news_settings`
 

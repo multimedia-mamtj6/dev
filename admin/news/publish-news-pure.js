@@ -58,7 +58,9 @@ function looksLikeErrorText(str) {
 
 // `now` is expected to already be Malaysia-shifted (Date.now() + an 8-hour
 // offset) — reading its UTC getters then yields the correct MYT calendar
-// date with no further timezone math.
+// date with no further timezone math. Kept (not just folded into
+// mytDateTimeString below) since it's still useful wherever only the day
+// matters, and existing tests exercise it directly.
 function mytDateString(now) {
     const y = now.getUTCFullYear();
     const m = String(now.getUTCMonth() + 1).padStart(2, '0');
@@ -66,18 +68,54 @@ function mytDateString(now) {
     return `${y}-${m}-${d}`;
 }
 
-// Date-only start_at/end_at expand to the full day (start of start_at day,
-// end of end_at day), boundary-inclusive both ends — mirrors news/script.js's
-// isActive()/parseLocalDate() semantics exactly (that page does the
-// equivalent expansion with Date objects on the display's own clock; this
-// does it with plain ISO string comparison, which sidesteps timezone
-// construction entirely and is what makes this trivially pure/testable).
-// Must agree with news/script.js on every input — see api/publish-news.test.js.
+// Same idea as mytDateString, extended to minute precision (no seconds —
+// scheduling only ever needs day/hour/minute, matching the admin UI's
+// datetime-local inputs, which have no seconds field either).
+function mytDateTimeString(now) {
+    const y  = now.getUTCFullYear();
+    const mo = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const d  = String(now.getUTCDate()).padStart(2, '0');
+    const h  = String(now.getUTCHours()).padStart(2, '0');
+    const mi = String(now.getUTCMinutes()).padStart(2, '0');
+    return `${y}-${mo}-${d}T${h}:${mi}`;
+}
+
+// Normalizes a start_at/end_at value (from the `TIMESTAMP` columns) into a
+// `YYYY-MM-DDTHH:MM` string comparable against mytDateTimeString()'s output.
+// A bare `YYYY-MM-DD` value (legacy rows from before minute-precision
+// scheduling existed, or any future row someone inserts without a time)
+// still expands to the full day — start of day for a start boundary, end of
+// day for an end boundary — same "date-only is editor-friendly" idea
+// news/script.js's parseLocalDate() already uses. Anything else is assumed
+// to already be a `YYYY-MM-DDTHH:MM[:SS]`-shaped string and is simply
+// truncated to 16 characters (drops seconds, if present) — Postgres
+// timestamps come back from PostgREST in that shape, so there's no need to
+// parse or otherwise touch it.
+function normalizeBoundary(value, isEnd) {
+    if (!value) return null;
+    const str = String(value);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        return str + (isEnd ? 'T23:59' : 'T00:00');
+    }
+    return str.slice(0, 16);
+}
+
+// start_at/end_at now carry day+hour+minute (see the news_announcements/
+// news_ticker `TIMESTAMP` migration in setup.sql §10), boundary-inclusive
+// both ends — mirrors news/script.js's isActive()/parseLocalDate()
+// semantics exactly (that page does the equivalent comparison with real
+// Date objects on the display's own clock; this does it with plain string
+// comparison via mytDateTimeString()/normalizeBoundary(), which sidesteps
+// timezone construction entirely and is what makes this trivially
+// pure/testable). Must agree with news/script.js on every input — see
+// api/publish-news.test.js.
 function isActiveNow(row, now) {
     if (!row || row.enabled === false) return false;
-    const today = mytDateString(now);
-    if (row.start_at && today < row.start_at) return false;
-    if (row.end_at && today > row.end_at) return false;
+    const nowStr = mytDateTimeString(now);
+    const start = normalizeBoundary(row.start_at, false);
+    const end   = normalizeBoundary(row.end_at, true);
+    if (start && nowStr < start) return false;
+    if (end && nowStr > end) return false;
     return true;
 }
 
@@ -144,6 +182,8 @@ if (typeof module !== 'undefined' && module.exports) {
         parseCSVRow,
         looksLikeErrorText,
         mytDateString,
+        mytDateTimeString,
+        normalizeBoundary,
         isActiveNow,
         buildAnnouncementsJson,
         buildMovingTextJson,

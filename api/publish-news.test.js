@@ -17,6 +17,8 @@ const {
     parseCSVRow,
     looksLikeErrorText,
     mytDateString,
+    mytDateTimeString,
+    normalizeBoundary,
     isActiveNow,
     buildAnnouncementsJson,
     buildMovingTextJson,
@@ -60,10 +62,29 @@ test('does not flag a normal khutbah title', () => {
     assert.strictEqual(looksLikeErrorText('Nuzul Al-Quran'), false);
 });
 
-// ── mytDateString ────────────────────────────────────────────────────────────
-console.log('mytDateString');
+// ── mytDateString / mytDateTimeString ─────────────────────────────────────────
+console.log('mytDateString / mytDateTimeString');
 test('reads the UTC calendar date of an already-shifted instant', () => {
     assert.strictEqual(mytDateString(new Date(Date.UTC(2026, 6, 28, 23, 59, 0))), '2026-07-28');
+});
+test('mytDateTimeString adds hour:minute, no seconds', () => {
+    assert.strictEqual(mytDateTimeString(new Date(Date.UTC(2026, 6, 28, 14, 5, 59))), '2026-07-28T14:05');
+});
+
+// ── normalizeBoundary ────────────────────────────────────────────────────────
+console.log('normalizeBoundary');
+test('expands a bare date to start-of-day for a start boundary', () => {
+    assert.strictEqual(normalizeBoundary('2026-07-28', false), '2026-07-28T00:00');
+});
+test('expands a bare date to end-of-day for an end boundary', () => {
+    assert.strictEqual(normalizeBoundary('2026-07-28', true), '2026-07-28T23:59');
+});
+test('truncates a full timestamp (with seconds) to minute precision', () => {
+    assert.strictEqual(normalizeBoundary('2026-07-28T14:30:00', true), '2026-07-28T14:30');
+});
+test('returns null for an empty/missing value', () => {
+    assert.strictEqual(normalizeBoundary(null, false), null);
+    assert.strictEqual(normalizeBoundary('', true), null);
 });
 
 // ── isActiveNow — date-only expansion, boundaries, disabled, open windows ────
@@ -108,6 +129,40 @@ test('agrees with news/script.js isActive() on every window case above', () => {
     const SCRIPT_NOW = new Date(2026, 6, 28, 10, 0, 0); // local wall-clock "now" — parseLocalDate() also parses via local time, so this stays self-consistent regardless of the test machine's real timezone
 
     WINDOW_CASES.forEach(c => {
+        const scriptResult = scriptIsActive({ ...c, text: 'dummy' }, SCRIPT_NOW);
+        assert.strictEqual(scriptResult, c.expect, `case "${c.label}": script.js isActive() returned ${scriptResult}, expected ${c.expect}`);
+    });
+});
+
+// ── isActiveNow — minute-precision windows (day+hour+minute scheduling) ──────
+console.log('isActiveNow (minute precision)');
+// TICKER_NOW is 2026-07-28T10:00 MYT (see mytDateTimeString(TICKER_NOW) above).
+const TIME_WINDOW_CASES = [
+    { label: 'now inside a same-day time window',       start_at: '2026-07-28T09:00', end_at: '2026-07-28T11:00', enabled: true, expect: true  },
+    { label: 'now before a same-day time window starts', start_at: '2026-07-28T14:00', end_at: '2026-07-28T15:00', enabled: true, expect: false },
+    { label: 'now after a same-day time window ends',    start_at: '2026-07-28T07:00', end_at: '2026-07-28T09:00', enabled: true, expect: false },
+    { label: 'boundary: starts at the exact minute',     start_at: '2026-07-28T10:00', end_at: null,               enabled: true, expect: true  },
+    { label: 'boundary: ends at the exact minute',       start_at: null,               end_at: '2026-07-28T10:00', enabled: true, expect: true  },
+    { label: 'one minute before end — still active',     start_at: null,               end_at: '2026-07-28T10:01', enabled: true, expect: true  },
+    { label: 'one minute after end — expired',           start_at: null,               end_at: '2026-07-28T09:59', enabled: true, expect: false },
+    { label: 'bare-date start still means start-of-day (legacy row)', start_at: '2026-07-28', end_at: null, enabled: true, expect: true },
+];
+
+TIME_WINDOW_CASES.forEach(c => {
+    test(c.label, () => {
+        assert.strictEqual(isActiveNow(c, TICKER_NOW), c.expect);
+    });
+});
+
+test('agrees with news/script.js isActive() on every minute-precision case above', () => {
+    const scriptSrc = fs.readFileSync(path.join(__dirname, '..', 'news', 'script.js'), 'utf8');
+    const ctx = vm.createContext({});
+    vm.runInContext(scriptSrc, ctx);
+    const scriptIsActive = vm.runInContext('isActive', ctx);
+
+    const SCRIPT_NOW = new Date(2026, 6, 28, 10, 0, 0); // same wall-clock instant as TICKER_NOW
+
+    TIME_WINDOW_CASES.forEach(c => {
         const scriptResult = scriptIsActive({ ...c, text: 'dummy' }, SCRIPT_NOW);
         assert.strictEqual(scriptResult, c.expect, `case "${c.label}": script.js isActive() returned ${scriptResult}, expected ${c.expect}`);
     });

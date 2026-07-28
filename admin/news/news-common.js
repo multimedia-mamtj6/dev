@@ -34,11 +34,34 @@ function localDateString(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// Minute-precision counterpart of localDateString, for start_at/end_at now
+// that they carry day+hour+minute (see setup.sql §10's TIMESTAMP migration).
+// Reads the browser's own local clock — fine for a glance-status label,
+// deliberately separate from publish-news-pure.js's MYT-shifted
+// mytDateTimeString() (which pengumuman.html doesn't even load), so this
+// file works standalone on either admin page.
+function localDateTimeString(d) {
+    return `${localDateString(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// Same "bare date expands to the full day" idea as
+// publish-news-pure.js's normalizeBoundary() — kept as its own small copy
+// here rather than a shared import, since news-common.js has to work on
+// pengumuman.html too, which never loads publish-news-pure.js.
+function normalizeBoundaryLocal(value, isEnd) {
+    if (!value) return null;
+    const str = String(value);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str + (isEnd ? 'T23:59' : 'T00:00');
+    return str.slice(0, 16);
+}
+
 function computeStatus(row, now = new Date()) {
     if (row.enabled === false) return 'Dimatikan';
-    const today = localDateString(now);
-    if (row.start_at && today < row.start_at) return 'Akan Datang';
-    if (row.end_at && today > row.end_at) return 'Tamat';
+    const nowStr = localDateTimeString(now);
+    const start = normalizeBoundaryLocal(row.start_at, false);
+    const end   = normalizeBoundaryLocal(row.end_at, true);
+    if (start && nowStr < start) return 'Akan Datang';
+    if (end && nowStr > end) return 'Tamat';
     return 'Aktif';
 }
 

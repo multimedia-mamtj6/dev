@@ -40,16 +40,25 @@ function jenisLabel(row) {
     return 'Teks';
 }
 
-function fmtDateShort(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    return `${d.getDate()} ${BULAN_MALAY[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+// start_at/end_at are TIMESTAMP now (day+hour+minute) — a legacy bare-date
+// value (YYYY-MM-DD, no time) still renders as just the date, no time shown
+// (nothing to show), same "date-only is fine" leniency the DB/isActiveNow
+// side already has.
+function fmtDateTimeShort(value) {
+    if (!value) return '';
+    const str = String(value);
+    const isBareDate = /^\d{4}-\d{2}-\d{2}$/.test(str);
+    const d = new Date(isBareDate ? str + 'T00:00:00' : str);
+    const datePart = `${d.getDate()} ${BULAN_MALAY[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+    if (isBareDate) return datePart;
+    return `${datePart}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 function tempohLabel(row) {
     if (!row.start_at && !row.end_at) return 'Sentiasa';
-    if (row.start_at && row.end_at) return `${fmtDateShort(row.start_at)} — ${fmtDateShort(row.end_at)}`;
-    if (row.start_at) return `Dari ${fmtDateShort(row.start_at)}`;
-    return `Sehingga ${fmtDateShort(row.end_at)}`;
+    if (row.start_at && row.end_at) return `${fmtDateTimeShort(row.start_at)} — ${fmtDateTimeShort(row.end_at)}`;
+    if (row.start_at) return `Dari ${fmtDateTimeShort(row.start_at)}`;
+    return `Sehingga ${fmtDateTimeShort(row.end_at)}`;
 }
 
 function renderTable() {
@@ -109,8 +118,10 @@ function openEditModal(id) {
     document.getElementById('edit-title').value      = r.title;
     document.getElementById('edit-heading').value    = r.heading || '';
     document.getElementById('edit-text').value       = r.body_text || '';
-    document.getElementById('edit-start').value      = r.start_at || '';
-    document.getElementById('edit-end').value        = r.end_at || '';
+    // datetime-local requires exactly YYYY-MM-DDTHH:MM (no seconds) — the DB
+    // returns a full timestamp string, so slice it down to fit the input.
+    document.getElementById('edit-start').value      = (r.start_at || '').slice(0, 16);
+    document.getElementById('edit-end').value        = (r.end_at || '').slice(0, 16);
     document.getElementById('edit-enabled').checked  = r.enabled !== false;
     document.getElementById('edit-sort').value       = r.sort_order || 0;
     document.getElementById('edit-image').value      = '';

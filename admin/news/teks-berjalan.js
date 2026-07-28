@@ -78,16 +78,24 @@ function renderTable() {
     `).join('');
 }
 
-function fmtDateShortTicker(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    return `${d.getDate()} ${BULAN_MALAY[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+// start_at/end_at are TIMESTAMP now (day+hour+minute) — a legacy bare-date
+// value (YYYY-MM-DD, no time) still renders as just the date, same
+// leniency the DB/isActiveNow side already has.
+function fmtDateTimeShortTicker(value) {
+    if (!value) return '';
+    const str = String(value);
+    const isBareDate = /^\d{4}-\d{2}-\d{2}$/.test(str);
+    const d = new Date(isBareDate ? str + 'T00:00:00' : str);
+    const datePart = `${d.getDate()} ${BULAN_MALAY[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+    if (isBareDate) return datePart;
+    return `${datePart}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 function tempohLabelTicker(row) {
     if (!row.start_at && !row.end_at) return 'Sentiasa';
-    if (row.start_at && row.end_at) return `${fmtDateShortTicker(row.start_at)} — ${fmtDateShortTicker(row.end_at)}`;
-    if (row.start_at) return `Dari ${fmtDateShortTicker(row.start_at)}`;
-    return `Sehingga ${fmtDateShortTicker(row.end_at)}`;
+    if (row.start_at && row.end_at) return `${fmtDateTimeShortTicker(row.start_at)} — ${fmtDateTimeShortTicker(row.end_at)}`;
+    if (row.start_at) return `Dari ${fmtDateTimeShortTicker(row.start_at)}`;
+    return `Sehingga ${fmtDateTimeShortTicker(row.end_at)}`;
 }
 
 // ─── Reorder (↑/↓ swap sort_order with the adjacent row) ───────────────────────
@@ -151,8 +159,10 @@ function openEditModal(id) {
     document.getElementById('edit-kind').value      = r.kind;
     document.getElementById('edit-message').value   = r.message || '';
     document.getElementById('edit-prefix').value    = r.prefix || '';
-    document.getElementById('edit-start').value     = r.start_at || '';
-    document.getElementById('edit-end').value       = r.end_at || '';
+    // datetime-local requires exactly YYYY-MM-DDTHH:MM (no seconds) — the DB
+    // returns a full timestamp string, so slice it down to fit the input.
+    document.getElementById('edit-start').value     = (r.start_at || '').slice(0, 16);
+    document.getElementById('edit-end').value       = (r.end_at || '').slice(0, 16);
     document.getElementById('edit-enabled').checked = r.enabled !== false;
     toggleKindFields();
     document.getElementById('ticker-modal').classList.add('open');

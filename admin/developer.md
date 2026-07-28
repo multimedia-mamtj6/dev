@@ -238,8 +238,9 @@ Two data pages + one shared file + one **shared-with-the-server** pure-logic fil
 ### pengumuman.js
 - `loadAnnouncements()` — fetches the whole `news_announcements` table (small, like `ustaz`/infaq's weekly tables), ordered by `sort_order`
 - `saveAnnouncement()` — image upload-or-URL is mutually exclusive (validated client-side), reuses `ustaz.js`'s `saveUstaz()` 3-way save priority (remove flag > file upload > URL input > no change) against the `news-assets` bucket instead of `kuliah-assets`; also validates client-side that the row will have at least an image or `body_text` before ever hitting the DB `CHECK` constraint, so the error surfaces as a toast, not a raw Postgres error
-- `jenisLabel(row)` / `tempohLabel(row)` — small pure display formatters (Imej / Teks / Imej+Teks; date range or "Sentiasa")
+- `jenisLabel(row)` / `tempohLabel(row)`/`fmtDateTimeShort(value)` — small pure display formatters (Imej / Teks / Imej+Teks; date+time range or "Sentiasa")
 - Tetapan card — `loadAnnouncementSettings()`/`saveAnnouncementSettings()` edit `news_settings.default_image` directly (not part of the announcements table)
+- `start_at`/`end_at` use `<input type="datetime-local">` (day+hour+minute, no seconds — added 2026-07-28), values sliced to 16 chars when loading from the DB (`YYYY-MM-DDTHH:MM`, matching the input's exact expected format) and saved back verbatim
 
 ### teks-berjalan.js
 - `moveTicker(id, direction)` — the ↑/↓ reorder implementation: finds the adjacent row in the already-loaded `allTicker` array, swaps their `sort_order` values with two parallel `UPDATE`s, logs one `news_ticker_reorder` activity row, reloads

@@ -43,6 +43,8 @@ const {
     parseCSVRow,
     looksLikeErrorText,
     mytDateString,
+    mytDateTimeString,
+    normalizeBoundary,
     isActiveNow,
     buildAnnouncementsJson,
     buildMovingTextJson,
@@ -322,6 +324,8 @@ module.exports = handler;
 module.exports.parseCSVRow            = parseCSVRow;
 module.exports.looksLikeErrorText     = looksLikeErrorText;
 module.exports.mytDateString          = mytDateString;
+module.exports.mytDateTimeString      = mytDateTimeString;
+module.exports.normalizeBoundary      = normalizeBoundary;
 module.exports.isActiveNow            = isActiveNow;
 module.exports.buildAnnouncementsJson = buildAnnouncementsJson;
 module.exports.buildMovingTextJson    = buildMovingTextJson;

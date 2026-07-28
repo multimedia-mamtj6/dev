@@ -578,14 +578,25 @@ CREATE POLICY "auth_delete_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bul
 -- news_announcements → news/data/announcements.json (read by news/script.js
 -- directly — our own JS resolves start_at/end_at scheduling client-side, on
 -- the display device's own clock, unlike news_ticker below).
+--
+-- start_at/end_at are TIMESTAMP (not DATE, added 2026-07-28 same day as the
+-- rest of this module — day+hour+minute scheduling, no seconds field since
+-- nothing here ever needs second-level precision) — "no time zone" is
+-- deliberate: these are treated as naive Malaysia wall-clock values, same
+-- as every other date-ish field in this repo (see root CLAUDE.md's Date
+-- handling pattern), never converted through a real tz. A bare date-only
+-- value (e.g. from an old row, or a future hand-insert) still works fine —
+-- Postgres reads it as midnight, and news/script.js's parseLocalDate() /
+-- api/publish-news.js's normalizeBoundary() both still expand a bare date
+-- to the full day exactly as before.
 CREATE TABLE IF NOT EXISTS news_announcements (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title      TEXT NOT NULL,               -- internal label, also published as JSON "title"
     heading    TEXT,
     body_text  TEXT,                        -- maps to published JSON "text"
     image_url  TEXT,
-    start_at   DATE,
-    end_at     DATE,
+    start_at   TIMESTAMP,
+    end_at     TIMESTAMP,
     enabled    BOOLEAN NOT NULL DEFAULT true,
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -601,19 +612,38 @@ CREATE TABLE IF NOT EXISTS news_announcements (
 -- start_at/end_at/enabled are resolved SERVER-SIDE by api/publish-news.js
 -- at publish time, not on the display. An expired ticker line only
 -- disappears when something republishes it — see the daily cron in
--- vercel.json.
+-- vercel.json. Same TIMESTAMP (not DATE) reasoning as news_announcements
+-- above applies here too.
 CREATE TABLE IF NOT EXISTS news_ticker (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     message    TEXT NOT NULL,
     kind       TEXT NOT NULL DEFAULT 'static' CHECK (kind IN ('static', 'khutbah')),
     prefix     TEXT,                        -- khutbah rows only, e.g. 'Khutbah Jumaat Minggu Ini: '
-    start_at   DATE,
-    end_at     DATE,
+    start_at   TIMESTAMP,
+    end_at     TIMESTAMP,
     enabled    BOOLEAN NOT NULL DEFAULT true,
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Migration for a database that already ran §10 above with start_at/end_at
+-- as DATE (i.e. any database that ran this section before 2026-07-28) —
+-- CREATE TABLE IF NOT EXISTS is a no-op on an existing table, it does not
+-- retroactively change a column's type. Safe to run even if start_at/end_at
+-- are already TIMESTAMP (changing a column to its own type is a no-op, not
+-- an error), so this is safe to re-run / run on a brand-new §10 install too.
+-- end_at's USING clause is the one part that ISN'T a no-op detail: a
+-- date-only end_at used to mean "valid through the end of that day," so
+-- casting it straight to TIMESTAMP (which lands on that day's midnight,
+-- 00:00) would silently shift every existing row's expiry almost a full day
+-- earlier the moment this runs. Adding 23:59 preserves the original
+-- meaning; start_at needs no such adjustment since "start of that day" was
+-- already midnight.
+ALTER TABLE news_announcements ALTER COLUMN start_at TYPE TIMESTAMP;
+ALTER TABLE news_announcements ALTER COLUMN end_at   TYPE TIMESTAMP USING (end_at::timestamp + INTERVAL '23 hours 59 minutes');
+ALTER TABLE news_ticker        ALTER COLUMN start_at TYPE TIMESTAMP;
+ALTER TABLE news_ticker        ALTER COLUMN end_at   TYPE TIMESTAMP USING (end_at::timestamp + INTERVAL '23 hours 59 minutes');
 
 -- news_settings: key/value store so defaults/URLs aren't hardcoded into
 -- api/publish-news.js. Seeded below — admin/news/'s Tetapan cards UPDATE
