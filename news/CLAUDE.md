@@ -63,14 +63,32 @@ news/
   schedule — expired/disabled/missing pin renders the default slide, never
   stale content. Invalid `ann` falls back to slideshow.
 
-## Core design: client-side scheduling, two-tier refresh
+## Core design: client-side scheduling, silent background refresh
 
 `start_at`/`end_at` are compared against the **display device's own clock**
 (screens are in Malaysia; date-only values expand to full-day 00:00:00 /
-23:59:59 — hand-editor-friendly). `reevaluate()` re-checks every minute
-(`REEVAL_MS`), so announcements appear/expire on schedule with **no
-republish and no reload**. The `<meta refresh content="600">` reload exists
-ONLY to pick up JSON *edits*. Don't conflate the two mechanisms.
+23:59:59 — hand-editor-friendly; a full timestamp, `YYYY-MM-DDTHH:MM[:SS]`,
+works too — see `admin/news/`'s minute-precision scheduling). Every minute
+(`REEVAL_MS`), `initNewsDisplay()`'s interval does two things in sequence:
+`refreshData()` silently re-fetches `announcements.json` in the background
+(no visible reload — a failed fetch just keeps the last-known-good data),
+then `reevaluate()` re-checks the active window against whatever it got.
+This is what makes BOTH "an admin publishes a change" AND "a schedule
+boundary passes" show up within ~1 minute, with **no republish needed for
+the latter and no page reload for either.**
+
+**Changed 2026-07-28 — there used to be a second, separate mechanism for
+this:** a `<meta http-equiv="refresh" content="600">` in `index.html` did a
+full page reload every 10 minutes, and was the ONLY thing that picked up
+JSON *edits* — `reevaluate()` on its own only ever re-checked the schedule
+against already-loaded data, never re-fetched. That caused a visible
+10-minute blink on the physical screen just to notice an admin's edit, and
+capped "how fast can a new announcement show up" at up to 10 minutes. Now
+that `reevaluate()`'s own interval also refreshes the data first, that
+tag was removed entirely — one mechanism, not two, and no blink either way.
+`reevaluate()`'s existing `itemKey()`-based diff (see below) already
+no-ops when the freshly-fetched content is unchanged, so this silent
+refresh costs one small fetch every 60s, not an unnecessary re-render.
 
 ## Three slide kinds — routed by which JSON fields exist
 
@@ -113,9 +131,10 @@ must get its own key shape or change detection silently breaks.**
 - **`data/announcements.json` is user-edited live, including mid-session.**
   Re-read it before every edit or test assertion; expect stale-file
   conflicts on Edit.
-- No `vercel.json` cache rule for `/news/` yet — JSON freshness rides the
-  `?v=` cache-buster + 10-min reload. First suspect if stale content is
-  ever reported.
+- `vercel.json` has a `/news/data/(.*)` → `Cache-Control: no-store` rule
+  (added 2026-07-28, alongside `admin/news/`) on top of the `?v=`
+  cache-buster — JSON freshness no longer depends on a page reload at all,
+  see "Core design" above.
 
 ## Testing
 

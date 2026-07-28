@@ -22,9 +22,8 @@ rotation; two+ active → 15s slideshow with crossfade.
 | What | Where | Default |
 |---|---|---|
 | Seconds per slide in rotation | `ROTATE_MS`, script.js | 15000 |
-| Active-window re-check interval | `REEVAL_MS`, script.js | 60000 |
+| Active-window re-check interval AND JSON refresh interval (same timer, 2026-07-28) | `REEVAL_MS`, script.js | 60000 |
 | Crossfade duration | `.slide-layer` transition, style.css **AND** `FADE_MS`, script.js — change BOTH | 0.7s / 700 |
-| JSON pickup (full reload) | `<meta http-equiv="refresh">`, index.html | 600s |
 | Theme colors (green/gold) | gradient + `#c9a84c` in style.css and default.svg | — |
 
 ## Testing harness (no framework — node vm + DOM stub)
@@ -91,6 +90,10 @@ Conventions that matter when extending tests:
 - `?ann=` pointing at nothing valid → default slide; `?ann=abc` → slideshow.
 - Interrupted fade (JSON change mid-transition) → incoming layer snaps to
   opacity 0 with transition disabled, then fades normally.
+- A failed background refresh (`refreshData()`, 2026-07-28) leaves `newsData`
+  untouched — a transient network blip on the periodic re-fetch must never
+  blank an otherwise-working display. Only a successful, parseable response
+  ever replaces it.
 
 ## Deploy
 

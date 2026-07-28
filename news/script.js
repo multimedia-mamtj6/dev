@@ -268,14 +268,34 @@ function reevaluate() {
     render();
 }
 
+async function fetchAnnouncementsData() {
+    const response = await fetch(`${JSON_URL}?v=${new Date().getTime()}`);
+    if (!response.ok) throw new Error(`Fetch failed with status ${response.status}`);
+    return response.json();
+}
+
+// Silently re-fetches announcements.json in the background — this is what
+// lets a newly-published admin edit show up with no republish/manual step
+// AND no visible reload, replacing the old `<meta http-equiv="refresh">`
+// full-page-reload mechanism (removed from index.html, 2026-07-28) that
+// used to blink the physical screen every 10 minutes just to pick up
+// content changes. A failed fetch deliberately leaves `newsData` untouched
+// — a transient network hiccup must never blank an otherwise-working
+// display; the next REEVAL_MS tick just tries again.
+async function refreshData() {
+    try {
+        newsData = await fetchAnnouncementsData();
+    } catch (error) {
+        console.error('Gagal memuatkan semula data pengumuman:', error);
+    }
+}
+
 async function initNewsDisplay() {
     const annParam = parseInt(new URLSearchParams(window.location.search).get('ann'), 10);
     pinnedAnnIndex = Number.isInteger(annParam) && annParam >= 1 ? annParam : null;
 
     try {
-        const response = await fetch(`${JSON_URL}?v=${new Date().getTime()}`);
-        if (!response.ok) throw new Error(`Fetch failed with status ${response.status}`);
-        newsData = await response.json();
+        newsData = await fetchAnnouncementsData();
     } catch (error) {
         console.error('Gagal memuatkan data pengumuman:', error);
         newsData = null;
@@ -291,5 +311,14 @@ async function initNewsDisplay() {
         reevaluate();
     }
 
-    setInterval(reevaluate, REEVAL_MS);
+    // One timer now does both jobs the old two-tier design split across
+    // reevaluate() (60s) and the <meta refresh> (10min): refresh the data,
+    // THEN re-evaluate the active window against whatever it got. When the
+    // fetch returns unchanged content, reevaluate()'s own itemKey() diff
+    // already no-ops (see its `changed` check) — so an unchanged publish
+    // causes zero re-render, not just zero visible reload.
+    setInterval(async () => {
+        await refreshData();
+        reevaluate();
+    }, REEVAL_MS);
 }

@@ -16,16 +16,41 @@ explicitly deferred future work. Two days later, a pre-written plan
 (`news/newplan.md`) for exactly that was implemented in full — see
 `admin/DEV_NOTES.MD` Session 15 for the actual build log, since almost
 none of the new code lives in this folder. **What changed in `news/`
-itself: nothing in `index.html`/`script.js`/`style.css`, exactly as
-session 1 designed it to.** The only things that changed here are
-`data/announcements.json` and `data/moving-text.json` gaining a real
-writer (previously hand-edited/Apps-Script-fed, now written by
+itself at first: nothing in `index.html`/`script.js`/`style.css`, exactly
+as session 1 designed it to.** The only things that changed initially
+here were `data/announcements.json` and `data/moving-text.json` gaining a
+real writer (previously hand-edited/Apps-Script-fed, now written by
 `api/publish-news.js`), and `moving-text/code.gs` being retired (superseded,
 not deleted — kept for history). If you're back in this folder wondering
 why a display bug doesn't reproduce with hand-edited JSON, check whether
 it's actually a publish-endpoint problem now (`admin/CLAUDE.md`/
 `admin/database.md`/`admin/developer.md`) before assuming it's this
 folder's own logic — the failure surface split in two.
+
+**Same day, follow-up — that "zero display changes" claim above didn't
+survive contact with a real question.** The user noticed new
+announcements weren't showing up promptly and asked why — the answer was
+the two-tier design session 1 built on purpose: `reevaluate()` (60s) only
+ever re-checked the schedule against already-loaded data, and the
+`<meta http-equiv="refresh" content="600">` full-page reload was the ONLY
+thing that ever re-fetched the JSON, capping "how fast does a Terbitkan
+show up on the physical screen" at up to 10 minutes, with a visible reload
+blink every cycle regardless of whether anything changed. This was
+flagged as a known future improvement at the end of session 1 (see
+"Deliberately NOT built" below) and got built this session: `script.js`'s
+`initNewsDisplay()` interval now calls a new `refreshData()` first (silent
+background fetch, keeps the last-known-good data on failure) before
+`reevaluate()`, and the `<meta refresh>` tag was deleted from `index.html`
+entirely — one mechanism instead of two, verified with a quick vm-harness
+script (not committed, matches the pattern in `developer.md`) showing a
+simulated second tick correctly re-fetches and crossfades in changed
+content. **Lesson for next time: "the display page needs zero changes" was
+true for the CMS's own data shape, but not a permanent guarantee — a
+CMS changes how often content changes, which can expose a display-side
+design constant (a 10-minute reload) that was fine for hand-editing but
+not for a "click Terbitkan and expect it soon" workflow. Don't assume a
+migration's original "zero changes" scope claim stays true forever once
+the thing on the other end of it starts behaving differently.**
 
 ## Session 1 — 2026-07-26 (the whole thing was born today)
 
@@ -153,16 +178,15 @@ asserting against them.
   Whole afternoon's features are covered by rerunnable one-liner suites —
   reuse this instead of standing up a browser.
 
-### Deliberately NOT built (offered, user deferred or silent)
+### Deliberately NOT built (offered, user deferred or silent) — status as of session 1's end
 
-- `admin/news/` CMS module + `api/publish-news.js` (Supabase → GitHub JSON,
-  infaq-publish shape). Explicitly chosen as "later" — display page needs
-  ZERO changes when it comes.
-- In-page JSON refetch to replace `<meta refresh>` (would remove the
-  10-minute reload blink on the TV). Offered, no answer yet.
-- No `vercel.json` cache rule for `/news/` — announcements.json rides the
-  default caching + `?v=` cache-buster. If stale-JSON complaints appear,
-  that's the first place to look.
+- ~~`admin/news/` CMS module + `api/publish-news.js`~~ — **built session 2
+  (2026-07-28)**, see above.
+- ~~In-page JSON refetch to replace `<meta refresh>`~~ — **built same-day
+  follow-up, session 2**, see above. The display page's "zero changes"
+  claim didn't survive this one, worth noting.
+- ~~No `vercel.json` cache rule for `/news/`~~ — **added session 2**
+  (`/news/data/(.*)` → `no-store`, alongside `admin/news/`'s own build).
 - The example entry hotlinks a sinarharian.com.my image — warned it can
   break/vanish; real announcements should use `/media/...` or Supabase
   Storage.

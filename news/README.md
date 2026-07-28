@@ -26,8 +26,10 @@ whichever announcements are **active right now** (device local time, Malaysia):
 
 Expiry is computed on the display itself — when an announcement's `end_at`
 passes, the screen falls back to the default slide within ~1 minute, with no
-edit or republish needed. New/changed JSON is picked up by the page's
-10-minute auto-reload (`<meta refresh>`), same as `kuliah/paparan/`.
+edit or republish needed. New/changed content (e.g. after clicking
+Terbitkan in `admin/news/pengumuman.html`) is also picked up within about a
+minute — the page silently re-fetches the JSON in the background on the
+same timer, with no visible reload of any kind.
 
 ## Editing `data/announcements.json`
 
