@@ -9,6 +9,167 @@ the prompt (DO NOT DELETE)
 Session memo for the `news/` announcement display. Read `news/CLAUDE.md` for
 the architecture reference; this file is the session-to-session context.
 
+## Session 3 — 2026-07-29 (a small, focused tuning task — character limits on
+the two `admin/news/` CMS forms — that turned into a live lesson about
+guessing thresholds vs. measuring real content)
+
+### What happened, in order
+
+Much smaller in scope than sessions 1-2, no new files, no new schema, no new
+architecture — just tightening two existing text fields in `admin/news/`.
+But the shape of the conversation is worth remembering on its own:
+
+1. User floated a hypothetical: "what if I sent the limit for
+   `pengumuman.html` (180 chars) and `teks-berjalan.html` (50 chars), said
+   that limitation is to make the text show properly on the Xibo display" —
+   phrased as a proposal to gut-check, not yet a "do it."
+2. I pushed back with a real distinction instead of just agreeing: the
+   announcement box (`pengumuman.html`) is a fixed-size area with no
+   scroll, so a length cap is a genuine overflow guard — but the ticker is
+   a marquee that scrolls continuously, so a hard character cap there
+   sounded more like a *pacing* choice dressed up as a display-fitting one.
+   Asked which it actually was.
+3. User corrected me with a concrete fact I had no way to know without
+   asking: **some ticker slides had visibly had the text moving upward** —
+   i.e. a real observed layout bug (long lines wrapping to a second row and
+   pushing the ticker bar vertically), not marquee-scroll pacing at all.
+   This reframed 50 chars as a bug mitigation with a real prior incident
+   behind it, not a guess.
+4. Implemented on "ok, proceed": `maxlength` + save-time validation on both
+   pages, with the label/error text stating the *real* reason in each case
+   (overflow for pengumuman, vertical-wrap for the ticker) — not a vague
+   "for the display."
+5. User then asked for a live remaining-character counter, visible once a
+   field is ~80% of its cap. Built as a shared `attachCharCounter()` helper
+   in `news-common.js` (both pages load this file) rather than duplicating
+   it — see Unique Discoveries below for why it returns its update function.
+6. **The pivotal moment:** user pasted 3 REAL ticker lines already in
+   informal use — a Tahlil announcement, the standard welcome line, a
+   phone-silent reminder — and asked me to count their characters. I ran
+   them through node: **70, 67, and 72 characters.** All three exceeded the
+   50-char cap we had *just shipped, that same session*, on the very first
+   real content anyone actually checked it against.
+7. Iterative correction, in real time: bumped 50→70 (fits 2 of 3, the third
+   at 72 still 2 over) → bumped again 70→74 (fits all 3). Each bump touched
+   the same 4 spots per file pair: `maxlength` + label text in the `.html`,
+   validation threshold + counter threshold in the `.js` — done twice in
+   one sitting, `replace_all` covering most of it but the differently-worded
+   prefix-vs-message validation strings needing a manual second edit each
+   time (they share a number, not a message template).
+
+### The dynamic — read this to re-sync
+
+- **Same brisk, capability-question cadence as session 1's "can it
+  also...?" loop** ("what if I sent the limit...", "so maybe up the ticker
+  limit to 70?", "ok bump to 74") — but this time aimed at *tuning a number
+  on a feature that shipped minutes earlier*, using real content as the
+  measuring stick, not requesting a new capability.
+- **A terse justification can be hiding a specific, real failure mode —
+  ask what it actually looks like before agreeing OR pushing back.** My
+  first response distinguished "genuine overflow guard" from "pacing
+  dressed up as fitting" reasonably, but I was still guessing between two
+  plausible stories. The user's one-line reply ("text moving up") resolved
+  it instantly and concretely. **Lesson generalizes from BUG 3/4 in session
+  2 (screenshots are ground truth) to justifications too: when someone
+  states a reason for a constraint, especially tied to real hardware, a
+  quick "what does that look like / what breaks" question (or, here, just
+  waiting for the natural follow-up) beats reasoning it out abstractly.**
+- **This user is comfortable deciding the final number themselves once
+  shown the data** — my job in step 6-7 was compute-and-present the
+  character counts, theirs was to pick 70, then 74. Don't pre-empt that by
+  suggesting a "safe round number" before they've seen the actual
+  measurements against real content.
+- Mood: efficient, low-friction, iterative — one-line asks, immediate
+  small course-corrections, zero friction about redoing the same 4-6 edit
+  sites twice in a row. No frustration at the two-bump correction; if
+  anything the second bump ("ok bump to 74") reads like a fully expected
+  next step once the first number visibly didn't fit real content.
+
+### Bugs found & fixed (and the lessons)
+
+**BUG 1 (not a code bug — a chosen-number bug, corrected on first contact
+with real content).** The ticker's initial 50-char cap was picked from a
+plausible-sounding heuristic ("should look fine on a ticker line") before
+anyone measured a single real ticker line against it. The very first 3 real
+examples brought in — content already in informal circulation, not
+hypothetical — failed the cap (70/67/72 vs. 50), forcing two sequential
+bumps in the same sitting (50→70→74).
+*Lesson:* **when a length/size constraint is justified by a real display
+constraint, get (or go count) actual current/real content BEFORE picking
+the number, not after shipping it.** A constraint that immediately rejects
+existing legitimate content is itself the signal that the number was
+guessed rather than measured — don't wait for the user to be the one who
+notices this; ask "do you have a real example I can measure?" up front
+next time a similar length cap comes up anywhere in `admin/`.
+
+**Not-a-bug, flagged proactively — the ticker's char limit is now a
+hardcoded literal in ~8 separate spots, no single source of truth.**
+`teks-berjalan.html` has `maxlength="74"` and "maks. 74 aksara" on BOTH the
+message input and the prefix input (4 occurrences); `teks-berjalan.js` has
+`length > 74` in two separate validation checks plus `attachCharCounter(...,
+74)` twice (4 more). Two live bumps already happened in one sitting, each
+needing a `replace_all` pass plus manual touch-up on the spots whose
+surrounding text didn't match the pattern exactly (the prefix-vs-message
+error strings). Nothing broke this time, but **the next person who bumps
+this number again has to grep both files for the literal old number — there
+is no `TICKER_LINE_MAX` constant to change in one place.** Not fixed this
+session (pure same-day tuning, not the moment to also refactor) — worth
+doing the next time either file is opened for an unrelated reason: a single
+exported constant in `teks-berjalan.js`, interpolated into the label text
+and read by `attachCharCounter()`/the validation checks, removes this risk
+permanently.
+
+**Open item, NOT yet checked the same way — `pengumuman.html`'s 180-char
+limit has never been measured against a real `body_text` example**, unlike
+the ticker's number, which got corrected the moment real data arrived. Same
+lesson as BUG 1 above, just not yet applied to this sibling field — next
+time someone's touching `pengumuman.html`, pull a few real announcement
+bodies and sanity-check 180 before trusting it as final.
+
+### Unique discoveries / decisions that aren't obvious from the code
+
+- **`attachCharCounter(inputId, counterId, limit, thresholdRatio=0.8)`**
+  (`admin/news/news-common.js`) is a small shared utility, deliberately
+  returning its own `update` function rather than being fire-and-forget:
+  `openAddModal()`/`openEditModal()` on both pages set `.value` on the
+  input programmatically when populating the edit form, and a scripted
+  assignment does **not** fire the `'input'` event the counter listens on
+  — so both modal-open functions call the returned `update()` explicitly
+  right after setting the value, or the counter would show stale (or no)
+  state until the admin's next keystroke. **This is the pattern for any
+  future "counter/note tied to a text field's current value" anywhere in
+  `admin/`** — wire the live listener AND expose a manual re-run for
+  programmatic value changes, don't assume `'input'` covers every path
+  that sets `.value`.
+- The two fields' limits protect genuinely different failure modes even
+  though both are framed as "Xibo display" constraints: `pengumuman`'s 180
+  chars guards against text overflowing a fixed-size box with no scroll;
+  the ticker's (now 74) chars guards against long lines wrapping to a
+  second row and moving the whole ticker bar vertically — a real,
+  previously-unlogged production bug, not a marquee-pacing preference.
+  Worth keeping these two justifications straight if either number is
+  revisited again — they are not interchangeable reasoning.
+- None of this touched the Supabase schema — `news_announcements.body_text`
+  and `news_ticker.message`/`.prefix` are still unbounded `text` columns
+  server-side (see `admin/CLAUDE.md`'s Supabase Schema section). Every cap
+  added this session is a client-side-only guard, matching how every other
+  soft validation in these two pages already works (`pengumuman.js`'s
+  title-required / image-or-text-required checks are the same shape) — a
+  hand-edit via the GitHub web UI, or the API bypassing the CMS entirely,
+  is not stopped by anything added this session.
+
+### Current state at session end (session 3)
+
+`pengumuman.html`'s `#edit-text` textarea: `maxlength="180"`, a counter
+that appears once length ≥144 (80% of 180), and a matching save-time toast
+check in `pengumuman.js`. `teks-berjalan.html`'s `#edit-message` and
+`#edit-prefix` inputs: both `maxlength="74"`, counters appearing ≥~59
+chars, and matching save-time checks in `teks-berjalan.js` for both fields.
+No schema change, no `database.md` update needed (see above — this is a
+UI-only guard). Nothing else in `news/` itself (the public display page)
+changed at all this session — everything here lives entirely in
+`admin/news/`.
+
 ## Session 2 — 2026-07-28 (the CMS from session 1's deferred item got built in one pass, then a full week-one support/iteration cycle happened in the same sitting)
 
 ### What happened, in order

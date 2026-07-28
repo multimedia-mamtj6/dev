@@ -115,3 +115,12 @@ architecture: `admin/CLAUDE.md`, `admin/database.md`, `admin/developer.md`.
 Retires the old `news/moving-text/code.gs` Sheets pipeline — see
 `news/newplan.md` for why (an unvalidated Sheet cell shipped a raw
 `"ERROR: ... Status: 503"` to the live ticker for weeks).
+
+**Content length caps (added 2026-07-29):** `pengumuman.html`'s `text`
+field is capped at 180 chars, `teks-berjalan.html`'s message/prefix at 74
+— both `maxlength` + a save-time check, CMS-side only (see
+`news/DEV_NOTES.md` Session 3 for the reasoning and the real ticker-wrap
+bug behind the 74 figure). Nothing in this folder's JSON schema or the
+Supabase columns enforces either cap — only relevant here because a
+hand-edit of `data/announcements.json` bypasses it entirely (see
+README.md's note on the `text` field).

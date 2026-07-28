@@ -135,6 +135,17 @@ must get its own key shape or change detection silently breaks.**
   (added 2026-07-28, alongside `admin/news/`) on top of the `?v=`
   cache-buster — JSON freshness no longer depends on a page reload at all,
   see "Core design" above.
+- **Content length caps are CMS-side only, not enforced on this folder's
+  JSON schema** (added 2026-07-29, see `news/DEV_NOTES.md` Session 3):
+  `admin/news/pengumuman.html`'s `text` field is capped at 180 chars (guards
+  against overflowing the fixed-size, non-scrolling announcement box this
+  page renders), and `admin/news/teks-berjalan.html`'s ticker line/prefix
+  are capped at 74 chars (guards against a real observed bug — a long line
+  wraps to a second row and moves the whole ticker bar vertically on the
+  Xibo screen, not a marquee-pacing preference). Both caps are `maxlength`
+  + a save-time check in the CMS only — nothing in `data/announcements.json`
+  or `data/moving-text.json` itself, nor the Supabase columns behind them,
+  enforces this, so a direct hand-edit or API write can still exceed it.
 
 ## Testing
 

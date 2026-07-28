@@ -64,6 +64,10 @@ Field rules:
 - `text` — text announcement: rendered as a styled fullscreen slide (dark
   green + gold, same look as the default slide). Use `\n` inside the string
   for line breaks. Optional `heading` shows above it in gold uppercase.
+  The CMS (`admin/news/pengumuman.html`) caps this at 180 characters so it
+  doesn't overflow the slide's box — hand-editing this file directly skips
+  that check, so keep new entries under ~180 chars too if you're editing
+  here instead of the CMS.
 - **`image_url` + `text` and/or `heading`** — combined slide on the dark
   green theme background: the image is top-aligned and resized to fit the
   space above the caption bar (never cropped or stretched), with the
