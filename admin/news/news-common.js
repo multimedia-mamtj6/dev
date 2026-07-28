@@ -92,6 +92,34 @@ async function saveSetting(key, value) {
     return db.from('news_settings').update({ value, updated_at: new Date().toISOString() }).eq('key', key);
 }
 
+// ─── Character counter (shows remaining chars once near the limit) ────────────
+// Wired to a text input/textarea + a small note element; the note only
+// becomes visible once length reaches ~80% of the limit, so a normal-length
+// entry never shows a permanent counter. Returns the update function so the
+// caller can also re-run it right after setting .value programmatically
+// (openAddModal/openEditModal) — a JS-set value doesn't fire 'input'.
+function attachCharCounter(inputId, counterId, limit, thresholdRatio = 0.8) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (!input || !counter) return () => {};
+
+    const update = () => {
+        const remaining = limit - input.value.length;
+        if (input.value.length >= limit * thresholdRatio) {
+            counter.textContent = remaining >= 0
+                ? `${remaining} aksara lagi`
+                : `${-remaining} aksara melebihi had`;
+            counter.style.display = '';
+        } else {
+            counter.style.display = 'none';
+        }
+    };
+
+    input.addEventListener('input', update);
+    update();
+    return update;
+}
+
 // ─── Publish (shared by pengumuman.js / teks-berjalan.js) ──────────────────────
 // Each of the 2 news data pages owns its own Terbitkan button, right next to
 // the data it publishes — same reasoning/shape as infaq's 3-target split

@@ -2,6 +2,8 @@
 let allTicker      = [];
 let deletingTickerId = null;
 let cachedSettings = {};
+let updateMessageCounter = () => {};
+let updatePrefixCounter  = () => {};
 
 const TICKER_MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // Malaysia is UTC+8, no DST â€” same constant as api/publish-news.js
 
@@ -16,6 +18,9 @@ const TICKER_MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // Malaysia is UTC+8, no DST â€
     document.getElementById('publish-ticker-btn').style.display = canWrite ? '' : 'none';
     document.getElementById('save-settings-btn').style.display = canWrite ? '' : 'none';
     document.getElementById('setting-default-line').disabled = !canWrite;
+
+    updateMessageCounter = attachCharCounter('edit-message', 'edit-message-counter', 50);
+    updatePrefixCounter  = attachCharCounter('edit-prefix', 'edit-prefix-counter', 50);
 
     await Promise.all([
         loadTicker(),
@@ -147,6 +152,8 @@ function openAddModal() {
     document.getElementById('edit-end').value       = '';
     document.getElementById('edit-enabled').checked = true;
     toggleKindFields();
+    updateMessageCounter();
+    updatePrefixCounter();
     document.getElementById('ticker-modal').classList.add('open');
 }
 
@@ -165,6 +172,8 @@ function openEditModal(id) {
     document.getElementById('edit-end').value       = (r.end_at || '').slice(0, 16);
     document.getElementById('edit-enabled').checked = r.enabled !== false;
     toggleKindFields();
+    updateMessageCounter();
+    updatePrefixCounter();
     document.getElementById('ticker-modal').classList.add('open');
 }
 
@@ -203,6 +212,16 @@ async function saveTickerRow() {
     if (kind === 'static' && !message) {
         showToast('Teks baris diperlukan', 'error');
         document.getElementById('edit-message').focus();
+        return;
+    }
+    if (kind === 'static' && message.length > 50) {
+        showToast('Teks baris maksimum 50 aksara (supaya tidak melilit pada paparan Xibo)', 'error');
+        document.getElementById('edit-message').focus();
+        return;
+    }
+    if (kind === 'khutbah' && prefix.length > 50) {
+        showToast('Awalan maksimum 50 aksara', 'error');
+        document.getElementById('edit-prefix').focus();
         return;
     }
 

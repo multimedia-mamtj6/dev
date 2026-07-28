@@ -92,8 +92,9 @@
             <input type="text" id="edit-heading" placeholder="Cth: Pengumuman">
           </div>
           <div class="form-group">
-            <label for="edit-text">Teks</label>
-            <textarea id="edit-text" rows="4" placeholder="Kandungan pengumuman. Baris baru dibenarkan."></textarea>
+            <label for="edit-text">Teks <span style="font-weight:400;color:var(--text-muted)">(maks. 180 aksara — supaya muat dalam ruang paparan Xibo)</span></label>
+            <textarea id="edit-text" rows="4" maxlength="180" placeholder="Kandungan pengumuman. Baris baru dibenarkan."></textarea>
+            <p id="edit-text-counter" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;display:none"></p>
           </div>
           <div class="form-group">
             <label for="edit-start">Mula</label>

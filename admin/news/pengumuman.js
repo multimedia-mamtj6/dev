@@ -2,6 +2,7 @@
 let allAnnouncements    = [];
 let deletingAnnId       = null;
 let pendingRemoveImage  = false;
+let updateTextCounter   = () => {};
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (async () => {
@@ -16,6 +17,7 @@ let pendingRemoveImage  = false;
     document.getElementById('setting-default-image').disabled = !canWrite;
 
     setupImagePreview();
+    updateTextCounter = attachCharCounter('edit-text', 'edit-text-counter', 180);
     await Promise.all([
         loadAnnouncements(),
         loadLastPublishedNewsNote('publish_announcements', 'last-published-announcements'),
@@ -106,6 +108,7 @@ function openAddModal() {
     document.getElementById('ann-image-preview').innerHTML = '';
     document.getElementById('ann-image-current-group').style.display = 'none';
     pendingRemoveImage = false;
+    updateTextCounter();
     document.getElementById('ann-modal').classList.add('open');
 }
 
@@ -136,6 +139,7 @@ function openEditModal(id) {
         document.getElementById('ann-image-current-group').style.display = 'none';
     }
 
+    updateTextCounter();
     document.getElementById('ann-modal').classList.add('open');
 }
 
@@ -186,6 +190,11 @@ async function saveAnnouncement() {
     const imageUrlInput = document.getElementById('edit-image-url').value.trim();
 
     if (!title) { showToast('Tajuk diperlukan', 'error'); document.getElementById('edit-title').focus(); return; }
+    if (text.length > 180) {
+        showToast('Teks maksimum 180 aksara (supaya muat dalam ruang paparan Xibo)', 'error');
+        document.getElementById('edit-text').focus();
+        return;
+    }
     if (imageFile && imageUrlInput) { showToast('Pilih sama ada muat naik fail atau URL imej, bukan kedua-dua.', 'error'); return; }
 
     const before = id ? allAnnouncements.find(a => a.id === id) : null;
