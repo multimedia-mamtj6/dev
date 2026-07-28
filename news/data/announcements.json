@@ -2,20 +2,11 @@
   "default_image": "/news/default.svg",
   "announcements": [
     {
-      "title": "testing",
+      "title": "Tahlil",
       "heading": "Pengunguman 1",
-      "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in volup.",
+      "text": "Majlis Tahlil Arwah dan Doa buat Allahyarham Pakteh Omar akan diadakan selepas Solat Isya pada 28 & 29 Julai 2026. Bertempat di MAMTJ6",
       "start_at": "2026-07-28T16:15:00",
-      "end_at": "2026-07-28T17:15:00",
-      "enabled": true
-    },
-    {
-      "title": "tesing image 2",
-      "heading": "Pengunguman 2",
-      "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in volup.",
-      "image_url": "https://cdn.pixabay.com/photo/2018/01/14/23/12/nature-3082832_1280.jpg",
-      "start_at": "2026-07-28T17:02:00",
-      "end_at": "2026-07-28T19:02:00",
+      "end_at": "2026-07-29T23:30:00",
       "enabled": true
     }
   ]
