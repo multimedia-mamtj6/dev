@@ -92,9 +92,11 @@ it has fully loaded. Rotation interval is `ROTATE_MS` in `script.js`
 - All asset paths in `index.html` are **absolute** (`/news/...`) — required
   under Vercel `cleanUrls`, see the Key Patterns section of the root
   `CLAUDE.md`. Keep them absolute.
-- Managed manually for now (edit this JSON + commit, or via GitHub web UI).
-  A future `admin/news/` module + `api/publish-news.js` can take over
-  writing this file without any change to the display page.
+- Managed via the **`admin/news/pengumuman.html`** CMS (as of 2026-07-28) —
+  log in, add/edit/delete announcements there, click Terbitkan to publish.
+  Direct hand-editing of this JSON (or via GitHub web UI) still works fine
+  as a fallback, since it's the same file either way — the display page
+  needed zero changes when the CMS arrived.
 
 ## See also
 

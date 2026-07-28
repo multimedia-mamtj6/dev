@@ -9,7 +9,7 @@ architecture reference; the plan file is a one-time historical record.
 ## What this is
 
 `admin/` is a full CMS admin dashboard for MAMTJ6 mosque management, hosting
-two independent modules as of 2026-07-19:
+three independent modules as of 2026-07-28:
 
 - **`admin/kuliah/`** — lecture schedule management. Committee members log in
   with Google OAuth and manage: monthly lecture schedules (subuh + maghrib
@@ -27,6 +27,23 @@ two independent modules as of 2026-07-19:
   further rollup (monthly/yearly totals, `graf`, active-project progress)
   is still always **computed**, never typed in directly (see
   `api/publish-infaq.js`).
+- **`admin/news/`** — CMS for `news/`'s Xibo digital-signage displays, added
+  2026-07-28. Two pages: `pengumuman.html` (announcement slides —
+  `news/data/announcements.json`, read by our own `news/script.js`, which
+  resolves the active schedule client-side on the display's own clock) and
+  `teks-berjalan.html` (the scrolling ticker — `news/data/moving-text.json`,
+  read DIRECTLY by Xibo's DataSet widget, so scheduling has to be resolved
+  **server-side at publish time** instead — see `api/publish-news.js`).
+  Retires the old Google Sheet → Apps Script → GitHub pipeline
+  (`news/moving-text/code.gs`), which had no output validation at all and
+  had been silently publishing a raw `"ERROR: ... Status: 503"` string to
+  the live ticker for weeks before this was noticed (see `news/newplan.md`).
+  A ticker line can optionally be `kind='khutbah'`, auto-sourced from the
+  same published khutbah CSV `khutbah/index.html` already reads, with a
+  fail-safe cache (`news_settings.khutbah_last_title`) so a bad fetch can
+  never republish an error string again. A daily Vercel cron
+  (`vercel.json`) republishes both files so an expired ticker line
+  eventually disappears even with no admin action.
 
 Shared/cross-module concerns (login, nav shell, admin-user management,
 activity-log viewer) stay flat at `admin/` root — see File Structure below.
@@ -34,9 +51,11 @@ It sits at the repo root, rather than under `kuliah/`, specifically *because*
 it's a multi-module hub — `kuliah/admin/` would have been misleading once it
 hosted non-kuliah modules. `kuliah/jadual/` is the public-facing read-only
 schedule view that reads kuliah's published JSON — see `kuliah/CLAUDE.md` for
-that side. **infaq has no public-facing page yet** — its published JSON lands
-in this repo (`admin/infaq/data/`) but nothing reads it publicly yet, by
-deliberate choice (see `admin/infaq/`'s own history in `admin/DEV_NOTES.MD`).
+that side; `news/` is `admin/news/`'s equivalent public-facing side — see
+`news/CLAUDE.md`. **infaq has no public-facing page yet** — its published
+JSON lands in this repo (`admin/infaq/data/`) but nothing reads it publicly
+yet, by deliberate choice (see `admin/infaq/`'s own history in
+`admin/DEV_NOTES.MD`).
 
 ## Tech Stack
 
@@ -101,6 +120,36 @@ admin/
                           data.json is written by the `daily` Terbitkan action alongside daily.json
                           (2 files, 1 commit each, same request) rather than getting its own button —
                           see admin/developer.md's Publish endpoint section for why.
+
+  news/            ← Module: Xibo signage CMS (new 2026-07-28) — unlike infaq's admin/infaq/data/
+                      convention, this module's published JSON lives under top-level `news/data/`
+                      (see admin/CLAUDE.md's Data Flow), matching kuliah's convention, because
+                      news/ already has a public HTTP consumer (Xibo + news/script.js)
+    news-common.js     ← Shared: requireNewsAccess(), publishNews()/loadLastPublishedNewsNote()
+                          (Terbitkan, shared by both pages below), getSetting()/getSettings()/
+                          saveSetting() (news_settings key/value table), computeStatus(row, now)
+                          (Aktif/Akan Datang/Tamat/Dimatikan — used by both pages' tables)
+    publish-news-pure.js ← THE SAME pure scheduling/CSV functions api/publish-news.js runs
+                          (parseCSVRow, isActiveNow, buildAnnouncementsJson, buildMovingTextJson,
+                          ...) — deliberately duplicated-by-reference (api/publish-news.js
+                          `require()`s this exact file) rather than reimplemented, and kept OUTSIDE
+                          api/ specifically so a plain <script src> can load it in the browser: any
+                          file under api/ is itself a live Vercel serverless route, so a GET to
+                          /api/publish-news.js would hit the real cron-auth handler, not serve
+                          source. Loaded by teks-berjalan.html for the ticker preview panel — see
+                          its own file header for the full reasoning
+    pengumuman.html/.js ← Announcement slides CRUD — title/heading/text/image (upload to
+                          news-assets bucket OR URL, mutually exclusive — reuses ustaz.js's 3-way
+                          poster-save logic verbatim), start/end date, enabled, sort order. Owns
+                          the `announcements` Terbitkan button. Tetapan card edits `default_image`
+    teks-berjalan.html/.js ← Ticker lines CRUD — ↑/↓ buttons swap `sort_order` (no drag-drop
+                          library). A `kind='khutbah'` row edits its `prefix` instead of free text
+                          and shows the cached last-fetched khutbah title. Owns the `moving-text`
+                          Terbitkan button. Includes a "what will actually be published" preview
+                          panel (see publish-news-pure.js above) — necessary because, unlike
+                          pengumuman's client-filtered display, the ticker's scheduling is resolved
+                          server-side, so an admin otherwise has no way to see what Xibo will
+                          actually receive. Tetapan card edits `default_ticker_line`
 
 admin/ustaz.html  ← zero-JS redirect stub → admin/kuliah/ustaz.html (old bare /admin/ URL,
                      pre-module-restructure, kept working). admin/dashboard.html used to be a
@@ -189,9 +238,44 @@ action text NOT NULL,       -- infaq_kutipan_mingguan_create/update/delete |
                              -- infaq_project_create/update/delete/activate |
                              -- publish_monthly | publish_daily | publish_perbelanjaan
 target_label text, detail text
+
+-- news_announcements → news/data/announcements.json (see admin/news/ above)
+id uuid PK, title text NOT NULL, heading text, body_text text,  -- body_text → published JSON "text"
+image_url text, start_at date, end_at date,
+enabled boolean DEFAULT true, sort_order integer DEFAULT 0,
+created_at timestamptz, updated_at timestamptz,
+CHECK (image_url IS NOT NULL OR body_text IS NOT NULL)  -- mirrors news/script.js's isActive():
+                             -- an entry with neither can never display anything
+
+-- news_ticker → news/data/moving-text.json. Unlike announcements, this
+-- table's start_at/end_at/enabled are resolved SERVER-SIDE at publish time
+-- (api/publish-news.js's isActiveNow()), not by the display — Xibo's
+-- DataSet widget has no JS of ours to filter live.
+id uuid PK, message text NOT NULL,
+kind text DEFAULT 'static' CHECK (kind IN ('static','khutbah')),
+prefix text,                -- khutbah rows only, e.g. 'Khutbah Jumaat Minggu Ini: '
+start_at date, end_at date, enabled boolean DEFAULT true, sort_order integer DEFAULT 0,
+created_at timestamptz, updated_at timestamptz
+
+-- news_settings: key/value store, avoids hardcoding defaults/URLs into
+-- api/publish-news.js. Seeded keys: default_image, default_ticker_line,
+-- khutbah_csv_url, khutbah_last_title, khutbah_last_fetched_at (the last
+-- two are the khutbah fail-safe cache — api/publish-news.js writes them
+-- back on every successful CSV fetch, see Data Flow below)
+key text PK, value text, updated_at timestamptz
+
+-- news_activity_log: SEPARATE from activity_log/infaq_activity_log by the
+-- same deliberate-independence reasoning — otherwise identical shape
+id uuid PK, created_at timestamptz,
+actor_email text NOT NULL, actor_name text,
+action text NOT NULL,       -- news_announcement_create/update/delete |
+                             -- news_ticker_create/update/delete/reorder |
+                             -- news_settings_update |
+                             -- publish_announcements | publish_moving_text
+target_label text, detail text
 ```
 
-RLS is ON on all tables. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`. `admins` also grants `service_role` SELECT-only (added 2026-07-22 — `api/publish.js`/`api/publish-infaq.js` both look up the publishing admin's name from it; this table predates that lookup, so the grant was missing for a long time and failed silently rather than erroring, see Key Patterns).
+RLS is ON on all tables. `news_announcements`/`news_ticker`/`news_settings` follow the same 4-policy write-gated shape as every table added since §9 (`admin_can_write('news')`) — the one divergence from every other module's publish grants is `news_settings`, where `service_role` gets `SELECT, INSERT, UPDATE` (not SELECT-only), because `api/publish-news.js` writes the khutbah fail-safe cache back into it. See `admin/setup.sql` §10 and `database.md` §2.2 for the full detail. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`. `admins` also grants `service_role` SELECT-only (added 2026-07-22 — `api/publish.js`/`api/publish-infaq.js` both look up the publishing admin's name from it; this table predates that lookup, so the grant was missing for a long time and failed silently rather than erroring, see Key Patterns).
 
 ## Data Flow
 
@@ -222,6 +306,31 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
     progress for that file only
   → pushes exactly ONE of admin/infaq/data/{monthly,daily,perbelanjaan}.json to GitHub
   → no public reader yet — see What This Is
+
+news: Admin edits a row in admin/news/pengumuman.html or teks-berjalan.html
+  → insert/update/delete directly on Supabase `news_announcements` /
+    `news_ticker` (ticker reorder is 2 plain sort_order updates, no RPC)
+  → click Terbitkan on that same page (each owns its own button + target)
+  → POST /api/publish-news?target=announcements|moving-text (Bearer: session
+    token) — OR the daily Vercel cron hits the same endpoint with
+    GET + Authorization: Bearer <CRON_SECRET>, publishing BOTH targets
+  → api/publish-news.js reads news_announcements (announcements target) or
+    news_ticker (moving-text target) + news_settings (service role)
+  → announcements: buildAnnouncementsJson() keeps future/expired rows as-is
+    (news/script.js filters the active window live, on the display's clock)
+  → moving-text: buildMovingTextJson() FILTERS by isActiveNow() here (Xibo's
+    DataSet widget has no JS of ours to filter live) — a kind='khutbah' row
+    resolves via a CSV fetch of news_settings.khutbah_csv_url (the same feed
+    khutbah/index.html reads), falling back to the cached
+    khutbah_last_title on ANY failure (never publishes an error string),
+    omitting the row entirely if there's truly nothing usable; an empty
+    result falls back to one default_ticker_line row
+  → pushes news/data/announcements.json or news/data/moving-text.json to
+    GitHub, SKIPPING the commit if the content is byte-identical to what's
+    already there (so the daily cron doesn't manufacture empty commits)
+  → served from news/data/ (public, no-store cache header — vercel.json),
+    read by news/script.js (announcements) or configured directly into
+    Xibo's DataSet widget (moving-text)
 ```
 
 ## Key Patterns
@@ -318,9 +427,18 @@ All sidebar styling (colors, fixed positioning, the off-canvas mobile transform)
 
 **Cross-module overview (`admin/dashboard.html`/`.js`, added 2026-07-22):** the universal post-login landing page (see `defaultLandingPageFor` above) — gates each section by the same `role === 'super_admin' || permissions?.X` check `renderSidebar()`/`requireInfaqAccess()` already use, so a kuliah-only admin never sees infaq numbers and vice versa. Every figure is a fresh, independent query against the same tables the full pages already read (`schedule`+`ustaz`, `activity_log`, `infaq_kutipan_mingguan`/`infaq_perbelanjaan_bulanan`/`infaq_projects`/`infaq_projek_kutipan`) — nothing is cached or shared across pages, since this is a plain MPA with no client-side state persistence between page loads. `dashboard.js`'s queries deliberately mirror existing patterns rather than reusing their code directly (different page, no shared module system): the kuliah section mirrors `jadual.js`'s month-bounded `schedule` fetch, its `countFilledDays`-style truthy-field check, and its `activity_log` "last publish for this month's label" lookup; the infaq section is a narrower version of `ringkasan.js`'s `loadStats()`/`loadActiveProject()` — bulan-ini only (no bulan-lepas/tahun breakdown), since this is meant as a glance, not a replacement for `ringkasan.html`'s fuller view. The generic stat-card/progress-bar CSS these both use (`.stat-grid`/`.stat-card`/`.stat-label`/`.stat-value`/`.progress-track`/`.progress-fill`/`.section-header-row`/`.subsection-title`/`.goto-link` in `style.css`) was renamed from an `infaq-`-prefixed set (`ringkasan.html` was its only prior consumer) specifically so `dashboard.html` and `ringkasan.html` share one definition instead of two near-duplicate CSS blocks — if you add a 4th module's own glimpse section later, reuse these same classes rather than inventing new ones.
 
+**News module's dual-auth publish endpoint (`api/publish-news.js`, 2026-07-28) — the first Vercel cron in this repo, and the first publish endpoint with two independent auth paths on one route:** every prior publish endpoint (`api/publish.js`, `api/publish-infaq.js`) only ever accepts `POST` + a Supabase session Bearer token. `api/publish-news.js` also accepts `GET` + `Authorization: Bearer <CRON_SECRET>` — the shape Vercel Cron Jobs itself sends when a `CRON_SECRET` project env var is set (Vercel's own convention, not something this repo invented). **Fails closed:** if `CRON_SECRET` isn't set in the environment, every GET is rejected with a 500, never silently treated as "no auth required" — an admin publish button still works fine via POST regardless of whether the cron path is configured. The GET path publishes BOTH targets in one request (`actor_email: 'vercel-cron'` in `news_activity_log`); the POST path publishes exactly the one `?target=` requested, same as infaq's split. If a future module ever needs a cron too, follow this exact shape (fail-closed GET + CRON_SECRET) rather than inventing a new one.
+
+**The ticker preview panel's pure-logic file lives in `admin/news/`, not `api/` — a genuine repo-wide gotcha, not a style choice:** `admin/news/teks-berjalan.js` needs to run the *exact* scheduling logic `api/publish-news.js` runs (`isActiveNow()`, `buildMovingTextJson()`), so an admin can see what Xibo will actually receive before clicking Terbitkan. The natural move — `<script src="/api/publish-news.js">` — is a real trap: **any file under `api/` is a live Vercel serverless function route**, so a browser `GET` to that URL doesn't serve the file's source, it *invokes the handler* (hitting the fail-closed cron-auth branch and returning JSON, not runnable script). The fix was pulling the pure functions out into `admin/news/publish-news-pure.js` — an ordinary static file with zero Node/Vercel-only APIs, loaded as a plain global script in the browser and pulled in via `require()` from `api/publish-news.js` server-side. **If any future module wants a live client-side preview of server-computed publish logic, this is the pattern: put the pure logic in a static-served path, never inside `api/`.**
+
+**`news_settings`'s service_role grant is the one place a news RLS convention diverges from every other module (see Supabase Schema above):** `api/publish-news.js` isn't purely read-only against Supabase like `api/publish.js`/`api/publish-infaq.js` are — it also writes the khutbah fail-safe cache (`khutbah_last_title`/`khutbah_last_fetched_at`) back into `news_settings` on every successful CSV fetch, so `service_role` needs `INSERT, UPDATE` there in addition to `SELECT`, not the SELECT-only grant every other table's publish-read gets. Documented explicitly in `admin/setup.sql` §10 so it isn't "fixed" back to SELECT-only by someone pattern-matching against the other modules.
+
 ## Sensitive Files
 
 - `admin/` has no config files with secrets — credentials are Vercel env vars
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side only, never in browser code
 - `GITHUB_TOKEN` — Vercel env var only, used in `api/publish.js`
+- `CRON_SECRET` — Vercel env var only, used in `api/publish-news.js`'s GET/cron
+  auth path (see Key Patterns) — must be set before the `vercel.json` cron is
+  enabled, or the fail-closed check rejects every cron run
 - Supabase anon key in `app.js` is public (safe — RLS enforces access control)

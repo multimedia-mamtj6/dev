@@ -77,6 +77,7 @@ function openAddModal() {
     document.getElementById('edit-role').value = 'editor';
     document.getElementById('perm-kuliah').checked = true;
     document.getElementById('perm-infaq').checked = false;
+    document.getElementById('perm-news').checked = false;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -92,6 +93,7 @@ function openEditModal(email) {
     document.getElementById('edit-role').value = u.role;
     document.getElementById('perm-kuliah').checked = u.permissions?.kuliah !== false;
     document.getElementById('perm-infaq').checked = u.permissions?.infaq === true;
+    document.getElementById('perm-news').checked = u.permissions?.news === true;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -154,6 +156,7 @@ async function saveUser() {
     const perms = {
         kuliah: document.getElementById('perm-kuliah').checked,
         infaq:  document.getElementById('perm-infaq').checked,
+        news:   document.getElementById('perm-news').checked,
     };
     const before = originalEmail ? allUsers.find(u => u.email === originalEmail) : null;
 

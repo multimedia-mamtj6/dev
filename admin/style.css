@@ -482,6 +482,35 @@ input[type="file"] {
 }
 .log-module-badge.log-module-kuliah { background: #dbeafe; color: #1d4ed8; }
 .log-module-badge.log-module-infaq  { background: #dcfce7; color: #15803d; }
+.log-module-badge.log-module-pengumuman { background: #fef3c7; color: #b45309; }
+
+/* ── admin/news/: 4-state row status (pengumuman.js + teks-berjalan.js), same
+   pill shape as .log-module-badge above ── */
+.news-status-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.news-status-badge.news-status-active   { background: #dcfce7; color: #15803d; }
+.news-status-badge.news-status-upcoming { background: #dbeafe; color: #1d4ed8; }
+.news-status-badge.news-status-expired  { background: var(--border); color: var(--text-muted); }
+.news-status-badge.news-status-off      { background: #fee2e2; color: #b91c1c; }
+.news-status-badge.news-status-khutbah  { background: #fef3c7; color: #b45309; }
+
+/* ── admin/news/teks-berjalan.html: "what will actually be published" preview ── */
+.news-preview-card { padding: 1rem 1.25rem; }
+.news-preview-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+}
+.news-preview-list li { padding-left: 0.25rem; }
 
 .toggle-row { display: flex; align-items: center; gap: 0.625rem; }
 input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }

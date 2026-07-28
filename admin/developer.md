@@ -40,6 +40,10 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/infaq/projek.html`/`.js` | Fundraising project settings CRUD, links to projek-kutipan.html per row |
 | `admin/infaq/projek-kutipan.html`/`.js` | ONE project's individual dated donations (`?project=<id>`), paginated, owns `daily` Terbitkan (shown only for the active project) |
 | `admin/import-legacy-infaq-data.sql` | One-time bulk import of historical infaq data — see its own header |
+| `admin/news/news-common.js` | Shared across news pages: `requireNewsAccess()`, `publishNews()`/`loadLastPublishedNewsNote()`, `getSetting()`/`getSettings()`/`saveSetting()`, `computeStatus()`/`statusBadgeHtml()` |
+| `admin/news/publish-news-pure.js` | The exact scheduling/CSV pure functions `api/publish-news.js` runs (`isActiveNow`, `buildMovingTextJson`, ...) — lives outside `api/` so a browser `<script>` can load it directly; see its own file header |
+| `admin/news/pengumuman.html`/`.js` | Announcement slides CRUD (image upload-or-URL, start/end date, enabled, sort order), owns `announcements` Terbitkan |
+| `admin/news/teks-berjalan.html`/`.js` | Ticker lines CRUD (↑/↓ reorder, khutbah row's auto-sourced title), owns `moving-text` Terbitkan + the ticker preview panel |
 
 ---
 
@@ -221,6 +225,30 @@ Rebuilt from scratch 2026-07-21 to match the mosque's real recording pattern (se
 
 ---
 
+## news module JS (`admin/news/*.js`, added 2026-07-28)
+
+Two data pages + one shared file + one **shared-with-the-server** pure-logic file — see `admin/CLAUDE.md`'s Key Patterns for why `publish-news-pure.js` lives outside `api/`.
+
+### news-common.js
+- `requireNewsAccess()` — 1-line wrapper around `app.js`'s `requireModuleAccess('news')`, same pattern as `infaq-common.js`'s `requireInfaqAccess()`
+- `computeStatus(row, now = new Date())` / `statusBadgeHtml(status)` — the 4-state Aktif/Akan Datang/Tamat/Dimatikan label used by both pages' tables, purely derived from `enabled`/`start_at`/`end_at` on every render, never stored. **Not** the same code path as `api/publish-news.js`'s `isActiveNow()` (that's a boolean gate for the ticker only, resolved in MYT via `publish-news-pure.js`); this is a 4-way UI label using the admin's own browser clock — different purpose, deliberately not unified
+- `getSetting(key, fallback)` / `getSettings(keys)` / `saveSetting(key, value)` — thin wrappers over the `news_settings` key/value table
+- `publishNews(target, btnId)` / `loadLastPublishedNewsNote(action, elId)` — same shape as infaq's `publishInfaq()`/`loadLastPublishedInfaqNote()`, POSTs to `/api/publish-news?target=...`; also surfaces a distinct toast when the response comes back `{ unchanged: true }` (the skip-if-identical path, see the publish endpoint section below) rather than claiming a fresh publish happened
+
+### pengumuman.js
+- `loadAnnouncements()` — fetches the whole `news_announcements` table (small, like `ustaz`/infaq's weekly tables), ordered by `sort_order`
+- `saveAnnouncement()` — image upload-or-URL is mutually exclusive (validated client-side), reuses `ustaz.js`'s `saveUstaz()` 3-way save priority (remove flag > file upload > URL input > no change) against the `news-assets` bucket instead of `kuliah-assets`; also validates client-side that the row will have at least an image or `body_text` before ever hitting the DB `CHECK` constraint, so the error surfaces as a toast, not a raw Postgres error
+- `jenisLabel(row)` / `tempohLabel(row)` — small pure display formatters (Imej / Teks / Imej+Teks; date range or "Sentiasa")
+- Tetapan card — `loadAnnouncementSettings()`/`saveAnnouncementSettings()` edit `news_settings.default_image` directly (not part of the announcements table)
+
+### teks-berjalan.js
+- `moveTicker(id, direction)` — the ↑/↓ reorder implementation: finds the adjacent row in the already-loaded `allTicker` array, swaps their `sort_order` values with two parallel `UPDATE`s, logs one `news_ticker_reorder` activity row, reloads
+- `toggleKindFields()` — swaps the modal between the `message` input (kind='static') and the `prefix` input + a read-only "last known khutbah title" note sourced from `news_settings.khutbah_last_title`/`khutbah_last_fetched_at` (kind='khutbah') — no free-text message is ever stored for a khutbah row, the published line is always `prefix + <resolved title>`
+- `renderPreview()` — the ticker preview panel. Calls `buildMovingTextJson()` from the globally-loaded `publish-news-pure.js` directly against `allTicker` (the already-loaded rows), `cachedSettings.khutbah_last_title` as the khutbah stand-in, and `new Date(Date.now() + 8h)` as "now" — the exact same MYT-shift the real endpoint uses. **This is the real endpoint's own logic, not a hand-copied reimplementation** — see `admin/CLAUDE.md`'s Key Patterns for why that distinction is load-bearing. Re-rendered after every save/delete/reorder/settings-change so it never shows stale output
+- `cachedSettings` — populated once by `loadTickerSettings()`, read by both `toggleKindFields()` and `renderPreview()`; the khutbah title shown in the preview is only as fresh as the last successful publish's cache write, clearly labeled as such in the panel's own copy
+
+---
+
 ## Publish endpoint (`api/publish.js`)
 
 Vercel serverless function. Requires:
@@ -266,6 +294,27 @@ Reads only what its target needs: `target=monthly` → `infaq_kutipan_mingguan` 
 
 ---
 
+## Publish endpoint (`api/publish-news.js`, added 2026-07-28)
+
+Vercel serverless function retiring `news/moving-text/code.gs` (the old Sheets pipeline). Structurally modeled on `api/publish.js`/`api/publish-infaq.js` (GET-sha-then-PUT GitHub Contents API, `?target=` split), but two things are genuinely new here — see `admin/CLAUDE.md`'s Key Patterns for the full reasoning on both:
+
+- **Dual auth.** `POST ?target=announcements|moving-text` + a Supabase session Bearer token (the normal admin Terbitkan click) publishes exactly that one target. `GET` + `Authorization: Bearer <CRON_SECRET>` (the Vercel cron path, `vercel.json`) publishes **both** targets in one request, logging `actor_email: 'vercel-cron'`. Fails closed: a missing `CRON_SECRET` env var rejects every GET with a 500, it's never silently equivalent to "cron auth not required."
+- **Pure builders live in `admin/news/publish-news-pure.js`, not this file** — `require()`d in here, but physically outside `api/` so the exact same code can also run as a plain browser script for `teks-berjalan.html`'s preview panel. `api/publish-news.test.js` still imports them from `api/publish-news.js`'s own `module.exports` (re-exported there), so the test file's import path is unaffected by where the implementation actually lives.
+
+**`buildAnnouncementsJson(rows, settings)`** — drops `enabled=false` rows only; future/expired rows are published as-is, because `news/script.js` filters the active window live on the display's own clock. Maps `body_text` → the published `text` field, attaches `default_image` from `news_settings`.
+
+**`buildMovingTextJson(rows, settings, khutbahTitle, now)`** — unlike announcements, filters by `isActiveNow(row, now)` HERE, because Xibo's DataSet widget has no JS of ours to filter live. `khutbahTitle` is passed in already-resolved (see below) — this function itself never fetches anything, making it trivially pure/testable. Flattens to `{"moving-text":[{"Col1":...}]}`; an empty result falls back to exactly one row from `settings.default_ticker_line`.
+
+**`isActiveNow(row, now)`** — date-only `start_at`/`end_at` expand to the full day, boundary-inclusive both ends, via plain ISO string comparison against `mytDateString(now)` (reads `now`'s UTC getters, expecting `now` to already be MYT-shifted via `Date.now() + 8h` — sidesteps constructing per-row `Date` objects across timezones entirely). Deliberately cross-checked in `api/publish-news.test.js` against `news/script.js`'s own `isActive()`/`parseLocalDate()` on an identical matrix of window cases — the two must never disagree about what "active" means, even though one runs server-side in MYT-string-space and the other runs client-side with real `Date` objects on the display's local clock.
+
+**Khutbah resolution (`resolveKhutbahTitle`/`fetchKhutbahTitle`, `target=moving-text` only, and only when a `kind='khutbah'` row is actually active) — the actual point of this rewrite:** fetches `news_settings.khutbah_csv_url` (an 8s `AbortController` timeout), parses with `parseCSVRow()` (quote-aware, copied verbatim from `khutbah/index.html` — a naive `split(",")` truncates a title containing a comma), reads `rows[1][1]`. On success: returns the title AND writes it back to `news_settings.khutbah_last_title`/`khutbah_last_fetched_at` (service-role `UPDATE`, wrapped in try/catch so a cache-write failure never blocks the publish response). **On ANY failure** — non-200, timeout/abort, empty sheet, unparseable, or a value matching `looksLikeErrorText()` (`/^ERROR/i` or `/status:\s*\d{3}/i`) — falls back to the cached `khutbah_last_title` instead of ever publishing the failure itself. If that's also empty, returns `null` and `buildMovingTextJson` omits the khutbah row entirely. **This is the one gate the old Apps Script pipeline never had** — it forwarded a Sheet cell's contents unconditionally, which is exactly how a raw `"ERROR: ... Status: 503"` string ended up on the live ticker for weeks.
+
+**Skip-the-commit-when-unchanged (`pushJsonToGitHubIfChanged`):** decodes the existing file's content (already fetched for its SHA, same GitHub API call every publish endpoint already makes) and compares it to the newly-built JSON before deciding whether to PUT at all; returns `{ unchanged: true }` instead when they match. Without this, the daily cron would manufacture an empty commit every single day regardless of whether anything actually changed — the admin's own `publishNews()` (`news-common.js`) surfaces this as a distinct "tiada perubahan" toast rather than claiming a fresh publish happened.
+
+**Also writes a `news_activity_log` row on success** — same pattern as every other publish endpoint, `.ilike()` email matching included; skipped/no-op-safe (wrapped in try/catch) so a logging failure never turns a successful publish into an error response.
+
+---
+
 ## Activity log (`activity_log` table, `userlog.html`, super_admin only)
 
 See [`database.md`](database.md) for the full schema reference, RLS/GRANT model, and troubleshooting table — this section covers the app-level design only.
@@ -288,6 +337,8 @@ Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
 
 `upsert: true` is used so re-uploads don't fail on duplicate paths. Public URL retrieved with `getPublicUrl()`.
 
+**`news-assets` bucket (added 2026-07-28):** same public-read/authenticated-write shape as `kuliah-assets`, its own bucket rather than a prefix inside `kuliah-assets` — same 5-line `setup.sql` cost either way, and keeps each module's assets independently manageable. Upload path: `announcements/{safe-slug}-{timestamp}.{ext}`, see `pengumuman.js`'s `saveAnnouncement()`.
+
 ---
 
 ## Vercel config (`vercel.json`)
@@ -298,7 +349,14 @@ Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
     {
       "source": "/admin/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    },
+    {
+      "source": "/news/data/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
+  ],
+  "crons": [
+    { "path": "/api/publish-news", "schedule": "0 20 * * *" }
   ]
 }
 ```
@@ -306,3 +364,7 @@ Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
 `no-store` (not `max-age=0, must-revalidate`) is required here — `must-revalidate` still lets mobile Chrome serve the page from back-forward cache (bfcache) with no network request at all, so a stale copy with old JS can resurface after backgrounding the app or navigating back. `no-store` disables bfcache for these routes and forces a full re-fetch every visit.
 
 Since `admin/infaq/data/*.json` (the infaq module's published output — see the `api/publish-infaq.js` section above) lives under `/admin/`, it inherits this same `no-store` rule automatically — no separate `vercel.json` entry was needed when that path was chosen 2026-07-21. A future public-facing consumer of that JSON would want its own caching decision, since `no-store` on every request isn't necessarily the right call for a public page.
+
+**`/news/data/(.*)` (added 2026-07-28)** needed its own explicit entry, unlike infaq's JSON — `news/data/` sits outside `/admin/`, since it has a real public consumer (Xibo + `news/script.js`), so it doesn't inherit the admin-wide rule. `news/CLAUDE.md` had flagged the missing cache rule as the first suspect for any future stale-content report; this closes that gap.
+
+**`crons` (added 2026-07-28, the first cron in this repo):** Vercel hits `GET /api/publish-news` daily at `0 20 * * *` (UTC) = 04:00 MYT, before Subuh — chosen so a stale ticker line is refreshed before the mosque's first prayer of the day, not mid-afternoon. Vercel automatically attaches `Authorization: Bearer <CRON_SECRET>` to cron-triggered requests once that env var is set on the project (see `database.md` §1.9) — this is Vercel's own convention, nothing custom on this repo's side. **Must set `CRON_SECRET` in Vercel before relying on this** — the endpoint fails closed (500) on every cron attempt otherwise, per `admin/CLAUDE.md`'s Key Patterns.

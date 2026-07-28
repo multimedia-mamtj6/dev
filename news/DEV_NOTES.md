@@ -9,6 +9,24 @@ the prompt (DO NOT DELETE)
 Session memo for the `news/` announcement display. Read `news/CLAUDE.md` for
 the architecture reference; this file is the session-to-session context.
 
+## Session 2 — 2026-07-28 (the CMS from session 1's deferred item got built — but in `admin/`, not here)
+
+Session 1 ended by flagging `admin/news/` + `api/publish-news.js` as
+explicitly deferred future work. Two days later, a pre-written plan
+(`news/newplan.md`) for exactly that was implemented in full — see
+`admin/DEV_NOTES.MD` Session 15 for the actual build log, since almost
+none of the new code lives in this folder. **What changed in `news/`
+itself: nothing in `index.html`/`script.js`/`style.css`, exactly as
+session 1 designed it to.** The only things that changed here are
+`data/announcements.json` and `data/moving-text.json` gaining a real
+writer (previously hand-edited/Apps-Script-fed, now written by
+`api/publish-news.js`), and `moving-text/code.gs` being retired (superseded,
+not deleted — kept for history). If you're back in this folder wondering
+why a display bug doesn't reproduce with hand-edited JSON, check whether
+it's actually a publish-endpoint problem now (`admin/CLAUDE.md`/
+`admin/database.md`/`admin/developer.md`) before assuming it's this
+folder's own logic — the failure surface split in two.
+
 ## Session 1 — 2026-07-26 (the whole thing was born today)
 
 ### What happened, in order

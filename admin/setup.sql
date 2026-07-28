@@ -560,3 +560,184 @@ CREATE POLICY "auth_delete_infaq_perbelanjaan_bulanan" ON infaq_perbelanjaan_bul
 -- 9.6 api/publish.js and api/publish-infaq.js are unaffected by all of the
 -- above — both use the service_role key server-side, which bypasses RLS
 -- entirely (RLS only ever applies to the `authenticated`/`anon` roles).
+
+
+-- ── 10. News module ───────────────────────────────────────────────────────────
+-- Pengumuman (announcement slides) + Teks Berjalan (Xibo ticker) for
+-- admin/news/, retiring the old Google Sheet → Apps Script → GitHub pipeline
+-- (news/moving-text/code.gs) that shipped a raw "ERROR: ... Status: 503"
+-- string to the live ticker for 3 weeks unnoticed — see news/newplan.md and
+-- api/publish-news.js's khutbah-resolution comment for the fail-safe this
+-- motivated. Not run automatically — run manually in the Supabase SQL
+-- editor, same as every section above. Written directly against the §9
+-- write-gated model (admin_can_write()/RLS already exist by this point in
+-- the script) rather than the old open-FOR-ALL-then-migrate two-step §8's
+-- infaq tables had to go through — a brand-new module added today starts
+-- gated from its first CREATE POLICY.
+
+-- news_announcements → news/data/announcements.json (read by news/script.js
+-- directly — our own JS resolves start_at/end_at scheduling client-side, on
+-- the display device's own clock, unlike news_ticker below).
+CREATE TABLE IF NOT EXISTS news_announcements (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title      TEXT NOT NULL,               -- internal label, also published as JSON "title"
+    heading    TEXT,
+    body_text  TEXT,                        -- maps to published JSON "text"
+    image_url  TEXT,
+    start_at   DATE,
+    end_at     DATE,
+    enabled    BOOLEAN NOT NULL DEFAULT true,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- Mirrors news/script.js's isActive(): an entry with neither field can
+    -- never display anything, so it's rejected here, not just silently
+    -- published as a blank slide.
+    CONSTRAINT news_announcements_has_content CHECK (image_url IS NOT NULL OR body_text IS NOT NULL)
+);
+
+-- news_ticker → news/data/moving-text.json, read DIRECTLY by Xibo's DataSet
+-- widget (no JS of ours runs there) — so unlike news_announcements,
+-- start_at/end_at/enabled are resolved SERVER-SIDE by api/publish-news.js
+-- at publish time, not on the display. An expired ticker line only
+-- disappears when something republishes it — see the daily cron in
+-- vercel.json.
+CREATE TABLE IF NOT EXISTS news_ticker (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message    TEXT NOT NULL,
+    kind       TEXT NOT NULL DEFAULT 'static' CHECK (kind IN ('static', 'khutbah')),
+    prefix     TEXT,                        -- khutbah rows only, e.g. 'Khutbah Jumaat Minggu Ini: '
+    start_at   DATE,
+    end_at     DATE,
+    enabled    BOOLEAN NOT NULL DEFAULT true,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- news_settings: key/value store so defaults/URLs aren't hardcoded into
+-- api/publish-news.js. Seeded below — admin/news/'s Tetapan cards UPDATE
+-- these rows in normal use, they don't insert new keys.
+CREATE TABLE IF NOT EXISTS news_settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- khutbah_csv_url is the same published CSV khutbah/index.html already
+-- reads reliably (see its own quote-aware parseCSVRow()) — a different,
+-- better source than whatever formula was feeding the old Sheet cell.
+INSERT INTO news_settings (key, value) VALUES
+    ('default_image',          '/news/default.svg'),
+    ('default_ticker_line',    'Selamat datang ke Masjid Al-Mukhlisin Taman Jaya 6'),
+    ('khutbah_csv_url',        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQDFOdEOVKqjeS1mErtCrV-Z1-dvArp3wteWAEyRM6KKzXN90yggh0Bc7Nq3yhYKdAEo1NkAiV3lZGd/pub?gid=0&single=true&output=csv'),
+    ('khutbah_last_title',     ''),
+    ('khutbah_last_fetched_at', '')
+ON CONFLICT (key) DO NOTHING;
+
+CREATE INDEX IF NOT EXISTS idx_news_announcements_sort ON news_announcements(sort_order);
+CREATE INDEX IF NOT EXISTS idx_news_ticker_sort         ON news_ticker(sort_order);
+
+ALTER TABLE news_announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE news_ticker        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE news_settings      ENABLE ROW LEVEL SECURITY;
+
+-- SELECT open (any authenticated admin can see news data regardless of
+-- permissions.news, same as every other module's data tables — see §9),
+-- writes gated on admin_can_write('news').
+CREATE POLICY "auth_select_news_announcements" ON news_announcements FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_news_announcements" ON news_announcements FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('news'));
+CREATE POLICY "auth_update_news_announcements" ON news_announcements FOR UPDATE TO authenticated
+    USING (public.admin_can_write('news')) WITH CHECK (public.admin_can_write('news'));
+CREATE POLICY "auth_delete_news_announcements" ON news_announcements FOR DELETE TO authenticated
+    USING (public.admin_can_write('news'));
+
+CREATE POLICY "auth_select_news_ticker" ON news_ticker FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_news_ticker" ON news_ticker FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('news'));
+CREATE POLICY "auth_update_news_ticker" ON news_ticker FOR UPDATE TO authenticated
+    USING (public.admin_can_write('news')) WITH CHECK (public.admin_can_write('news'));
+CREATE POLICY "auth_delete_news_ticker" ON news_ticker FOR DELETE TO authenticated
+    USING (public.admin_can_write('news'));
+
+CREATE POLICY "auth_select_news_settings" ON news_settings FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_news_settings" ON news_settings FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('news'));
+CREATE POLICY "auth_update_news_settings" ON news_settings FOR UPDATE TO authenticated
+    USING (public.admin_can_write('news')) WITH CHECK (public.admin_can_write('news'));
+CREATE POLICY "auth_delete_news_settings" ON news_settings FOR DELETE TO authenticated
+    USING (public.admin_can_write('news'));
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON news_announcements TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON news_ticker        TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON news_settings       TO authenticated;
+
+-- api/publish-news.js reads news_announcements/news_ticker (SELECT only —
+-- publish never writes them) via the service-role key. news_settings is the
+-- ONE place this diverges from infaq's publish grants: the endpoint also
+-- WRITES news_settings.khutbah_last_title/khutbah_last_fetched_at back as
+-- the fail-safe cache (see api/publish-news.js's khutbah resolution), so
+-- service_role needs INSERT/UPDATE there too, not just SELECT.
+GRANT SELECT ON news_announcements, news_ticker TO service_role;
+GRANT SELECT, INSERT, UPDATE ON news_settings TO service_role;
+
+-- news_activity_log: verbatim copy of infaq_activity_log's template — its
+-- own table (independent auditability, same reasoning as infaq), open
+-- FOR ALL policy (logActivity() is fire-and-forget from many call
+-- sites/roles — see database.md §3 for why activity-log tables are
+-- deliberately left ungated even after §9's write-gating pass).
+CREATE TABLE IF NOT EXISTS news_activity_log (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_email  TEXT NOT NULL,
+    actor_name   TEXT,
+    action       TEXT NOT NULL,
+    target_label TEXT,
+    detail       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_news_activity_log_created_at ON news_activity_log(created_at DESC);
+
+ALTER TABLE news_activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all_news_activity_log" ON news_activity_log
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON news_activity_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON news_activity_log TO service_role;
+
+-- Extend admins.permissions default so a from-scratch database (or any
+-- admin row created after this point) includes the news flag — existing
+-- rows keep whatever permissions they already have (a missing "news" key
+-- reads false everywhere permissions.news is checked), same migration
+-- shape as §8's infaq addition.
+ALTER TABLE admins ALTER COLUMN permissions SET DEFAULT '{"kuliah": true, "infaq": false, "news": false}'::jsonb;
+
+-- news-assets storage bucket: announcement images. Public read,
+-- authenticated write — same 4-policy shape as §4's kuliah-assets (not
+-- module-gated at the storage-policy level, matching that bucket's own
+-- precedent). Path convention: announcements/<slug>-<Date.now()>.<ext>
+-- (see admin/news/pengumuman.js).
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('news-assets', 'news-assets', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "public_read_news_assets" ON storage.objects
+    FOR SELECT
+    USING (bucket_id = 'news-assets');
+
+CREATE POLICY "auth_write_news_assets" ON storage.objects
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = 'news-assets');
+
+CREATE POLICY "auth_update_news_assets" ON storage.objects
+    FOR UPDATE
+    TO authenticated
+    USING (bucket_id = 'news-assets');
+
+CREATE POLICY "auth_delete_news_assets" ON storage.objects
+    FOR DELETE
+    TO authenticated
+    USING (bucket_id = 'news-assets');

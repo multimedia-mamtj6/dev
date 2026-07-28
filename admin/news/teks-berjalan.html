@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teks Berjalan — Admin MAMTJ6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+
+<body>
+
+  <div class="sidebar-mobile-topbar">
+    <button class="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <span>Admin MAMTJ6</span>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeNav()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">Admin MAMTJ6</div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </aside>
+
+  <div class="admin-content">
+  <div class="page">
+    <div class="section-header">
+      <h1 class="section-title">Teks Berjalan</h1>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-primary" id="add-ticker-btn" onclick="openAddModal()">+ Tambah Baris</button>
+        <button class="btn btn-ghost" id="publish-ticker-btn" onclick="publishNews('moving-text', 'publish-ticker-btn')">Terbitkan</button>
+      </div>
+    </div>
+    <p class="schedule-actions-note" id="last-published-ticker" style="display:none;font-weight:600;font-size:0.8125rem"></p>
+    <p style="color:var(--text-muted);margin-top:-0.75rem;margin-bottom:1.25rem">
+      Dibaca terus oleh widget DataSet Xibo — jadual di sini hanya berkuat kuasa selepas <strong>Terbitkan</strong>
+      (atau cron harian automatik). Guna panel pratonton di bawah untuk lihat apa yang akan diterbitkan.
+    </p>
+
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:70px">Susun</th>
+            <th>Baris</th>
+            <th style="width:100px">Jenis</th>
+            <th style="width:180px">Tempoh</th>
+            <th style="width:110px">Status</th>
+            <th style="width:150px">Tindakan</th>
+          </tr>
+        </thead>
+        <tbody id="ticker-tbody">
+          <tr><td colspan="6" class="state-cell">Memuatkan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-header-row">
+      <p class="subsection-title">Pratonton Terbitan</p>
+      <button class="btn btn-ghost btn-sm" onclick="renderPreview()">Muat Semula Pratonton</button>
+    </div>
+    <div class="card news-preview-card">
+      <p style="color:var(--text-muted);font-size:0.8125rem;margin-bottom:0.75rem">
+        Baris sebenar yang akan ditulis ke <code>moving-text.json</code> jika Terbitkan diklik sekarang —
+        dikira menggunakan logik yang <strong>sama persis</strong> dengan endpoint terbitan
+        (<code>admin/news/publish-news-pure.js</code>). Tajuk khutbah menggunakan tajuk tersimpan terakhir;
+        nilai sebenar disahkan semula semasa Terbitkan.
+      </p>
+      <ol id="preview-list" class="news-preview-list"></ol>
+    </div>
+
+    <p class="subsection-title">Tetapan</p>
+    <div class="card" style="padding:1rem 1.25rem">
+      <div class="form-group" style="margin-bottom:0.5rem">
+        <label for="setting-default-line">Baris Lalai <span style="font-weight:400;color:var(--text-muted)">(dipaparkan bila tiada baris aktif)</span></label>
+        <input type="text" id="setting-default-line" placeholder="Selamat datang ke Masjid Al-Mukhlisin Taman Jaya 6">
+      </div>
+      <button class="btn btn-ghost btn-sm" id="save-settings-btn" onclick="saveTickerSettings()">Simpan Tetapan</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ── Add / Edit modal ── -->
+  <div class="modal-overlay" id="ticker-modal" onclick="handleOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="ticker-modal-title">Tambah Baris</span>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+
+      <input type="hidden" id="edit-id">
+
+      <div class="form-group">
+        <label for="edit-kind">Jenis*</label>
+        <select id="edit-kind" onchange="toggleKindFields()">
+          <option value="static">Statik</option>
+          <option value="khutbah">Khutbah (auto — tarik dari Google Sheet)</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="static-field-group">
+        <label for="edit-message">Teks Baris*</label>
+        <input type="text" id="edit-message" placeholder="Cth: Sila pastikan anak-anak anda tidak membuat bising">
+      </div>
+
+      <div class="form-group" id="khutbah-field-group" style="display:none">
+        <label for="edit-prefix">Awalan <span style="font-weight:400;color:var(--text-muted)">(diikuti tajuk khutbah automatik)</span></label>
+        <input type="text" id="edit-prefix" placeholder="Khutbah Jumaat Minggu Ini: ">
+        <p id="khutbah-last-title-note" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.375rem"></p>
+      </div>
+
+      <div class="form-group" style="display:flex;gap:0.75rem">
+        <div style="flex:1">
+          <label for="edit-start">Mula</label>
+          <input type="date" id="edit-start">
+        </div>
+        <div style="flex:1">
+          <label for="edit-end">Tamat</label>
+          <input type="date" id="edit-end">
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400;color:var(--text);margin:0">
+          <input type="checkbox" id="edit-enabled" checked> Aktif
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" id="ticker-save-btn" onclick="saveTickerRow()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete confirm modal ── -->
+  <div class="modal-overlay" id="delete-modal" onclick="handleDeleteOverlay(event)">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-header">
+        <span class="modal-title">Padam Baris</span>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:1.25rem">
+        Adakah anda pasti mahu memadam
+        <strong id="delete-label" style="color:var(--text)"></strong>? Tindakan ini tidak boleh diundur.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+        <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Padam</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin/app.js"></script>
+  <script src="/admin/news/news-common.js"></script>
+  <script src="/admin/news/publish-news-pure.js"></script>
+  <script src="/admin/news/teks-berjalan.js"></script>
+</body>
+
+</html>

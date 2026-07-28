@@ -8,26 +8,49 @@ Architecture reference for Claude Code when working in `news/`.
 for the mosque's Xibo digital-signage screens, built 2026-07-26 (see
 `news/DEV_NOTES.md` for the session history). It's the same "URL a signage
 player points at" pattern as `kuliah/paparan/`, but for general
-announcements instead of lecture posters: content is a hand-edited JSON
-file, each announcement has an active window (`start_at`/`end_at`), and
-when nothing is active the screen shows a default slide. **No database, no
-admin module, no server code** — a deliberate manual-JSON v1 (a future
-`admin/news/` module + `api/publish-news.js` was designed but deferred;
-the display page needs zero changes when it arrives).
+announcements instead of lecture posters: content lives in
+`data/announcements.json`, each announcement has an active window
+(`start_at`/`end_at`), and when nothing is active the screen shows a
+default slide. **This folder itself still has no database, no admin
+module, no server code** — that logic lives entirely in `admin/news/` +
+`api/publish-news.js`, added 2026-07-28 (see `admin/CLAUDE.md`), which
+write `data/announcements.json` the same way this file always expected:
+**the display page needed, and got, zero changes** when the CMS arrived,
+exactly as designed when `news/` shipped as manual-JSON v1.
+
+A second file, `data/moving-text.json`, feeds the scrolling **ticker**
+(read directly by Xibo's DataSet widget, not by anything in this folder)
+— also now published by `admin/news/` + `api/publish-news.js`, replacing
+the old Google Sheet → Apps Script → GitHub pipeline
+(`news/moving-text/code.gs`, retired). See `admin/news/CLAUDE.md`-equivalent
+docs in `admin/CLAUDE.md`/`admin/database.md` for the ticker's own
+scheduling model, which is deliberately different from this folder's — it
+has no client-side JS of its own to filter an active window live, so its
+scheduling is resolved server-side at publish time instead.
 
 ## File Structure
 
 ```
 news/
-  index.html              ← Entry point (two stacked .slide-layer divs + .message-box)
-  script.js               ← All logic: fetch, active-window filter, rotation, crossfade, routing
-  style.css               ← Fullscreen display styles, all 3 slide kinds, fade transition
-  default.svg             ← Default "Selamat Datang" slide (1920×1080, green/gold, pure SVG text)
-  data/announcements.json ← THE content file — hand-edited (single source of truth)
-  README.md               ← Editor-facing guide (URL modes, JSON field rules)
-  DEV_NOTES.md            ← Session memo (bugs, lessons, vibe — read before touching anything)
-  CLAUDE.md               ← This file
-  developer.md            ← Developer guide (testing harness, tuning knobs, edge cases)
+  index.html               ← Entry point (two stacked .slide-layer divs + .message-box)
+  script.js                ← All logic: fetch, active-window filter, rotation, crossfade, routing
+  style.css                ← Fullscreen display styles, all 3 slide kinds, fade transition
+  default.svg              ← Default "Selamat Datang" slide (1920×1080, green/gold, pure SVG text)
+  data/announcements.json  ← Announcement content — published by admin/news/pengumuman.html
+                              (api/publish-news.js), read by script.js above
+  data/moving-text.json    ← Xibo DataSet ticker content — published by
+                              admin/news/teks-berjalan.html (api/publish-news.js), read DIRECTLY
+                              by Xibo (nothing in THIS folder reads it)
+  moving-text/code.gs      ← RETIRED (2026-07-28) — the old Google Sheet → Apps Script → GitHub
+                              pipeline that used to write moving-text.json. Kept in the repo for
+                              history; superseded by api/publish-news.js. See newplan.md
+  README.md                ← Editor-facing guide (URL modes, JSON field rules)
+  DEV_NOTES.md             ← Session memo (bugs, lessons, vibe — read before touching anything)
+  CLAUDE.md                ← This file
+  developer.md             ← Developer guide (testing harness, tuning knobs, edge cases)
+  newplan.md               ← Implementation plan for the admin/news/ CMS module (2026-07-28) —
+                              historical record of the design, now built; see admin/CLAUDE.md for
+                              the current architecture reference rather than re-deriving it here
 ```
 
 ## URL modes (Xibo Webpage widget)

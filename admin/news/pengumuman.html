@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengumuman — Admin MAMTJ6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+
+<body>
+
+  <div class="sidebar-mobile-topbar">
+    <button class="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <span>Admin MAMTJ6</span>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeNav()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">Admin MAMTJ6</div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </aside>
+
+  <div class="admin-content">
+  <div class="page">
+    <div class="section-header">
+      <h1 class="section-title">Pengumuman</h1>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-primary" id="add-ann-btn" onclick="openAddModal()">+ Tambah Pengumuman</button>
+        <button class="btn btn-ghost" id="publish-announcements-btn" onclick="publishNews('announcements', 'publish-announcements-btn')">Terbitkan</button>
+      </div>
+    </div>
+    <p class="schedule-actions-note" id="last-published-announcements" style="display:none;font-weight:600;font-size:0.8125rem"></p>
+    <p style="color:var(--text-muted);margin-top:-0.75rem;margin-bottom:1.25rem">
+      Paparan skrin Xibo di <code>/news</code>. Pengumuman akan/tamat tempoh tetap dipaparkan di sini
+      (ditapis secara langsung oleh skrin mengikut jadual) — Terbitkan bila-bila sahaja selepas menambah/mengubah.
+    </p>
+
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:70px">Susunan</th>
+            <th>Tajuk</th>
+            <th style="width:110px">Jenis</th>
+            <th style="width:180px">Tempoh</th>
+            <th style="width:110px">Status</th>
+            <th style="width:120px">Tindakan</th>
+          </tr>
+        </thead>
+        <tbody id="ann-tbody">
+          <tr><td colspan="6" class="state-cell">Memuatkan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="subsection-title">Tetapan</p>
+    <div class="card" style="padding:1rem 1.25rem">
+      <div class="form-group" style="margin-bottom:0.5rem">
+        <label for="setting-default-image">Imej Lalai <span style="font-weight:400;color:var(--text-muted)">(dipaparkan bila tiada pengumuman aktif)</span></label>
+        <input type="text" id="setting-default-image" placeholder="/news/default.svg">
+      </div>
+      <button class="btn btn-ghost btn-sm" id="save-settings-btn" onclick="saveAnnouncementSettings()">Simpan Tetapan</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ── Add / Edit modal ── -->
+  <div class="modal-overlay" id="ann-modal" onclick="handleOverlay(event)">
+    <div class="modal modal-poster">
+      <div class="modal-header">
+        <span class="modal-title" id="ann-modal-title">Tambah Pengumuman</span>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+
+      <input type="hidden" id="edit-id">
+
+      <div class="ustaz-form-columns">
+        <div class="ustaz-form-col">
+          <div class="form-group">
+            <label for="edit-title">Tajuk <span style="font-weight:400;color:var(--text-muted)">(label dalaman, tidak dipaparkan)*</span></label>
+            <input type="text" id="edit-title" placeholder="Cth: Kelas Tahsin Ogos">
+          </div>
+          <div class="form-group">
+            <label for="edit-heading">Tajuk Kecil <span style="font-weight:400;color:var(--text-muted)">(dipaparkan, pilihan)</span></label>
+            <input type="text" id="edit-heading" placeholder="Cth: Pengumuman">
+          </div>
+          <div class="form-group">
+            <label for="edit-text">Teks</label>
+            <textarea id="edit-text" rows="4" placeholder="Kandungan pengumuman. Baris baru dibenarkan."></textarea>
+          </div>
+          <div class="form-group" style="display:flex;gap:0.75rem">
+            <div style="flex:1">
+              <label for="edit-start">Mula</label>
+              <input type="date" id="edit-start">
+            </div>
+            <div style="flex:1">
+              <label for="edit-end">Tamat</label>
+              <input type="date" id="edit-end">
+            </div>
+          </div>
+          <div class="form-group" style="display:flex;gap:1.5rem;align-items:center">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400;color:var(--text);margin:0">
+              <input type="checkbox" id="edit-enabled" checked> Aktif
+            </label>
+            <div style="flex:1">
+              <label for="edit-sort" style="font-size:0.75rem">Susunan</label>
+              <input type="number" id="edit-sort" step="1" value="0" style="max-width:90px">
+            </div>
+          </div>
+        </div>
+
+        <div class="ustaz-form-col ustaz-form-col-poster">
+          <div class="form-group" id="ann-image-current-group" style="display:none">
+            <label>Imej Semasa</label>
+            <img id="ann-image-current-img" src="" alt="Imej semasa" class="poster-modal-preview">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeAnnImage()" style="margin-top:0.5rem">Buang Imej</button>
+          </div>
+
+          <div class="form-group">
+            <label>Muat Naik Imej Baru <span style="font-weight:400;color:var(--text-muted)">(1920×1080)</span></label>
+            <input type="file" id="edit-image" accept="image/jpeg,image/png,image/webp">
+            <div id="ann-image-preview" style="margin-top:0.5rem"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Atau Gunakan URL Imej</label>
+            <input type="url" id="edit-image-url" placeholder="https://contoh.com/gambar.jpg">
+          </div>
+
+          <p style="color:var(--text-muted);font-size:0.75rem;margin-top:-0.25rem">
+            Perlu sekurang-kurangnya imej ATAU teks — pengumuman tanpa kedua-duanya tidak boleh disimpan.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" id="ann-save-btn" onclick="saveAnnouncement()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete confirm modal ── -->
+  <div class="modal-overlay" id="delete-modal" onclick="handleDeleteOverlay(event)">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-header">
+        <span class="modal-title">Padam Pengumuman</span>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:1.25rem">
+        Adakah anda pasti mahu memadam
+        <strong id="delete-title" style="color:var(--text)"></strong>? Tindakan ini tidak boleh diundur.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+        <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Padam</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin/app.js"></script>
+  <script src="/admin/news/news-common.js"></script>
+  <script src="/admin/news/pengumuman.js"></script>
+</body>
+
+</html>

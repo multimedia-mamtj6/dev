@@ -100,10 +100,15 @@ serverless function, no Supabase, no database (that's why there is no
 image URLs editors put in the JSON — prefer repo-hosted `/media/...` or
 Supabase Storage over hotlinks.
 
-## Planned next step (not built)
+## CMS (built 2026-07-28)
 
-`admin/news/` CMS module + `api/publish-news.js` writing
-`data/announcements.json` via the same Supabase→GitHub publish shape as
-`api/publish-infaq.js`. The display page reads only the JSON, so that
-migration requires zero display changes. See `admin/CLAUDE.md` for the
-module-addition checklist (MODULES array, permissions, RLS grants).
+`admin/news/` (Pengumuman + Teks Berjalan pages) + `api/publish-news.js`
+now write `data/announcements.json` and `data/moving-text.json`
+respectively, via the same Supabase→GitHub publish shape as
+`api/publish-infaq.js` — plus a daily Vercel cron (`vercel.json`) so an
+expired ticker line eventually disappears even with no admin action. The
+display page in THIS folder needed zero changes, as designed. Full
+architecture: `admin/CLAUDE.md`, `admin/database.md`, `admin/developer.md`.
+Retires the old `news/moving-text/code.gs` Sheets pipeline — see
+`news/newplan.md` for why (an unvalidated Sheet cell shipped a raw
+`"ERROR: ... Status: 503"` to the live ticker for weeks).

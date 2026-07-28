@@ -86,11 +86,27 @@ The email must exactly match the Google account you'll log in with. After this o
 
 No new Vercel environment variables are needed — `api/publish-infaq.js` reuses the same `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`GITHUB_TOKEN`/`GITHUB_REPO` from [1.5](#15-configure-vercel-environment-variables).
 
+### 1.8 Set up the news module (optional — separate from kuliah/infaq above)
+
+`admin/news/` (CMS for `news/`'s Xibo digital-signage displays) is a third, independent module — skip this section if you don't need it. Its schema lives in `setup.sql` §10, written directly against the write-gated §9 model (no old-style open-policy step to migrate through, since this module was added after §9 already existed):
+
+1. In the Supabase SQL Editor, select and run `setup.sql` §10 in full (`── 10. News module ──` through the end of that section), as one paste — same "run RLS-enable and policies together" reasoning as §8's infaq note above.
+2. Set the **`CRON_SECRET`** Vercel environment variable (see [1.9](#19-configure-the-news-module-cron) below) — required before the daily ticker/announcement republish cron can run, and `api/publish-news.js` fails closed (rejects every cron request) without it.
+3. In `users.html`, grant `permissions.news` to whichever admins need it (defaults to `false` on new rows, same opt-in shape as `permissions.infaq`).
+4. Verify: log in as an admin with `permissions.news`, confirm the "Pengumuman" nav group appears with both "Pengumuman" and "Teks Berjalan" links. Add a test row on either page, confirm it appears in Supabase's Table Editor, then click Terbitkan and confirm a new commit lands on `news/data/announcements.json` or `news/data/moving-text.json`.
+5. Optional: if you want the auto-sourced khutbah ticker line, add one `news_ticker` row with `kind = 'khutbah'` and a `prefix` (e.g. `'Khutbah Jumaat Minggu Ini: '`) via `teks-berjalan.html` — `khutbah_csv_url` is already seeded in `news_settings` pointing at the same published CSV `khutbah/index.html` reads.
+
+No new Supabase-side Vercel environment variables beyond `CRON_SECRET` — `api/publish-news.js` reuses the same `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`GITHUB_TOKEN`/`GITHUB_REPO` from [1.5](#15-configure-vercel-environment-variables).
+
+### 1.9 Configure the news module cron
+
+`vercel.json`'s `crons` array hits `GET /api/publish-news` once a day (`0 20 * * *` = 20:00 UTC = 04:00 MYT, before Subuh). Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` on cron-triggered requests when a `CRON_SECRET` project environment variable is set — that's Vercel's own convention, not a custom header this repo invented. Set `CRON_SECRET` to any random secret string in Vercel Dashboard → Project → Settings → Environment Variables; no matching client-side value is ever needed since only Vercel's own cron infrastructure calls the GET path. **Until `CRON_SECRET` is set, the cron path fails closed with a 500 on every attempt** — this doesn't block the admin's own POST-based Terbitkan buttons, which use a Supabase session token instead and work regardless.
+
 ---
 
 ## 2. Database structure
 
-Four kuliah tables + four infaq tables (§2.1 below), one storage bucket. No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and the two activity-log tables also from their respective `api/publish*.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs; all business logic lives in the client JS.
+Four kuliah tables + four infaq tables (§2.1 below) + four news tables (§2.2 below), one storage bucket per module (`kuliah-assets`, `news-assets`). No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and the activity-log tables also from their respective `api/publish*.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs (and the `admin_can_write()`/`admin_is_super_admin()` `SECURITY DEFINER` helper functions, §3); all business logic lives in the client JS.
 
 ```
 admins ──────────────┐
@@ -299,9 +315,99 @@ target_label TEXT
 detail       TEXT
 ```
 
-- **Not yet shown anywhere in the UI** — `userlog.html` only reads kuliah's `activity_log`, so every infaq accountability row is currently write-only. Known gap, see `DEV_NOTES.MD`'s WHAT MIGHT COME NEXT.
+- `userlog.html` merges this into the same timeline as `activity_log`/`news_activity_log` (fixed 2026-07-22 for infaq, extended 2026-07-28 for news) — see `userlog.js`'s `LOG_SOURCES` array.
 - Written by `logActivity(action, targetLabel, detail, 'infaq_activity_log')` — `app.js`'s shared `logActivity()` gained an optional 4th param (table name, defaults to kuliah's `activity_log`) specifically so infaq pages could reuse it without duplicating the function.
 - **`publish_monthly`/`publish_daily`/`publish_perbelanjaan` (2026-07-22) are 3 distinct actions, not one shared `publish`** — `api/publish-infaq.js` publishes each of its 3 output files independently (`?target=monthly|daily|perbelanjaan`), each logging its own row so `kutipan.html`/`perbelanjaan.html`/`projek-kutipan.html` can each show their own "last published" note next to their own Terbitkan button (moved off `ringkasan.html` the same day — see `admin/CLAUDE.md`'s Key Patterns).
+
+---
+
+## 2.2 News tables
+
+Independent of both the kuliah and infaq tables above. Added 2026-07-28, retiring the old Google Sheet → Apps Script → GitHub pipeline (`news/moving-text/code.gs`) — see `admin/CLAUDE.md`'s "What this is" for why (the unvalidated `"ERROR: ... Status: 503"` incident).
+
+```
+news_announcements (no FK to anything)      news_ticker (no FK to anything)
+news_settings (key/value, no FK)            news_activity_log (no FK, plain-text snapshots only)
+```
+
+### `news_announcements`
+
+One row per Pengumuman slide. Read by `news/script.js`, which resolves the active `start_at`/`end_at` window **client-side**, on the display device's own clock — so this table's rows are published essentially as-is (only `enabled = false` rows are dropped), future/expired ones included.
+
+```sql
+id         UUID PK
+title      TEXT NOT NULL      -- internal label, also published as JSON "title"
+heading    TEXT
+body_text  TEXT               -- maps to published JSON "text"
+image_url  TEXT
+start_at   DATE
+end_at     DATE
+enabled    BOOLEAN NOT NULL DEFAULT true
+sort_order INTEGER NOT NULL DEFAULT 0
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CHECK (image_url IS NOT NULL OR body_text IS NOT NULL)
+```
+
+- The `CHECK` constraint mirrors `news/script.js`'s `isActive()`: an entry with neither an image nor text can never actually display anything, so it's rejected at the database rather than allowed to publish as a blank slide.
+- Images are uploaded to the `news-assets` Storage bucket (see below) or entered as a URL — same mutually-exclusive upload-or-URL pattern as `ustaz.poster_url`, reusing `ustaz.js`'s save logic verbatim (`admin/news/pengumuman.js`).
+- `sort_order` is a plain number field edited directly in the Add/Edit modal (unlike `news_ticker`'s ↑/↓ reorder buttons below) — announcements don't need drag-reordering since there are typically few of them at once.
+
+### `news_ticker`
+
+One row per scrolling-ticker line. Read **directly** by Xibo's DataSet widget (`news/data/moving-text.json`) — no JS of ours runs there, so unlike `news_announcements`, `start_at`/`end_at`/`enabled` are resolved **server-side, at publish time** (`api/publish-news.js`'s `isActiveNow()`). An expired line only actually disappears from the live ticker once something republishes — which is why the daily cron (`vercel.json`, see `database.md` §1.9) exists at all.
+
+```sql
+id         UUID PK
+message    TEXT NOT NULL
+kind       TEXT NOT NULL DEFAULT 'static' CHECK (kind IN ('static', 'khutbah'))
+prefix     TEXT               -- khutbah rows only, e.g. 'Khutbah Jumaat Minggu Ini: '
+start_at   DATE
+end_at     DATE
+enabled    BOOLEAN NOT NULL DEFAULT true
+sort_order INTEGER NOT NULL DEFAULT 0
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+```
+
+- A `kind = 'khutbah'` row has no `message` — its published line is `prefix + <the resolved khutbah title>`, fetched from the same published CSV `khutbah/index.html` reads (`news_settings.khutbah_csv_url`). If that fetch fails for any reason, `api/publish-news.js` falls back to `news_settings.khutbah_last_title` (a cache it writes on every successful fetch); if that's empty too, the row is omitted entirely — it is never replaced with a placeholder or error text.
+- `sort_order` is changed only via `teks-berjalan.html`'s ↑/↓ buttons (two plain `UPDATE`s swapping adjacent rows' `sort_order`), not a manually-typed number — deliberately no drag-drop library, matching this repo's no-framework rule.
+
+### `news_settings`
+
+Key/value store so defaults and the khutbah CSV URL aren't hardcoded into `api/publish-news.js`.
+
+```sql
+key        TEXT PK
+value      TEXT
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+```
+
+Seeded rows (see `setup.sql` §10): `default_image` (`/news/default.svg`), `default_ticker_line` (the ticker's empty-state fallback), `khutbah_csv_url` (the published CSV URL), `khutbah_last_title` and `khutbah_last_fetched_at` (the khutbah fail-safe cache, both start empty and are only ever written by `api/publish-news.js` itself — the admin UI never edits these two directly, though `teks-berjalan.html`'s khutbah row editor displays them read-only).
+
+### `news_activity_log`
+
+Same independent-auditability shape as `activity_log`/`infaq_activity_log`.
+
+```sql
+id           UUID PK
+created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+actor_email  TEXT NOT NULL
+actor_name   TEXT
+action       TEXT NOT NULL  -- news_announcement_create/update/delete |
+                             -- news_ticker_create/update/delete/reorder |
+                             -- news_settings_update |
+                             -- publish_announcements | publish_moving_text
+target_label TEXT
+detail       TEXT
+```
+
+- Merged into `userlog.html`'s timeline from day one (unlike infaq's log, which had a gap until 2026-07-22) — `userlog.js`'s `LOG_SOURCES` array got a third entry alongside kuliah and infaq.
+- `actor_email = 'vercel-cron'` for rows written by the daily cron's GET-triggered publish — distinguishable from a real admin's Terbitkan click in the log.
+
+### Storage: `news-assets` bucket
+
+Public bucket for announcement images, same 4-policy shape as `kuliah-assets` (public read, authenticated write/update/delete — not gated by `permissions.news` at the storage-policy level, matching `kuliah-assets`' own precedent). Upload path convention: `announcements/{safe-slug}-{timestamp}.{ext}` (see `pengumuman.js`'s `saveAnnouncement()`).
 
 ---
 
@@ -365,3 +471,4 @@ The infaq tables (§2.1) follow this exact same pattern — explicit `GRANT`s to
 - **Schema changes:** always update `setup.sql` to match live reality when you change something by hand in the SQL Editor — this file is the single source of truth for "how do I reproduce this database from nothing." A live schema that's drifted from `setup.sql` is exactly the gap that made the `admins` table missing in the first place.
 - **Bulk-importing historical infaq data:** `admin/import-legacy-infaq-data.sql` is a one-time script for seeding `infaq_kutipan_mingguan`/`infaq_perbelanjaan_bulanan`/`infaq_projects`/`infaq_projek_kutipan` from a transcribed Sheet. Sections A/B are idempotent (`ON CONFLICT DO NOTHING` against their unique constraints); Section C (the project + its donations) is **not** — it has no unique constraint to conflict against (legitimate same-day duplicate donations are expected in real data), so re-running it creates duplicate rows. Read the file's own header before reusing this pattern for a different dataset.
 - **infaq's `Jumlah Terkumpul`/rollups can legitimately disagree with an older, separately-maintained figure** (e.g. from a Sheet or a different site) — this system always computes from raw rows, so if an older system's own summary cell had drifted from its own underlying log (a real, confirmed case found 2026-07-21, see [§4 Troubleshooting](#4-troubleshooting)), don't "fix" the discrepancy by inserting an adjustment row here. Figure out which source is actually wrong first.
+- **Disabling the news module's cron:** if `news/` is ever retired or Xibo is repointed elsewhere, remove the `crons` entry from `vercel.json` — an orphaned cron would keep publishing an unused `news/data/moving-text.json` daily forever otherwise. There's no "pause" flag; deleting the entry (or unsetting `CRON_SECRET`, which fails it closed) are the only two ways to stop it.

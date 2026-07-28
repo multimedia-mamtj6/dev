@@ -46,6 +46,21 @@ const LOG_SOURCES = [
             publish_perbelanjaan:          'Terbitkan Perbelanjaan',
         },
     },
+    {
+        module: 'Pengumuman', table: 'news_activity_log',
+        actionLabels: {
+            news_announcement_create: 'Tambah Pengumuman',
+            news_announcement_update: 'Kemaskini Pengumuman',
+            news_announcement_delete: 'Padam Pengumuman',
+            news_ticker_create:       'Tambah Baris Teks Berjalan',
+            news_ticker_update:       'Kemaskini Baris Teks Berjalan',
+            news_ticker_delete:       'Padam Baris Teks Berjalan',
+            news_ticker_reorder:      'Susun Semula Teks Berjalan',
+            news_settings_update:     'Kemaskini Tetapan Pengumuman',
+            publish_announcements:    'Terbitkan Pengumuman',
+            publish_moving_text:      'Terbitkan Teks Berjalan',
+        },
+    },
 ];
 
 (async () => {
