@@ -175,6 +175,8 @@ created_at timestamptz
 -- ustaz: penceramah registry
 id uuid PK, full_name text NOT NULL, short_name text NOT NULL,
 tajuk_kuliah text, poster_url text,
+square_url text,  -- square-ratio poster variant, any resolution (added 2026-07-29,
+                   -- no live consumer yet — see Key Patterns below)
 created_at timestamptz, updated_at timestamptz
 
 -- schedule: one row per date
@@ -391,6 +393,8 @@ All sidebar styling (colors, fixed positioning, the off-canvas mobile transform)
 - `pendingRemovePoster` → `poster_url: null`
 - New file or URL entered → `poster_url: newValue`
 - Neither → omit `poster_url` from payload (preserves existing)
+
+**Square poster (`ustaz.square_url`, added 2026-07-29) — a second, independent field, same 3-way save logic duplicated verbatim, not shared:** built ahead of any actual consumer, for a future square-ratio use case (`kuliah/paparan/` or similar signage variant hasn't been designed yet). `ustaz.html`'s modal has its own upload/URL/current-image/remove group below the existing poster fields; `ustaz.js` tracks it with a fully separate `pendingRemoveSquarePoster` flag and `newSquareUrl` variable — deliberately not refactored into one shared upload helper with `poster_url`'s block, since the two fields' upload paths differ (`posters/` vs `posters-square/`, same `kuliah-assets` bucket — the bucket's RLS gates on `bucket_id` only, no path-prefix policy, so no new Storage policy was needed) and keeping them fully parallel keeps a future "square poster only" or "landscape poster only" behavior change from accidentally touching both. `api/publish.js` forwards `square_url` into the published JSON's `subuh`/`maghrib` ustaz objects exactly where `poster_url` already is (same `|| null` fallback) — unused by any current page, but avoids a second `api/publish.js` change whenever a consumer is finally built. **If you build the square poster's actual display use case, decide then whether the duplicated save logic is worth collapsing into a shared helper — don't preemptively refactor now.**
 
 **Cache-busting:** `vercel.json` serves `Cache-Control: no-store` for `/admin/(.*)` and `/kuliah/jadual/(.*)`. `no-store` (not `max-age=0, must-revalidate`) is required — `must-revalidate` still lets mobile Chrome serve the page from bfcache with zero network request, so a stale copy with old JS can resurface after backgrounding the app. `no-store` disables bfcache for these routes.
 

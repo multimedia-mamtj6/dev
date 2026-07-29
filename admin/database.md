@@ -147,7 +147,9 @@ id           UUID PK
 short_name   TEXT UNIQUE NOT NULL   -- shown everywhere in the UI (dropdowns, pills, log)
 full_name    TEXT NOT NULL          -- used in published JSON, formal contexts
 tajuk_kuliah TEXT                   -- lecture topic, optional
-poster_url   TEXT                   -- Supabase Storage public URL, optional
+poster_url   TEXT                   -- Supabase Storage public URL, optional (landscape, ~1920x1080 convention)
+square_url   TEXT                   -- square-ratio poster variant, any resolution, optional (added
+                                     -- 2026-07-29 — no live consumer yet, same upload-or-URL pattern)
 created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
@@ -155,7 +157,8 @@ updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 - `short_name` is `UNIQUE` — this is what breaks if you try to add two ustaz with the same short name (see [Troubleshooting](#4-troubleshooting)).
 - Sort order is **never** done via Supabase `.order('short_name')` — Postgres sorts that lexicographically (`"Ustaz 10"` before `"Ustaz 2"`), not numerically. Every page that lists ustaz sorts client-side with `localeCompare({ numeric: true })` instead. Don't add `.order()` back.
 - Deleting a row is blocked in the UI (`ustaz.js`'s `confirmDelete()`) if the ustaz is still referenced in any `schedule` row — but nothing stops that check being bypassed by direct SQL, so the FK's `ON DELETE SET NULL` (below) is the real safety net.
-- Poster files uploaded to Storage are **not** cleaned up when a poster is replaced or removed — old files are simply orphaned in the `kuliah-assets` bucket. Known gap, see [Maintenance](#3-maintenance).
+- Poster files uploaded to Storage are **not** cleaned up when a poster is replaced or removed — old files are simply orphaned in the `kuliah-assets` bucket. Known gap, see [Maintenance](#3-maintenance). Applies equally to `square_url` files (`posters-square/` prefix, same bucket).
+- `square_url` is independent of `poster_url` — either, both, or neither can be set. `ustaz.js`'s save logic for it is a parallel copy of `poster_url`'s 3-way (remove/new-value/unchanged), not shared code — see `admin/CLAUDE.md` Key Patterns.
 
 ### `schedule`
 
@@ -204,7 +207,7 @@ detail       TEXT            -- human-readable before→after diff, or a summary
 
 ### Storage: `kuliah-assets` bucket
 
-Public bucket for ustaz poster images. Public read (anyone can view a poster URL), authenticated-only write/update/delete. Upload path convention: `posters/{safe-short-name}-{timestamp}.{ext}` (see `ustaz.js`'s `saveUstaz()`).
+Public bucket for ustaz poster images. Public read (anyone can view a poster URL), authenticated-only write/update/delete. Upload path convention: `posters/{safe-short-name}-{timestamp}.{ext}` for the landscape poster, `posters-square/{safe-short-name}-{timestamp}.{ext}` for the square variant (added 2026-07-29) — same bucket, same RLS (gated on `bucket_id` only, no path-prefix policy), see `ustaz.js`'s `saveUstaz()`.
 
 ---
 

@@ -2,6 +2,7 @@
 let allUstaz          = [];
 let deletingId        = null;
 let pendingRemovePoster = false;
+let pendingRemoveSquarePoster = false;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
@@ -73,6 +74,11 @@ function openAddModal() {
     document.getElementById('poster-preview').innerHTML = '';
     document.getElementById('poster-current-group').style.display = 'none';
     pendingRemovePoster = false;
+    document.getElementById('edit-poster-square').value      = '';
+    document.getElementById('edit-poster-square-url').value  = '';
+    document.getElementById('poster-square-preview').innerHTML = '';
+    document.getElementById('poster-square-current-group').style.display = 'none';
+    pendingRemoveSquarePoster = false;
     document.getElementById('ustaz-modal').classList.add('open');
 }
 
@@ -99,12 +105,26 @@ function openEditModal(id) {
         document.getElementById('poster-current-group').style.display = 'none';
     }
 
+    document.getElementById('edit-poster-square').value      = '';
+    document.getElementById('edit-poster-square-url').value  = '';
+    document.getElementById('poster-square-preview').innerHTML = '';
+    pendingRemoveSquarePoster = false;
+
+    if (u.square_url) {
+        document.getElementById('poster-square-current-group').style.display = '';
+        document.getElementById('poster-square-current-img').src = u.square_url;
+        document.getElementById('poster-square-current-url').textContent = u.square_url;
+    } else {
+        document.getElementById('poster-square-current-group').style.display = 'none';
+    }
+
     document.getElementById('ustaz-modal').classList.add('open');
 }
 
 function closeUstazModal() {
     document.getElementById('ustaz-modal').classList.remove('open');
     pendingRemovePoster = false;
+    pendingRemoveSquarePoster = false;
 }
 
 function removePoster() {
@@ -113,6 +133,14 @@ function removePoster() {
     document.getElementById('edit-poster').value     = '';
     document.getElementById('edit-poster-url').value = '';
     document.getElementById('poster-preview').innerHTML = '';
+}
+
+function removeSquarePoster() {
+    pendingRemoveSquarePoster = true;
+    document.getElementById('poster-square-current-group').style.display = 'none';
+    document.getElementById('edit-poster-square').value     = '';
+    document.getElementById('edit-poster-square-url').value = '';
+    document.getElementById('poster-square-preview').innerHTML = '';
 }
 
 function handleUstazOverlay(e) {
@@ -136,6 +164,9 @@ function buildUstazDiffText(before, after) {
     if (after.posterChanged) {
         parts.push(after.posterRemoved ? 'Poster dibuang' : 'Poster dikemaskini');
     }
+    if (after.squarePosterChanged) {
+        parts.push(after.squarePosterRemoved ? 'Poster segi empat sama dibuang' : 'Poster segi empat sama dikemaskini');
+    }
     return parts.length ? parts.join('; ') : null;
 }
 
@@ -146,6 +177,8 @@ async function saveUstaz() {
     const topic          = document.getElementById('edit-topic').value.trim();
     const posterFile     = document.getElementById('edit-poster').files[0];
     const posterUrlInput = document.getElementById('edit-poster-url').value.trim();
+    const squareFile      = document.getElementById('edit-poster-square').files[0];
+    const squareUrlInput  = document.getElementById('edit-poster-square-url').value.trim();
 
     if (!fullName) {
         showToast('Nama penuh diperlukan', 'error');
@@ -159,6 +192,10 @@ async function saveUstaz() {
     }
     if (posterFile && posterUrlInput) {
         showToast('Pilih sama ada muat naik fail atau URL gambar, bukan kedua-dua.', 'error');
+        return;
+    }
+    if (squareFile && squareUrlInput) {
+        showToast('Pilih sama ada muat naik fail atau URL gambar segi empat sama, bukan kedua-dua.', 'error');
         return;
     }
 
@@ -193,6 +230,32 @@ async function saveUstaz() {
         newPosterUrl = posterUrlInput;
     }
 
+    let newSquareUrl = null;
+
+    if (squareFile) {
+        const ext      = squareFile.name.split('.').pop().toLowerCase();
+        const safeName = shortName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        const filename = `posters-square/${safeName}-${Date.now()}.${ext}`;
+
+        const { error: uploadErr } = await db.storage
+            .from('kuliah-assets')
+            .upload(filename, squareFile, { upsert: true, contentType: squareFile.type });
+
+        if (uploadErr) {
+            showToast('Gagal muat naik poster segi empat sama: ' + uploadErr.message, 'error');
+            saveBtn.disabled    = false;
+            saveBtn.textContent = 'Simpan';
+            return;
+        }
+
+        const { data: { publicUrl } } = db.storage
+            .from('kuliah-assets')
+            .getPublicUrl(filename);
+        newSquareUrl = publicUrl;
+    } else if (squareUrlInput) {
+        newSquareUrl = squareUrlInput;
+    }
+
     const payload = {
         full_name:    fullName,
         short_name:   shortName,
@@ -203,6 +266,11 @@ async function saveUstaz() {
         payload.poster_url = null;
     } else if (newPosterUrl) {
         payload.poster_url = newPosterUrl;
+    }
+    if (pendingRemoveSquarePoster) {
+        payload.square_url = null;
+    } else if (newSquareUrl) {
+        payload.square_url = newSquareUrl;
     }
 
     let error;
@@ -225,6 +293,7 @@ async function saveUstaz() {
         const after = {
             full_name: fullName, short_name: shortName, tajuk_kuliah: topic || null,
             posterChanged: pendingRemovePoster || !!newPosterUrl, posterRemoved: pendingRemovePoster,
+            squarePosterChanged: pendingRemoveSquarePoster || !!newSquareUrl, squarePosterRemoved: pendingRemoveSquarePoster,
         };
         const diff = buildUstazDiffText(before, after);
         if (diff) await logActivity('ustaz_update', shortName, diff);
@@ -315,15 +384,20 @@ async function confirmDelete() {
 
 // ─── Poster preview before upload ─────────────────────────────────────────────
 function setupPosterPreview() {
-    document.getElementById('edit-poster').addEventListener('change', e => {
+    wireOnePosterPreview('edit-poster', 'poster-preview');
+    wireOnePosterPreview('edit-poster-square', 'poster-square-preview');
+}
+
+function wireOnePosterPreview(inputId, previewId) {
+    document.getElementById(inputId).addEventListener('change', e => {
         const file = e.target.files[0];
         if (!file) {
-            document.getElementById('poster-preview').innerHTML = '';
+            document.getElementById(previewId).innerHTML = '';
             return;
         }
         const reader = new FileReader();
         reader.onload = ev => {
-            document.getElementById('poster-preview').innerHTML =
+            document.getElementById(previewId).innerHTML =
                 `<img src="${ev.target.result}" class="preview-img" alt="Preview">`;
         };
         reader.readAsDataURL(file);

@@ -143,7 +143,7 @@ module.exports = async function handler(req, res) {
 
     // ── 3. Fetch ustaz lookup from Supabase ─────────────────────────────────
     const ustazRes = await fetch(
-        `${supabaseUrl}/rest/v1/ustaz?select=id,full_name,tajuk_kuliah,poster_url`,
+        `${supabaseUrl}/rest/v1/ustaz?select=id,full_name,tajuk_kuliah,poster_url,square_url`,
         {
             headers: {
                 'apikey':        serviceKey,
@@ -195,12 +195,14 @@ module.exports = async function handler(req, res) {
                 nama_penceramah: subuhUstaz.full_name,
                 tajuk_kuliah:    subuhUstaz.tajuk_kuliah || null,
                 poster_url:      subuhUstaz.poster_url  || null,
+                square_url:      subuhUstaz.square_url  || null,
                 ...(row.subuh_khas ? { khas: true } : {}),
             } : null),
             maghrib:   row.maghrib_pending ? { pending: true, ...(row.maghrib_khas ? { khas: true } : {}) } : (maghribUstaz ? {
                 nama_penceramah: maghribUstaz.full_name,
                 tajuk_kuliah:    maghribUstaz.tajuk_kuliah || null,
                 poster_url:      maghribUstaz.poster_url  || null,
+                square_url:      maghribUstaz.square_url  || null,
                 ...(row.maghrib_khas ? { khas: true } : {}),
             } : null),
             cuti_umum: row.cuti_umum || null,
