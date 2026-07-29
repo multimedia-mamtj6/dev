@@ -157,7 +157,20 @@ function buildDayCell(dayNumber, year, month, dataByDate, todayString) {
         blocks += createEmptyLectureBlock('maghrib');
     }
 
-    inner += `<div class="lecture-content">${blocks}</div>`;
+    // Cell-level highlight classes — computed from the rendered blocks HTML
+    // rather than relying on CSS :has(), which older WebView2/Chromium
+    // builds (e.g. an un-updated Xibo signage player) silently don't support.
+    // See kuliah/CLAUDE.md for why this replaced the :has()-based CSS.
+    const blockCount = (blocks.match(/class="lecture-block\b/g) || []).length;
+    const isShared   = blockCount > 1;
+    const hasKhas    = /\bis-khas\b/.test(blocks);
+    const hasYasin   = /\byasin-block\b/.test(blocks);
+
+    let contentClass = 'lecture-content';
+    if (hasKhas) contentClass += ' has-khas';
+    if (hasYasin) contentClass += isShared ? ' has-yasin-shared' : ' has-yasin-solo';
+
+    inner += `<div class="${contentClass}">${blocks}</div>`;
 
     return `<td class="${cellClass}">${inner}</td>`;
 }

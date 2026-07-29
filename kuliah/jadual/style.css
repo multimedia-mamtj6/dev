@@ -220,8 +220,12 @@ main {
 
 /* Yasiin & Tahlil — solo day: green fills the whole cell.
    When it shares the cell with another session, the block-level rule
-   below colors only its own slot instead (see .yasin-block). */
-.lecture-content:has(.yasin-block):not(:has(.lecture-block + .lecture-block)) {
+   below colors only its own slot instead (see .yasin-block).
+   .has-yasin-solo/.has-yasin-shared are added by script.js's buildDayCell()
+   — NOT CSS :has() — since older WebView2/Chromium builds (Xibo signage
+   players in particular) silently don't support :has() at all; see
+   kuliah/CLAUDE.md. */
+.lecture-content.has-yasin-solo {
     background-color: #c3ffc5;
 }
 
@@ -323,7 +327,9 @@ main {
 /* =========================================================
    Special — Kuliah Khas
    ========================================================= */
-.lecture-content:has(.lecture-block.is-khas) {
+/* .has-khas is added by script.js's buildDayCell(), not CSS :has() — see
+   the .has-yasin-solo comment above for why. */
+.lecture-content.has-khas {
     background-color: #f3e8ff;
 }
 
@@ -370,16 +376,18 @@ main {
 
 /* Yasin isn't gated to a specific weekday — when it shares the cell with
    another session, shrink to fit and color only its own slot (not the
-   whole cell) instead of overflowing the fixed-height cell */
-.lecture-content:has(.lecture-block + .lecture-block) .arabic-text {
+   whole cell) instead of overflowing the fixed-height cell.
+   .has-yasin-shared is added by script.js's buildDayCell(), not CSS :has()
+   — see the .has-yasin-solo comment above for why. */
+.lecture-content.has-yasin-shared .arabic-text {
     font-size: 1.7vmin;
 }
 
-.lecture-content:has(.lecture-block + .lecture-block) .yasin-title {
+.lecture-content.has-yasin-shared .yasin-title {
     font-size: 1.1vmin;
 }
 
-.lecture-content:has(.lecture-block + .lecture-block) .yasin-block {
+.lecture-content.has-yasin-shared .yasin-block {
     gap: 0.15vmin;
     background-color: #c3ffc5;
     border-radius: 3px;
