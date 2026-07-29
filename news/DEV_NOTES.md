@@ -9,6 +9,92 @@ the prompt (DO NOT DELETE)
 Session memo for the `news/` announcement display. Read `news/CLAUDE.md` for
 the architecture reference; this file is the session-to-session context.
 
+## Session 4 — 2026-07-29, later the same day (pure Q&A, no code — the display's own refresh mechanism, why hard-refresh sometimes needs a few tries, and a "what is a dynamic site" detour)
+
+### What happened, in order
+
+No files touched in this folder at all this session — a chain of "just answer"
+questions, each building on the last, with a natural off-ramp at the end.
+
+1. "What makes the news page update the content automatically?" — answered by
+   pointing at the real mechanism: one 60s timer in `initNewsDisplay()`
+   (`news/script.js`) that calls `refreshData()` (silent background fetch,
+   keeps last-known-good data on failure) then `reevaluate()` every tick.
+2. "Can reduce the capping updates to 5 minutes?" — genuinely ambiguous (the
+   phrase "capping" echoed my own earlier description of the OLD, already-
+   removed 10-minute `<meta refresh>` mechanism from session 2's Bug 5, not
+   the CURRENT 60-second interval, which is already faster than 5 minutes).
+   I asked a clarifying question via `AskUserQuestion` rather than guess which
+   direction they meant; the user rejected that tool call outright and asked a
+   different, more concrete question instead — see below.
+3. **The real question underneath:** "why if i hard refresh ctrl f5, the
+   content is not updating? it takes several hard refresh to update." Traced
+   through the actual mechanics: the JSON fetch already has a `?v=timestamp`
+   cache-buster AND `vercel.json`'s `Cache-Control: no-store` on
+   `/news/data/(.*)` — both browser-cache and CDN-cache are already defeated
+   for that specific request, so this isn't a caching bug in this folder's own
+   code. Landed on the most likely explanation instead: **Vercel's own
+   deployment pipeline** — Terbitkan → GitHub commit → brand-new Vercel
+   build+deploy, and a fresh deployment needs a short build+global-edge-
+   propagation window before every edge location is serving it; a hard
+   refresh immediately after Terbitkan can land on a not-yet-updated edge
+   node, and repeated refreshes have a chance of hitting a different,
+   already-updated one. **This is a hypothesis, not independently confirmed**
+   — I suggested checking the Vercel dashboard's Deployments tab timestamp
+   against the refresh attempts next time to actually verify it, but that
+   check hasn't happened yet as of this note.
+4. "So the page is not dynamic?" → "what is dynamic site" — two follow-up
+   conceptual questions, answered by contrasting this repo's actual static-
+   site-plus-client-JS architecture (files on a CDN, "publishing" = a new git
+   commit + redeploy, no live server-side query per request) against what a
+   true dynamic site would do instead (query a database live, per request, no
+   rebuild/redeploy step at all) — tied back to `news/`'s own Terbitkan flow
+   as the concrete example throughout, not left as abstract theory.
+5. User started to react, then said "nvm" — the thread ended there, no
+   further action requested.
+
+### The dynamic — read this to re-sync
+
+- **This is the same "just answer" gear documented in sessions 1-3, but
+  worth noting a new wrinkle: an ambiguous question is a real signal to
+  clarify, not to guess-and-implement — and the user is comfortable flatly
+  rejecting a clarifying question and just re-asking more concretely
+  instead.** Don't take that rejection as friction; it resolved into a
+  better, more answerable question two turns later.
+- **Pure conceptual/educational Q&A ("what is a dynamic site") is a
+  legitimate mode for this user, not a detour to rush past.** They're
+  building a real mental model of how their own site works, one concrete
+  question at a time, and each answer landed better by tying straight back
+  to a mechanism already in `news/`'s own code (Terbitkan, the JSON fetch)
+  rather than staying abstract.
+- Mood: curious, low-stakes, comfortable trailing off once satisfied ("ok
+  nvm") — no pressure to force the "reduce to 5 minutes" question to a
+  concrete outcome once the real underlying confusion (why hard-refresh
+  seems flaky) was actually resolved.
+
+### Bugs found & fixed (and the lessons)
+
+No code bugs this session — pure explanation. One **flagged-but-unconfirmed
+hypothesis worth carrying forward**: the "several hard refreshes needed
+after Terbitkan" symptom is most likely Vercel build+edge-propagation
+latency, NOT a caching bug in this folder's fetch logic (which is already
+correctly cache-busted + `no-store`). *Lesson: before proposing a code fix
+for a "stale content" symptom, first rule out deployment-pipeline latency —
+not everything that looks like a caching bug is one, especially on a repo
+where "publish" always means "new deployment," never a live query.* If this
+comes up again, the next step is a real timing check (Vercel dashboard
+deploy-ready timestamp vs. refresh attempts), not a code change — nothing in
+`news/`'s own fetch/cache logic needs touching based on what's known so far.
+
+### Current state at session end (session 4)
+
+Nothing in `news/` changed. The auto-refresh mechanism (60s silent
+`refreshData()`+`reevaluate()`, see session 2) is unchanged and working as
+designed. The "several hard refreshes" symptom remains unconfirmed as
+deployment latency rather than something else — worth an actual timing
+check next time someone's testing right after a Terbitkan click, before
+assuming it's settled either way.
+
 ## Session 3 — 2026-07-29 (a small, focused tuning task — character limits on
 the two `admin/news/` CMS forms — that turned into a live lesson about
 guessing thresholds vs. measuring real content)

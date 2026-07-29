@@ -166,6 +166,7 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `pendingRemovePoster` — boolean flag; if true, `saveUstaz()` sets `poster_url: null`
 - `removePoster()` — sets flag, hides current poster block, clears inputs
 - Poster save priority: remove flag > file upload > URL input > no change
+- `square_url` (added 2026-07-29) — a second, independent poster field, no live consumer yet. `pendingRemoveSquarePoster`/`removeSquarePoster()` mirror the above exactly but as a fully separate flag/function, not shared code — uploads to `posters-square/{safe-short-name}-{timestamp}.{ext}` in the same `kuliah-assets` bucket. `wireOnePosterPreview(inputId, previewId)` is the one bit that WAS generalized (both the landscape and square file inputs' live preview wiring share this one function)
 
 ### users.js
 - Only accessible if `currentAdmin.role === 'super_admin'` — redirects otherwise
@@ -335,6 +336,7 @@ Records who changed what: schedule day edits, bulk duplicate/clear (one summary 
 Bucket: `kuliah-assets` (public)
 
 Poster upload path: `posters/{safe-short-name}-{timestamp}.{ext}`
+Square poster upload path (added 2026-07-29): `posters-square/{safe-short-name}-{timestamp}.{ext}` — same bucket, no separate RLS policy needed (gated on `bucket_id` only, no path-prefix policy)
 
 `upsert: true` is used so re-uploads don't fail on duplicate paths. Public URL retrieved with `getPublicUrl()`.
 

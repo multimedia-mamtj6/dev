@@ -1,6 +1,6 @@
 # DEV NOTES — admin
 
-_Last updated: 2026-07-25 | For next-context-window Claude_
+_Last updated: 2026-07-29 | For next-context-window Claude_
 
 **ARCHIVE SPLIT NOTICE (2026-07-25):** this file was compacted for token cost — SESSION HISTORY below is now **summary-only** (2-4 sentences per session), and the full function-level build log for every session lives in `admin/DEV_NOTES_ARCHIVE.md` instead (never read by default, only on demand). This was a deliberate, user-requested trade: an Explore/Plan agent audit confirmed every cross-reference to a specific session number, in this file and every other `admin/*.md` doc, resolves through THE VIBE's narrative or a fact already independently restated in CRITICAL PATTERNS/CURRENT STATE — never through SESSION HISTORY's detailed build-log text — so nothing was lost by moving it out. **Going forward, keep it this way**: write each new session's SESSION HISTORY entry here as a short summary ending in `*(full detail: admin/DEV_NOTES_ARCHIVE.md)*`, and append the actual function-level detail as a new `## Session N` section at the end of `DEV_NOTES_ARCHIVE.md` — don't let full build logs creep back into this file, or the size just grows back over the next several sessions.
 
@@ -173,6 +173,10 @@ Admin edits schedule in admin/kuliah/jadual.html
 
 ## SESSION HISTORY
 
+### Session 16 (2026-07-29 — small, build-ahead-of-need feature: `ustaz.square_url`, a second independent poster field)
+
+User asked a scoped "is this possible" question first (explicitly "just answer, do not edit the code"), for a future square-ratio ustaz poster — confirmed the field name (`square_url`, their own pick), confirmed it'd live on the existing `admin/kuliah/ustaz.html` menu (yes), then "ok proceed." Built: `admin/setup.sql` (`ustaz.square_url TEXT` + migration `ALTER`), a second upload/URL/current-image/remove group in `ustaz.html`'s modal, a fully parallel (not shared/refactored) 3-way save block in `ustaz.js` with its own `posters-square/` Storage path, and `api/publish.js` forwarding `square_url` into the published JSON next to `poster_url`. **Deliberately not refactored into shared upload logic with the existing poster field** — see `admin/CLAUDE.md` Key Patterns for the reasoning; revisit only once an actual display consumer exists. No new architecture, no new dynamic-insight beyond what's already documented above — same fast-question-then-"ok proceed" gear as every other small feature in this file. *(Full detail already lives in WHAT MIGHT COME NEXT below rather than duplicated into `DEV_NOTES_ARCHIVE.md` — the change is small enough that one write-up is enough.)* **Migration confirmed run against production Supabase by the user same session** — see CURRENT STATE.
+
 ### Session 1 (before first compact — foundation built)
 
 Supabase schema (`admins`/`ustaz`/`schedule`), Google OAuth login, `dashboard.html` (calendar + day editor + Terbitkan), `ustaz.html`, `users.html`, `app.js`'s shared auth/toast/nav helpers, `api/publish.js`. *(full detail: `admin/DEV_NOTES_ARCHIVE.md`)*
@@ -230,6 +234,8 @@ The online-donation-total feature (planned in session 13) got built and confirme
 ---
 
 ## CURRENT STATE
+
+**As of 2026-07-29 (session 16) — `ustaz.square_url` is code-complete AND the migration has been run against production Supabase (user confirmed: "i already run it").** `admin/setup.sql`'s `ALTER TABLE ustaz ADD COLUMN IF NOT EXISTS square_url TEXT;` is done — the column exists live. No display-side consumer exists or was requested; this is schema+CMS only, a deliberate build-ahead-of-need. **Not yet independently confirmed: an actual save-a-square-poster click-through in `ustaz.html`** — the user confirmed the SQL step specifically, not a full round-trip test. If picking this up next, that's the one remaining gap before calling this fully proven, not just deployed.
 
 **As of 2026-07-28 (session 15) — the `admin/news/` module (Pengumuman + Teks Berjalan) is BUILT, and the user has confirmed the SQL/env-var setup steps themselves worked — but a real Terbitkan against production Supabase/GitHub has NOT been confirmed yet.** All code is written and the pure scheduling logic is node-tested (46/46 passing as of the day-2 minute-precision-scheduling addition, up from the initial build's 32). `setup.sql` §10 has been run (the user said "done too"), `CRON_SECRET` has been set in Vercel (the user worked through it, including recovering from my own buggy PowerShell generator command), and `permissions.news` was presumably granted to the user's own admin account per the guided steps — but there's no explicit confirmation in this session's record that the user actually clicked Terbitkan and it landed a GitHub commit, only that they reported UI/CSS issues on the admin pages themselves (both fixed, see Session 15 below) and asked a follow-up about display refresh timing (also addressed). The two Google-side retirement steps for the old `news/moving-text/code.gs` (delete its trigger/menu, revoke its hardcoded PAT) still haven't been done — see Session 15 below and `news/newplan.md` §7/§1 for the full remaining checklist. **If picking this up next: confirm a real publish has actually happened (check `news/data/announcements.json`'s/`moving-text.json`'s git history for a `[Admin] Terbitkan...` commit) before assuming the live path is proven, not just the setup steps.**
 
