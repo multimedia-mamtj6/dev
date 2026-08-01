@@ -44,6 +44,8 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/news/publish-news-pure.js` | The exact scheduling/CSV pure functions `api/publish-news.js` runs (`isActiveNow`, `buildMovingTextJson`, ...) — lives outside `api/` so a browser `<script>` can load it directly; see its own file header |
 | `admin/news/pengumuman.html`/`.js` | Announcement slides CRUD (image upload-or-URL, start/end date, enabled, sort order), owns `announcements` Terbitkan |
 | `admin/news/teks-berjalan.html`/`.js` | Ticker lines CRUD (↑/↓ reorder, khutbah row's auto-sourced title), owns `moving-text` Terbitkan + the ticker preview panel |
+| `admin/staff/roster.html`/`.js` | Staff CRUD (name/phone/email, PIN generation via "Jana PIN Baharu", lockout clear) — mirrors `ustaz.js`'s shape |
+| `admin/staff/staff-pin-pure.js` | PBKDF2 PIN hash/generate/verify/lockout pure functions — loaded here via `<script>` AND `require()`d server-side by `api/staff-login.js`, same file both places (see its own header) |
 
 ---
 
@@ -182,6 +184,14 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `applyFilters()` / `resetFilters()` — read the 4 filter controls into module state, reset `logLimit` to the page size, reload
 - `loadMoreLog()` — increments `logLimit` and refetches (simple limit-refetch pagination, not offset/cursor-based — avoids edge cases if new rows arrive between clicks)
 
+### admin/staff/roster.js (added 2026-07-29)
+- `init()` calls `requireModuleAccess('staff')` — same gate shape as `ustaz.js`/`jadual.js`. `#add-staff-btn` and each row's Edit/Padam are hidden behind `canWriteModule('staff')`
+- `loadStaff()`'s `SELECT` explicitly excludes `pin_hash`/`device_session_token` even though RLS would technically allow fetching them (row-level, not column-level policies) — see `admin/CLAUDE.md`'s Key Patterns
+- `pendingPinHash` — set by `generateNewPin()` (calls `generatePinAndHash()` from `staff-pin-pure.js`, a CSPRNG-based 6-digit PIN + its PBKDF2 hash), included in the next `saveStaff()` call if present. A brand-new staff member cannot be saved without generating a PIN first (`saveStaff()`'s validation)
+- `generateNewPin()` reveals the plaintext PIN once, inline in the modal (`#pin-reveal-box`) — nothing anywhere re-displays it after the modal closes; only whether a PIN is set at all is ever shown again
+- `clearLockout()` — direct `UPDATE staff SET failed_pin_attempts=0, locked_until=null` via the normal RLS-gated browser write (not a serverless call — this is an admin-authenticated action, same trust level as any other roster edit), logs its own `staff_lockout_cleared` action
+- PIN regeneration and lockout-clearing log their own distinct `staff_activity_log` actions (`staff_pin_reset`/`staff_lockout_cleared`) rather than being folded into `buildStaffDiffText()`'s combined `staff_update` diff — see `admin/CLAUDE.md`'s Key Patterns for why
+
 ---
 
 ## infaq module JS (`admin/infaq/*.js`)
@@ -314,6 +324,23 @@ Vercel serverless function retiring `news/moving-text/code.gs` (the old Sheets p
 **Skip-the-commit-when-unchanged (`pushJsonToGitHubIfChanged`):** decodes the existing file's content (already fetched for its SHA, same GitHub API call every publish endpoint already makes) and compares it to the newly-built JSON before deciding whether to PUT at all; returns `{ unchanged: true }` instead when they match. Without this, the daily cron would manufacture an empty commit every single day regardless of whether anything actually changed — the admin's own `publishNews()` (`news-common.js`) surfaces this as a distinct "tiada perubahan" toast rather than claiming a fresh publish happened.
 
 **Also writes a `news_activity_log` row on success** — same pattern as every other publish endpoint, `.ilike()` email matching included; skipped/no-op-safe (wrapped in try/catch) so a logging failure never turns a successful publish into an error response.
+
+---
+
+## Staff login endpoint (`api/staff-login.js`, added 2026-07-29)
+
+**Structurally unlike every other endpoint in `api/`** — every prior one (`publish.js`, `publish-infaq.js`, `publish-news.js`) authenticates the *caller* first (a Supabase session Bearer token, or `CRON_SECRET`) and then does a privileged write on their behalf. This endpoint has no caller identity to check *at all* going in — verifying identity (PIN or Google) is its entire job, not a precondition for it. It's also the first genuinely public, unauthenticated-by-design route in this repo; don't add a session-token check here by habit, there's nothing to check yet.
+
+Raw `fetch()` to PostgREST with the service-role key, same as every other `api/` file — **not** `@supabase/supabase-js`, which isn't installed anywhere in this repo (no `package.json` exists at all).
+
+- **`GET` (or `POST {method:'roster'}`)** — public, unauthenticated: `id, full_name` for `enabled=true` staff, nothing else. This is how `staff/login.html` populates its name picker before a PIN is even entered.
+- **`POST {method:'pin', staff_id, pin}`** — looks up the row, checks `locked_until` via `isLocked()`, verifies via `verifyPin()` (both from `admin/staff/staff-pin-pure.js`, see below), and on mismatch calls `computeLockoutUpdate()` to decide the next `failed_pin_attempts`/whether to lock. Every failure path (missing staff, disabled staff, wrong PIN) returns the *same* generic "PIN salah" message and status — deliberately no enumeration signal telling an attacker which part was wrong.
+- **`POST {method:'google', id_token}`** — verifies the token against Google's own `https://oauth2.googleapis.com/tokeninfo` endpoint (checking `aud` matches the `GOOGLE_CLIENT_ID` env var and `email_verified`), then matches the verified email against `staff.email` via `ilike`. **Never touches `/auth/v1/...`** — see `admin/CLAUDE.md`'s "Staff login never becomes a Supabase Auth principal" before changing anything about this path.
+- **`finalizeLogin()`** (shared by both success paths) — issues `crypto.randomUUID()`, unconditionally overwrites `device_session_token`/`device_session_started_at`, and resets `failed_pin_attempts`/`locked_until` regardless of which method succeeded (proof of identity by either method clears the other method's failure count — a deliberate choice, not an oversight).
+
+**PIN hashing/verification logic lives in `admin/staff/staff-pin-pure.js`, `require()`d here — the exact same file `admin/staff/roster.js` loads via `<script>` for PIN *generation*.** This is the same "shared pure-logic file outside `api/`" pattern `publish-news-pure.js` established, but for a different reason: there, it's about dodging the `api/`-is-a-live-route trap; here, it's specifically to guarantee the browser's PBKDF2 params (iterations, hash algorithm, salt handling) can never drift out of sync with the server's — they're not just "the same algorithm," they're the same source file. `api/staff-login.test.js` imports directly from `admin/staff/staff-pin-pure.js` (not re-exported through `staff-login.js`, unlike `publish-news.js`'s re-export convention — there was no existing test-import path to preserve here since this is a new module).
+
+**No GitHub push, no `pushJsonToGitHub*`, no Terbitkan concept at all.** This endpoint reads/writes the live `staff` table directly — there's no static JSON snapshot for this module, so none of `publish.js`'s SHA-fetch-then-PUT machinery applies here.
 
 ---
 

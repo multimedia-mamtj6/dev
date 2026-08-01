@@ -66,6 +66,9 @@ calendar/hijri/
   hari-ini/                         ← Current Hijri date & MST time widget
 
 khutbah/                             ← Friday sermon (khutbah) title display, polls Google Sheet CSV
+staff/                               ← Staff identity/login layer (new 2026-07-29) — PIN or Google
+                                        login for a workforce distinct from admins; login only, no
+                                        clock-in/geolocation/attendance yet. Managed from admin/staff/
 csr/weather/                        ← Pahang weather-warning map + digital-signage display (MET/data.gov.my)
 csr/calc/                           ← Calculator tool
 web/asset/moving-text/              ← Scrolling text ticker
@@ -104,6 +107,7 @@ Each major sub-project has its own CLAUDE.md with detailed architecture:
 - `kuliah3/jadual/CLAUDE.md` — Archived v15.4 Sheets-backed system internals (dual-view, print, Apps Script)
 - `calendar/hijri/CLAUDE.md` — Calendar system specifics
 - `khutbah/CLAUDE.md` — Mimbar Jumaat sermon display specifics
+- `staff/CLAUDE.md` — Staff login layer specifics (PIN/Google, session model, setup steps)
 - `csr/weather/webpage-plan.md` — Weather-warning map + signage page specifics (no dedicated CLAUDE.md yet)
 
 ## Key Patterns
@@ -121,3 +125,4 @@ Each major sub-project has its own CLAUDE.md with detailed architecture:
 - `kuliah3/kuliah(beta)/jadual/google-app-script/config.json` — **Contains what appears to be a live, real-format GitHub PAT, flagged unresolved across multiple sessions (see `kuliah/DEV_NOTES.MD`).** Moving this file's folder location does not remediate the exposure — the secret is already in git history regardless of current path. Recommend rotating/revoking it in GitHub settings and replacing the committed value with a placeholder.
 - `admin/` (moved from `kuliah/admin/` 2026-07-19) has no committed config files with secrets — Supabase service-role key and GitHub token are Vercel environment variables, never in browser code or repo files. See `admin/database.md` for the full credentials/setup reference.
 - `api/weather-warning.js` (`csr/weather/`) — MET Malaysia API token is a Vercel environment variable (`MET_TOKEN`), never in browser code or repo files. See `csr/weather/webpage-plan.md`'s v2 section.
+- `api/staff-login.js` (`staff/`, `admin/staff/`) — `GOOGLE_CLIENT_ID` is a Vercel environment variable; not secret (Google Client IDs are meant to be public/client-side) but must exactly match the same value hand-pasted into `staff/script.js` (no build step to inject it). Staff never authenticate via Supabase Auth at all — see `staff/CLAUDE.md`/`admin/CLAUDE.md` before changing anything about this module's login flow, getting this wrong is a real confidentiality risk, not a style choice.

@@ -102,6 +102,19 @@ No new Supabase-side Vercel environment variables beyond `CRON_SECRET` — `api/
 
 `vercel.json`'s `crons` array hits `GET /api/publish-news` once a day (`0 20 * * *` = 20:00 UTC = 04:00 MYT, before Subuh). Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` on cron-triggered requests when a `CRON_SECRET` project environment variable is set — that's Vercel's own convention, not a custom header this repo invented. Set `CRON_SECRET` to any random secret string in Vercel Dashboard → Project → Settings → Environment Variables; no matching client-side value is ever needed since only Vercel's own cron infrastructure calls the GET path. **Until `CRON_SECRET` is set, the cron path fails closed with a 500 on every attempt** — this doesn't block the admin's own POST-based Terbitkan buttons, which use a Supabase session token instead and work regardless.
 
+### 1.10 Set up the staff module (optional — separate from every module above)
+
+`admin/staff/` + `staff/` (the identity/login layer for a future geolocation clock-in feature — see `admin/CLAUDE.md`'s "What this is") is a fourth, independent module — skip this section if you don't need it yet. Its schema lives in `setup.sql` §11.
+
+1. In the Supabase SQL Editor, select and run `setup.sql` §11 in full (`── 11. Staff identity/login module ──` through the end of that section), as one paste.
+2. In `users.html`, grant `permissions.staff` to whichever admins need it (defaults to `false` on new rows, same opt-in shape as `permissions.infaq`/`permissions.news`).
+3. **Set the `GOOGLE_CLIENT_ID` Vercel environment variable** — the same Google OAuth Client ID Supabase Auth already uses for admin login (find it in Supabase Dashboard → Authentication → Providers → Google, or Google Cloud Console → Credentials). Not secret, but required — `api/staff-login.js` fails Google logins without it.
+4. **Paste that exact same Client ID into `staff/script.js`'s `GOOGLE_CLIENT_ID` constant by hand** — this repo has no build step to inject it automatically. Until this is done, `staff/login.html` hides the Google Sign-In button entirely (PIN login still works) rather than showing a broken one.
+5. **Add `staff/login.html`'s origins to Google Cloud Console → APIs & Services → Credentials → [the OAuth Client] → Authorized JavaScript origins** — your production domain, and `http://localhost:8000` if testing locally. **This is a different setting than step 3 of [1.3](#13-configure-google-oauth)** (Supabase's own Redirect URLs) — the staff login flow uses Google Identity Services directly, never `signInWithOAuth()`, so it needs this origin allowlist instead, not a redirect URL.
+6. Add at least one test staff member via `admin/staff/roster.html`, click "Jana PIN Baharu", note the revealed PIN. Verify: open `staff/login.html`, pick that name from the list, enter the PIN, confirm the stub "Log Masuk Berjaya" success state appears. Deliberately fail the PIN 5 times to confirm the lockout message appears, then use "Buka Kunci" in `roster.html` to clear it.
+
+No new Supabase-side Vercel environment variables beyond `GOOGLE_CLIENT_ID` — `api/staff-login.js` reuses the same `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` from [1.5](#15-configure-vercel-environment-variables). Unlike every other module, this one has **no GitHub token / Terbitkan step at all** — there's nothing to publish, `staff` is a live table read directly by `api/staff-login.js`, not a source for a static JSON snapshot.
+
 ---
 
 ## 2. Database structure
@@ -416,6 +429,63 @@ Public bucket for announcement images, same 4-policy shape as `kuliah-assets` (p
 
 ---
 
+## 2.3 Staff tables
+
+Added 2026-07-29 — a workforce identity/login layer, distinct from `admins`, for a future geolocation clock-in feature that isn't built yet. Independent of every other table above (no FK to `admins`, `ustaz`, or anything else).
+
+```
+staff (no FK to anything)      staff_activity_log (no FK, plain-text snapshots only)
+```
+
+### `staff`
+
+One row per staff member. Two completely separate access paths read/write this table, and it's important to keep them straight — see `admin/CLAUDE.md`'s "Staff login never becomes a Supabase Auth principal" for the full reasoning:
+
+1. **Admin roster management** (`admin/staff/roster.html`) — normal browser + anon key + the admin's own Supabase session, gated by RLS (`admin_can_write('staff')`, same shape as every other module).
+2. **Staff login** (`staff/login.html` → `POST /api/staff-login`) — service-role key, bypasses RLS entirely. Staff never authenticate through Supabase Auth at all.
+
+```sql
+id                         UUID PK
+full_name                  TEXT NOT NULL
+phone                      TEXT
+email                      TEXT               -- nullable; matched ONLY against a verified Google identity (ILIKE)
+pin_hash                   TEXT                -- 'salt_hex:hash_hex' — PBKDF2-HMAC-SHA256, 100k iterations
+device_session_token       TEXT                -- nullable; overwritten wholesale on every successful login
+device_session_started_at  TIMESTAMPTZ
+failed_pin_attempts        INTEGER NOT NULL DEFAULT 0
+locked_until                TIMESTAMPTZ
+enabled                     BOOLEAN NOT NULL DEFAULT true
+created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+updated_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+```
+
+- `pin_hash` is never set by hand — `admin/staff/roster.js`'s "Jana PIN Baharu" button generates it client-side (`generatePinAndHash()` in `admin/staff/staff-pin-pure.js`) and reveals the plaintext PIN exactly once for the admin to relay out-of-band. Nothing in this repo ever displays an existing PIN again after that reveal — only whether one is set at all.
+- `device_session_token` is the entire "single active session" mechanism: every successful login (PIN or Google) overwrites it unconditionally. There's no separate sessions table — whichever token is currently stored is the only valid one. No expiry is enforced on it (`device_session_started_at` exists so a future feature could add one without a schema change).
+- `failed_pin_attempts`/`locked_until` are written only by `api/staff-login.js` (on a PIN mismatch) and cleared either by a successful login (either method) or an admin's manual "Buka Kunci" action in `roster.html`. 5 failed attempts locks for 15 minutes (`LOCKOUT_THRESHOLD`/`LOCKOUT_MINUTES` in `staff-pin-pure.js`).
+- `admin/staff/roster.js`'s own listing query deliberately excludes `pin_hash`/`device_session_token` from its `SELECT` — RLS doesn't stop an admin from fetching them (policies are row-level, not column-level), this is a convention, not a DB-enforced restriction. See `admin/CLAUDE.md`'s Key Patterns.
+- **`service_role` gets `SELECT, UPDATE`, not the SELECT-only every prior publish endpoint gets** — `api/staff-login.js`'s entire job is writing lockout counters and the session token. This is the second table in this repo (after `news_settings`) to diverge from the SELECT-only convention; don't "fix" it back.
+
+### `staff_activity_log`
+
+Same independent-auditability shape as `activity_log`/`infaq_activity_log`/`news_activity_log`, but scoped narrower on purpose: **admin accountability only**, never a per-login-attempt security log. `api/staff-login.js` never writes here — the live `staff.failed_pin_attempts`/`locked_until` columns already give `roster.html` everything it needs to react to a lockout.
+
+```sql
+id           UUID PK
+created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+actor_email  TEXT NOT NULL   -- the ADMIN performing the roster action, never the staff member
+actor_name   TEXT
+action       TEXT NOT NULL   -- staff_create | staff_update | staff_delete |
+                              -- staff_pin_reset | staff_lockout_cleared
+target_label TEXT
+detail       TEXT
+```
+
+- Merged into `userlog.html`'s timeline from day one, same as news — `userlog.js`'s `LOG_SOURCES` array got a fourth entry.
+- PIN regeneration (`staff_pin_reset`) and lockout-clearing (`staff_lockout_cleared`) are logged as their own distinct actions rather than folded into a combined `staff_update` diff string — a security-relevant event is worth being independently filterable by the Tindakan dropdown. Don't fold a future security-relevant staff action into `staff_update` either; give it its own action value.
+- **No `service_role` grant at all** — unlike every other `*_activity_log` table, nothing server-side ever writes here.
+
+---
+
 ## 3. RLS & permissions (the part that's easy to get wrong)
 
 **As of 2026-07-23 (`setup.sql` §9), write access is enforced per-role in Postgres — this replaced the fully-open state described below for most tables.** `admins`, `ustaz`, `schedule`, and all 4 infaq data tables (`infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan`) each moved from one permissive `FOR ALL` policy to 4 separate policies: SELECT stays open to any authenticated admin (unchanged), INSERT/UPDATE/DELETE are gated behind two new `SECURITY DEFINER` SQL helper functions:
@@ -463,6 +533,9 @@ The infaq tables (§2.1) follow this exact same pattern — explicit `GRANT`s to
 | Running `setup.sql` §8 errors on `CREATE POLICY "auth_all_infaq_projects" ... already exists` (or `auth_all_infaq_activity_log`) | Your database already ran an earlier version of §8 (the one that created `infaq_donations`/`infaq_expenses`, replaced 2026-07-21) — `infaq_projects`/`infaq_activity_log` are unchanged between versions, so their policies already exist | Don't re-run the whole section — see step 2 of [1.7](#17-set-up-the-infaq-module-optional--separate-from-the-kuliah-setup-above) for exactly which statements to run instead |
 | `infaq_donations`/`infaq_expenses` still exist as tables but nothing in the app reads or writes them | Leftover from the pre-2026-07-21 schema, before the rebuild to match real Sheet data (see `DEV_NOTES.MD` session 11) | Harmless to leave (RLS-protected, just unused) — or run `setup.sql` §8b to drop them, after confirming in Table Editor they don't hold data you need |
 | A project's `Terkumpul`/`Peratusan` in `projek.html` looks lower than expected, or lower than a figure quoted elsewhere (e.g. an older manually-maintained Sheet/site for the same project) | This system always **computes** the total by summing `infaq_projek_kutipan` rows — if an older system's own summary figure had drifted from its own underlying records (a real, confirmed issue found in the source Sheet during the 2026-07-21 import, see `DEV_NOTES.MD` session 11), the computed total here will legitimately differ, and the computed one is the trustworthy one | Don't "correct" this by inserting an adjustment row — investigate whether donation entries are genuinely missing from `infaq_projek_kutipan` (add them if so) or whether the other figure was simply wrong |
+| A staff member says "PIN salah" repeatedly on `staff/login.html`, or `roster.html` shows a "Dikunci" badge | Either a genuinely wrong PIN 5+ times (locks for 15 minutes, `staff.locked_until`), or the admin generated a new PIN but never actually relayed the new one to the staff member (the old PIN stops working the instant a new one is saved) | Open the staff member in `roster.html` — if locked, click "Buka Kunci" to clear it immediately without waiting out the 15 minutes; either way, confirm the PIN they're using matches the last one actually generated (PINs are never re-displayed after their one-time reveal, so if unsure, just generate a new one) |
+| Google login on `staff/login.html` fails with "Log masuk Google tidak sah", or the Google button doesn't render at all | Either `staff/script.js`'s `GOOGLE_CLIENT_ID` constant was never filled in (button hides itself deliberately in this case — see `staff/CLAUDE.md`), it doesn't match the Vercel `GOOGLE_CLIENT_ID` env var `api/staff-login.js` checks against, or this page's origin isn't in the Google Cloud Console OAuth Client's Authorized JavaScript origins | Confirm all three match: the hardcoded browser-side value, the Vercel env var, and the origin allowlist (**Google Cloud Console → Credentials → the OAuth Client → Authorized JavaScript origins** — NOT Supabase's Redirect URLs, a likely mix-up since every other OAuth setup step in this repo refers to the Supabase one; this feature never uses `signInWithOAuth()` so that allowlist is irrelevant here) |
+| A staff member logs in on their phone, works fine, then a colleague reports "I got logged out for no reason" | Expected — "single active session" means the newest login anywhere silently invalidates whichever session was active before, with no notification to the older device | Not a bug. If this UX is ever reported as confusing in practice, that's a product decision to revisit (see the plan this module was built from), not something to patch quietly |
 
 ---
 

@@ -483,6 +483,33 @@ input[type="file"] {
 .log-module-badge.log-module-kuliah { background: #dbeafe; color: #1d4ed8; }
 .log-module-badge.log-module-infaq  { background: #dcfce7; color: #15803d; }
 .log-module-badge.log-module-pengumuman { background: #fef3c7; color: #b45309; }
+.log-module-badge.log-module-staf   { background: #ede9fe; color: #6d28d9; }
+
+/* ── admin/staff/roster.html: staff status pill, same shape as .log-module-badge ── */
+.staff-status-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.staff-status-badge.staff-status-active   { background: #dcfce7; color: #15803d; }
+.staff-status-badge.staff-status-locked   { background: #fee2e2; color: #b91c1c; }
+.staff-status-badge.staff-status-disabled { background: var(--border); color: var(--text-muted); }
+
+.pin-status-text { font-size: 0.8125rem; color: var(--text-muted); margin: 0 0 0.5rem; }
+.pin-reveal-box {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #fef3c7;
+  border: 1px solid #f5cb63;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+.pin-reveal-box strong { font-size: 1.125rem; letter-spacing: 0.15em; }
 
 /* ── admin/news/: 4-state row status (pengumuman.js + teks-berjalan.js), same
    pill shape as .log-module-badge above ── */
@@ -525,6 +552,8 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary)
   gap: 1rem;
 }
 .section-title { font-size: 1rem; font-weight: 600; }
+.page-hint { font-size: 0.8125rem; color: var(--text-muted); margin: -0.5rem 0 1rem; }
+.page-hint a { color: var(--primary); }
 
 /* ── Stat cards + progress bar (ringkasan.html, projek-kutipan.html, dashboard.html) ── */
 .subsection-title {

@@ -778,3 +778,109 @@ CREATE POLICY "auth_delete_news_assets" ON storage.objects
     FOR DELETE
     TO authenticated
     USING (bucket_id = 'news-assets');
+
+
+-- ── 11. Staff identity/login module ─────────────────────────────────────────
+-- Staff (cleaners/guards/etc) are a workforce distinct from `admins` — no
+-- role/permission granularity, any registered staff member can log in via
+-- either method (PIN or Google), no per-staff assignment. This module is
+-- IDENTITY/LOGIN ONLY — the actual geolocation clock-in punch is a
+-- deliberately separate, future addition; nothing here writes an
+-- attendance record.
+--
+-- Two completely disjoint access paths — do not conflate them:
+--   1. Admin manages the staff roster (admin/staff/roster.html) — normal
+--      browser + anon key + the admin's own Supabase Auth session, gated
+--      by admin_can_write('staff') exactly like every other module (§9).
+--   2. Staff logs in (staff/login.html → POST /api/staff-login) — the
+--      browser NEVER creates a Supabase Auth session for a staff member.
+--      The Google path uses Google Identity Services directly, verified
+--      server-side against Google's own tokeninfo endpoint — NOT
+--      db.auth.signInWithOAuth(). Every SELECT policy in this repo is
+--      `TO authenticated USING (true)`, meaning "holds ANY valid Supabase
+--      Auth JWT for this project" — NOT "is a row in admins". If a staff
+--      member's browser ever called signInWithOAuth(), they'd get a real
+--      authenticated-role JWT capable of reading every table in this
+--      database (admins, infaq donations, everything), regardless of
+--      permissions — the admins-table check only happens client-side,
+--      after the fact, in app.js's requireAuth(). api/staff-login.js uses
+--      the service-role key, bypassing RLS entirely, same pattern as
+--      api/publish.js. RLS below is relevant ONLY to path 1.
+
+CREATE TABLE IF NOT EXISTS staff (
+    id                         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name                  TEXT NOT NULL,
+    phone                      TEXT,
+    email                      TEXT,               -- nullable; matched ONLY against a verified Google identity (ILIKE)
+    pin_hash                   TEXT,                -- 'salt_hex:hash_hex' — PBKDF2-HMAC-SHA256, 100k iterations
+    device_session_token       TEXT,                -- nullable; overwritten wholesale on every successful login —
+                                                      -- this IS the "single active session" mechanism: whichever
+                                                      -- token is currently stored is the only valid one
+    device_session_started_at  TIMESTAMPTZ,
+    failed_pin_attempts        INTEGER NOT NULL DEFAULT 0,
+    locked_until                TIMESTAMPTZ,
+    enabled                     BOOLEAN NOT NULL DEFAULT true,
+    created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_staff_email ON staff (email);
+
+ALTER TABLE staff ENABLE ROW LEVEL SECURITY;
+
+-- Path 1 only (admin roster CRUD). Same 4-policy shape as every §9/§10 module.
+CREATE POLICY "auth_select_staff" ON staff FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_staff" ON staff FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('staff'));
+CREATE POLICY "auth_update_staff" ON staff FOR UPDATE TO authenticated
+    USING (public.admin_can_write('staff')) WITH CHECK (public.admin_can_write('staff'));
+CREATE POLICY "auth_delete_staff" ON staff FOR DELETE TO authenticated
+    USING (public.admin_can_write('staff'));
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON staff TO authenticated;
+
+-- DIVERGES from every prior publish-style service_role grant (SELECT-only,
+-- or SELECT+INSERT/UPDATE for news_settings' cache write-back only):
+-- api/staff-login.js's PRIMARY job is writing lockout counters and the
+-- session token, so service_role needs UPDATE here, not just SELECT. Do
+-- NOT narrow this to SELECT-only by pattern-matching against
+-- publish.js/publish-infaq.js — that would silently break login.
+GRANT SELECT, UPDATE ON staff TO service_role;
+
+-- staff_activity_log: ADMIN-ACCOUNTABILITY ONLY (staff_create/update/
+-- delete/pin_reset/lockout_cleared — admin actions on the roster),
+-- deliberately NOT a per-login-attempt security log. Login-attempt
+-- telemetry is a different concern (staff security, not admin
+-- accountability) than every other *_activity_log table models — the
+-- live staff.failed_pin_attempts/locked_until columns already give
+-- roster.html everything it needs to react. Same plain-text-snapshot,
+-- never-a-FK convention as every other activity log in this repo.
+CREATE TABLE IF NOT EXISTS staff_activity_log (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_email  TEXT NOT NULL,   -- the ADMIN performing the roster action, never the staff member
+    actor_name   TEXT,
+    action       TEXT NOT NULL,   -- staff_create | staff_update | staff_delete |
+                                   -- staff_pin_reset | staff_lockout_cleared
+    target_label TEXT,
+    detail       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_staff_activity_log_created_at ON staff_activity_log(created_at DESC);
+
+ALTER TABLE staff_activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all_staff_activity_log" ON staff_activity_log
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON staff_activity_log TO authenticated;
+-- No service_role grant — unlike activity_log/infaq_activity_log/
+-- news_activity_log, api/staff-login.js deliberately does NOT write here
+-- (see the no-login-telemetry decision above). Only add this grant if
+-- that decision is later reversed.
+
+-- Extend admins.permissions default so a fresh admin row includes the
+-- staff flag — existing rows keep whatever permissions they already have
+-- (a missing "staff" key reads false everywhere it's checked), same
+-- migration shape as every prior module addition.
+ALTER TABLE admins ALTER COLUMN permissions SET DEFAULT '{"kuliah": true, "infaq": false, "news": false, "staff": false}'::jsonb;

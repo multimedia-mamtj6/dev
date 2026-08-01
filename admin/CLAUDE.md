@@ -9,7 +9,7 @@ architecture reference; the plan file is a one-time historical record.
 ## What this is
 
 `admin/` is a full CMS admin dashboard for MAMTJ6 mosque management, hosting
-three independent modules as of 2026-07-28:
+four independent modules as of 2026-07-29:
 
 - **`admin/kuliah/`** — lecture schedule management. Committee members log in
   with Google OAuth and manage: monthly lecture schedules (subuh + maghrib
@@ -44,6 +44,17 @@ three independent modules as of 2026-07-28:
   never republish an error string again. A daily Vercel cron
   (`vercel.json`) republishes both files so an expired ticker line
   eventually disappears even with no admin action.
+- **`admin/staff/`** — a staff **identity/login layer only**, added
+  2026-07-29, for a future geolocation-based clock-in system that isn't
+  built yet. One page, `roster.html` — admin-managed CRUD for a workforce
+  (cleaners/guards/etc.) distinct from `admins`, following the exact same
+  browser+RLS CRUD pattern as `ustaz.js`. **The one thing that makes this
+  module structurally different from the other three:** its actual
+  public-facing login surface (`staff/login.html` → `POST
+  /api/staff-login`) deliberately never uses Supabase Auth at all — see
+  "Staff login never becomes a Supabase Auth principal" in Key Patterns
+  below before touching anything in this module, since getting that
+  wrong is a real confidentiality hole, not a style preference.
 
 Shared/cross-module concerns (login, nav shell, admin-user management,
 activity-log viewer) stay flat at `admin/` root — see File Structure below.
@@ -151,6 +162,16 @@ admin/
                           server-side, so an admin otherwise has no way to see what Xibo will
                           actually receive. Tetapan card edits `default_ticker_line`
 
+  staff/           ← Module: staff identity/login layer (new 2026-07-29) — login only,
+                      no clock-in/attendance yet
+    staff-pin-pure.js ← PBKDF2 PIN hash/verify/lockout logic — a plain static file (like
+                          publish-news-pure.js), require()'d server-side by
+                          api/staff-login.js AND loaded via <script> in roster.js, so
+                          PIN generation (browser) and PIN verification (server) can
+                          NEVER drift apart — same source file both places
+    roster.html/.js   ← Staff CRUD (name/phone/email, PIN generation, lockout clear) —
+                          mirrors admin/kuliah/ustaz.js's shape exactly
+
 admin/ustaz.html  ← zero-JS redirect stub → admin/kuliah/ustaz.html (old bare /admin/ URL,
                      pre-module-restructure, kept working). admin/dashboard.html used to be a
                      matching stub too, but that path now hosts the real cross-module overview
@@ -161,6 +182,10 @@ kuliah/
   jadual/          ← Public schedule view (see kuliah/CLAUDE.md)
   paparan/         ← Digital signage (see kuliah/CLAUDE.md)
   data/jadual_lengkap_v2.json ← Published data admin/kuliah/ writes, that jadual/paparan read
+staff/
+  login.html/script.js/style.css ← Public staff login page (see staff/CLAUDE.md) —
+                      the admin/staff/roster.html module above manages WHO can log in
+                      here; this is the actual login surface staff use
 ```
 
 ## Supabase Schema
@@ -280,9 +305,36 @@ action text NOT NULL,       -- news_announcement_create/update/delete |
                              -- news_settings_update |
                              -- publish_announcements | publish_moving_text
 target_label text, detail text
+
+-- staff: identity/login layer (added 2026-07-29) — a workforce distinct
+-- from `admins`, no role/permission granularity. RLS (admin_can_write
+-- ('staff')) governs ONLY the roster-CRUD path (admin/staff/roster.html);
+-- staff logging in NEVER touches RLS at all — api/staff-login.js uses the
+-- service-role key and bypasses it entirely. See "Staff login never
+-- becomes a Supabase Auth principal" in Key Patterns below.
+id uuid PK, full_name text NOT NULL, phone text,
+email text,                 -- nullable; matched ONLY against a verified Google identity
+pin_hash text,               -- 'salt_hex:hash_hex', PBKDF2-HMAC-SHA256, 100k iterations
+device_session_token text,   -- nullable; overwritten wholesale on every successful login —
+                              -- this IS the "single active session" mechanism
+device_session_started_at timestamptz,
+failed_pin_attempts integer NOT NULL DEFAULT 0,
+locked_until timestamptz,
+enabled boolean NOT NULL DEFAULT true,
+created_at timestamptz, updated_at timestamptz
+
+-- staff_activity_log: ADMIN-ACCOUNTABILITY ONLY (roster create/update/
+-- delete/pin-reset/lockout-clear) — deliberately NOT a per-login-attempt
+-- security log; that's a different concern than every other
+-- *_activity_log table models. api/staff-login.js never writes here.
+id uuid PK, created_at timestamptz,
+actor_email text NOT NULL, actor_name text,
+action text NOT NULL,       -- staff_create | staff_update | staff_delete |
+                             -- staff_pin_reset | staff_lockout_cleared
+target_label text, detail text
 ```
 
-RLS is ON on all tables. `news_announcements`/`news_ticker`/`news_settings` follow the same 4-policy write-gated shape as every table added since §9 (`admin_can_write('news')`) — the one divergence from every other module's publish grants is `news_settings`, where `service_role` gets `SELECT, INSERT, UPDATE` (not SELECT-only), because `api/publish-news.js` writes the khutbah fail-safe cache back into it. See `admin/setup.sql` §10 and `database.md` §2.2 for the full detail. Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`. `admins` also grants `service_role` SELECT-only (added 2026-07-22 — `api/publish.js`/`api/publish-infaq.js` both look up the publishing admin's name from it; this table predates that lookup, so the grant was missing for a long time and failed silently rather than erroring, see Key Patterns).
+RLS is ON on all tables. `news_announcements`/`news_ticker`/`news_settings` follow the same 4-policy write-gated shape as every table added since §9 (`admin_can_write('news')`) — the one divergence from every other module's publish grants is `news_settings`, where `service_role` gets `SELECT, INSERT, UPDATE` (not SELECT-only), because `api/publish-news.js` writes the khutbah fail-safe cache back into it. See `admin/setup.sql` §10 and `database.md` §2.2 for the full detail. `staff` is a SECOND divergence from that same convention — `service_role` gets `SELECT, UPDATE` there too (`api/staff-login.js`'s entire job is writing lockout counters and the session token), while `staff_activity_log` gets no `service_role` grant at all (nothing server-side ever writes to it — see `admin/setup.sql` §11). Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`. `admins` also grants `service_role` SELECT-only (added 2026-07-22 — `api/publish.js`/`api/publish-infaq.js` both look up the publishing admin's name from it; this table predates that lookup, so the grant was missing for a long time and failed silently rather than erroring, see Key Patterns).
 
 ## Data Flow
 
@@ -338,6 +390,26 @@ news: Admin edits a row in admin/news/pengumuman.html or teks-berjalan.html
   → served from news/data/ (public, no-store cache header — vercel.json),
     read by news/script.js (announcements) or configured directly into
     Xibo's DataSet widget (moving-text)
+
+staff: Admin manages the roster in admin/staff/roster.html
+  → insert/update/delete directly on Supabase `staff` (admin_can_write
+    ('staff') RLS — same browser+RLS pattern as ustaz.js, NOT the
+    publish/service-role pattern above)
+  → no Terbitkan/publish step — nothing here writes a file to GitHub, this
+    module has no public JSON output at all
+
+  Separately, staff themselves log in at staff/login.html (NOT part of the
+  flow above, and NOT triggered from admin/ at all):
+  → staff picks their name (GET /api/staff-login, public roster listing)
+  → PIN: POST /api/staff-login {method:'pin', staff_id, pin} — OR —
+    Google: POST /api/staff-login {method:'google', id_token} (verified
+    against Google's own tokeninfo endpoint, NOT Supabase Auth)
+  → api/staff-login.js (service role, bypasses RLS entirely) verifies
+    the credential, rate-limits/locks out on PIN failure, and on success
+    overwrites staff.device_session_token — the "single active session"
+    mechanism, see Key Patterns below
+  → returns a token staff/script.js stores in localStorage — nothing
+    currently reads it back; a future clock-in feature would
 ```
 
 ## Key Patterns
@@ -444,11 +516,27 @@ All sidebar styling (colors, fixed positioning, the off-canvas mobile transform)
 
 **Minute-precision scheduling (`start_at`/`end_at` as `TIMESTAMP`, added same day as the rest of the module, 2026-07-28) — day+hour+minute, deliberately no seconds field:** both news tables started as `DATE` columns (whole-day granularity, matching `kuliah`'s `schedule.date`), then were changed to `TIMESTAMP` after the user confirmed the extra precision was worth it despite the ticker's real-world caveat (below). `admin/news/pengumuman.html`/`teks-berjalan.html`'s modals use `<input type="datetime-local">` (which has no seconds field by construction) instead of `<input type="date">`; the value round-trips as a plain `YYYY-MM-DDTHH:MM` string with no client-side Date-object parsing needed on save. **The date-only *string-comparison* design (see the "must agree with news/script.js" note above) survived the upgrade unchanged in spirit** — `publish-news-pure.js`'s `isActiveNow()` now compares `YYYY-MM-DDTHH:MM` strings via `mytDateTimeString()`/`normalizeBoundary()` instead of `YYYY-MM-DD` strings via `mytDateString()`, same lexicographic-comparison trick, just one more segment. `normalizeBoundary()` still expands a bare `YYYY-MM-DD` value (any pre-migration row, or a future hand-inserted one) to start-of-day/end-of-day exactly as before — full backward compatibility, no forced data cleanup. `news-common.js`'s `computeStatus()` (the admin table's Aktif/Akan Datang/Tamat label) got its own parallel `localDateTimeString()`/`normalizeBoundaryLocal()`, deliberately NOT sharing code with `publish-news-pure.js` — `pengumuman.html` never loads that file, so `news-common.js` (loaded by both pages) has to work standalone. **The live-precision caveat, explained to the user before this was built and accepted as worth it anyway:** announcements get real minute-level scheduling for free, since `news/script.js` already re-evaluates every 60 seconds client-side and its `parseLocalDate()` already accepted a full timestamp even before this change (zero display-side changes needed). The ticker does NOT — `moving-text.json` only updates when something republishes it, so a ticker line's precise start/end time only actually takes effect on the live screen at the next Terbitkan click or the next daily cron run (once/day on Vercel's Hobby plan), not the instant the clock ticks past it. The schema/UI support the precision either way; whether it's *visibly* real-time on the ticker specifically is a hosting-plan/cron-frequency question, not a code one — see the cron Key Patterns entry above.
 
+**Staff login never becomes a Supabase Auth principal — this is the load-bearing security property of the whole `admin/staff/`+`staff/`+`api/staff-login.js` module, not an implementation detail (added 2026-07-29):** every RLS SELECT policy in this repo, on every table, is `TO authenticated USING (true)` — "authenticated" means "holds ANY valid Supabase Auth JWT for this project," never "is a row in `admins`." The `admins` membership check only happens client-side, after the fact, in `app.js`'s `requireAuth()`. The obvious way to add Google login for staff — reusing `db.auth.signInWithOAuth()`, same call `admin/index.html` uses — would be a real confidentiality hole: a staff member's browser would get a genuine `authenticated`-role JWT, and from devtools could query `https://<project>.supabase.co/rest/v1/admins?select=*` (or any other table) directly with that token + the public anon key, reading every admin's email/role/permissions, every donation record, everything. **Fixed by never letting staff touch Supabase Auth at all** — `staff/login.html`'s Google path uses Google Identity Services (`https://accounts.google.com/gsi/client`) directly, independent of Supabase; the browser gets a Google ID token and POSTs it to `/api/staff-login`, which verifies it itself against Google's own `tokeninfo` endpoint. `staff/` never loads the Supabase JS SDK — grep for `supabase-js` in that folder if you ever suspect this rule has been violated, it should find nothing. `api/staff-login.js` uses the service-role key and bypasses RLS entirely for every staff-facing action (same pattern as `api/publish.js`) — RLS on the `staff` table is only ever evaluated for the ADMIN roster-management path (`admin/staff/roster.html`, normal browser + anon key + the admin's own Supabase session). These two paths must stay genuinely disjoint; if you're ever tempted to make them share a login mechanism "for consistency," don't.
+
+**PIN hashing lives in one file, loaded both server-side and browser-side, specifically to eliminate drift risk (`admin/staff/staff-pin-pure.js`, same convention as `admin/news/publish-news-pure.js`):** PBKDF2-HMAC-SHA256 (100k iterations) via the standard Web Crypto API — `generatePinAndHash()` runs in the admin's browser (`roster.js`, "Jana PIN Baharu" button, using `crypto.getRandomValues()` for both the PIN and the salt, never `Math.random()`), `verifyPin()` runs server-side (`api/staff-login.js`, using Node's `crypto.webcrypto.subtle` + `crypto.timingSafeEqual` for the comparison). Because it's the *same source file* required/loaded on both sides (an `isNodeEnv()` guard picks `require('crypto').webcrypto` vs. the browser's global `crypto`), the two can never independently drift out of sync the way two hand-written implementations of "the same algorithm" could. No npm dependency either way — Web Crypto is a browser/Node built-in, consistent with this repo having zero npm dependencies anywhere. Rate-limiting (`LOCKOUT_THRESHOLD = 5`, `LOCKOUT_MINUTES = 15`, also in this file) is the actual defense against a 6-digit PIN's low entropy — enforced exclusively server-side in `api/staff-login.js`, since any client-side limit is trivially bypassable.
+
+**"Single active session" is one overwritable column, not a sessions table (`staff.device_session_token`):** every successful login — PIN or Google, doesn't matter which — issues a fresh `crypto.randomUUID()` and unconditionally overwrites whatever was stored before. That overwrite *is* the entire enforcement mechanism: logging in on a second device silently invalidates the first, with no notification to the now-logged-out device and no admin action needed to "release" anything. Deliberate design, not a gap — see the plan this module was built from. The token has no expiry (`device_session_started_at` is stored precisely so a future feature could add one without a migration). Identity proven via *either* method resets `failed_pin_attempts`/`locked_until` too (`finalizeLogin()` in `api/staff-login.js`) — a successful Google login clears a PIN lockout, an explicit decision, not an oversight.
+
+**The admin roster page's own SELECT deliberately excludes `pin_hash`/`device_session_token`, even though RLS would technically allow fetching them (`roster.js`'s `loadStaff()`):** RLS policies are row-level, not column-level — `admin_can_write('staff')` governs whether a row can be read/written at all, not which columns. Nothing stops an admin from writing a different query that fetches the hash. This is a convention-level exclusion, not a DB-enforced one — the same trust model this repo already accepts for admins seeing other sensitive data (donation records, other admins' emails). Documented here so it isn't mistaken for a real security boundary if this page is ever extended.
+
+**PIN regeneration and lockout-clearing are their own distinct `staff_activity_log` actions (`staff_pin_reset`/`staff_lockout_cleared`), not folded into the generic `staff_update` diff the way `ustaz.js` folds poster changes into `ustaz_update`:** a security-relevant event like "this staff member's PIN was reset" is worth being independently filterable in `userlog.html`'s Tindakan dropdown, not buried inside a combined diff string only visible in the `detail` column. If you add another security-relevant staff action later, follow this same shape — its own action value, not a bullet point inside `staff_update`.
+
 ## Sensitive Files
 
 - `admin/` has no config files with secrets — credentials are Vercel env vars
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side only, never in browser code
 - `GITHUB_TOKEN` — Vercel env var only, used in `api/publish.js`
+- `GOOGLE_CLIENT_ID` — Vercel env var used by `api/staff-login.js` to verify
+  Google ID tokens; NOT secret (Google Client IDs are meant to be
+  public/client-side), but must exactly match the same literal value
+  hardcoded into `staff/script.js` (that file has no build step to inject
+  it automatically — see `staff/CLAUDE.md`'s setup section) or every
+  Google login attempt fails
 - `CRON_SECRET` — Vercel env var only, used in `api/publish-news.js`'s GET/cron
   auth path (see Key Patterns) — must be set before the `vercel.json` cron is
   enabled, or the fail-closed check rejects every cron run

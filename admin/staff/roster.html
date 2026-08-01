@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staf — Admin MAMTJ6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+
+<body>
+
+  <div class="sidebar-mobile-topbar">
+    <button class="sidebar-toggle-btn" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <span>Admin MAMTJ6</span>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeNav()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">Admin MAMTJ6</div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" onclick="signOut()">Log Keluar</button>
+    </div>
+  </aside>
+
+  <div class="admin-content">
+  <div class="page">
+    <div class="section-header">
+      <h1 class="section-title">Senarai Staf</h1>
+      <button class="btn btn-primary" id="add-staff-btn" onclick="openAddModal()">+ Tambah Staf</button>
+    </div>
+
+    <p class="page-hint">
+      Log masuk staf (PIN atau Google) berlaku di
+      <a href="/staff/login.html" target="_blank" rel="noopener">/staff/login.html</a> —
+      ciri ini adalah lapisan pengenalan diri sahaja; sistem daftar masuk kerja
+      (clock-in) berdasarkan lokasi belum dibina.
+    </p>
+
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th>Nama Penuh</th>
+            <th>Telefon</th>
+            <th>Emel</th>
+            <th>Status</th>
+            <th style="width:140px">Tindakan</th>
+          </tr>
+        </thead>
+        <tbody id="staff-tbody">
+          <tr>
+            <td colspan="6" class="state-cell">Memuatkan...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+
+  <!-- ── Add / Edit modal ── -->
+  <div class="modal-overlay" id="staff-modal" onclick="handleStaffOverlay(event)">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header">
+        <span class="modal-title" id="staff-modal-title">Tambah Staf</span>
+        <button class="modal-close" onclick="closeStaffModal()">&times;</button>
+      </div>
+
+      <input type="hidden" id="edit-id">
+
+      <div class="form-group">
+        <label for="edit-fullname">Nama Penuh*</label>
+        <input type="text" id="edit-fullname" placeholder="Cth: Ahmad bin Ali">
+      </div>
+      <div class="form-group">
+        <label for="edit-phone">Telefon <span style="font-weight:400;color:var(--text-muted)">(pilihan)</span></label>
+        <input type="text" id="edit-phone" placeholder="Cth: 012-3456789">
+      </div>
+      <div class="form-group">
+        <label for="edit-email">Emel <span
+            style="font-weight:400;color:var(--text-muted)">(pilihan — membolehkan log masuk Google)</span></label>
+        <input type="email" id="edit-email" placeholder="staf@gmail.com">
+      </div>
+
+      <div class="form-group">
+        <label>PIN Log Masuk</label>
+        <p id="pin-status-text" class="pin-status-text">PIN belum ditetapkan.</p>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="generateNewPin()">Jana PIN Baharu</button>
+        <div id="pin-reveal-box" class="pin-reveal-box" style="display:none">
+          PIN Baharu: <strong id="pin-reveal-value"></strong><br>
+          <span style="font-weight:400">Catat/beritahu staf sekarang — PIN ini tidak akan dipaparkan lagi selepas borang ini ditutup.</span>
+        </div>
+      </div>
+
+      <div class="form-group" id="lock-status-group" style="display:none">
+        <label>Status Kunci</label>
+        <p id="lock-status-text" class="pin-status-text"></p>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="clearLockout()">Buka Kunci</button>
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400">
+          <input type="checkbox" id="edit-enabled" checked style="width:auto">
+          Staf Aktif
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeStaffModal()">Batal</button>
+        <button class="btn btn-primary" id="staff-save-btn" onclick="saveStaff()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete confirm modal ── -->
+  <div class="modal-overlay" id="delete-modal" onclick="handleDeleteOverlay(event)">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-header">
+        <span class="modal-title">Padam Staf</span>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:1.25rem">
+        Adakah anda pasti mahu memadam
+        <strong id="delete-name" style="color:var(--text)"></strong>?
+        Tindakan ini tidak boleh diundur.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+        <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Padam</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin/app.js"></script>
+  <script src="/admin/staff/staff-pin-pure.js"></script>
+  <script src="/admin/staff/roster.js"></script>
+</body>
+
+</html>

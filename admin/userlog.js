@@ -61,6 +61,16 @@ const LOG_SOURCES = [
             publish_moving_text:      'Terbitkan Teks Berjalan',
         },
     },
+    {
+        module: 'Staf', table: 'staff_activity_log',
+        actionLabels: {
+            staff_create:          'Tambah Staf',
+            staff_update:          'Kemaskini Staf',
+            staff_delete:          'Padam Staf',
+            staff_pin_reset:       'Jana Semula PIN',
+            staff_lockout_cleared: 'Buka Kunci Akaun',
+        },
+    },
 ];
 
 (async () => {

@@ -35,7 +35,7 @@ async function requireAuth() {
 // (redirecting to another gated/denied page is how you get a bounce loop).
 function defaultLandingPageFor(admin) {
     if (!admin) return null;
-    if (admin.role === 'super_admin' || admin.permissions?.kuliah || admin.permissions?.infaq || admin.permissions?.news) return '/admin/dashboard.html';
+    if (admin.role === 'super_admin' || admin.permissions?.kuliah || admin.permissions?.infaq || admin.permissions?.news || admin.permissions?.staff) return '/admin/dashboard.html';
     return null;
 }
 
@@ -106,6 +106,12 @@ const MODULES = [
         items: [
             { label: 'Pengumuman',    href: '/admin/news/pengumuman.html',     match: ['/admin/news/pengumuman.html'] },
             { label: 'Teks Berjalan', href: '/admin/news/teks-berjalan.html',  match: ['/admin/news/teks-berjalan.html'] },
+        ],
+    },
+    {
+        key: 'staff', label: 'Staf', permission: 'staff', requiresSuperAdmin: false,
+        items: [
+            { label: 'Senarai Staf', href: '/admin/staff/roster.html', match: ['/admin/staff/roster.html'] },
         ],
     },
     {

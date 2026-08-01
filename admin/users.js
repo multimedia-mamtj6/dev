@@ -78,6 +78,7 @@ function openAddModal() {
     document.getElementById('perm-kuliah').checked = true;
     document.getElementById('perm-infaq').checked = false;
     document.getElementById('perm-news').checked = false;
+    document.getElementById('perm-staff').checked = false;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -94,6 +95,7 @@ function openEditModal(email) {
     document.getElementById('perm-kuliah').checked = u.permissions?.kuliah !== false;
     document.getElementById('perm-infaq').checked = u.permissions?.infaq === true;
     document.getElementById('perm-news').checked = u.permissions?.news === true;
+    document.getElementById('perm-staff').checked = u.permissions?.staff === true;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -157,6 +159,7 @@ async function saveUser() {
         kuliah: document.getElementById('perm-kuliah').checked,
         infaq:  document.getElementById('perm-infaq').checked,
         news:   document.getElementById('perm-news').checked,
+        staff:  document.getElementById('perm-staff').checked,
     };
     const before = originalEmail ? allUsers.find(u => u.email === originalEmail) : null;
 
