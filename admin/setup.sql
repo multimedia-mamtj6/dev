@@ -792,8 +792,9 @@ CREATE POLICY "auth_delete_news_assets" ON storage.objects
 --   1. Admin manages the staff roster (admin/staff/roster.html) — normal
 --      browser + anon key + the admin's own Supabase Auth session, gated
 --      by admin_can_write('staff') exactly like every other module (§9).
---   2. Staff logs in (staff/login.html → POST /api/staff-login) — the
---      browser NEVER creates a Supabase Auth session for a staff member.
+--   2. Staff logs in (staff/index.html, served at /staff → POST
+--      /api/staff-login) — the browser NEVER creates a Supabase Auth
+--      session for a staff member.
 --      The Google path uses Google Identity Services directly, verified
 --      server-side against Google's own tokeninfo endpoint — NOT
 --      db.auth.signInWithOAuth(). Every SELECT policy in this repo is

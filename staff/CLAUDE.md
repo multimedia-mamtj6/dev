@@ -9,7 +9,8 @@ geolocation-based staff clock-in system (cleaners, guards, etc. — a
 workforce distinct from `admins`), built 2026-07-29. This module is
 **login only** — it deliberately does not include a clock-in/out punch,
 geolocation check, or attendance log; those are a separate, not-yet-built
-future addition. Once logged in, `staff/login.html` shows a stub "Log
+future addition. Once logged in, `staff/index.html` (served at `/staff`
+via `cleanUrls`) shows a stub "Log
 Masuk Berjaya" success state and stores a session token in
 `localStorage` — that token is what a future clock-in build will send
 with each punch, but nothing currently reads it back.
@@ -21,7 +22,8 @@ Staff are managed by an admin via `admin/staff/roster.html` (see
 
 ```
 staff/
-  login.html   ← Entry point — name picker + PIN, or "Sign in with Google"
+  index.html   ← Entry point (served at /staff via cleanUrls) — name
+                 picker + PIN, or "Sign in with Google"
   script.js    ← Roster fetch, PIN submit, Google Identity Services wiring
   style.css    ← Standalone styles (green/gold brand, no Tailwind, no
                  dark-mode toggle — same "own self-contained look" choice
@@ -49,7 +51,7 @@ no `<script src=".../supabase-js@2/...">` anywhere in `staff/`, and there
 must never be one.
 
 **Google login uses Google Identity Services (GIS) directly**
-(`https://accounts.google.com/gsi/client` in `login.html`), completely
+(`https://accounts.google.com/gsi/client` in `index.html`), completely
 independent of Supabase Auth. The browser gets a Google ID token and
 POSTs it straight to `/api/staff-login`, which verifies it itself against
 Google's own `tokeninfo` endpoint — see `api/staff-login.js`'s header
@@ -58,9 +60,14 @@ never calls anything under `/auth/v1/...`.
 
 ## Login flow
 
-1. `script.js`'s `loadRoster()` calls `GET /api/staff-login` — a public,
-   name-only listing (`id, full_name` for `enabled = true` staff). Never
-   returns `pin_hash`/`device_session_token`/phone/email.
+1. `script.js`'s `loadRoster()` calls `GET /api/staff-login` — a public
+   listing (`id, full_name, has_email` for `enabled = true` staff).
+   `has_email` is a derived boolean only — the real address is never sent
+   to the browser. It drives `onStaffSelected()` hiding the Google button
+   for a name with no email on file (Google login isn't actually gated by
+   `staff_id` server-side — it matches by email — so this is purely a UX
+   guard against a confusing "akaun tidak didaftarkan" click). Never
+   returns `pin_hash`/`device_session_token`/phone/the real email.
 2. Staff picks their name, then either:
    - **PIN**: enters their 6-digit PIN → `POST /api/staff-login
      {method:'pin', staff_id, pin}`. Server-side rate-limited: 5 wrong
@@ -69,7 +76,12 @@ never calls anything under `/auth/v1/...`.
      `LOCKOUT_MINUTES`) — the error message and `locked_until` come back
      from the server, this page has no rate-limit logic of its own
      (client-side limits are trivially bypassable and would be
-     meaningless here).
+     meaningless here). Each wrong PIN (before the lockout is reached)
+     returns `attempts_remaining` alongside the error message, e.g. "PIN
+     salah. 3 percubaan lagi sebelum akaun dikunci." — only ever surfaced
+     for a real, enabled staff row (the missing/disabled case above stays
+     a flat generic message), so it can't be used to enumerate accounts
+     beyond what the eventual 423 lockout already reveals.
    - **Google**: clicks the GIS button → `onGoogleCredential()` →
      `POST /api/staff-login {method:'google', id_token}`.
 3. Either path, on success, returns `{ token, staff: {id, full_name} }`.

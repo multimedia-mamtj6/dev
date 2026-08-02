@@ -54,6 +54,15 @@ async function derivePinHashHex(pin, saltHex) {
     return bufferToHex(derivedBits);
 }
 
+async function hashPinValue(pin) {
+    const webcrypto = getWebCrypto();
+    const saltBuf = new Uint8Array(SALT_BYTES);
+    webcrypto.getRandomValues(saltBuf);
+    const saltHex = bufferToHex(saltBuf);
+    const hashHex = await derivePinHashHex(pin, saltHex);
+    return `${saltHex}:${hashHex}`;
+}
+
 // Generates a fresh 6-digit PIN + its stored hash — used by
 // admin/staff/roster.js's "Jana PIN Baharu" button. Uses a CSPRNG
 // (crypto.getRandomValues), never Math.random() — an easy, invisible
@@ -63,11 +72,15 @@ async function generatePinAndHash() {
     const randomBuf = new Uint32Array(1);
     webcrypto.getRandomValues(randomBuf);
     const pin = String(randomBuf[0] % 1000000).padStart(6, '0');
-    const saltBuf = new Uint8Array(SALT_BYTES);
-    webcrypto.getRandomValues(saltBuf);
-    const saltHex = bufferToHex(saltBuf);
-    const hashHex = await derivePinHashHex(pin, saltHex);
-    return { pin, pin_hash: `${saltHex}:${hashHex}` };
+    return { pin, pin_hash: await hashPinValue(pin) };
+}
+
+// Hashes an admin-typed PIN (manual entry, "Guna PIN Ini" in roster.js) —
+// same 6-digit format constraint as a generated PIN, so verifyPin() on
+// the server never needs to know which path a given PIN came from.
+async function hashManualPin(pin) {
+    if (!isValidPinFormat(pin)) throw new Error('PIN mesti tepat 6 digit angka.');
+    return { pin, pin_hash: await hashPinValue(pin) };
 }
 
 // Verifies a submitted PIN against a stored 'salt_hex:hash_hex' value.
@@ -113,7 +126,7 @@ function isLocked(staffRow, now) {
 if (isNodeEnv()) {
     module.exports = {
         PBKDF2_ITERATIONS, LOCKOUT_THRESHOLD, LOCKOUT_MINUTES,
-        isValidPinFormat, derivePinHashHex, generatePinAndHash, verifyPin,
+        isValidPinFormat, derivePinHashHex, generatePinAndHash, hashManualPin, verifyPin,
         computeLockoutUpdate, isLocked,
     };
 }

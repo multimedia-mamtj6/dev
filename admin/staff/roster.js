@@ -79,6 +79,7 @@ function openAddModal() {
     document.getElementById('edit-enabled').checked = true;
     document.getElementById('pin-status-text').textContent = 'PIN belum ditetapkan.';
     document.getElementById('pin-reveal-box').style.display = 'none';
+    document.getElementById('manual-pin-input').value = '';
     document.getElementById('lock-status-group').style.display = 'none';
     pendingPinHash = null;
     document.getElementById('staff-modal').classList.add('open');
@@ -97,6 +98,7 @@ function openEditModal(id) {
     document.getElementById('edit-enabled').checked = s.enabled !== false;
     document.getElementById('pin-status-text').textContent = s.pin_hash ? 'PIN telah ditetapkan.' : 'PIN belum ditetapkan.';
     document.getElementById('pin-reveal-box').style.display = 'none';
+    document.getElementById('manual-pin-input').value = '';
     pendingPinHash = null;
 
     const isLockedNow = s.locked_until && new Date(s.locked_until).getTime() > Date.now();
@@ -125,6 +127,24 @@ async function generateNewPin() {
     document.getElementById('pin-reveal-value').textContent = pin;
     document.getElementById('pin-reveal-box').style.display = '';
     document.getElementById('pin-status-text').textContent = 'PIN baharu dijana (belum disimpan).';
+}
+
+// Admin-typed PIN, as an alternative to generateNewPin() — same format
+// constraint (6 digits) and same downstream pendingPinHash/save flow,
+// just sourced from the admin's own input instead of a CSPRNG.
+async function setManualPin() {
+    const input = document.getElementById('manual-pin-input');
+    const pin = input.value.trim();
+    try {
+        const { pin_hash } = await hashManualPin(pin);
+        pendingPinHash = pin_hash;
+        document.getElementById('pin-reveal-value').textContent = pin;
+        document.getElementById('pin-reveal-box').style.display = '';
+        document.getElementById('pin-status-text').textContent = 'PIN ditetapkan secara manual (belum disimpan).';
+        input.value = '';
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
 }
 
 // ─── Clear a lockout without generating a new PIN ─────────────────────────────

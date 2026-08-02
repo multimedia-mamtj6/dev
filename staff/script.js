@@ -17,6 +17,7 @@
 const GOOGLE_CLIENT_ID = '737196492802-bobgcpvase2741dker8lbmj21tce1rq5.apps.googleusercontent.com';
 
 let allStaff = [];
+let googleAvailable = false; // set true only once GIS is configured AND loaded
 
 async function init() {
     await loadRoster();
@@ -42,9 +43,22 @@ async function loadRoster() {
 }
 
 function onStaffSelected() {
-    const hasSelection = !!document.getElementById('staff-select').value;
+    const selectedId = document.getElementById('staff-select').value;
+    const hasSelection = !!selectedId;
     document.getElementById('pin-group').style.display = hasSelection ? '' : 'none';
     document.getElementById('pin-submit-btn').style.display = hasSelection ? '' : 'none';
+
+    // Google login isn't actually gated by staff_id server-side (it matches
+    // by email), but showing the button for a name with no email on file
+    // just leads to a confusing "akaun tidak didaftarkan" click — hide it
+    // once such a name is picked. Leave it alone with no selection, since
+    // Google login doesn't require picking a name at all.
+    if (googleAvailable) {
+        const staff = allStaff.find(s => s.id === selectedId);
+        const showGoogle = !hasSelection || (staff && staff.has_email);
+        document.querySelector('.login-divider').style.display = showGoogle ? '' : 'none';
+        document.getElementById('g-signin-btn').style.display = showGoogle ? '' : 'none';
+    }
     hideError();
 }
 
@@ -101,6 +115,7 @@ function initGoogleSignIn() {
         // GIS script blocked/slow to load — PIN login still works standalone.
         return;
     }
+    googleAvailable = true;
     google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: onGoogleCredential,

@@ -35,7 +35,7 @@
 
     <p class="page-hint">
       Log masuk staf (PIN atau Google) berlaku di
-      <a href="/staff/login.html" target="_blank" rel="noopener">/staff/login.html</a> —
+      <a href="/staff" target="_blank" rel="noopener">/staff</a> —
       ciri ini adalah lapisan pengenalan diri sahaja; sistem daftar masuk kerja
       (clock-in) berdasarkan lokasi belum dibina.
     </p>
@@ -89,7 +89,12 @@
       <div class="form-group">
         <label>PIN Log Masuk</label>
         <p id="pin-status-text" class="pin-status-text">PIN belum ditetapkan.</p>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="generateNewPin()">Jana PIN Baharu</button>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="generateNewPin()">Jana PIN Baharu</button>
+          <input type="text" id="manual-pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                 placeholder="Taip PIN (6 digit)" style="width:140px" autocomplete="off">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="setManualPin()">Guna PIN Ini</button>
+        </div>
         <div id="pin-reveal-box" class="pin-reveal-box" style="display:none">
           PIN Baharu: <strong id="pin-reveal-value"></strong><br>
           <span style="font-weight:400">Catat/beritahu staf sekarang — PIN ini tidak akan dipaparkan lagi selepas borang ini ditutup.</span>

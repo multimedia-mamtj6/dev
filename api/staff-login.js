@@ -21,7 +21,8 @@
 //              verified against Google's tokeninfo endpoint, matched
 //              against staff.email.
 // GET (or POST {method:'roster'}) — public name-only listing for the PIN
-//   picker on staff/login.html. Never returns pin_hash/device_session_token.
+//   picker on staff/index.html (served at /staff). Never returns
+//   pin_hash/device_session_token.
 //
 // Either successful path issues a fresh device_session_token, overwriting
 // whatever was stored before — this IS the "single active session"
@@ -32,12 +33,12 @@
 //     endpoint in this repo already uses)
 //   GOOGLE_CLIENT_ID — the Google OAuth Client ID already used by
 //     Supabase Auth for admin login; centralized here (not secret) so
-//     staff/login.html's GIS initialize() and this endpoint's aud check
+//     staff/index.html's GIS initialize() and this endpoint's aud check
 //     can't drift apart
 
 const crypto = require('crypto');
 const {
-    isValidPinFormat, verifyPin, computeLockoutUpdate, isLocked,
+    isValidPinFormat, verifyPin, computeLockoutUpdate, isLocked, LOCKOUT_THRESHOLD,
 } = require('../admin/staff/staff-pin-pure.js');
 
 module.exports = async function handler(req, res) {
@@ -61,11 +62,15 @@ module.exports = async function handler(req, res) {
 
     if (method === 'roster') {
         const rosterRes = await fetch(
-            `${supabaseUrl}/rest/v1/staff?select=id,full_name&enabled=eq.true&order=full_name.asc`,
+            `${supabaseUrl}/rest/v1/staff?select=id,full_name,email&enabled=eq.true&order=full_name.asc`,
             { headers: sbHeaders }
         );
         if (!rosterRes.ok) return res.status(500).json({ error: 'Gagal memuatkan senarai staf' });
-        const roster = await rosterRes.json();
+        const rows = await rosterRes.json();
+        // has_email is a derived boolean only — the actual address is never
+        // sent to the browser, same "no sensitive columns on this path"
+        // guarantee as pin_hash/device_session_token.
+        const roster = rows.map(r => ({ id: r.id, full_name: r.full_name, has_email: !!r.email }));
         return res.status(200).json({ staff: roster });
     }
 
@@ -116,7 +121,22 @@ async function handlePinLogin(req, res, supabaseUrl, sbHeaders) {
             headers: { ...sbHeaders, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
             body: JSON.stringify(update),
         });
-        return res.status(401).json({ error: 'PIN salah' });
+
+        if (update.locked_until) {
+            return res.status(423).json({
+                error: 'Akaun dikunci buat sementara waktu selepas terlalu banyak percubaan. Cuba lagi kemudian.',
+                locked_until: update.locked_until,
+            });
+        }
+        // Only surfaced once staffRow is confirmed real+enabled (above) —
+        // a nonexistent/disabled id never reaches here, so this can't be
+        // used to distinguish "no such account" from "wrong PIN" beyond
+        // what the eventual lockout (423) already reveals.
+        const attemptsRemaining = LOCKOUT_THRESHOLD - update.failed_pin_attempts;
+        return res.status(401).json({
+            error: `PIN salah. ${attemptsRemaining} percubaan lagi sebelum akaun dikunci.`,
+            attempts_remaining: attemptsRemaining,
+        });
     }
 
     return finalizeLogin(res, supabaseUrl, sbHeaders, staffRow);
