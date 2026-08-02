@@ -3,7 +3,7 @@
     "2026-08": {
       "infoJadual": {
         "tajukBulan": "BULAN OGOS 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 1/8/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 2/8/2026"
       },
       "senaraiHari": [
         {
@@ -19,12 +19,7 @@
         },
         {
           "date": "2026-08-02",
-          "subuh": {
-            "nama_penceramah": "Ustaz Badrul Hisham",
-            "tajuk_kuliah": "Fadilat Sedekah",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg",
-            "square_url": null
-          },
+          "subuh": null,
           "maghrib": {
             "nama_penceramah": "Ustaz Amir",
             "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
