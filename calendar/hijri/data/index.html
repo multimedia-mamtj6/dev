@@ -225,7 +225,11 @@
             showStatus('Memuatkan data...', 'loading');
             saveBtn.disabled = true;
             try {
-                const res = await fetch(`./events.json?v=${Date.now()}`);
+                // Laluan mutlak — bukan relatif — kerana cleanUrls/trailingSlash
+                // di vercel.json buat URL halaman ini jadi /calendar/hijri/data
+                // (tanpa index.html/trailing slash), jadi './events.json' akan
+                // resolve salah kepada /calendar/hijri/events.json (404).
+                const res = await fetch(`/calendar/hijri/data/events.json?v=${Date.now()}`);
                 if (!res.ok) throw new Error(`Status ${res.status}`);
                 const data = await res.json();
                 eventsContainer.innerHTML = ''; // Kosongkan container
