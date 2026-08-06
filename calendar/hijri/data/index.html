@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .event-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 80px;
+            gap: 15px;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .event-row:last-child {
+            border-bottom: none;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-add {
+            background-color: #27ae60;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .btn-add:hover {
+            background-color: #229954;
+        }
+
+        .save-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-top: 2px solid #3498db;
+            border-radius: 0 0 8px 8px;
+            text-align: center;
+        }
+
+        #pin-input {
+            width: 100px;
+            padding: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .btn-save {
+            background-color: #3498db;
+            color: white;
+            font-size: 1.2em;
+            padding: 12px 25px;
+        }
+
+        .btn-save:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-save:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #status-message {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Admin Panel - Kalendar Islam</h1>
+
+        <div id="events-container">
+            <!-- Baris acara akan dijana oleh JavaScript di sini -->
+        </div>
+
+        <button id="add-event-btn" class="btn btn-add">Tambah Acara Baru</button>
+
+        <div class="save-section">
+            <label for="pin-input">Masukkan PIN untuk Simpan</label><br>
+            <input type="password" id="pin-input" maxlength="6" placeholder="****"><br>
+            <button id="save-btn" class="btn btn-save">Simpan Perubahan ke GitHub</button>
+            <div id="status-message"></div>
+        </div>
+    </div>
+
+    <!-- Templat untuk satu baris acara -->
+    <template id="event-row-template">
+        <div class="event-row">
+            <div class="form-group">
+                <label>Nama Peristiwa</label>
+                <input type="text" class="event-name" placeholder="Cth: Awal Ramadan">
+            </div>
+            <div class="form-group">
+                <label>Tarikh Hijrah</label>
+                <input type="text" class="hijri-date" placeholder="Cth: 1 Ramadan 1447 H">
+            </div>
+            <div class="form-group">
+                <label>Tarikh Masihi</label>
+                <input type="date" class="event-date">
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-delete">Padam</button>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        const eventsContainer = document.getElementById('events-container');
+        const addBtn = document.getElementById('add-event-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const pinInput = document.getElementById('pin-input');
+        const statusMessage = document.getElementById('status-message');
+        const eventTemplate = document.getElementById('event-row-template');
+
+        // Fungsi untuk memaparkan status
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-${type}`;
+            statusMessage.style.display = 'block';
+        }
+
+        // Fungsi untuk menambah baris acara ke dalam UI
+        function createEventRow(event = {}) {
+            const templateClone = eventTemplate.content.cloneNode(true);
+            const eventRow = templateClone.querySelector('.event-row');
+
+            eventRow.querySelector('.event-name').value = event.eventName || '';
+            eventRow.querySelector('.hijri-date').value = event.hijriDate || '';
+            eventRow.querySelector('.event-date').value = event.eventDate || '';
+
+            eventRow.querySelector('.btn-delete').addEventListener('click', () => {
+                eventRow.remove();
+            });
+
+            eventsContainer.appendChild(eventRow);
+        }
+
+        // Memuatkan data apabila halaman dibuka — terus dari fail statik,
+        // bukan google.script.run (fail ini bukan lagi Apps Script HTML).
+        document.addEventListener('DOMContentLoaded', async () => {
+            showStatus('Memuatkan data...', 'loading');
+            saveBtn.disabled = true;
+            try {
+                const res = await fetch(`./events.json?v=${Date.now()}`);
+                if (!res.ok) throw new Error(`Status ${res.status}`);
+                const data = await res.json();
+                eventsContainer.innerHTML = ''; // Kosongkan container
+
+                // Susun acara sebelum memaparkannya di panel admin
+                data.events.sort((a, b) => {
+                    if (!a.eventDate || !b.eventDate) return 0;
+                    return new Date(a.eventDate) - new Date(b.eventDate);
+                });
+
+                data.events.forEach(createEventRow);
+                showStatus('Data berjaya dimuatkan.', 'success');
+                setTimeout(() => { statusMessage.style.display = 'none'; }, 3000);
+                saveBtn.disabled = false;
+            } catch (error) {
+                showStatus(`Ralat: ${error.message}`, 'error');
+            }
+        });
+
+        // Fungsi untuk butang 'Tambah Acara'
+        addBtn.addEventListener('click', () => {
+            createEventRow();
+        });
+
+        // Fungsi untuk butang 'Simpan Perubahan'
+        saveBtn.addEventListener('click', async () => {
+            const pin = pinInput.value;
+            if (!pin) {
+                alert('Sila masukkan PIN anda.');
+                return;
+            }
+
+            showStatus('Menyimpan data ke GitHub...', 'loading');
+            saveBtn.disabled = true;
+
+            const allRows = eventsContainer.querySelectorAll('.event-row');
+            const eventsData = Array.from(allRows).map(row => ({
+                eventName: row.querySelector('.event-name').value,
+                eventDate: row.querySelector('.event-date').value,
+                hijriDate: row.querySelector('.hijri-date').value
+            }));
+
+            try {
+                const res = await fetch('/api/publish-events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ events: eventsData, pin })
+                });
+                const response = await res.json();
+
+                if (res.ok && response.success) {
+                    showStatus(response.message, 'success');
+                    // Muat semula data untuk memaparkan susunan yang betul
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showStatus(`Gagal: ${response.message || response.error}`, 'error');
+                    saveBtn.disabled = false;
+                }
+            } catch (error) {
+                showStatus(`Ralat: ${error.message}`, 'error');
+                saveBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
