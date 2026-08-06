@@ -1,55 +1,60 @@
 {
-  "lastUpdated": "08 November 2025, 11:29 PTG",
+  "lastUpdated": "06 Ogos 2026, 11:06 PG",
   "events": [
     {
-      "eventName": "Israk dan Mikraj",
-      "eventDate": "2026-01-17",
-      "hijriDate": "27 Rejab 1446 H"
-    },
-    {
-      "eventName": "Nisfu Sya'ban",
-      "eventDate": "2026-02-03",
-      "hijriDate": "15 Syaaban 1446 H"
-    },
-    {
       "eventName": "Awal Ramadan",
-      "eventDate": "2026-02-19",
-      "hijriDate": "1 Ramadan 1447 H"
-    },
-    {
-      "eventName": "Hari Nuzul Al-Quran",
-      "eventDate": "2026-03-07",
-      "hijriDate": "17 Ramadan 1447 H"
-    },
-    {
-      "eventName": "Hari Raya Aidilfitri",
-      "eventDate": "2026-03-21",
-      "hijriDate": "1 Syawal 1447 H"
-    },
-    {
-      "eventName": "Hari Arafah",
-      "eventDate": "2026-05-26",
-      "hijriDate": "9 Zulhijah 1447 H"
-    },
-    {
-      "eventName": "Hari Raya Aidiladha",
-      "eventDate": "2026-05-27",
-      "hijriDate": "10 Zulhijah 1447 H"
-    },
-    {
-      "eventName": "Awal Muharram (Maal Hijrah)",
-      "eventDate": "2026-06-17",
-      "hijriDate": "1 Muharam 1448 H"
-    },
-    {
-      "eventName": "Hari Asyura",
-      "eventDate": "2026-06-27",
-      "hijriDate": "10 Muharam 1448 H"
+      "eventDate": "2026-02-08",
+      "hijriDate": "1 Ramadan 1448 H"
     },
     {
       "eventName": "Maulidur Rasul",
       "eventDate": "2026-08-25",
-      "hijriDate": "12 Rabiulawal 1447 H"
+      "hijriDate": "12 Rabiulawal 1448 H"
+    },
+    {
+      "eventName": "Israk dan Mikraj",
+      "eventDate": "2027-01-06",
+      "hijriDate": "27 Rejab 1448 H"
+    },
+    {
+      "eventName": "Nisfu Sya'ban",
+      "eventDate": "2027-01-24",
+      "hijriDate": "15 Syaaban 1448 H"
+    },
+    {
+      "eventName": "Hari Nuzul Al-Quran",
+      "eventDate": "2027-02-24",
+      "hijriDate": "17 Ramadan 1448 H"
+    },
+    {
+      "eventName": "Hari Raya Aidilfitri",
+      "eventDate": "2027-03-10",
+      "hijriDate": "1 Syawal 1448 H"
+    },
+    {
+      "eventName": "Awal Zulhijjah",
+      "eventDate": "2027-05-08",
+      "hijriDate": "1 Zulhijah 1448 H"
+    },
+    {
+      "eventName": "Hari Arafah",
+      "eventDate": "2027-05-16",
+      "hijriDate": "9 Zulhijah 1448 H"
+    },
+    {
+      "eventName": "Hari Raya Aidiladha",
+      "eventDate": "2027-05-17",
+      "hijriDate": "10 Zulhijah 1448 H"
+    },
+    {
+      "eventName": "Awal Muharram (Maal Hijrah)",
+      "eventDate": "2027-06-06",
+      "hijriDate": "1 Muharam 1449 H"
+    },
+    {
+      "eventName": "Hari Asyura",
+      "eventDate": "2027-06-15",
+      "hijriDate": "10 Muharam 1449 H"
     }
   ]
 }
