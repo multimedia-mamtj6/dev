@@ -104,6 +104,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('last-updated').textContent = `Tarikh Kemaskini: ${lastUpdated}`;
 
+            // Julat tahun Masihi & Hijrah — dikira terus dari events.json
+            // supaya subtajuk sentiasa sepadan dengan data sebenar, bukan
+            // nombor tahun yang dikodkan keras (lihat calendar/hijri/data/eventproject.md).
+            const subtitleEl = document.getElementById('year-range-subtitle');
+            if (subtitleEl && eventData.length > 0) {
+                const masihiYears = eventData.map(e => new Date(e.eventDate + 'T00:00:00').getFullYear());
+                const hijriYears = eventData
+                    .map(e => {
+                        const match = e.hijriDate.match(/(\d{3,4})\s*H/);
+                        return match ? parseInt(match[1], 10) : null;
+                    })
+                    .filter(y => y !== null);
+
+                const masihiMin = Math.min(...masihiYears);
+                const masihiMax = Math.max(...masihiYears);
+                const masihiLabel = masihiMin === masihiMax ? `${masihiMin}` : `${masihiMin} &ndash; ${masihiMax}`;
+
+                let hijriLabel = '';
+                if (hijriYears.length > 0) {
+                    const hijriMin = Math.min(...hijriYears);
+                    const hijriMax = Math.max(...hijriYears);
+                    hijriLabel = ' / ' + (hijriMin === hijriMax ? `${hijriMin} H` : `${hijriMin} &ndash; ${hijriMax} H`);
+                }
+
+                subtitleEl.innerHTML = `Tahun ${masihiLabel}${hijriLabel} bagi Malaysia`;
+            }
+
             const tableBody = document.getElementById('events-tbody');
             const today = new Date();
             today.setHours(0, 0, 0, 0);
