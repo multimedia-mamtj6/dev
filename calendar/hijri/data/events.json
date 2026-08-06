@@ -1,11 +1,6 @@
 {
-  "lastUpdated": "06 Ogos 2026, 11:06 PG",
+  "lastUpdated": "06 Ogos 2026, 11:07 PG",
   "events": [
-    {
-      "eventName": "Awal Ramadan",
-      "eventDate": "2026-02-08",
-      "hijriDate": "1 Ramadan 1448 H"
-    },
     {
       "eventName": "Maulidur Rasul",
       "eventDate": "2026-08-25",
@@ -20,6 +15,11 @@
       "eventName": "Nisfu Sya'ban",
       "eventDate": "2027-01-24",
       "hijriDate": "15 Syaaban 1448 H"
+    },
+    {
+      "eventName": "Awal Ramadan",
+      "eventDate": "2027-02-08",
+      "hijriDate": "1 Ramadan 1449 H"
     },
     {
       "eventName": "Hari Nuzul Al-Quran",
