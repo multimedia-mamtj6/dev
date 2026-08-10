@@ -16,7 +16,8 @@
       "Bash(git config *)",
       "Bash(git-credential-manager --version)",
       "Bash(git-credential-manager github *)",
-      "Bash(where git-credential-manager *)"
+      "Bash(where git-credential-manager *)",
+      "Bash(curl -sL \"https://api.data.gov.my/weather/warning?limit=10\")"
     ]
   }
 }
