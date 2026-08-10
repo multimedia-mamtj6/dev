@@ -1,8 +1,11 @@
 /* =====================================================================
-   csr/weather/paparan — digital-signage stylesheet
-   Fixed 1920x1080 design (#stage), uniformly scaled by JS to fit any
-   screen — everything below uses fixed px tuned for that canvas, not
-   vw-relative clamp() (which would fight the outer scale transform).
+   csr/weather — interactive weather page stylesheet
+   Layout ported from csr/weather/paparan/style.css (header/top-bar,
+   floating legend-card, forecast card, tier-grouped warning cards) but
+   kept RESPONSIVE — no fixed 1920x1080 #stage/scale-transform, that's
+   paparan's TV-kiosk-specific mechanism and wrong for a normal
+   resizable browser page. Theme tokens are identical to paparan's so
+   both pages share one palette.
    ===================================================================== */
 
 * {
@@ -10,7 +13,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Theme tokens                                                        */
+/* Theme tokens — same values as csr/weather/paparan/style.css         */
 /* ------------------------------------------------------------------ */
 :root[data-theme="dark"] {
     --bg: #05070c;
@@ -29,42 +32,30 @@
 }
 
 :root {
-    /* Severity tokens — fixed in both themes, match weather-core.js's TIER_COLORS */
     --tier-amaran: #2516d2;
-    /* Ribut Petir / Hujan Lebat */
     --tier-waspada: #fdfe00;
     --tier-buruk: #fea402;
     --tier-bahaya: #fa0101;
-    --district-default-fill: #ffffff;
-    --district-default-border: #8a8a8a;
 }
 
 html,
 body {
-    height: 100%;
     margin: 0;
-    overflow: hidden;
-    /* signage never scrolls */
-    background: var(--bg);
-}
-
-/* ------------------------------------------------------------------ */
-/* Stage — fixed 1920x1080 canvas, centered + scaled by JS             */
-/* ------------------------------------------------------------------ */
-#stage {
-    width: 1920px;
-    height: 1080px;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform-origin: center center;
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+    padding: 24px 16px;
+}
+
+.page-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    padding: 48px 16px;
-    gap: 28px;
+    gap: 20px;
 }
 
 .panel {
@@ -80,25 +71,28 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .title-block {
     display: flex;
     align-items: baseline;
     gap: 14px;
+    flex-wrap: wrap;
 }
 
 .title-block h1 {
     margin: 0;
     font-family: 'Archivo', sans-serif;
     font-weight: 800;
-    font-size: 34px;
+    font-size: 28px;
     letter-spacing: -0.01em;
+    color: var(--text);
 }
 
 .title-block .subtitle {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--muted);
 }
@@ -106,7 +100,7 @@ body {
 .top-bar-right {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 18px;
 }
 
 .clock-block {
@@ -119,11 +113,12 @@ body {
 #live-clock {
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
-    font-size: 28px;
+    font-size: 22px;
+    color: var(--text);
 }
 
 #live-date {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--muted);
 }
@@ -131,25 +126,26 @@ body {
 .theme-toggle-btn {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text);
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 10px 20px;
+    padding: 8px 16px;
     cursor: pointer;
+    white-space: nowrap;
 }
 
-/* Test-mode indicator — must never be mistaken for a real warning */
+/* Test-mode / unrecognized-state indicators — must never be mistaken
+   for a real warning. */
 #test-mode-banner {
     display: none;
-    flex: 0 0 auto;
-    padding: 10px 16px;
+    padding: 10px 14px;
     border: 2px dashed #7c3aed;
     border-radius: 10px;
     background: var(--panel);
     color: #a78bfa;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -157,21 +153,65 @@ body {
     display: block;
 }
 
+#state-error-banner {
+    display: none;
+    padding: 10px 14px;
+    border: 2px dashed #ef4444;
+    border-radius: 10px;
+    background: var(--panel);
+    color: #fca5a5;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#state-error-banner.active {
+    display: block;
+}
+
+/* ------------------------------------------------------------------ */
+/* Controls (state/district selects) — no analog in paparan (it has no */
+/* dropdowns); styled to match the surrounding panel language.         */
+/* ------------------------------------------------------------------ */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+}
+
+.controls label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+select {
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+}
+
 /* ------------------------------------------------------------------ */
 /* Main: map panel left, content column right                         */
 /* ------------------------------------------------------------------ */
 main {
-    flex: 1;
-    min-height: 0;
     display: flex;
-    gap: 28px;
+    gap: 20px;
+    flex-wrap: wrap;
+    /* stacks on narrow viewports */
 }
 
 #map-panel {
-    flex: 0 0 61%;
+    flex: 1 1 620px;
+    height: 600px;
     position: relative;
     overflow: hidden;
-    /* clip Leaflet tiles to the 20px rounded corners */
+    /* clip Leaflet tiles to the rounded corners */
 }
 
 #map {
@@ -184,7 +224,7 @@ main {
     align-items: center;
     justify-content: center;
     color: var(--muted);
-    font-size: 20px;
+    font-size: 15px;
     text-align: center;
     background: var(--panel);
 }
@@ -193,7 +233,8 @@ body.map-dark .leaflet-tile-pane {
     filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.85) saturate(.7);
 }
 
-/* District name pills — Leaflet permanent tooltips */
+/* District name pills — Leaflet permanent tooltips (map is locked, no
+   hover/click, so these are the only always-visible district labels). */
 .leaflet-tooltip.district-label-pill {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -207,7 +248,6 @@ body.map-dark .leaflet-tile-pane {
 
 .leaflet-tooltip.district-label-pill::before {
     display: none;
-    /* hide Leaflet's default tooltip arrow */
 }
 
 /* Floating legend, top-right of the map */
@@ -251,6 +291,16 @@ body.map-dark .leaflet-tile-pane {
     flex: 0 0 auto;
 }
 
+.legend-swatch[data-tier="biasa"] {
+    background: #ffffff;
+    border: 1px solid #94a3b8;
+}
+
+.legend-swatch[data-tier="dipilih"] {
+    background: transparent;
+    border: 3px solid #1d4ed8;
+}
+
 .legend-swatch[data-tier="amaran"] {
     background: var(--tier-amaran);
 }
@@ -268,51 +318,44 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .right-col {
-    flex: 1;
-    min-height: 0;
+    flex: 1 1 360px;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 20px;
 }
 
 /* ------------------------------------------------------------------ */
 /* Forecast card                                                       */
 /* ------------------------------------------------------------------ */
 .forecast-card {
-    flex: 0 0 auto;
     padding: 0;
-    /* clip .forecast-head's own rounded top corners flush with the card's */
     overflow: hidden;
+    /* clip .forecast-head's own rounded top corners flush with the card's */
 }
 
-/* The whole header row is framed in the tier colour (all 4 sides) instead
-   of just a left edge on the card — more visible at signage viewing
-   distance, especially for Bahaya. Transparent by default. */
 .forecast-head {
     display: flex;
     align-items: baseline;
     gap: 10px;
-    padding: 18px 28px;
+    padding: 18px 24px;
     border: 3px solid transparent;
     border-radius: 20px 20px 0 0;
+    flex-wrap: wrap;
 }
 
 .forecast-head h2 {
     margin: 0;
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
-    font-size: 26px;
+    font-size: 22px;
 }
 
 .forecast-head span {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--muted);
 }
 
-/* Reuses .tier-swatch/.tier-label (defined under Warning cards) so it
-   reads as the same "district under X tier" language as the warn-cards'
-   tier rows. Right-aligned like .meta-issued in .warn-card-head. */
 .forecast-warn-badge {
     display: none;
     align-items: center;
@@ -327,13 +370,14 @@ body.map-dark .leaflet-tile-pane {
 .forecast-body {
     display: flex;
     align-items: center;
-    gap: 36px;
-    padding: 18px 28px 22px;
+    gap: 28px;
+    padding: 18px 24px 22px;
+    flex-wrap: wrap;
 }
 
 .forecast-temp {
     font-family: 'Archivo', sans-serif;
-    font-size: 56px;
+    font-size: 44px;
     font-weight: 800;
     white-space: nowrap;
 }
@@ -341,16 +385,17 @@ body.map-dark .leaflet-tile-pane {
 .forecast-temp small {
     display: block;
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
     color: var(--muted);
 }
 
 .forecast-slots {
     display: flex;
-    gap: 32px;
+    gap: 24px;
     flex: 1;
     justify-content: space-around;
+    flex-wrap: wrap;
 }
 
 .forecast-slot {
@@ -359,7 +404,7 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .forecast-slot .slot-name {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--muted);
     font-weight: 600;
     text-transform: uppercase;
@@ -367,12 +412,12 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .forecast-slot .slot-icon {
-    font-size: 40px;
+    font-size: 32px;
     line-height: 1.3;
 }
 
 .forecast-slot .slot-text {
-    font-size: 16px;
+    font-size: 14px;
     color: var(--text);
     line-height: 1.25;
 }
@@ -381,29 +426,18 @@ body.map-dark .leaflet-tile-pane {
 /* Warning cards                                                       */
 /* ------------------------------------------------------------------ */
 .warn-card {
-    /* Size to content, don't force an equal 50/50 split with the sibling
-       card — a short "Tiada ..." card shouldn't eat half the column while
-       a card with several tiers is starved for room and forced to overflow. */
     flex: 0 0 auto;
-    max-height: 100%;
-    padding: 16px 28px;
+    padding: 16px 24px;
     display: flex;
     flex-direction: column;
     border-left: 8px solid transparent;
-    /* Never clip: a hidden tier row would mean a warning silently vanishes
-       from the screen. If content ever exceeds the available column height
-       (many simultaneous tiers/districts on both cards at once), it visibly
-       overflows rather than disappearing. */
     overflow: visible;
+    /* never silently clip a warning row */
 }
 
 .warn-card.empty {
     background: var(--panel);
     opacity: .6;
-}
-
-.warn-card.active {
-    /* border-left colour set inline from the warning's severity tier */
 }
 
 .warn-card-head {
@@ -413,17 +447,18 @@ body.map-dark .leaflet-tile-pane {
     border-bottom: 2px solid var(--border);
     padding-bottom: 8px;
     margin-bottom: 8px;
+    flex-wrap: wrap;
 }
 
 .warn-card-head h2 {
     margin: 0;
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .warn-more {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--muted);
     white-space: nowrap;
@@ -431,7 +466,7 @@ body.map-dark .leaflet-tile-pane {
 
 .meta-issued {
     margin-left: auto;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--muted);
     white-space: nowrap;
@@ -443,7 +478,7 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .warn-marine-note {
-    font-size: 15px;
+    font-size: 14px;
     color: #38bdf8;
     margin-bottom: 10px;
 }
@@ -464,6 +499,7 @@ body.map-dark .leaflet-tile-pane {
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
+    flex-wrap: wrap;
 }
 
 .tier-swatch {
@@ -474,18 +510,17 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .tier-label {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 600;
 }
 
 .tier-sehingga {
     margin-left: auto;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--muted);
     white-space: nowrap;
 }
 
-/* District pills — one per affected Pahang district, tier-coloured */
 .tier-row-districts {
     display: flex;
     flex-wrap: wrap;
@@ -496,7 +531,7 @@ body.map-dark .leaflet-tile-pane {
     display: inline-block;
     padding: 6px 16px;
     border-radius: 999px;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     line-height: 1.2;
     white-space: nowrap;
@@ -533,9 +568,10 @@ body.map-dark .leaflet-tile-pane {
 /* Footer                                                              */
 /* ------------------------------------------------------------------ */
 #page-footer {
-    flex: 0 0 auto;
     display: flex;
     justify-content: space-between;
-    font-size: 15px;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 13px;
     color: var(--muted);
 }

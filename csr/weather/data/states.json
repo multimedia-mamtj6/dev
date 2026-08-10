@@ -1,0 +1,146 @@
+{
+  "pahang": {
+    "displayName": "Pahang",
+    "apiName": "Pahang",
+    "stateCode": "PHG",
+    "districts": ["Bentong", "Bera", "Cameron Highlands", "Jerantut", "Kuantan", "Lipis", "Maran", "Pekan", "Raub", "Rompin", "Temerloh"],
+    "aliases": { "kuala lipis": "Lipis", "cameron highland": "Cameron Highlands", "tanah tinggi cameron": "Cameron Highlands" },
+    "center": [3.8126, 102.3275],
+    "zoom": 8
+  },
+  "terengganu": {
+    "displayName": "Terengganu",
+    "apiName": "Terengganu",
+    "stateCode": "TRG",
+    "districts": ["Besut", "Kuala Terengganu", "Setiu", "Kemaman", "Marang", "Hulu Terengganu", "Dungun", "Kuala Nerus"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "johor": {
+    "displayName": "Johor",
+    "apiName": "Johor",
+    "stateCode": "JHR",
+    "districts": ["Johor Bahru", "Kluang", "Kota Tinggi", "Tangkak", "Segamat", "Mersing", "Pontian", "Muar", "Kulai", "Batu Pahat"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "kedah": {
+    "displayName": "Kedah",
+    "apiName": "Kedah",
+    "stateCode": "KDH",
+    "districts": ["Baling", "Pendang", "Padang Terap", "Kuala Muda", "Bandar Baharu", "Yan", "Kota Setar", "Kulim", "Kubang Pasu", "Sik", "Pokok Sena", "Langkawi"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "kelantan": {
+    "displayName": "Kelantan",
+    "apiName": "Kelantan",
+    "stateCode": "KTN",
+    "districts": ["Machang", "Kecil Lojing", "Jeli", "Pasir Puteh", "Kuala Krai", "Tumpat", "Bachok", "Kota Bharu", "Tanah Merah", "Gua Musang", "Pasir Mas"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "kualalumpur": {
+    "displayName": "Kuala Lumpur",
+    "apiName": "Kuala Lumpur",
+    "stateCode": "KUL",
+    "districts": ["W.P. Kuala Lumpur"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "labuan": {
+    "displayName": "Labuan",
+    "apiName": "Labuan",
+    "stateCode": "LBN",
+    "districts": ["W.P. Labuan"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "melaka": {
+    "displayName": "Melaka",
+    "apiName": "Melaka",
+    "stateCode": "MLK",
+    "districts": ["Jasin", "Melaka Tengah", "Alor Gajah"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "negerisembilan": {
+    "displayName": "Negeri Sembilan",
+    "apiName": "Negeri Sembilan",
+    "stateCode": "NSN",
+    "districts": ["Kuala Pilah", "Seremban", "Jelebu", "Tampin", "Rembau", "Jempol", "Port Dickson"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "putrajaya": {
+    "displayName": "Putrajaya",
+    "apiName": "Putrajaya",
+    "stateCode": "PJY",
+    "districts": ["W.P. Putrajaya"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "perlis": {
+    "displayName": "Perlis",
+    "apiName": "Perlis",
+    "stateCode": "PLS",
+    "districts": ["Perlis"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "penang": {
+    "displayName": "Penang",
+    "apiName": "Penang",
+    "stateCode": "PNG",
+    "districts": ["Seberang Perai Tengah", "Seberang Perai Selatan", "Seberang Perai Utara", "Timur Laut", "Barat Daya"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "perak": {
+    "displayName": "Perak",
+    "apiName": "Perak",
+    "stateCode": "PRK",
+    "districts": ["Hulu Perak", "Batang Padang", "Bagan Datuk", "Manjung", "Perak Tengah", "Selama", "Hilir Perak", "Kerian", "Kampar", "Muallim", "Kinta", "Kuala Kangsar", "Larut Dan Matang"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "sabah": {
+    "displayName": "Sabah",
+    "apiName": "Sabah",
+    "stateCode": "SBH",
+    "districts": ["Kuala Penyu", "Ranau", "Kota Belud", "Kunak", "Tawau", "Semporna", "Beaufort", "Sipitang", "Beluran", "Sandakan", "Kinabatangan", "Telupid", "Kota Kinabalu", "Lahad Datu", "Pitas", "Putatan", "Keningau", "Tambunan", "Papar", "Kudat", "Kota Marudu", "Tongod", "Nabawan", "Tenom", "Penampang", "Kalabakan", "Tuaran"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "selangor": {
+    "displayName": "Selangor",
+    "apiName": "Selangor",
+    "stateCode": "SGR",
+    "districts": ["Kuala Selangor", "Sepang", "Klang", "Gombak", "Ulu Langat", "Ulu Selangor", "Sabak Bernam", "Petaling", "Kuala Langat"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  },
+  "sarawak": {
+    "displayName": "Sarawak",
+    "apiName": "Sarawak",
+    "stateCode": "SWK",
+    "districts": ["Lundu", "Bau", "Kuching", "Samarahan", "Serian", "Lubok Antu", "Simunjan", "Sri Aman", "Sarikei", "Dalat", "Betong", "Daro", "Saratok", "Maradong", "Julau", "Mukah", "Sibu", "Kapit", "Bintulu", "Kanowit", "Tanjung Manis", "Sebauh", "Song", "Asajaya", "Pakan", "Lawas", "Tatau", "Selangau", "Matu", "Marudi", "Tebedu", "Kabong", "Limbang", "Pusa", "Miri", "Belaga", "Telang Usan", "Subis", "Beluru", "Bukit Mabong"],
+    "aliases": {},
+    "center": null,
+    "zoom": null
+  }
+}

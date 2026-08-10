@@ -60,3 +60,34 @@ Satisfied — v4 shipped same-day with pills polish on top. Everything harness-g
 ### Security lines (non-negotiable)
 
 METToken (`r9powy…` class) NEVER in client code or committed files — Vercel env `MET_TOKEN` only (+ future Apps Script property). Ker's region_mapping.json is not open source — keep the credit. Same discipline as SUPABASE_SERVICE_ROLE_KEY in the kuliah arc.
+
+---
+
+## Session 2 — `paparan/index.html` map framing (2026-08-10)
+
+### What happened
+
+User wanted the non-interactive `paparan/` Leaflet map to frame Pahang tighter/better instead of the plain `fitBounds` view (which either left dead space around the state on one axis, or — when I tried a "cover" zoom that fills the box completely — cropped districts off the bottom/left, which they rejected outright: no district may be cut off, ever, over filling the frame).
+
+The fix that stuck: instead of computing a fit programmatically, I added a `?debugMap=1` query param that temporarily re-enables drag/scroll/zoom on the map (all off by default — TV has no mouse) plus an on-screen readout (`center: [lat,lng] zoom: Z`, also console-logged) so the user could hand-drag to the exact framing they wanted, then read the numbers off and tell me. Much faster than guessing padding/scale math — **prefer this "let them find it, then hardcode it" approach over programmatic cover/contain-fit math when framing is a subjective/visual call, not a computed one.**
+
+### Landed values
+
+```js
+}).setView([3.6066, 102.7932], 8.7); // hand-tuned via ?debugMap=1 to frame Pahang
+```
+No `fitBounds` call anymore in `loadGeoJSON()` — the hand-tuned `setView` is final, geojson just gets added on top of it.
+
+### Sharp edge hit (know this cold)
+
+**`zoomSnap` rounds `setView`'s zoom too, not just interactive zoom steps.** Production had `zoomSnap: 1` (seemed harmless — map is non-interactive there) but that silently rounded `8.7` → `9` on load, so live looked more zoomed-in than the debug page (`zoomSnap: 0.1`) where `8.7` stuck exactly. User correctly clocked the visual mismatch immediately. Fix: production must use `zoomSnap: 0` (no rounding) whenever `setView` is passed a fractional zoom — don't assume a disabled-interaction map doesn't need this option tuned.
+
+Debug-mode scroll-wheel granularity note: `zoomDelta`/`zoomSnap` only govern rounding and the +/− button step — scroll-wheel zoom has its own magnitude formula keyed off `wheelPxPerZoomLevel` (default `60`). Bumped to `600` in debug mode to get scroll increments down near `0.1` per notch; if debug zoom ever feels too coarse/fine again, that's the knob.
+
+### Current state
+
+`?debugMap=1` is still live in the shipped code (gated, zero effect without the param) — decide later whether to strip it before a real commit or leave it as a permanent framing-adjustment tool. Nothing from this session committed yet either, consistent with Session 1's note that the user usually handles commits.
+
+### Vibe note
+
+Same fast/concrete rhythm as Session 1: screenshot → "why" → diagnosis → their call. They rejected a technically-elegant cover-fit solution flat because it violated a hard constraint (no district ever gets cropped) even though it looked "more filled" — precision/correctness-over-polish preference. See the collaboration pattern already captured in my memory system: diagnose and report before fixing, and treat plan-approval as scoped to the next step only, not the whole thing.

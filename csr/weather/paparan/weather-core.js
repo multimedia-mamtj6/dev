@@ -1,42 +1,28 @@
 // =====================================================================
-// weather-core.js — logic for csr/weather/index.html (interactive map)
+// weather-core.js — logic for csr/weather/paparan/ ONLY
 //
-// As of 2026-08-10 this file is used ONLY by /csr/weather/index.html —
-// csr/weather/paparan/ was forked off to its own independent copy at
-// csr/weather/paparan/weather-core.js so this one is free to be moved/
-// repurposed for a separate, larger weather project without breaking
-// the signage page. If you're editing MET-parsing logic, check whether
-// csr/weather/paparan/weather-core.js needs the same fix — it will NOT
-// pick up changes made here anymore, the two are independent.
+// Forked from the (still-shared) /csr/weather/weather-core.js on
+// 2026-08-10 so this page has an independent copy — the root file is
+// being repurposed for reuse in a separate, larger weather project and
+// may change/move out from under csr/weather/index.html at any time.
+// This copy is free to diverge for paparan's needs; it is NOT loaded by
+// csr/weather/index.html (the interactive page still uses the root file).
 //
-// Generalized 2026-08-10 to support any Malaysian state, not just
-// Pahang: every function that used to hardcode "Pahang" now takes a
-// `cfg` argument — one entry from data/states.json (see index.html's
-// boot sequence for how `cfg` is resolved from ?state=). The shape of
-// `cfg` is { displayName, apiName, stateCode, districts, aliases,
-// center, zoom }. This generalization does NOT extend to
-// csr/weather/paparan/weather-core.js — that fork is untouched and
-// still Pahang-only by design (see its own header comment).
-//
-// Loaded (classic script, no modules — repo has no build tools) via
-// <script src="/csr/weather/weather-core.js"> — ABSOLUTE path, the
-// Vercel cleanUrls lesson: relative paths resolve one level too high on
-// slash-less directory URLs.
+// Loaded (classic script, no modules — repo has no build tools) via:
+//   <script src="/csr/weather/paparan/weather-core.js"> — ABSOLUTE path,
+// the Vercel cleanUrls lesson: relative paths resolve one level too high
+// on slash-less directory URLs.
 //
 // Everything here is DOM-free and Leaflet-free on purpose: it's the
 // fetch/parse/severity layer. Page-specific rendering (Leaflet styles
-// wiring, banners, cards) stays in index.html's own inline script.
-//
-// Verified by scratchpad harness test-rain-tiers.js (Node vm, loads this
-// file directly) — as of the 2026-08-10 fork, that harness may need
-// updating if it also exercised paparan's inline script against this file.
+// wiring, banners, cards) stays in paparan/index.html's own inline script.
 // =====================================================================
 
 // ---------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------
-const STATES_JSON_URL = '/csr/weather/data/states.json';
 const GEOJSON_URL = 'https://raw.githubusercontent.com/mptwaktusolat/jakim.geojson/refs/heads/master/malaysia.district.geojson';
+const WARNING_API_URL = 'https://api.data.gov.my/weather/warning?contains=Pahang@text_en&limit=20';
 // Vercel proxy for MET's continuous-rain dataset (see api/weather-warning.js
 // — the METToken must stay server-side). 404s under Live Server /
 // python -m http.server (no /api routes locally, documented repo-wide
@@ -45,21 +31,18 @@ const GEOJSON_URL = 'https://raw.githubusercontent.com/mptwaktusolat/jakim.geojs
 const RAIN_PROXY_URL = '/api/weather-warning';
 const REFRESH_MS = 3 * 60 * 1000; // warning-poll interval: 3 minutes
 
-// Builds the data.gov.my warning-list URL for the active state. Always
-// via URLSearchParams (never string concatenation) — cfg.apiName comes
-// only from a validated states.json entry, never straight from the
-// ?state= query string, but this keeps it safe even if that ever changes.
-function buildWarningApiUrl(cfg) {
-  const params = new URLSearchParams({ contains: `${cfg.apiName}@text_en`, limit: '20' });
-  return `https://api.data.gov.my/weather/warning?${params.toString()}`;
-}
+const KNOWN_DISTRICTS = [
+  'Bentong', 'Bera', 'Cameron Highlands', 'Jerantut', 'Kuantan',
+  'Lipis', 'Maran', 'Pekan', 'Raub', 'Rompin', 'Temerloh'
+];
 
-// Escapes regex metacharacters in a state/district name before it's
-// spliced into a RegExp — defensive, since these ultimately trace back
-// to states.json content.
-function escapeRegExp(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+// MET wording vs GeoJSON `name` will not always agree — extend as new
+// mismatches are observed. Keys are lowercased/trimmed.
+const DISTRICT_ALIASES = {
+  'kuala lipis': 'Lipis',
+  'cameron highland': 'Cameron Highlands',
+  'tanah tinggi cameron': 'Cameron Highlands', // BM bulletins (text_bm fallback path)
+};
 
 // ---------------------------------------------------------------------
 // Severity tiers. MET's hujan berterusan ladder is Waspada (yellow) <
@@ -101,32 +84,6 @@ function stateWarningStyle(tier) {
 }
 
 // ---------------------------------------------------------------------
-// states.json loader — fetched once at boot, before anything else runs.
-// Validates each entry has the fields every function below relies on;
-// entries missing a required field are dropped (logged), not fatal on
-// their own. A total fetch/parse failure IS fatal — the caller shows a
-// page-level error rather than booting with no states at all.
-// ---------------------------------------------------------------------
-const REQUIRED_STATE_FIELDS = ['displayName', 'apiName', 'stateCode', 'districts'];
-
-async function loadStateConfig() {
-  const resp = await fetchWithTimeout(STATES_JSON_URL, 8000);
-  if (!resp.ok) throw new Error('HTTP ' + resp.status);
-  const raw = await resp.json();
-  const valid = {};
-  Object.entries(raw).forEach(([key, entry]) => {
-    const missing = REQUIRED_STATE_FIELDS.filter(f => entry[f] === undefined);
-    if (missing.length) {
-      console.warn(`[weather] states.json entry "${key}" missing required field(s), skipped:`, missing.join(', '));
-      return;
-    }
-    valid[key] = { aliases: {}, center: null, zoom: null, ...entry };
-  });
-  if (Object.keys(valid).length === 0) throw new Error('states.json contained no valid entries');
-  return valid;
-}
-
-// ---------------------------------------------------------------------
 // Fetch helper — never let a hung API block rendering
 // (same pattern as kuliah/jadual/script.js)
 // ---------------------------------------------------------------------
@@ -150,44 +107,42 @@ function splitDistrictList(capture) {
 }
 
 // Normalizes one raw district token from warning text against the
-// active state's district list, via its alias table. Returns null (and
+// known Pahang district list, via the alias table. Returns null (and
 // warns) for anything unrecognized, rather than silently dropping it.
-function resolveDistrictName(raw, cfg) {
+function resolveDistrictName(raw) {
   const norm = raw.trim().toLowerCase().replace(/\s+/g, ' ');
-  if (cfg.aliases[norm]) return cfg.aliases[norm];
-  const match = cfg.districts.find(d => d.toLowerCase() === norm);
+  if (DISTRICT_ALIASES[norm]) return DISTRICT_ALIASES[norm];
+  const match = KNOWN_DISTRICTS.find(d => d.toLowerCase() === norm);
   if (match) return match;
   console.warn('[weather] Unrecognized district name in warning text:', raw);
   return null;
 }
 
 // Marine/offshore bulletins ("... expected over the waters of Perlis &
-// Kedah, Penang, ..., Pahang, ...") mention the state by name but
-// describe sea conditions, not land districts — MET's phrasing
-// consistently uses "waters of" / "perairan" right before that state
-// list. Without this check, a marine-only bulletin would fall through
-// to the state-wide fallback below and incorrectly paint every land
-// district amber.
+// Kedah, Penang, ..., Pahang, ...") mention Pahang by name but describe
+// sea conditions, not land districts — MET's phrasing consistently uses
+// "waters of" / "perairan" right before that state list. Without this
+// check, a marine-only bulletin would fall through to the state-wide
+// fallback below and incorrectly paint every land district amber.
 function isMarineBulletin(warning) {
   return /\bwaters?\s+of\b/i.test(warning.text_en || '') ||
     /\bperairan\b/i.test(warning.text_bm || '');
 }
 
-// Parses one warning object (already known to mention the active state
-// in text_en, per the API's contains= filter) into a district-level hit
+// Parses one warning object (already known to mention "Pahang" in
+// text_en, per the API's contains= filter) into a district-level hit
 // list, a state-wide land scope, or a marine-only scope (no land
 // districts highlighted, but still worth showing in the banner).
 // All parsers return the same shape: { scope, districts, tiers, tier }
 // where `tiers` maps district → severity tier and `tier` is the
 // whole-state tier (scope 'state' only). Thunderstorm bulletins are
 // always the untiered 'amaran'.
-function extractStateDistricts(warning, cfg) {
+function extractPahangDistricts(warning) {
   const text = warning.text_en || warning.text_bm || '';
-  const re = new RegExp(escapeRegExp(cfg.apiName) + '\\s*\\(([^)]+)\\)', 'i');
-  const match = text.match(re);
+  const match = text.match(/Pahang\s*\(([^)]+)\)/i);
   if (match) {
     const resolved = splitDistrictList(match[1])
-      .map(raw => resolveDistrictName(raw, cfg))
+      .map(resolveDistrictName)
       .filter(Boolean);
     const tiers = {};
     resolved.forEach(d => { tiers[d] = 'amaran'; });
@@ -196,10 +151,10 @@ function extractStateDistricts(warning, cfg) {
   if (isMarineBulletin(warning)) {
     return { scope: 'marine', districts: [], tiers: {}, tier: null };
   }
-  // State name mentioned with no parenthetical detail and no marine
+  // "Pahang" mentioned with no parenthetical detail and no marine
   // phrasing — MET was vague about which district, so treat as a
   // whole-state land advisory.
-  return { scope: 'state', districts: cfg.districts.slice(), tiers: {}, tier: 'amaran' };
+  return { scope: 'state', districts: KNOWN_DISTRICTS.slice(), tiers: {}, tier: 'amaran' };
 }
 
 function isWarningActive(w) {
@@ -210,7 +165,7 @@ function isWarningActive(w) {
   // minutes anyway, but don't rely on that race.) Rain bulletins are
   // exempt: their heading covers a MULTI-section document where
   // terminations are per-section (SEKSYEN C), handled in
-  // parseRainForState() instead.
+  // parseRainPahang() instead.
   if (w.source !== 'rain' &&
     (/termination/i.test(w.heading_en || '') || /penamatan/i.test(w.heading_bm || ''))) return false;
   if (w.valid_to) {
@@ -228,9 +183,9 @@ function isWarningActive(w) {
 //   SECTION B: CONTINUOUS RAIN WARNING (ALERT) ...
 //   SECTION C: TERMINATION OF CONTINUOUS RAIN WARNING ...
 // Termination sections list areas whose warning just ENDED — they must
-// be excluded before looking for the active state, or a lifted warning
-// would re-highlight its districts (same principle as the
-// isWarningActive termination guard for thunderstorm bulletins).
+// be excluded before looking for Pahang, or a lifted warning would
+// re-highlight its districts (same principle as the isWarningActive
+// termination guard for thunderstorm bulletins).
 // ---------------------------------------------------------------------
 
 // Severity of ONE rain section, read from its heading line only — e.g.
@@ -245,7 +200,7 @@ function rainSectionTier(section) {
   return 'waspada'; // ALERT/WASPADA, or an unlabeled heading — lowest tier
 }
 
-function parseRainForState(textEn, cfg) {
+function parseRainPahang(textEn) {
   const sections = String(textEn || '')
     .split(/(?=SECTION\s+[A-Z]\s*:|SEKSYEN\s+[A-Z]\s*:)/i)
     .map(s => s.trim())
@@ -256,43 +211,38 @@ function parseRainForState(textEn, cfg) {
   // scanning, or "SECTION A (SEVERE): Maran / SECTION B (ALERT):
   // Temerloh" would collapse into one tierless district list.
   const tiers = {};        // district → highest tier across sections
-  let stateTier = null;    // tier of any section naming the state without districts
-
-  const parenRe = new RegExp(escapeRegExp(cfg.apiName) + '\\s*\\(([^)]+)\\)', 'i');
-  const bareRe = new RegExp('\\b' + escapeRegExp(cfg.apiName) + '\\b', 'i');
+  let stateTier = null;    // tier of any section naming Pahang without districts
 
   sections.forEach(section => {
     const tier = rainSectionTier(section);
-    const m = section.match(parenRe);
+    const m = section.match(/Pahang\s*\(([^)]+)\)/i);
     if (m) {
-      splitDistrictList(m[1]).map(raw => resolveDistrictName(raw, cfg)).filter(Boolean).forEach(d => {
+      splitDistrictList(m[1]).map(resolveDistrictName).filter(Boolean).forEach(d => {
         if (!tiers[d] || TIER_RANK[tier] > TIER_RANK[tiers[d]]) tiers[d] = tier;
       });
-    } else if (bareRe.test(section)) {
+    } else if (/\bPahang\b/i.test(section)) {
       if (!stateTier || TIER_RANK[tier] > TIER_RANK[stateTier]) stateTier = tier;
     }
   });
 
   const districts = Object.keys(tiers);
   if (stateTier) {
-    // Some section covered the state with no district detail — whole
-    // state gets that tier's wash; explicit district tiers still paint
-    // on top.
-    return { scope: 'state', districts: districts.length ? districts : cfg.districts.slice(), tiers, tier: stateTier };
+    // Some section covered Pahang with no district detail — whole state
+    // gets that tier's wash; explicit district tiers still paint on top.
+    return { scope: 'state', districts: districts.length ? districts : KNOWN_DISTRICTS.slice(), tiers, tier: stateTier };
   }
   if (districts.length) {
     return { scope: 'district', districts, tiers, tier: null };
   }
-  return { scope: null, districts: [], tiers: {}, tier: null }; // active state not affected — don't show
+  return { scope: null, districts: [], tiers: {}, tier: null }; // Pahang not affected — don't show
 }
 
 // Normalizes metapi2's RAIN payload rows into the same shape the
 // banner/state code already consumes (heading_bm, text_bm, valid_to...),
-// plus `source: 'rain'` and a precomputed `stateScope`. Rows whose
-// active sections never mention the active state are dropped — these
-// pages are single-state-scoped, a warning for some other state is
-// noise here.
-function normalizeRainWarnings(metJson, cfg) {
+// plus `source: 'rain'` and a precomputed `pahang` scope. Rows whose
+// active sections never mention Pahang are dropped — these pages are
+// Pahang-scoped, a KL/Sabah-only rain warning is noise here.
+function normalizeRainWarnings(metJson) {
   const rows = (metJson && Array.isArray(metJson.results)) ? metJson.results : [];
   return rows
     .map(row => {
@@ -314,40 +264,40 @@ function normalizeRainWarnings(metJson, cfg) {
         instruction_bm: null,
         valid_from: attrs.valid_from || null,
         valid_to: attrs.valid_to || null,
-        stateScope: parseRainForState(textEn || textBm, cfg),
+        pahang: parseRainPahang(textEn || textBm),
       };
     })
-    .filter(w => w.stateScope.scope !== null);
+    .filter(w => w.pahang.scope !== null);
 }
 
-async function fetchRainWarnings(cfg) {
+async function fetchRainWarnings() {
   const resp = await fetchWithTimeout(RAIN_PROXY_URL, 8000);
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const data = await resp.json();
-  return normalizeRainWarnings(data, cfg).filter(isWarningActive);
+  return normalizeRainWarnings(data).filter(isWarningActive);
 }
 
-async function fetchActiveWarnings(cfg) {
-  const resp = await fetchWithTimeout(buildWarningApiUrl(cfg));
+async function fetchActiveWarnings() {
+  const resp = await fetchWithTimeout(WARNING_API_URL);
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const data = await resp.json();
   const rows = Array.isArray(data) ? data : [];
   return rows.filter(isWarningActive);
 }
 
-// Rain warnings carry a precomputed `stateScope` (SEKSYEN-aware);
+// Rain warnings carry a precomputed `pahang` scope (SEKSYEN-aware);
 // thunderstorm/other data.gov.my warnings are parsed on the fly.
-function stateScopeOf(w, cfg) {
-  return w.source === 'rain' ? w.stateScope : extractStateDistricts(w, cfg);
+function pahangScopeOf(w) {
+  return w.source === 'rain' ? w.pahang : extractPahangDistricts(w);
 }
 
-function computeWarningState(warnings, cfg) {
+function computeWarningState(warnings) {
   const districts = new Map(); // district → highest tier across all warnings
   let scope = null;            // null | 'district' | 'state'
   let stateTier = null;
 
   warnings.forEach(w => {
-    const parsed = stateScopeOf(w, cfg);
+    const parsed = pahangScopeOf(w);
     if (parsed.scope === 'marine' || parsed.scope === null) return; // no land district affected
     if (parsed.scope === 'state') {
       scope = 'state'; // state wash for the vague warning — district tiers still paint on top
@@ -392,7 +342,7 @@ function escapeHtml(str) {
 //   marine                  — offshore-only bulletin (must NOT highlight any district)
 //   district:Temerloh       — one district
 //   district:Kuantan,Pekan  — multiple districts
-//   rain                    — continuous-rain bulletin, whole-state (Waspada)
+//   rain                    — continuous-rain bulletin, whole-state Pahang (Waspada)
 //   rain:Temerloh,Maran     — continuous-rain, specific districts (Waspada)
 //   rain:buruk              — whole-state at a tier (waspada|buruk|bahaya)
 //   rain:bahaya:Maran       — specific districts at a tier
@@ -410,13 +360,11 @@ function escapeHtml(str) {
 // Builds a fixture `activeWarnings` array from the given param value, or
 // returns undefined when the param is absent/unrecognized so callers
 // fall back to the live API. Fixtures run through the exact same
-// extractStateDistricts()/computeWarningState() code path as real
+// extractPahangDistricts()/computeWarningState() code path as real
 // API data — this only replaces the network fetch, never the logic
-// being tested. District names in fixtures (e.g. the district: examples
-// above) are Pahang names for illustration only — pass real districts
-// of whichever state is active via cfg.districts.
+// being tested.
 // ---------------------------------------------------------------------
-function getTestWarningFixture(param, cfg) {
+function getTestWarningFixture(param) {
   if (!param) return undefined;
 
   // '|' combines independent specs (e.g. one thunderstorm + one rain) into
@@ -425,7 +373,7 @@ function getTestWarningFixture(param, cfg) {
   if (param.includes('|')) {
     const combined = [];
     for (const part of param.split('|').map(s => s.trim()).filter(Boolean)) {
-      const fixture = getTestWarningFixture(part, cfg);
+      const fixture = getTestWarningFixture(part);
       if (fixture) combined.push(...fixture);
     }
     return combined;
@@ -444,20 +392,20 @@ function getTestWarningFixture(param, cfg) {
   if (param === 'none') return [];
 
   if (param === 'state') {
-    return [{ ...base, text_en: `Test warning affecting ${cfg.apiName} generally.`, text_bm: `Amaran ujian yang menjejaskan ${cfg.apiName} secara umum.` }];
+    return [{ ...base, text_en: 'Test warning affecting Pahang generally.', text_bm: 'Amaran ujian yang menjejaskan Pahang secara umum.' }];
   }
 
   if (param === 'marine') {
-    return [{ ...base, text_en: `Thunderstorms expected over the waters of ${cfg.apiName}.`, text_bm: `Ribut petir dijangka di kawasan perairan ${cfg.apiName}.` }];
+    return [{ ...base, text_en: 'Thunderstorms expected over the waters of Pahang, Terengganu.', text_bm: 'Ribut petir dijangka di kawasan perairan Pahang, Terengganu.' }];
   }
 
   if (param.startsWith('district:')) {
     const list = param.slice('district:'.length).split(',').map(s => s.trim()).filter(Boolean).join(', ');
-    return [{ ...base, text_en: `Thunderstorms Warning for ${cfg.apiName} (${list})`, text_bm: `Amaran Ribut Petir untuk ${cfg.apiName} (${list})` }];
+    return [{ ...base, text_en: `Thunderstorms Warning for Pahang (${list})`, text_bm: `Amaran Ribut Petir untuk Pahang (${list})` }];
   }
 
   // rain fixtures — built as a real metapi2-shaped payload and run
-  // through the SAME normalizeRainWarnings()/parseRainForState() path as
+  // through the SAME normalizeRainWarnings()/parseRainPahang() path as
   // proxy data, always including a trailing TERMINATION section that
   // the parser must ignore. Syntax (see the block comment above):
   //   rain | rain:<districts> | rain:<tier> | rain:<tier>:<districts>
@@ -488,21 +436,17 @@ function getTestWarningFixture(param, cfg) {
 
       const letter = String.fromCharCode(65 + idx); // A, B, C ...
       const w = TIER_WORDS[tier];
-      const areaEn = list ? `${cfg.apiName} (${list})` : `the state of ${cfg.apiName}`;
-      const areaBm = list ? `${cfg.apiName} (${list})` : `negeri ${cfg.apiName}`;
-      // ". (TEST DATA)" — the period matters: "<State> (TEST DATA)" would
+      const areaEn = list ? `Pahang (${list})` : 'the state of Pahang';
+      const areaBm = list ? `Pahang (${list})` : 'negeri Pahang';
+      // ". (TEST DATA)" — the period matters: "Pahang (TEST DATA)" would
       // match the district-list regex and swallow the state-wide case.
       sectionsEn.push(`SECTION ${letter}: CONTINUOUS RAIN WARNING (${w.en})\nContinuous rain is expected to occur over ${areaEn}. (TEST DATA)`);
       sectionsBm.push(`SEKSYEN ${letter}: AMARAN HUJAN BERTERUSAN (${w.bm})\nHujan berterusan dijangka berlaku di ${areaBm}. (DATA UJIAN)`);
     });
 
-    // A trailing termination section the parser must ignore — references
-    // a real district of the active state so the exclusion is actually
-    // exercised (not just an empty/no-op section).
-    const termDistrict = cfg.districts[cfg.districts.length - 1];
     const termLetter = String.fromCharCode(65 + groups.length);
-    sectionsEn.push(`SECTION ${termLetter}: TERMINATION OF CONTINUOUS RAIN WARNING\nContinuous Rain Warning (Alert) for ${cfg.apiName} (${termDistrict}) is now terminated.`);
-    sectionsBm.push(`SEKSYEN ${termLetter}: PENAMATAN AMARAN HUJAN BERTERUSAN\nAmaran Hujan Berterusan (Waspada) untuk ${cfg.apiName} (${termDistrict}) kini ditamatkan.`);
+    sectionsEn.push(`SECTION ${termLetter}: TERMINATION OF CONTINUOUS RAIN WARNING\nContinuous Rain Warning (Alert) for Pahang (Rompin) is now terminated.`);
+    sectionsBm.push(`SEKSYEN ${termLetter}: PENAMATAN AMARAN HUJAN BERTERUSAN\nAmaran Hujan Berterusan (Waspada) untuk Pahang (Rompin) kini ditamatkan.`);
 
     const headEn = `Continuous Rain Warning (${TIER_WORDS[maxTier].headEn}) (TEST)`;
     const headBm = `Amaran Hujan Berterusan (${TIER_WORDS[maxTier].headBm}) (UJIAN)`;
@@ -525,7 +469,7 @@ function getTestWarningFixture(param, cfg) {
         },
       }],
     };
-    return normalizeRainWarnings(metShaped, cfg);
+    return normalizeRainWarnings(metShaped);
   }
 
   console.warn('[weather] Unknown ?testWarning= value, falling back to live API:', param);
