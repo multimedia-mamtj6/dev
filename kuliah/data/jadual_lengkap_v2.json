@@ -3,7 +3,7 @@
     "2026-08": {
       "infoJadual": {
         "tajukBulan": "BULAN OGOS 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 9/8/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 16/8/2026"
       },
       "senaraiHari": [
         {
@@ -284,7 +284,7 @@
             "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/05_4.-Ustaz-Abdul-Aziz.jpg",
             "square_url": null
           },
-          "cuti_umum": null
+          "cuti_umum": "Maulidur Rasul"
         },
         {
           "date": "2026-08-26",
