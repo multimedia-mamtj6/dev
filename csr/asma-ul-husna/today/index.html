@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="600">
+    <title>Asma-ul-Husna — Paparan Hari Ini | MAMTJ6</title>
+
+    <!-- Google Fonts: Inter + Noto Naskh Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        arabic: ['Noto Naskh Arabic', 'serif'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-zinc-50 text-zinc-950 font-sans antialiased">
+    <div class="min-h-screen flex items-center justify-center p-10 sm:p-14">
+        <div id="display" class="w-full max-w-6xl">
+            <p class="text-zinc-400 text-center">Memuatkan...</p>
+        </div>
+    </div>
+
+    <script src="/csr/asma-ul-husna/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const display = document.getElementById('display');
+
+            asmaLoadNames()
+                .then(function (result) {
+                    const index0 = asmaIndexFromURL(result.todayIndex0);
+                    const entry = result.names[index0];
+                    if (!entry) throw new Error('Nama tidak ditemui.');
+
+                    const isPreview = index0 !== result.todayIndex0;
+
+                    display.innerHTML =
+                        '<div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-20">' +
+                            '<div class="flex-1 text-center">' +
+                                '<span class="inline-block mb-6 rounded-full px-4 py-1.5 text-sm font-semibold ' +
+                                (isPreview ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') + '">' +
+                                (isPreview ? 'Asma-ul-Husna — Previewing Hari ' + entry.index : 'Asma-ul-Husna Hari Ini:') +
+                                '</span>' +
+                                '<img src="' + ASMA_SVG_BASE + entry.svg + '" alt="' + entry.latin + '" ' +
+                                'class="w-56 h-56 sm:w-72 sm:h-72 mx-auto mb-6">' +
+                                '<div class="text-sm text-zinc-400 mb-2">Nama ke-' + entry.index + ' daripada 99</div>' +
+                                '<h1 class="text-4xl sm:text-5xl font-bold text-zinc-900 mb-2">' + entry.latin + '</h1>' +
+                                '<p class="text-xl sm:text-2xl font-semibold text-emerald-700">' + entry.shortMeaning + '</p>' +
+                            '</div>' +
+                            '<div class="hidden lg:block w-px self-stretch bg-zinc-200"></div>' +
+                            '<div class="flex-1 text-left bg-zinc-100 rounded-2xl p-8 lg:p-12">' +
+                                '<h2 class="text-3xl sm:text-5xl font-bold leading-tight text-zinc-900 mb-8">Setiap Hari,<br><span class="whitespace-nowrap">Satu Asma-ul-Husna</span></h2>' +
+                                '<div class="text-lg font-semibold text-zinc-900 mb-2">Maksud:</div>' +
+                                '<p class="text-base sm:text-lg text-zinc-600 leading-relaxed">' + entry.explanation + '</p>' +
+                            '</div>' +
+                        '</div>';
+                })
+                .catch(function (err) {
+                    display.innerHTML = '<p class="text-red-500 text-center">' + err.message + '</p>';
+                });
+        });
+    </script>
+</body>
+
+</html>

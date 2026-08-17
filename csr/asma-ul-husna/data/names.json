@@ -1,0 +1,797 @@
+{
+  "lastUpdated": "2026-08-16",
+  "names": [
+    {
+      "index": 1,
+      "latin": "Ar-Rahman",
+      "arabic": "الرحمن",
+      "shortMeaning": "Yang Maha Pengasih",
+      "explanation": "Maha Pengasih, iaitu pemberi kenikmatan yang agung-agung dan pengasih di dunia.",
+      "svg": "1._Ar_Rahman.svg"
+    },
+    {
+      "index": 2,
+      "latin": "Ar-Rahim",
+      "arabic": "الرحيم",
+      "shortMeaning": "Yang Maha Penyayang",
+      "explanation": "Maha Penyayang, iaitu pemberi kenikmatan yang di luar jangkaan dan penyayang di akhirat.",
+      "svg": "2._Ar_Rahim.svg"
+    },
+    {
+      "index": 3,
+      "latin": "Al-Malik",
+      "arabic": "الملك",
+      "shortMeaning": "Yang Maha Berkuasa",
+      "explanation": "Maha Merajai/ Menguasai /Pemerintah, iaitu mengatur kerajaanNya sesuai dengan kehendakNya sendiri.",
+      "svg": "3._Al_Malik.svg"
+    },
+    {
+      "index": 4,
+      "latin": "Al-Quddus",
+      "arabic": "القدوس",
+      "shortMeaning": "Yang Maha Suci",
+      "explanation": "Maha Suci, iaitu tersuci dan bersih dari segala cela dan kekurangan.",
+      "svg": "4._Al_Qudus.svg"
+    },
+    {
+      "index": 5,
+      "latin": "As-Salaam",
+      "arabic": "السلام",
+      "shortMeaning": "Yang Maha Sejahtera",
+      "explanation": "Maha Penyelamat, iaitu pemberi keselamatan dan kesejahteraan kepada seluruh makhlukNya.",
+      "svg": "5._As_Salam.svg"
+    },
+    {
+      "index": 6,
+      "latin": "Al-Mu’min",
+      "arabic": "المؤمن",
+      "shortMeaning": "Yang Maha Mengamankan",
+      "explanation": "Maha Pengaman / Pemelihara keamanan, iaitu siapa yang bersalah dan makhlukNya itu benar-benar akan diberi seksa, sedang kepada yang taat akan benar-benar dipenuhi janjiNya dengan pahala yang baik.",
+      "svg": "6._Al_Mumin.svg"
+    },
+    {
+      "index": 7,
+      "latin": "Al-Muhaimin",
+      "arabic": "المحيمن",
+      "shortMeaning": "Yang Maha Mengawal",
+      "explanation": "Maha Pelindung/Penjaga / Maha Pengawal serta Pengawas, iaitu memerintah dan melindungi segala sesuatu.",
+      "svg": "7._Al_Muhaimin.svg"
+    },
+    {
+      "index": 8,
+      "latin": "Al-’Aziiz",
+      "arabic": "العزيز",
+      "shortMeaning": "Yang Maha Berkuasa dan Perkasa",
+      "explanation": "Maha Mulia / Maha Berkuasa, iaitu kuasaNya mampu untuk berbuat sekehendakNya",
+      "svg": "8._Al_Aziz.svg"
+    },
+    {
+      "index": 9,
+      "latin": "Al-Jabbaar",
+      "arabic": "الجبار",
+      "shortMeaning": "Yang Maha Perkasa",
+      "explanation": "Maha Perkasa / Maha Kuat / Yang Menundukkan Segalanya, iaitu mencukupi segala keperluan, melangsungkan segala perintahNya serta memperbaiki keadaan seluruh hambaNya.",
+      "svg": "9._Al_Jabbar.svg"
+    },
+    {
+      "index": 10,
+      "latin": "Al-Mutakabbir",
+      "arabic": "المتكبر",
+      "shortMeaning": "Yang Maha Memiliki Segala Kebesaran",
+      "explanation": "Maha Megah / Maha Pelengkap Kebesaran. iaitu yang melengkapi segala kebesaranNya, menyendiri dengan sifat keagungan dan kemegahanNya.",
+      "svg": "10._Al_Mutakabbir.svg"
+    },
+    {
+      "index": 11,
+      "latin": "Al-Khaaliq",
+      "arabic": "الخالق",
+      "shortMeaning": "Yang Maha Pencipta Sekalian Makhluk",
+      "explanation": "Maha Pencipta, iaitu mengadakan seluruh makhluk tanpa asal, juga yang menakdirkan adanya semua itu.",
+      "svg": "11._Al_Khaliq.svg"
+    },
+    {
+      "index": 12,
+      "latin": "Al-Baari’",
+      "arabic": "البارئ",
+      "shortMeaning": "Yang Maha Pencipta Makhluk",
+      "explanation": "Maha Pembuat / Maha Perancang / Maha Menjadikan, iaitu mengadakan sesuatu yang bernyawa yang ada asal mulanya.",
+      "svg": "12._Al_Bari.svg"
+    },
+    {
+      "index": 13,
+      "latin": "Al-Mushawwir",
+      "arabic": "المصور",
+      "shortMeaning": "Yang Maha Menjadikan Rupa Bentuk",
+      "explanation": "Maha Pembentuk / Maha Menjadikan Rupa Bentuk, memberikan gambaran atau bentuk pada sesuatu yang berbeza dengan lainnya. (Al-Khaaliq adalah mengadakan sesuatu yang belum ada asal mulanya atau yang menakdirkan adanya itu. Al-Baari’ ialah mengeluarkannya dari yang sudah ada asalnya, manakala Al-Mushawwir ialah yang memberinya bentuk yang sesuai dengan keadaan dan keperluannya).",
+      "svg": "13._Al_Musawwiru.svg"
+    },
+    {
+      "index": 14,
+      "latin": "Al-Ghaffaar",
+      "arabic": "الغفار",
+      "shortMeaning": "Yang Maha Mengampuni",
+      "explanation": "Maha Pengampun, banyak pemberian maafNya dan menutupi dosa-dosa dan kesalahan.",
+      "svg": "14._Al_Ghafur.svg"
+    },
+    {
+      "index": 15,
+      "latin": "Al-Qahhaar",
+      "arabic": "القهار",
+      "shortMeaning": "Yang Maha Gagah Perkasa",
+      "explanation": "Maha Pemaksa, menggenggam segala sesuatu dalam kekuasaanNya serta memaksa segala makhluk menurut kehendakNya.",
+      "svg": "15._Al_Qahar.svg"
+    },
+    {
+      "index": 16,
+      "latin": "Al-Wahhaab",
+      "arabic": "الوهاب",
+      "shortMeaning": "Yang Maha Pemberi",
+      "explanation": "Maha Pemberi / Maha Menganugerah, iaitu memberi banyak kenikmatan dan selalu memberi kurnia.",
+      "svg": "16._Al_Wahab.svg"
+    },
+    {
+      "index": 17,
+      "latin": "Ar-Razzaaq",
+      "arabic": "الرزاق",
+      "shortMeaning": "Yang Maha Memberi Rezeki",
+      "explanation": "Maha Pengrezeki / Maha Pemberi Rezeki, iaitu memberi berbagai rezeki serta membuat juga sebab-sebab diperolehnya.",
+      "svg": "17._Ar_Razzaq.svg"
+    },
+    {
+      "index": 18,
+      "latin": "Al-Fattaah",
+      "arabic": "الفتاح",
+      "shortMeaning": "Yang Maha Pembuka",
+      "explanation": "Maha Membukakan / Maha Pembuka , iaitu membuka gedung penyimpanan rahmatNya untuk seluruh hambaNya.",
+      "svg": "18._Al_Fattaah.svg"
+    },
+    {
+      "index": 19,
+      "latin": "Al-’Aliim",
+      "arabic": "العليم",
+      "shortMeaning": "Yang Maha Mengetahui",
+      "explanation": "Maha Mengetahui, iaitu mengetahui segala yang maujud dan tidak ada satu benda pun yang tertutup oleh penglihatanNya.",
+      "svg": "19._Al_Aliim.svg"
+    },
+    {
+      "index": 20,
+      "latin": "Al-Qaabidh",
+      "arabic": "القابض",
+      "shortMeaning": "Yang Maha Pengekang",
+      "explanation": "Maha Pencabut / Maha Penyempit Hidup / Maha Pengekang, iaitu mengambil nyawa atau menyempitkan rezeki bagi siapa yang dikehendaki olehNya.",
+      "svg": "20._Al_Qaabidh.svg"
+    },
+    {
+      "index": 21,
+      "latin": "Al-Baasith",
+      "arabic": "الباسط",
+      "shortMeaning": "Yang Maha Melapangkan",
+      "explanation": "Maha Meluaskan / Maha Pelapang Hidup / Maha Melimpah Nikmat, iaitu memudahkan terkumpulnya rezeki bagi siapa yang diinginkan olehNya.",
+      "svg": "21._Al_Baasith.svg"
+    },
+    {
+      "index": 22,
+      "latin": "AI-Khaafidh",
+      "arabic": "الخافض",
+      "shortMeaning": "Yang Maha Merendahkan Darjat Seseorang",
+      "explanation": "Maha Menjatuhkan / Maha Menghinakan / Maha Perendah / Pengurang, iaitu terhadap orang yang selayaknya dijatuhkan akibat kelakuannya sendiri dengan memberinya kehinaan, kerendahan dan seksaan.",
+      "svg": "22._AI_Khaafidh.svg"
+    },
+    {
+      "index": 23,
+      "latin": "Ar-Raafi’",
+      "arabic": "الرافع",
+      "shortMeaning": "Yang Maha Meninggikan Darjat",
+      "explanation": "Maha Mengangkat / Maha Peninggi, iaitu terhadap orang yang selayaknya diangkat kedudukannya kerana usahanya yang giat, iaitu termasuk golongan kaum yang bertaqwa.",
+      "svg": "23._Ar_Raafi.svg"
+    },
+    {
+      "index": 24,
+      "latin": "Al-Mu’iz",
+      "arabic": "المعز",
+      "shortMeaning": "Yang Maha Memuliakan",
+      "explanation": "Maha Menghormati / Memuliakan / Maha Pemberi Kemuliaan/Kemenangan, iaitu kepada orang yang berpegang teguh pada agamaNya dengan memberinya pentolongan dan kemenangan.",
+      "svg": "24._Al_Muiz.svg"
+    },
+    {
+      "index": 25,
+      "latin": "Al-Muzil",
+      "arabic": "المذل",
+      "shortMeaning": "Yang Maha Menghina Musuh-Nya",
+      "explanation": "Maha Menghina / Pemberi kehinaan, iaitu kepada musuh-musuhNya dan musuh ummat Islam seluruhnya.",
+      "svg": "25._Al_Muzil.svg"
+    },
+    {
+      "index": 26,
+      "latin": "As-Samii’",
+      "arabic": "السميع",
+      "shortMeaning": "Yang Maha Mendengar",
+      "explanation": "Maha Mendengar.",
+      "svg": "26._As_Samii.svg"
+    },
+    {
+      "index": 27,
+      "latin": "Al-Bashiir",
+      "arabic": "البصير",
+      "shortMeaning": "Yang Maha Melihat",
+      "explanation": "Maha Melihat.",
+      "svg": "27._Al_Bashiir.svg"
+    },
+    {
+      "index": 28,
+      "latin": "Al-Hakam",
+      "arabic": "الحكم",
+      "shortMeaning": "Yang Maha Menentukan Hukuman",
+      "explanation": "Maha Menghukum / Maha Mengadili, iaitu sebagai hakim yang menetapkan / memutuskan yang tidak seorang pun dapat menolak keputusanNya, juga tidak seorang pun yang berkuasa merintangi kelangsungan hukumNya itu.",
+      "svg": "28.Al_Hakam.svg"
+    },
+    {
+      "index": 29,
+      "latin": "Al-’Adl",
+      "arabic": "العدل",
+      "shortMeaning": "Yang Maha Adil",
+      "explanation": "Maha Adil. Serta sangat sempurna dalam keadilanNya itu.",
+      "svg": "29._Al_Adl.svg"
+    },
+    {
+      "index": 30,
+      "latin": "Al-Lathiif",
+      "arabic": "اللطيف",
+      "shortMeaning": "Yang Maha Lemah Lembut dan Mengetahui Segala Sesuatu Sehalus-halusnya",
+      "explanation": "Maha Menghalusi / Maha Teliti / Maha Lembut serta Halus, iaitu mengetahui segala sesuatu yang samar-samar, pelik-pelik dan kecil-kecil.",
+      "svg": "30._Al_Lathiif.svg"
+    },
+    {
+      "index": 31,
+      "latin": "Al-Khabiir",
+      "arabic": "الخبير",
+      "shortMeaning": "Yang Maha Sedia Mengetahui",
+      "explanation": "Maha Waspada/  Maha Mengetahui.",
+      "svg": "31._Al_Khabiir.svg"
+    },
+    {
+      "index": 32,
+      "latin": "Al-Haliim",
+      "arabic": "الحليم",
+      "shortMeaning": "Yang Maha Penyantun dan Penyabar",
+      "explanation": "Maha Penyabar / Maha Penyantun / Maha Penghamba, iaitu yang tidak tergesa-gesa melakukan kemarahan dan tidak pula gelojoh memberikan siksaan.",
+      "svg": "32._Al_Haliim.svg"
+    },
+    {
+      "index": 33,
+      "latin": "Al-’Adzhiim",
+      "arabic": "العظيم",
+      "shortMeaning": "Yang Maha Agung",
+      "explanation": "Maha Agung, iaitu mencapai puncak tertinggi dan di mercu keagungan kerana bersifat dengan segala macam sifat kebesaran dan kesempunnaan.",
+      "svg": "33._Al_Adzhiim.svg"
+    },
+    {
+      "index": 34,
+      "latin": "Al-Ghafuur",
+      "arabic": "الغفور",
+      "shortMeaning": "Yang Maha Sedia Mengampuni",
+      "explanation": "Maha Pengampun, banyak pengampunanNya kepada hamba-hambaNya.",
+      "svg": "34._Al_Ghafuur.svg"
+    },
+    {
+      "index": 35,
+      "latin": "Asy-Syakuur",
+      "arabic": "الشكور",
+      "shortMeaning": "Yang Maha Menggandakan Balasan",
+      "explanation": "Maha Pembalas / Maha Bersyukur, iaitu memberikan balasan yang banyak sekali atas amalan yang kecil.",
+      "svg": "35._Asy_Syakuur.svg"
+    },
+    {
+      "index": 36,
+      "latin": "Al-’Aliy",
+      "arabic": "العلي",
+      "shortMeaning": "Yang Maha Tinggi (Luhur)",
+      "explanation": "Maha Tinggi Martabat-Nya / Maha Tinggi serta Mulia, iaitu mencapai tingkat yang setinggi-tingginya yang tidak mungkin digambarkan oleh akal fikiran sesiapa pun dan tidak dapat difahami oleh otak yang bagaimanapun pandainya.",
+      "svg": "36._Al_Aliy.svg"
+    },
+    {
+      "index": 37,
+      "latin": "Al-Kabiir",
+      "arabic": "الكبير",
+      "shortMeaning": "Maha Besar",
+      "explanation": "Maha Besar, yang kebesaranNya tidak dapat dicapai oleh pancaindera ataupun akal manusia.",
+      "svg": "37._Al_Kabiir.svg"
+    },
+    {
+      "index": 38,
+      "latin": "Al-Hafidz",
+      "arabic": "الحفيظ",
+      "shortMeaning": "Yang Maha Memelihara",
+      "explanation": "Maha Pemelihara Maha Pelindung / Maha Memelihara, iaitu menjaga segala sesuatu jangan sampai rosak dan goyah. Juga menjaga segala amal perbuatan hamba-hambaNya, sehingga tidak akan disia-siakan sedikit pun untuk memberikan balasanNya.",
+      "svg": "38._Al_Hafidz.svg"
+    },
+    {
+      "index": 39,
+      "latin": "Al-Muqiit",
+      "arabic": "المقيت",
+      "shortMeaning": "Yang Maha Menyediakan Segala Keperluan Makhluk-Nya",
+      "explanation": "Maha Pemberi kecukupan/ Maha Pemberi Keperluan , baik yang berupa makanan tubuh ataupun makanan rohani.",
+      "svg": "39._Al_Muqiit.svg"
+    },
+    {
+      "index": 40,
+      "latin": "Al-Hasiib",
+      "arabic": "الحسيب",
+      "shortMeaning": "Yang Maha Menghitung Amalan Makhluk",
+      "explanation": "Maha Penjamin / Maha Mencukupi / Maha Penghitung, iaitu memberikan jaminan kecukupan kepada seluruh bamba-hambaNya pada hari Qiamat.",
+      "svg": "40._Al_Hasiib.svg"
+    },
+    {
+      "index": 41,
+      "latin": "Al-Jaliil",
+      "arabic": "الجليل",
+      "shortMeaning": "Yang Maha Memiliki Sifat Keagungan Yang Tiada Pada Makhluk",
+      "explanation": "Maha Luhur, iaitu yang memiliki sifat-sifat keluhuran kerana kesempurnaan sifat-sifatNya.",
+      "svg": "41._Al_Jaliil.svg"
+    },
+    {
+      "index": 42,
+      "latin": "Al-Kariim",
+      "arabic": "الكريم",
+      "shortMeaning": "Yang Maha Mulia dan Sedia Memberi",
+      "explanation": "Maha Pemurah, iaitu mulia tanpa had dan memberi siapa pun tanpa diminta atau sebagai penggantian dan sesuatu pemberian.",
+      "svg": "42._Al_Kariim.svg"
+    },
+    {
+      "index": 43,
+      "latin": "Ar-Raqiib",
+      "arabic": "الركيب",
+      "shortMeaning": "Yang Maha Mengawasi",
+      "explanation": "Maha Peneliti / Maha Pengawas Maha Waspada, iaitu yang mengamat-amati gerak-geri segala sesuatu dan mengawasinya.",
+      "svg": "43._Ar_Raqiib.svg"
+    },
+    {
+      "index": 44,
+      "latin": "Al-Mujiib",
+      "arabic": "المجيب",
+      "shortMeaning": "Yang Maha Memakbulkan",
+      "explanation": "Maha Mengabulkan, iaitu yang memenuhi permohonan siapa saja yang berdoa padaNya.",
+      "svg": "44._Al_Mujiib.svg"
+    },
+    {
+      "index": 45,
+      "latin": "Al-Waasi’",
+      "arabic": "الواسع",
+      "shortMeaning": "Yang Maha Luas Ilmu dan Rahmat-Nya",
+      "explanation": "Maha Luas Pemberian-Nya , iaitu kerahmatanNya merata kepada segala yang maujud dan luas pula ilmuNya terhadap segala sesuatu.",
+      "svg": "45._Al_Waasi.svg"
+    },
+    {
+      "index": 46,
+      "latin": "Al-Hakiim",
+      "arabic": "الحكيم",
+      "shortMeaning": "Yang Maha Bijaksana",
+      "explanation": "Maha Bijaksana, iaitu memiliki kebijaksanaan yang tertinggi kesempurnaan ilmuNya serta kerapiannya dalam membuat segala sesuatu.",
+      "svg": "46._Al_Hakiim.svg"
+    },
+    {
+      "index": 47,
+      "latin": "Al-Waduud",
+      "arabic": "الودود",
+      "shortMeaning": "Yang Maha Mengasihi orang yang beriman kepada-Nya",
+      "explanation": "Maha Pencinta / Maha Menyayangi, iaitu yang menginginkan segala kebaikan untuk seluruh hambaNya dan juga berbuat baik pada mereka itu dalam segala hal dan keadaan.",
+      "svg": "47._Al_Waduud.svg"
+    },
+    {
+      "index": 48,
+      "latin": "Al-Majiid",
+      "arabic": "المجيد",
+      "shortMeaning": "Yang Maha Sempurna",
+      "explanation": "Maha Mulia, iaitu yang mencapai tingkat teratas dalam hal kemuliaan dan keutamaan.",
+      "svg": "48._Al_Majiid.svg"
+    },
+    {
+      "index": 49,
+      "latin": "Al-Ba’ithu",
+      "arabic": "الباعث",
+      "shortMeaning": "Yang Membangkitkan Manusia",
+      "explanation": "Maha Membangkitkan, iaitu membangkitkan semangat dan kemahuan, juga membangkitkan para Rasul dan orang-orang yang telah mati dari kubur masing-masing nanti setelah tibanya hari Qiamat.",
+      "svg": "49._Al_Baithu.svg"
+    },
+    {
+      "index": 50,
+      "latin": "Asy-Syahiid",
+      "arabic": "الشهيد",
+      "shortMeaning": "Yang Maha Menyaksikan Segala Kebenaran",
+      "explanation": "Maha Menyaksikan / Maha Mengetahui keadaan semua makhluk.",
+      "svg": "50._Asy_Syahiid.svg"
+    },
+    {
+      "index": 51,
+      "latin": "Al-Haq",
+      "arabic": "الحق",
+      "shortMeaning": "Yang Maha Benar",
+      "explanation": "Maha Haq / Maha Benar yang kekal dan tidak akan berubah sedikit pun.",
+      "svg": "51._Al_Haq.svg"
+    },
+    {
+      "index": 52,
+      "latin": "Al-Wakiil",
+      "arabic": "الوكيل",
+      "shortMeaning": "Yang Maha Pelindung",
+      "explanation": "Maha Pentadbir / Maha Berserah / Maha Memelihara penyerahan, yakni memelihara semua urusan hamba-hambaNya dan apa-apa yang menjadi keperluan mereka itu.",
+      "svg": "52._Al_Wakiil.svg"
+    },
+    {
+      "index": 53,
+      "latin": "Al-Qawiy",
+      "arabic": "القوى",
+      "shortMeaning": "Yang Maha Berkuasa",
+      "explanation": "Maha Kuat / Maha Memiliki Kekuatan , iaitu yang memiliki kekuasaan yang sesempurnanya.",
+      "svg": "53._Al_Qawiy.svg"
+    },
+    {
+      "index": 54,
+      "latin": "Al-Matiin",
+      "arabic": "المتين",
+      "shortMeaning": "Yang Maha Teguh Kekuatan-Nya",
+      "explanation": "Maha Teguh / Maha Kukuh atau Perkasa / Maha Sempurna Kekuatan-Nya , iaitu memiliki keperkasaan yang sudah sampai di puncaknya.",
+      "svg": "54._Al_Matiin.svg"
+    },
+    {
+      "index": 55,
+      "latin": "Al-Waliy",
+      "arabic": "الولى",
+      "shortMeaning": "Yang Maha Memberikan Pertolongan",
+      "explanation": "Maha Melindungi, iaitu melindungi serta mengaturkan semua kepentingan makhlukNya kerana kecintaanNya yang amat sangat dan pemberian pertolonganNya yang tidak terbatas pada keperluan mereka.",
+      "svg": "55._Al_Waliy.svg"
+    },
+    {
+      "index": 56,
+      "latin": "Al-Hamiid",
+      "arabic": "الحميد",
+      "shortMeaning": "Yang Maha Layak Menerima Pujian",
+      "explanation": "Maha Terpuji, yang memang sudah selayaknya untuk memperoleh pujian dan sanjungan.",
+      "svg": "56._Al_Hamiid.svg"
+    },
+    {
+      "index": 57,
+      "latin": "Al-Muhshii",
+      "arabic": "المحصى",
+      "shortMeaning": "Yang Maha Mengira",
+      "explanation": "Maha Menghitung  / Maha Penghitung, iaitu yang tiada satu pun tertutup dari pandanganNya dan semua amalan diperhitungkan sebagaimana wajarnya.",
+      "svg": "57._Al_Muhshii.svg"
+    },
+    {
+      "index": 58,
+      "latin": "Al-Mubdi’",
+      "arabic": "المبدئ",
+      "shortMeaning": "Yang Maha Memulakan Sesuatu",
+      "explanation": "Maha Memulai/Pemula / Maha Pencipta dari Asal, iaitu yang melahirkan sesuatu yang asalnya tidak ada dan belum maujud.",
+      "svg": "58._Al_Mubdi.svg"
+    },
+    {
+      "index": 59,
+      "latin": "Al-Mu’iid",
+      "arabic": "المعيد",
+      "shortMeaning": "Yang Maha Mengembalikan Ciptaan-Nya",
+      "explanation": "Maha Mengulangi / Maha Mengembalikan dan Memulihkan, iaitu menumbuhkan kembali setelah lenyapnya atau setelah rosaknya.",
+      "svg": "59._Al_Muiid.svg"
+    },
+    {
+      "index": 60,
+      "latin": "Al-Muhyii",
+      "arabic": "المحي",
+      "shortMeaning": "Yang Maha Menghidupkan",
+      "explanation": "Maha Menghidupkan, iaitu memberikan daya kehidupan pada setiap sesuatu yang berhak hidup.",
+      "svg": "60._Al_Muhyii.svg"
+    },
+    {
+      "index": 61,
+      "latin": "Al-Mumiit",
+      "arabic": "المميت",
+      "shortMeaning": "Yang Maha Mematikan",
+      "explanation": "Maha Mematikan, iaitu mengambil kehidupan (roh) dari apa-apa yang hidup.",
+      "svg": "61._Al_Mumiit.svg"
+    },
+    {
+      "index": 62,
+      "latin": "Al-Hay",
+      "arabic": "الحي",
+      "shortMeaning": "Yang Maha Hidup",
+      "explanation": "Maha Hidup, iaitu sentiasa kekal hidupNya itu.",
+      "svg": "62._Al_Hay.svg"
+    },
+    {
+      "index": 63,
+      "latin": "Al-Qayyuum",
+      "arabic": "القيوم",
+      "shortMeaning": "Yang Maha Berdiri Sendiri",
+      "explanation": "Maha Berdiri Dengan Sendiri-Nya , iaitu baik ZatNya, SifatNya, Af’alNya. Juga membuat berdirinya apa-apa yang selain Dia. DenganNya pula berdirinya langit dan bumi ini.",
+      "svg": "63._Al_Qayyuum.svg"
+    },
+    {
+      "index": 64,
+      "latin": "Al-Waajid",
+      "arabic": "الواجد",
+      "shortMeaning": "Yang Maha Memperoleh Segala Sesuatu Yang Dikehendaki-Nya",
+      "explanation": "Maha Penemu / Maha Menemukan, iaitu dapat menemukan apa saja yang diinginkan olehNya, maka tidak berkehendakkan pada suatu apa pun kerana sifat kayaNya yang secara mutlak.",
+      "svg": "64._Al_Waajid.svg"
+    },
+    {
+      "index": 65,
+      "latin": "Al-Maajid",
+      "arabic": "الماجد",
+      "shortMeaning": "Yang Maha Dimuliakan",
+      "explanation": "Maha Mulia, (sama dengan no. 48 yang berbeda hanyalah tulisannya dalam bahasa Arab, Ejaan sebenarnya no. 48 Al-Majiid, sedang no. 65 A1-Maajid).",
+      "svg": "65._Al_Maajid.svg"
+    },
+    {
+      "index": 66,
+      "latin": "Al-Waahid",
+      "arabic": "الواحد",
+      "shortMeaning": "Yang Maha Esa",
+      "explanation": "Maha Esa.",
+      "svg": "66._Al_Waahid.svg"
+    },
+    {
+      "index": 67,
+      "latin": "Al-Ahad",
+      "arabic": "الأحد",
+      "shortMeaning": "Yang Maha Tunggal",
+      "explanation": "Maha Tunggal.",
+      "svg": "67._Al_Ahad.svg"
+    },
+    {
+      "index": 68,
+      "latin": "Ash-Shamad",
+      "arabic": "الصمد",
+      "shortMeaning": "Yang Kekal dan Menjadi Tempat Bergantung Sekalian Makhluk",
+      "explanation": "Maha Diperlukan / Maha Diminta / Yang Menjadi Tumpuan, iaitu selalu menjadi tujuan dan harapan orang di waktu ada hajat keperluan.",
+      "svg": "68._Ash_Shamad.svg"
+    },
+    {
+      "index": 69,
+      "latin": "Al-Qaadir",
+      "arabic": "القادر",
+      "shortMeaning": "Yang Maha Berkuasa",
+      "explanation": "Maha Berkuasa/ Maha Kuasa / Maha Berupaya",
+      "svg": "69._Al_Qaadir.svg"
+    },
+    {
+      "index": 70,
+      "latin": "Al-Muqtadir",
+      "arabic": "المقتدر",
+      "shortMeaning": "Yang Maha Berkuasa Menentukan Sesuatu",
+      "explanation": "Maha Menentukan.",
+      "svg": "70._Al_Muqtadir.svg"
+    },
+    {
+      "index": 71,
+      "latin": "Al-Muqaddim",
+      "arabic": "المقدم",
+      "shortMeaning": "Yang Memulakan Wujudnya Sesuatu",
+      "explanation": "Maha Mendahulukan / Maha Menyegera, iaitu mendahulukan sebahagian benda dari yang lainnya dalam mewujudnya, atau dalam kemuliaannya, selisih waktu atau tempatnya.",
+      "svg": "71._Al_Muqaddim.svg"
+    },
+    {
+      "index": 72,
+      "latin": "Al-Muakhkhir",
+      "arabic": "المؤخر",
+      "shortMeaning": "Yang Mentakhirkan Wujudnya Sesuatu",
+      "explanation": "Maha Menangguhkan / Maha Mengakhirkan / Maha Membelakangkan / Maha Melambat-lambatkan., iaitu melewatkan sebahagian sesuatu dari yang lainnya.",
+      "svg": "72._Al_Muakhkhir.svg"
+    },
+    {
+      "index": 73,
+      "latin": "Al-Awwal",
+      "arabic": "الأول",
+      "shortMeaning": "Yang Awal dan Tiada Permulaan",
+      "explanation": "Maha Pemulaan  / Maha Pertama, iaitu terdahulu sekali dari semua yang maujud.",
+      "svg": "73._Al_Awwal.svg"
+    },
+    {
+      "index": 74,
+      "latin": "Al-Aakhir",
+      "arabic": "الآخر",
+      "shortMeaning": "Yang Akhir dan Tiada Kesudahan",
+      "explanation": "Maha Penghabisan / Yang Akhir, iaitu kekal terus setelah habisnya segala sesuatu yang maujud.",
+      "svg": "74._Al_Aakhir.svg"
+    },
+    {
+      "index": 75,
+      "latin": "Azh-Zhaahir",
+      "arabic": "الظاهر",
+      "shortMeaning": "Yang Menzahirkan Kewujudan",
+      "explanation": "Maha Zahir / Maha Nyata / Maha Menyatakan, iaitu menyatakan dan menampakkan kewujudanNya itu dengan bukti-bukti dan tanda-tanda ciptaanNya",
+      "svg": "75._Azh_Zhaahir.svg"
+    },
+    {
+      "index": 76,
+      "latin": "Al-Baathin",
+      "arabic": "الباطن",
+      "shortMeaning": "Yang Menyembunyikan Kewujudan",
+      "explanation": "Maha Tersembunyi, iaitu tidak dapat dimaklumi ZatNya, sehingga tidak seorang pun dapat mengenal ZatNya itu.",
+      "svg": "76._Al_Baathin.svg"
+    },
+    {
+      "index": 77,
+      "latin": "Al-Waalii",
+      "arabic": "الوالى",
+      "shortMeaning": "Yang Maha Memiliki dan Memerintah Segala Sesuatu",
+      "explanation": "Maha Menguasai / Maha Menguasai Urusan / Yang Maha Memerintah, iaitu menggenggam segala sesuatu dalam kekuasaanNya dan menjadi milikNya.",
+      "svg": "77._Al_Waalii.svg"
+    },
+    {
+      "index": 78,
+      "latin": "Al-Muta’aalii",
+      "arabic": "المتعال",
+      "shortMeaning": "Yang Maha Tinggi dan Suci",
+      "explanation": "Maha Suci/Tinggi , iaitu terpelihara dari segala kekurangan dan kerendahan.",
+      "svg": "78._Al_Mutaaalii.svg"
+    },
+    {
+      "index": 79,
+      "latin": "Al-Bar",
+      "arabic": "البار",
+      "shortMeaning": "Yang Menjadi Sumber Kebaikan",
+      "explanation": "Maha Dermawan / Maha Bagus (Sumber Segala Kelebihan) / Yang banyak membuat kebajikan, iaitu banyak kebaikanNya dan besar kenikmatan yang dilimpahkanNya.",
+      "svg": "79._Al_Bar.svg"
+    },
+    {
+      "index": 80,
+      "latin": "At-Tawwaab",
+      "arabic": "التواب",
+      "shortMeaning": "Yang Sentiasa Menerima Taubat",
+      "explanation": "Maha Penerima Taubat, iaitu memberikan pertolongan kepada orang-orang yang melakukan maksiat untuk bertaubat lalu Allah akan menerimanya.",
+      "svg": "80._At_Tawwaab.svg"
+    },
+    {
+      "index": 81,
+      "latin": "Al-Muntaqim",
+      "arabic": "المنتقم",
+      "shortMeaning": "Yang Membalas Dengan Seksa",
+      "explanation": "Maha Penyiksa / Yang Maha Menghukum, kepada mereka yang bersalah dan orang yang berhak untuk memperoleh siksaNya.",
+      "svg": "81._Al_Muntaqim.svg"
+    },
+    {
+      "index": 82,
+      "latin": "Al-’Afuw",
+      "arabic": "العفو",
+      "shortMeaning": "Yang Maha Pemaaf",
+      "explanation": "Maha Pemaaf / Yang Maha Pengampun, menghapuskan kesalahan orang yang suka kembali untuk meminta maaf padaNya.",
+      "svg": "82._Al_Afuw.svg"
+    },
+    {
+      "index": 83,
+      "latin": "Ar-Rauuf",
+      "arabic": "الرؤف",
+      "shortMeaning": "Yang Maha Pemberi Kasih Sayang",
+      "explanation": "Maha Pengasih / Maha Mengasihi, banyak kerahmatan dan kasih sayangNya.",
+      "svg": "83._Ar_Rauuf.svg"
+    },
+    {
+      "index": 84,
+      "latin": "Maalikul Mulk",
+      "arabic": "المالك الملك",
+      "shortMeaning": "Pemilik Mutlak Segala Kekuasaan",
+      "explanation": "Maha Pemilik Kekuasaan  / Maha Menguasai kerajaan / Pemilik Kedaulatan Yang Kekal, maka segala perkara yang berlaku di alam semesta, langit, bumi dan sekitarnya serta yang di alam semesta itu semuanya sesuai dengan kehendak dan iradatNya.",
+      "svg": "84._Maalikul_Mulk.svg"
+    },
+    {
+      "index": 85,
+      "latin": "Zul-Jalaali Wal Ikraam",
+      "arabic": "ذوالجلال والإكرام",
+      "shortMeaning": "Yang Memiliki Keagungan dan Kemuliaan",
+      "explanation": "Maha Pemilik Keagungan dan Kemuliaan  / Maha Memiliki Kebesaran dan Kemuliaan. Juga Zat yang mempunyai keutamaan dan kesempurnaan, pemberi kurnia dan kenikmatan yang amat banyak dan melimpah ruah.",
+      "svg": "85._Zul_Jalaali_Wal_Ikraam.svg"
+    },
+    {
+      "index": 86,
+      "latin": "Al-Muqsith",
+      "arabic": "المقسط",
+      "shortMeaning": "Yang Maha Adil dan Saksama",
+      "explanation": "Maha Mengadili / Maha Saksama, iaitu memberikan kemenangan pada orang-orang yang teraniaya dari tindakan orang-orang yang menganiaya dengan keadilanNya.",
+      "svg": "86._Al_Muqsith.svg"
+    },
+    {
+      "index": 87,
+      "latin": "Al-Jaami’",
+      "arabic": "الجامع",
+      "shortMeaning": "Yang Maha Penghimpun",
+      "explanation": "Maha Mengumpulkan / Maha Pengumpul, iaitu mengumpulkan berbagai hakikat yang telah bercerai-berai dan juga mengumpulkan seluruh umat manusia pada hari pembalasan.",
+      "svg": "87._Al_Jaami.svg"
+    },
+    {
+      "index": 88,
+      "latin": "Al-Ghaniy",
+      "arabic": "الغنى",
+      "shortMeaning": "Yang Maha Kaya dan Tidak Memerlukan Sesuatu Apa-apa pun",
+      "explanation": "Maha Kaya Raya / Maha Kaya serta Serba Lengkap, iaitu tidak berkehendakkan apa juapun dari yang selain ZatNya sendiri, tetapi yang selainNya itu amat mengharapkan padaNya.",
+      "svg": "88._Al_Ghaniy.svg"
+    },
+    {
+      "index": 89,
+      "latin": "Al-Mughnii",
+      "arabic": "المغنى",
+      "shortMeaning": "Yang Maha Mengayakan Makhluk Sehingga Tidak Memerlukan Apa-apa",
+      "explanation": "Maha Pemberi kekayaan / Maha Mengkayakan dan Memakmurkan, iaitu memberikan kelebihan yang berupa kekayaan yang berlimpah-ruah kepada siapa saja yang dikehendaki dari golongan hamba-hambaNya.",
+      "svg": "89._Al_Mughnii.svg"
+    },
+    {
+      "index": 90,
+      "latin": "Al-Maani’",
+      "arabic": "المانع",
+      "shortMeaning": "Yang Maha Menegah dan Menolak",
+      "explanation": "Maha Membela atau Maha Menolak / Maha Pencegah, iaitu membela hamba-hambaNya yang soleh dan menolak sebab-sebab yang menyebabkan kerosakan.",
+      "svg": "90._Al_Maani.svg"
+    },
+    {
+      "index": 91,
+      "latin": "Adh-Dhaar",
+      "arabic": "الضار",
+      "shortMeaning": "Yang Mendatangkan Kemudaratan",
+      "explanation": "Maha Mendatangkan Mudharat / Maha Pembuat Bahaya  / Maha Pemberi bahaya, iaitu dengan menurunkan seksa-seksaNya kepada musuh-musuhNya",
+      "svg": "91._Adh_Dhaar.svg"
+    },
+    {
+      "index": 92,
+      "latin": "An-Naafi’",
+      "arabic": "النافع",
+      "shortMeaning": "Yang Memberikan Kebaikan dan Kemanfaatan",
+      "explanation": "Maha Pemberi Manfaat , iaitu meluaslah kebaikan yang dikurniakanNya itu kepada semua hamba, masyarakat dan negeri.",
+      "svg": "92._An_Naafi.svg"
+    },
+    {
+      "index": 93,
+      "latin": "An-Nuur",
+      "arabic": "النور",
+      "shortMeaning": "Cahaya Yang Menerangi",
+      "explanation": "Maha Pemberi Cahaya  / Maha Bercahaya, iaitu menonjokan ZatNya sendiri dan menampakkan untuk yang selainNya dengan menunjukkan tanda-tanda kekuasaanNya.",
+      "svg": "93._An_Nuur.svg"
+    },
+    {
+      "index": 94,
+      "latin": "Al-Haadi",
+      "arabic": "الهادى",
+      "shortMeaning": "Yang Memberi Hidayah Kepada Hamba-Nya",
+      "explanation": "Maha Pemberi Petunjuk / Yang Memimpin dan Memberi Pertunjuk, iaitu memberikan jalan yang benar kepada segala sesuatu agar berterusan adanya dan terjaga kehidupannya.",
+      "svg": "94._Al_Haadi.svg"
+    },
+    {
+      "index": 95,
+      "latin": "Al-Badii’",
+      "arabic": "البديع",
+      "shortMeaning": "Yang Maha Menciptakan Sesuatu yang sebelumnya tiada",
+      "explanation": "Maha Indah / Tiada Bandingan  / Maha Pencipta yang baru, sehingga tidak ada contoh dan yang menyamai sebelum keluarnya ciptaanNya itu.",
+      "svg": "95._Al_Badii.svg"
+    },
+    {
+      "index": 96,
+      "latin": "Al-Baaqi",
+      "arabic": "الباقع",
+      "shortMeaning": "Yang Berkekalan",
+      "explanation": "Maha Kekal, iaitu kekal hidupNya untuk selama-Iamanya",
+      "svg": "96._Al_Baaqi.svg"
+    },
+    {
+      "index": 97,
+      "latin": "Al-Waarits",
+      "arabic": "الوارث",
+      "shortMeaning": "Yang Kekal Memusakai",
+      "explanation": "Maha Membahagi / Maha Mewarisi  / Maha Pewaris, iaitu kekal setelah musnahnya seluruh makhluk.",
+      "svg": "97._Al_Waarits.svg"
+    },
+    {
+      "index": 98,
+      "latin": "Ar-Rasyiid",
+      "arabic": "الرشيد",
+      "shortMeaning": "Yang Memberi Petunjuk Kepada Kebenaran",
+      "explanation": "Maha Cendekiawan / Maha Pandai / Bijaksana / Maha Memimpin, iaitu yang memimpin kepada kebenaran, iaitu memberi penerangan dan panduan pada seluruh hambaNya dan segala peraturanNya itu berjalan mengikut ketentuan yang digariskan oleh kebijaksanaan dan kecendekiawanNya.",
+      "svg": "98._Ar_Rasyiid.svg"
+    },
+    {
+      "index": 99,
+      "latin": "Ash-Shabuur",
+      "arabic": "الصبور",
+      "shortMeaning": "Yang Maha Penyabar",
+      "explanation": "Maha Penyabar yang tidak tergesa-gesa memberikan seksaan dan tidak juga cepat melaksanakan sesuatu sebelum masanya.",
+      "svg": "99._Ash_Shabuur.svg"
+    }
+  ]
+}
