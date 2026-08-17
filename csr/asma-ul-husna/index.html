@@ -78,8 +78,13 @@
             </p>
         </div>
 
+        <!-- Kad Hari Ini -->
+        <div id="today-card" class="mb-8 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 sm:p-8 text-center">
+            <p class="text-zinc-400">Memuatkan...</p>
+        </div>
+
         <!-- Grid Nama -->
-        <div id="name-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2 sm:gap-3">
+        <div id="name-grid" dir="rtl" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2 sm:gap-3">
             <p class="col-span-full text-center text-zinc-400 py-10">Memuatkan...</p>
         </div>
     </div>
@@ -127,15 +132,35 @@
                     names = result.names;
                     todayIndex0 = result.todayIndex0;
                     renderGrid();
-                    openPopup(asmaIndexFromURL(todayIndex0), false);
+                    renderTodayCard(asmaIndexFromURL(todayIndex0));
                 })
                 .catch(function (err) {
                     grid.innerHTML = '<p class="col-span-full text-center text-red-500 py-10">' + err.message + '</p>';
+                    document.getElementById('today-card').innerHTML = '<p class="text-red-500">' + err.message + '</p>';
                 });
+
+            function renderTodayCard(index0) {
+                const entry = names[index0];
+                const card = document.getElementById('today-card');
+                if (!entry) return;
+
+                const isPreview = index0 !== todayIndex0;
+
+                card.innerHTML =
+                    '<span class="inline-block mb-4 rounded-full px-3 py-1 text-xs font-semibold ' +
+                    (isPreview ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') + '">' +
+                    (isPreview ? 'Previewing Hari ' + entry.index : 'Asma-ul-Husna Hari Ini:') +
+                    '</span>' +
+                    '<img src="' + ASMA_SVG_BASE + entry.svg + '" alt="' + entry.latin + '" class="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-4">' +
+                    '<div class="text-xs text-zinc-400 mb-1">Nama ke-' + entry.index + ' daripada 99</div>' +
+                    '<h2 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">' + entry.latin + '</h2>' +
+                    '<p class="text-base sm:text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4">' + entry.shortMeaning + '</p>' +
+                    '<p class="text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">' + entry.explanation + '</p>';
+            }
 
             function renderGrid() {
                 grid.innerHTML = names.map(function (n, i) {
-                    return '<button type="button" data-index="' + i + '" class="name-card rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 hover:shadow-md hover:-translate-y-0.5 transition text-center">' +
+                    return '<button type="button" dir="ltr" data-index="' + i + '" class="name-card rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 hover:shadow-md hover:-translate-y-0.5 transition text-center">' +
                         '<span class="block text-[10px] text-zinc-400">' + n.index + '</span>' +
                         '<img src="' + ASMA_SVG_BASE + n.svg + '" alt="' + n.latin + '" class="w-full h-14 sm:h-16 object-contain my-1">' +
                         '<span class="block text-[11px] sm:text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">' + n.latin + '</span>' +

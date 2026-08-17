@@ -29,8 +29,8 @@
 </head>
 
 <body class="bg-zinc-50 text-zinc-950 font-sans antialiased">
-    <div class="min-h-screen flex items-center justify-center p-10 sm:p-14">
-        <div id="display" class="w-full max-w-6xl">
+    <div class="min-h-screen flex items-center justify-center p-[24px] sm:p-[72.8px]">
+        <div id="display" class="w-full max-w-[1498px]">
             <p class="text-zinc-400 text-center">Memuatkan...</p>
         </div>
     </div>
@@ -49,23 +49,23 @@
                     const isPreview = index0 !== result.todayIndex0;
 
                     display.innerHTML =
-                        '<div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-20">' +
-                            '<div class="flex-1 text-center">' +
-                                '<span class="inline-block mb-6 rounded-full px-4 py-1.5 text-sm font-semibold ' +
+                        '<div class="flex flex-col lg:flex-row items-center gap-[20px] lg:gap-[104px]">' +
+                            '<div class="flex-1 min-w-0 text-center">' +
+                                '<span class="inline-block mb-[12px] rounded-full px-[14px] py-[5px] text-[13px] sm:text-[18.2px] font-semibold ' +
                                 (isPreview ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') + '">' +
                                 (isPreview ? 'Asma-ul-Husna — Previewing Hari ' + entry.index : 'Asma-ul-Husna Hari Ini:') +
                                 '</span>' +
                                 '<img src="' + ASMA_SVG_BASE + entry.svg + '" alt="' + entry.latin + '" ' +
-                                'class="w-56 h-56 sm:w-72 sm:h-72 mx-auto mb-6">' +
-                                '<div class="text-sm text-zinc-400 mb-2">Nama ke-' + entry.index + ' daripada 99</div>' +
-                                '<h1 class="text-4xl sm:text-5xl font-bold text-zinc-900 mb-2">' + entry.latin + '</h1>' +
-                                '<p class="text-xl sm:text-2xl font-semibold text-emerald-700">' + entry.shortMeaning + '</p>' +
+                                'class="w-[150px] h-auto sm:w-[374.4px] mx-auto mb-[12px]">' +
+                                '<div class="text-[13px] sm:text-[18.2px] text-zinc-400 mb-[4px]">Nama ke-' + entry.index + ' daripada 99</div>' +
+                                '<h1 class="text-[28px] sm:text-[62.4px] font-bold text-zinc-900 mb-[6px]">' + entry.latin + '</h1>' +
+                                '<p class="text-[17px] sm:text-[31.2px] font-semibold text-emerald-700">' + entry.shortMeaning + '</p>' +
                             '</div>' +
                             '<div class="hidden lg:block w-px self-stretch bg-zinc-200"></div>' +
-                            '<div class="flex-1 text-left bg-zinc-100 rounded-2xl p-8 lg:p-12">' +
-                                '<h2 class="text-3xl sm:text-5xl font-bold leading-tight text-zinc-900 mb-8">Setiap Hari,<br><span class="whitespace-nowrap">Satu Asma-ul-Husna</span></h2>' +
-                                '<div class="text-lg font-semibold text-zinc-900 mb-2">Maksud:</div>' +
-                                '<p class="text-base sm:text-lg text-zinc-600 leading-relaxed">' + entry.explanation + '</p>' +
+                            '<div class="flex-1 min-w-0 text-left bg-zinc-100 rounded-[16px] p-[16px] sm:p-[41.6px] lg:p-[62.4px]">' +
+                                '<h2 class="text-[20px] sm:text-[39px] lg:text-[57px] font-bold leading-tight text-zinc-900 mb-[12px] sm:mb-[41.6px]">Setiap Hari,<br><span class="lg:whitespace-nowrap">Satu Asma-ul-Husna</span></h2>' +
+                                '<div class="text-[14px] sm:text-[23.4px] font-semibold text-zinc-900 mb-[4px] sm:mb-[10.4px]">Maksud:</div>' +
+                                '<p class="text-[13px] sm:text-[23.4px] text-zinc-600 leading-relaxed">' + entry.explanation + '</p>' +
                             '</div>' +
                         '</div>';
                 })
