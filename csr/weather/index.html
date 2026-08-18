@@ -162,8 +162,15 @@
     let lastCheckedAt = null;
     let forecastToday = null;         // today's row from the forecast API, once fetched
 
-    // ?testWarning= override — full syntax documented in weather-core.js
-    const TEST_WARNING_PARAM = new URLSearchParams(window.location.search).get('testWarning');
+    // ?testWarning= override — full syntax documented in weather-core.js.
+    // Param NAME matched case-insensitively — manually-typed URLs can end
+    // up with "testwarning" (e.g. mobile/TV keyboards lowercasing it).
+    const TEST_WARNING_PARAM = (function () {
+      for (const [key, value] of new URLSearchParams(window.location.search)) {
+        if (key.toLowerCase() === 'testwarning') return value;
+      }
+      return null;
+    })();
 
     function showStateBanner(msg) {
       const el = document.getElementById('state-error-banner');

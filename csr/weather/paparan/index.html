@@ -115,7 +115,15 @@
     const FORECAST_REFRESH_MS = 60 * 60 * 1000; // daily-granularity data — hourly is plenty
     const TICK_MS = 60 * 1000;                  // relative-time labels + nightly-reload check
 
-    const TEST_WARNING_PARAM = new URLSearchParams(window.location.search).get('testWarning');
+    // Param NAME matched case-insensitively — this page runs on a TV/kiosk
+    // where the URL is often typed via remote/on-screen keyboard, which can
+    // silently lowercase a manually-typed "testWarning" to "testwarning".
+    const TEST_WARNING_PARAM = (function () {
+      for (const [key, value] of new URLSearchParams(window.location.search)) {
+        if (key.toLowerCase() === 'testwarning') return value;
+      }
+      return null;
+    })();
 
     let map, geojsonLayer;
     let warningDistricts = new Map(); // district name → severity tier
