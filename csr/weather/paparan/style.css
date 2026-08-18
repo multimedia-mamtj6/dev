@@ -367,8 +367,27 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .forecast-slot .slot-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
     font-size: 40px;
+    /* fallback size if a phrase falls through to the emoji fallback */
     line-height: 1.3;
+}
+
+.forecast-slot .slot-icon .wicon {
+    width: 52px;
+    height: 52px;
+}
+
+/* Pale shapes (mainly the sun's gradYellow fill + light ray stroke) lose
+   contrast against the light theme's near-white panel. A shape-following
+   shadow (vs a rectangular box-shadow) keeps the icon looking like an
+   icon rather than boxing it in a badge. Dark theme doesn't need this —
+   its panel is already dark enough for every icon to read fine. */
+:root[data-theme="light"] .forecast-slot .slot-icon .wicon {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.35));
 }
 
 .forecast-slot .slot-text {
@@ -538,4 +557,149 @@ body.map-dark .leaflet-tile-pane {
     justify-content: space-between;
     font-size: 15px;
     color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animated weather icons (forecast slots) — see the <svg><defs> sprite */
+/* near the top of index.html for the symbol/gradient definitions.     */
+/* Rebuilt from the CodePen's per-instance `id`s into classes: this    */
+/* page renders three icon instances at once (Pagi/Petang/Malam), and  */
+/* the original markup reused ids like #drop1 across variants, which   */
+/* only worked because the demo showed one icon at a time.             */
+/* ------------------------------------------------------------------ */
+.w-long-ray {
+    stroke: #ffdd1a;
+    stroke-width: 3;
+    stroke-dasharray: 10;
+    animation: w-long-ray 4s linear infinite;
+}
+
+@keyframes w-long-ray {
+    from { stroke-dashoffset: 100; }
+    to { stroke-dashoffset: 0; }
+}
+
+.w-short-ray {
+    stroke: #ffdd1a;
+    stroke-width: 1.5;
+    stroke-dasharray: 3;
+    animation: w-short-ray 3s linear infinite;
+}
+
+@keyframes w-short-ray {
+    from { stroke-dashoffset: 20; }
+    to { stroke-dashoffset: 0; }
+}
+
+.w-cloud-float {
+    animation: w-cloud-float 8s linear infinite;
+}
+
+@keyframes w-cloud-float {
+    0%, 100% { transform: translate(0px, 15px); opacity: 0.75; }
+    25% { transform: translate(15px, 0px); opacity: 1; }
+    50% { transform: translate(30px, 0px); opacity: 1; }
+    75% { transform: translate(25px, 0px); opacity: 1; }
+}
+
+.w-cloud-float-reverse {
+    animation: w-cloud-float-reverse 6s linear infinite;
+}
+
+@keyframes w-cloud-float-reverse {
+    0%, 100% { transform: translate(0px, -15px); opacity: 0.75; }
+    25% { transform: translate(-15px, 0px); opacity: 1; }
+    50% { transform: translate(-30px, 0px); opacity: 1; }
+    75% { transform: translate(-25px, 0px); opacity: 1; }
+}
+
+.w-drop1 { animation: w-rain 1s linear infinite; }
+.w-drop2 { animation: w-rain 2s linear infinite 1s; }
+.w-drop3 { animation: w-rain 1s linear infinite 0.5s; }
+.w-drop4 { animation: w-rain 2s linear infinite 0.8s; }
+
+@keyframes w-rain {
+    0% { opacity: 1; }
+    25% { transform: translateY(5px); opacity: 1; }
+    50% { transform: translateY(15px); opacity: 1; }
+    75% { transform: translateY(25px); opacity: 0.75; }
+    100% { transform: translateY(35px); opacity: 0; }
+}
+
+.w-lighting { animation: w-flash 2.5s linear infinite; }
+.w-lighting.w-delay-1 { animation-delay: 1s; }
+
+.w-star { animation: w-flash 3s linear infinite; }
+.w-star.w-delay-1 { animation-delay: 1s; }
+.w-star.w-delay-2 { animation-delay: 2s; }
+
+@keyframes w-flash {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0; }
+}
+
+.w-mist {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: w-mist 5s linear infinite alternate;
+}
+
+@keyframes w-mist {
+    from { transform: translateX(-10px); }
+    to { transform: translateX(17px); }
+}
+
+/* ------------------------------------------------------------------ */
+/* ?raw debug overlay — sits outside #stage (fixed to the real         */
+/* viewport) so it isn't shrunk by applyStageScale()'s TV scale        */
+/* transform. Colors are fixed, not theme tokens — a debug view should */
+/* look the same regardless of the page's own light/dark toggle.       */
+/* ------------------------------------------------------------------ */
+.raw-debug-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow-y: auto;
+    background: #05070c;
+    color: #f2f4f8;
+    font-family: 'Inter', sans-serif;
+    padding: 24px 32px 64px;
+}
+
+.raw-debug-overlay h1 {
+    font-size: 22px;
+    margin: 0 0 20px;
+}
+
+.raw-debug-section {
+    margin-bottom: 28px;
+}
+
+.raw-debug-section h2 {
+    font-size: 16px;
+    margin: 0 0 4px;
+}
+
+.raw-debug-url {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #8b95a8;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.raw-debug-pre {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #0d121c;
+    border: 1px solid #1d2534;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0;
 }
