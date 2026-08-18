@@ -30,6 +30,8 @@
 
 :root {
     /* Severity tokens — fixed in both themes, match weather-core.js's TIER_COLORS */
+    --tier-watch: #93c5fd;
+    /* Ribut Petir (Peringatan) — early/unconfirmed */
     --tier-amaran: #2516d2;
     /* Ribut Petir / Hujan Lebat */
     --tier-waspada: #fdfe00;
@@ -251,6 +253,10 @@ body.map-dark .leaflet-tile-pane {
     flex: 0 0 auto;
 }
 
+.legend-swatch[data-tier="watch"] {
+    background: var(--tier-watch);
+}
+
 .legend-swatch[data-tier="amaran"] {
     background: var(--tier-amaran);
 }
@@ -312,7 +318,7 @@ body.map-dark .leaflet-tile-pane {
 
 /* Reuses .tier-swatch/.tier-label (defined under Warning cards) so it
    reads as the same "district under X tier" language as the warn-cards'
-   tier rows. Right-aligned like .meta-issued in .warn-card-head. */
+   tier rows. Right-aligned via margin-left: auto. */
 .forecast-warn-badge {
     display: none;
     align-items: center;
@@ -448,23 +454,9 @@ body.map-dark .leaflet-tile-pane {
     white-space: nowrap;
 }
 
-.meta-issued {
-    margin-left: auto;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--muted);
-    white-space: nowrap;
-}
-
 .rel-chip {
     font-weight: 600;
     color: var(--text);
-}
-
-.warn-marine-note {
-    font-size: 15px;
-    color: #38bdf8;
-    margin-bottom: 10px;
 }
 
 /* One row per active severity tier */

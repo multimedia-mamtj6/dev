@@ -127,6 +127,7 @@
         <div id="map"></div>
         <div id="map-legend" class="legend-card">
           <div class="legend-title">Status Daerah</div>
+          <div class="legend-row"><span class="legend-swatch" data-tier="watch"></span>Ribut Petir (Peringatan)</div>
           <div class="legend-row"><span class="legend-swatch" data-tier="amaran"></span>Ribut Petir / Hujan Lebat</div>
           <div class="legend-row"><span class="legend-swatch" data-tier="waspada"></span>Waspada</div>
           <div class="legend-row"><span class="legend-swatch" data-tier="buruk"></span>Buruk</div>
@@ -386,16 +387,6 @@
     // =========================================================
     // Relative-time labels (re-rendered every minute)
     // =========================================================
-    function relPast(iso) {
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return null;
-      const mins = Math.floor((Date.now() - d.getTime()) / 60000);
-      if (mins < 1) return 'Sebentar tadi';
-      if (mins < 60) return `${mins} minit lepas`;
-      const h = Math.floor(mins / 60), m = mins % 60;
-      return m ? `${h} jam ${m} minit lepas` : `${h} jam lepas`;
-    }
-
     function relFuture(iso) {
       const d = new Date(iso);
       if (isNaN(d.getTime())) return null;
@@ -433,17 +424,18 @@
     // 'amaran' (thunderstorm/rain-lebat, untiered) reads as "Ribut Petir /
     // Hujan Lebat" in the UI, matching the card title and legend — the
     // raw TIER_LABEL value ("Amaran") is too generic on its own here.
+    // 'watch' (an earlier/unconfirmed thunderstorm signal) gets the same
+    // "Ribut Petir" framing, qualified as a lower-confidence heads-up.
     function tierRowLabel(tier) {
+      if (tier === 'watch') return 'Ribut Petir (Peringatan)';
       return tier === 'amaran' ? 'Ribut Petir / Hujan Lebat' : (TIER_LABEL[tier] || tier);
     }
 
-    function renderWarnCard(el, title, items, marineCount) {
+    function renderWarnCard(el, title, items) {
       if (!items.length) {
         el.className = 'warn-card empty panel';
         el.style.borderLeftColor = 'transparent';
-        el.innerHTML = `
-          <div class="warn-card-head"><h2>Tiada ${escapeHtml(title)}</h2></div>
-          ${marineCount ? '<div class="warn-marine-note">🌊 Amaran perairan Pahang sahaja aktif (bukan kawasan darat)</div>' : ''}`;
+        el.innerHTML = `<div class="warn-card-head"><h2>Tiada ${escapeHtml(title)}</h2></div>`;
         return;
       }
 
@@ -462,9 +454,9 @@
       const pill = (label, tier) => {
         const c = TIER_COLORS[tier] || TIER_COLORS.amaran;
         // 'amaran' (Ribut Petir/Hujan Lebat) is MET's dark blue, so it
-        // needs white text like buruk/bahaya — only the bright yellow
-        // 'waspada' pill still needs dark text.
-        const textColor = tier === 'waspada' ? '#713f12' : '#ffffff';
+        // needs white text like buruk/bahaya — the bright yellow 'waspada'
+        // and light-blue 'watch' pills are pastel enough to need dark text.
+        const textColor = (tier === 'waspada' || tier === 'watch') ? '#713f12' : '#ffffff';
         return `<span class="warn-pill" style="background:${c.fill};color:${textColor}">${escapeHtml(label)}</span>`;
       };
 
@@ -505,9 +497,6 @@
         }).join('');
       }
 
-      const issued = w.warning_issue?.issued;
-      const issuedShort = issued ? (formatTimeShort(issued) || '—') : '—';
-      const issuedRel = issued ? (relPast(issued) || '') : '';
       const more = items.length > 1 ? `+${items.length - 1} lagi` : '';
 
       el.className = 'warn-card active panel' + (accentTier === 'bahaya' ? ' tier-bahaya-active' : '');
@@ -517,20 +506,17 @@
           ${accentTier === 'bahaya' ? '<span class="pulse-dot"></span>' : ''}
           <h2>${escapeHtml(title)}</h2>
           ${more ? `<span class="warn-more">${escapeHtml(more)}</span>` : ''}
-          <span class="meta-issued">Dikeluarkan ${escapeHtml(issuedShort)}${issuedRel ? ` · <span class="rel-chip">${escapeHtml(issuedRel)}</span>` : ''}</span>
         </div>
-        ${rowsHtml}
-        ${(marineCount || parsed.scope === 'marine') ? '<div class="warn-marine-note">🌊 Amaran perairan Pahang aktif (bukan kawasan darat)</div>' : ''}`;
+        ${rowsHtml}`;
     }
 
     function renderCards() {
       const rain = newestFirst(activeWarnings.filter(w => w.source === 'rain'));
       const others = newestFirst(activeWarnings.filter(w => w.source !== 'rain'));
       const land = others.filter(w => pahangScopeOf(w).scope !== 'marine');
-      const marineCount = others.length - land.length;
 
-      renderWarnCard(document.getElementById('card-thunder'), 'Ribut Petir / Hujan Lebat', land, marineCount);
-      renderWarnCard(document.getElementById('card-rain'), 'Amaran Hujan Berterusan', rain, 0);
+      renderWarnCard(document.getElementById('card-thunder'), 'Ribut Petir / Hujan Lebat', land);
+      renderWarnCard(document.getElementById('card-rain'), 'Amaran Hujan Berterusan', rain);
     }
 
     function updateFooter() {

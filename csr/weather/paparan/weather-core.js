@@ -52,15 +52,19 @@ const DISTRICT_ALIASES = {
 // Waspada and Buruk so a rain-Buruk district keeps its orange even if
 // a thunderstorm warning also covers it — highest rank wins per
 // district. Colours match MET Malaysia's own warning-map palette.
+// 'watch' is a data.gov.my thunderstorm heading distinction ("Warning on
+// Thunderstorms" vs the confirmed "Thunderstorms Warning") — an
+// early/unconfirmed signal, ranked below everything else.
 // ---------------------------------------------------------------------
-const TIER_RANK = { waspada: 1, amaran: 2, buruk: 3, bahaya: 4 };
+const TIER_RANK = { watch: 0, waspada: 1, amaran: 2, buruk: 3, bahaya: 4 };
 const TIER_COLORS = {
+  watch: { fill: '#93c5fd', border: '#000000' },
   waspada: { fill: '#fdfe00', border: '#000000' },
   amaran: { fill: '#2516d2', border: '#000000' },
   buruk: { fill: '#fea402', border: '#000000' },
   bahaya: { fill: '#fa0101', border: '#000000' },
 };
-const TIER_LABEL = { waspada: 'Waspada', amaran: 'Amaran', buruk: 'Buruk', bahaya: 'Bahaya' };
+const TIER_LABEL = { watch: 'Peringatan', waspada: 'Waspada', amaran: 'Amaran', buruk: 'Buruk', bahaya: 'Bahaya' };
 
 // Leaflet style objects for district polygons — pure data, safe here.
 const defaultStyle = {
@@ -124,9 +128,27 @@ function resolveDistrictName(raw) {
 // "waters of" / "perairan" right before that state list. Without this
 // check, a marine-only bulletin would fall through to the state-wide
 // fallback below and incorrectly paint every land district amber.
+// "First/Second Category" wind/rough-seas bulletins (verified live
+// 2026-08-18: "FIRST CATEGORY WARNING ON STRONG WINDS AND ROUGH SEAS") are
+// the same class of thing under a different heading — its whole multi-
+// section text is sea-themed throughout, so the heading is checked
+// directly rather than relying only on body-text phrasing.
 function isMarineBulletin(warning) {
   return /\bwaters?\s+of\b/i.test(warning.text_en || '') ||
-    /\bperairan\b/i.test(warning.text_bm || '');
+    /\bperairan\b/i.test(warning.text_bm || '') ||
+    /CATEGORY WARNING ON STRONG WINDS/i.test(warning.heading_en || '');
+}
+
+// data.gov.my's thunderstorm heading distinguishes a confirmed warning
+// ("Thunderstorms Warning") from an earlier, unconfirmed one ("Warning on
+// Thunderstorms") — a real severity signal this page didn't previously use.
+// Defaults to the existing 'amaran' for the confirmed case and anything
+// else unrecognized, so this is additive, not a behavior change for the
+// already-verified-live "Thunderstorms Warning" case.
+function thunderstormTier(warning) {
+  const heading = (warning.heading_en || (warning.warning_issue && warning.warning_issue.title_en) || '');
+  if (/warning on thunderstorms/i.test(heading)) return 'watch';
+  return 'amaran';
 }
 
 // Parses one warning object (already known to mention "Pahang" in
@@ -135,26 +157,30 @@ function isMarineBulletin(warning) {
 // districts highlighted, but still worth showing in the banner).
 // All parsers return the same shape: { scope, districts, tiers, tier }
 // where `tiers` maps district → severity tier and `tier` is the
-// whole-state tier (scope 'state' only). Thunderstorm bulletins are
-// always the untiered 'amaran'.
+// whole-state tier (scope 'state' only). Marine check runs FIRST — a
+// genuine land bulletin never contains "waters of"/"perairan" phrasing
+// (verified live: land bulletins say "over the states of ... Pahang
+// (...)", never "waters of"), so a sea bulletin that happens to embed a
+// Pahang(...)-shaped substring can't be misread as a land district hit.
 function extractPahangDistricts(warning) {
+  if (isMarineBulletin(warning)) {
+    return { scope: 'marine', districts: [], tiers: {}, tier: null };
+  }
   const text = warning.text_en || warning.text_bm || '';
+  const tier = thunderstormTier(warning);
   const match = text.match(/Pahang\s*\(([^)]+)\)/i);
   if (match) {
     const resolved = splitDistrictList(match[1])
       .map(resolveDistrictName)
       .filter(Boolean);
     const tiers = {};
-    resolved.forEach(d => { tiers[d] = 'amaran'; });
+    resolved.forEach(d => { tiers[d] = tier; });
     return { scope: 'district', districts: resolved, tiers, tier: null };
-  }
-  if (isMarineBulletin(warning)) {
-    return { scope: 'marine', districts: [], tiers: {}, tier: null };
   }
   // "Pahang" mentioned with no parenthetical detail and no marine
   // phrasing — MET was vague about which district, so treat as a
   // whole-state land advisory.
-  return { scope: 'state', districts: KNOWN_DISTRICTS.slice(), tiers: {}, tier: 'amaran' };
+  return { scope: 'state', districts: KNOWN_DISTRICTS.slice(), tiers: {}, tier };
 }
 
 function isWarningActive(w) {
@@ -277,12 +303,63 @@ async function fetchRainWarnings() {
   return normalizeRainWarnings(data).filter(isWarningActive);
 }
 
+// ---------------------------------------------------------------------
+// Defensive "Continuous Rain" catch on the data.gov.my (thunderstorm)
+// source. NOT independently confirmed live — a live check on 2026-08-18
+// found no such heading on this endpoint, and the official docs at
+// developer.data.gov.my/realtime-api/weather don't document one either.
+// MET_TOKEN/api/weather-warning.js (metapi2) stays the real primary rain
+// source; this only exists in case a "Continuous Rain" bulletin ever does
+// show up here. Must NOT assume metapi2's `SECTION A:`/`SEKSYEN A:` prose
+// structure — data.gov.my's own bulletins are flat single paragraphs, so
+// this mirrors extractPahangDistricts()'s shape instead, just tier-aware.
+// ---------------------------------------------------------------------
+function isContinuousRainHeading(w) {
+  return /continuous rain/i.test(w.heading_en || w.text_en || '') ||
+    /hujan berterusan/i.test(w.heading_bm || w.text_bm || '');
+}
+
+function rainTierFromText(text) {
+  if (/\b(DANGER|BAHAYA)\b/i.test(text)) return 'bahaya';
+  if (/\b(SEVERE|BURUK)\b/i.test(text)) return 'buruk';
+  return 'waspada'; // ALERT/WASPADA, or no tier keyword found
+}
+
+function extractRainFromThunderSource(w) {
+  if (isMarineBulletin(w)) {
+    return { scope: 'marine', districts: [], tiers: {}, tier: null };
+  }
+  const text = w.text_en || w.text_bm || '';
+  const tier = rainTierFromText((w.heading_en || '') + ' ' + text);
+  const match = text.match(/Pahang\s*\(([^)]+)\)/i);
+  if (match) {
+    const resolved = splitDistrictList(match[1]).map(resolveDistrictName).filter(Boolean);
+    const tiers = {};
+    resolved.forEach(d => { tiers[d] = tier; });
+    return { scope: 'district', districts: resolved, tiers, tier: null };
+  }
+  return { scope: 'state', districts: KNOWN_DISTRICTS.slice(), tiers: {}, tier };
+}
+
+// Reclassifies any data.gov.my item that looks like a Continuous Rain
+// bulletin into the same { source: 'rain', pahang } shape
+// normalizeRainWarnings() produces, so it flows through the existing
+// pahangScopeOf()/renderCards() split unchanged — lands in the "Amaran
+// Hujan Berterusan" card instead of being mislabeled as a thunderstorm.
+function reclassifyRainWarnings(warnings) {
+  return warnings.map(w => !isContinuousRainHeading(w) ? w : {
+    ...w,
+    source: 'rain',
+    pahang: extractRainFromThunderSource(w),
+  });
+}
+
 async function fetchActiveWarnings() {
   const resp = await fetchWithTimeout(WARNING_API_URL);
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const data = await resp.json();
   const rows = Array.isArray(data) ? data : [];
-  return rows.filter(isWarningActive);
+  return reclassifyRainWarnings(rows.filter(isWarningActive));
 }
 
 // Rain warnings carry a precomputed `pahang` scope (SEKSYEN-aware);
@@ -342,6 +419,12 @@ function escapeHtml(str) {
 //   marine                  — offshore-only bulletin (must NOT highlight any district)
 //   district:Temerloh       — one district
 //   district:Kuantan,Pekan  — multiple districts
+//   watch                   — thunderstorm "Watch" tier, whole-state ("Warning on Thunderstorms")
+//   watch:Temerloh          — thunderstorm "Watch" tier, specific districts
+//   thunder-rain            — data.gov.my-shaped "Continuous Rain" heading (the
+//                             defensive, unconfirmed-live catch — see
+//                             isContinuousRainHeading()), whole-state, Waspada
+//   thunder-rain:buruk:Maran — same, specific districts at a tier
 //   rain                    — continuous-rain bulletin, whole-state Pahang (Waspada)
 //   rain:Temerloh,Maran     — continuous-rain, specific districts (Waspada)
 //   rain:buruk              — whole-state at a tier (waspada|buruk|bahaya)
@@ -402,6 +485,52 @@ function getTestWarningFixture(param) {
   if (param.startsWith('district:')) {
     const list = param.slice('district:'.length).split(',').map(s => s.trim()).filter(Boolean).join(', ');
     return [{ ...base, text_en: `Thunderstorms Warning for Pahang (${list})`, text_bm: `Amaran Ribut Petir untuk Pahang (${list})` }];
+  }
+
+  // 'Watch' tier — exercises thunderstormTier()'s "Warning on Thunderstorms"
+  // branch, which real fixtures above never hit (they all use the base
+  // object's confirmed "Thunderstorms Warning" heading).
+  if (param === 'watch' || param.startsWith('watch:')) {
+    const list = param.startsWith('watch:')
+      ? param.slice('watch:'.length).split(',').map(s => s.trim()).filter(Boolean).join(', ')
+      : '';
+    return [{
+      ...base,
+      warning_issue: { ...base.warning_issue, title_en: 'Warning on Thunderstorms' },
+      heading_en: 'Warning on Thunderstorms (TEST)',
+      heading_bm: 'Amaran Awal Ribut Petir (UJIAN)',
+      text_en: list ? `Warning on Thunderstorms for Pahang (${list})` : 'Warning on Thunderstorms affecting Pahang generally.',
+      text_bm: list ? `Amaran Awal Ribut Petir untuk Pahang (${list})` : 'Amaran Awal Ribut Petir yang menjejaskan Pahang secara umum.',
+    }];
+  }
+
+  // data.gov.my-shaped "Continuous Rain" fixture (flat text, NOT metapi2's
+  // SECTION prose) — run through the REAL reclassifyRainWarnings(), not a
+  // hand-built mimic, so this proves isContinuousRainHeading()/
+  // extractRainFromThunderSource() actually work, since there's no live
+  // example to test against.
+  if (param === 'thunder-rain' || param.startsWith('thunder-rain:')) {
+    const spec = param === 'thunder-rain' ? '' : param.slice('thunder-rain:'.length);
+    const parts = spec.split(':').map(s => s.trim());
+    const TIER_WORDS = { waspada: 'ALERT', buruk: 'SEVERE', bahaya: 'DANGER' };
+    let tier = 'waspada', list = parts[0] || null;
+    if (parts[0] && TIER_WORDS[parts[0].toLowerCase()]) {
+      tier = parts[0].toLowerCase();
+      list = parts[1] || null;
+    }
+    if (list) list = list.split(',').map(s => s.trim()).filter(Boolean).join(', ');
+    const area = list ? `Pahang (${list})` : 'the state of Pahang';
+    const raw = {
+      ...base,
+      heading_en: `Continuous Rain Warning (${TIER_WORDS[tier]}) (TEST)`,
+      heading_bm: 'Amaran Hujan Berterusan (UJIAN)',
+      // ". (TEST DATA)" — period before the tag, same reason as the rain
+      // fixtures below: "Pahang (TEST DATA)" would match the district regex
+      // and swallow the state-wide case.
+      text_en: `Continuous rain is expected to occur over ${area}. (TEST DATA)`,
+      text_bm: `Hujan berterusan dijangka berlaku di ${list ? `Pahang (${list})` : 'negeri Pahang'}. (DATA UJIAN)`,
+    };
+    return reclassifyRainWarnings([raw]);
   }
 
   // rain fixtures — built as a real metapi2-shaped payload and run
