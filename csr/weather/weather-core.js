@@ -49,8 +49,18 @@ const REFRESH_MS = 3 * 60 * 1000; // warning-poll interval: 3 minutes
 // via URLSearchParams (never string concatenation) — cfg.apiName comes
 // only from a validated states.json entry, never straight from the
 // ?state= query string, but this keeps it safe even if that ever changes.
+//
+// Nationwide mode (cfg.apiName === null, the "malaysia" states.json entry)
+// omits the contains= filter entirely instead of looping this request once
+// per state — the endpoint just returns every currently-active bulletin
+// unfiltered, which computeWarningStateNationwide() then slices per-state
+// itself (see that function). limit is raised accordingly since we now
+// need EVERY active bulletin, not just the ~20 most recent ones mentioning
+// one state.
 function buildWarningApiUrl(cfg) {
-  const params = new URLSearchParams({ contains: `${cfg.apiName}@text_en`, limit: '20' });
+  const params = cfg.apiName
+    ? new URLSearchParams({ contains: `${cfg.apiName}@text_en`, limit: '20' })
+    : new URLSearchParams({ limit: '100' });
   return `https://api.data.gov.my/weather/warning?${params.toString()}`;
 }
 
@@ -173,16 +183,30 @@ function isMarineBulletin(warning) {
     /\bperairan\b/i.test(warning.text_bm || '');
 }
 
-// Parses one warning object (already known to mention the active state
-// in text_en, per the API's contains= filter) into a district-level hit
-// list, a state-wide land scope, or a marine-only scope (no land
-// districts highlighted, but still worth showing in the banner).
+// Parses one warning object into a district-level hit list, a state-wide
+// land scope, a marine-only scope (no land districts highlighted, but
+// still worth showing in the banner), or "not affected" (scope: null).
 // All parsers return the same shape: { scope, districts, tiers, tier }
 // where `tiers` maps district → severity tier and `tier` is the
 // whole-state tier (scope 'state' only). Thunderstorm bulletins are
 // always the untiered 'amaran'.
+//
+// The bare-mention gate below is required, not just defensive: this
+// function's single-state caller (fetchActiveWarnings, via the API's
+// contains=<state> filter) already guarantees every warning it sees
+// mentions the state — but computeWarningStateNationwide() calls this
+// same function once per state against ONE unfiltered nationwide fetch,
+// where most states are NOT mentioned in any given bulletin. Without the
+// gate, every unmentioned state fell through to the vague "state" branch
+// below and got incorrectly washed by every bulletin, mentioned or not.
 function extractStateDistricts(warning, cfg) {
   const text = warning.text_en || warning.text_bm || '';
+
+  const bareRe = new RegExp('\\b' + escapeRegExp(cfg.apiName) + '\\b', 'i');
+  if (!bareRe.test(text)) {
+    return { scope: null, districts: [], tiers: {}, tier: null };
+  }
+
   const re = new RegExp(escapeRegExp(cfg.apiName) + '\\s*\\(([^)]+)\\)', 'i');
   const match = text.match(re);
   if (match) {
@@ -286,37 +310,41 @@ function parseRainForState(textEn, cfg) {
   return { scope: null, districts: [], tiers: {}, tier: null }; // active state not affected — don't show
 }
 
-// Normalizes metapi2's RAIN payload rows into the same shape the
-// banner/state code already consumes (heading_bm, text_bm, valid_to...),
-// plus `source: 'rain'` and a precomputed `stateScope`. Rows whose
-// active sections never mention the active state are dropped — these
-// pages are single-state-scoped, a warning for some other state is
-// noise here.
-function normalizeRainWarnings(metJson, cfg) {
+// Normalizes metapi2's RAIN payload rows into the shape the rest of this
+// file consumes (heading_bm, text_bm, valid_to...) plus `source: 'rain'`
+// — no state-scoping yet, that's layered on by the two callers below
+// depending on whether they need one state's slice or all of them.
+function normalizeRainRows(metJson) {
   const rows = (metJson && Array.isArray(metJson.results)) ? metJson.results : [];
-  return rows
-    .map(row => {
-      const v = row.value || {};
-      const attrs = row.attributes || {};
-      const textEn = v.text?.en?.warning || '';
-      const textBm = v.text?.ms?.warning || '';
-      return {
-        source: 'rain',
-        warning_issue: {
-          issued: attrs.timestamp || row.date,
-          title_en: attrs.title?.en || v.heading?.en || 'Continuous Rain Warning',
-          title_bm: attrs.title?.ms || v.heading?.ms || 'Amaran Hujan Berterusan',
-        },
-        heading_en: attrs.title?.en || v.heading?.en || '',
-        heading_bm: attrs.title?.ms || v.heading?.ms || '',
-        text_en: textEn,
-        text_bm: textBm,
-        instruction_bm: null,
-        valid_from: attrs.valid_from || null,
-        valid_to: attrs.valid_to || null,
-        stateScope: parseRainForState(textEn || textBm, cfg),
-      };
-    })
+  return rows.map(row => {
+    const v = row.value || {};
+    const attrs = row.attributes || {};
+    const textEn = v.text?.en?.warning || '';
+    const textBm = v.text?.ms?.warning || '';
+    return {
+      source: 'rain',
+      warning_issue: {
+        issued: attrs.timestamp || row.date,
+        title_en: attrs.title?.en || v.heading?.en || 'Continuous Rain Warning',
+        title_bm: attrs.title?.ms || v.heading?.ms || 'Amaran Hujan Berterusan',
+      },
+      heading_en: attrs.title?.en || v.heading?.en || '',
+      heading_bm: attrs.title?.ms || v.heading?.ms || '',
+      text_en: textEn,
+      text_bm: textBm,
+      instruction_bm: null,
+      valid_from: attrs.valid_from || null,
+      valid_to: attrs.valid_to || null,
+    };
+  });
+}
+
+// Single-state shape: adds the precomputed `stateScope` the rest of the
+// single-state code path consumes, and drops rows whose active sections
+// never mention the active state at all (noise for a single-state page).
+function normalizeRainWarnings(metJson, cfg) {
+  return normalizeRainRows(metJson)
+    .map(w => ({ ...w, stateScope: parseRainForState(w.text_en || w.text_bm, cfg) }))
     .filter(w => w.stateScope.scope !== null);
 }
 
@@ -325,6 +353,17 @@ async function fetchRainWarnings(cfg) {
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const data = await resp.json();
   return normalizeRainWarnings(data, cfg).filter(isWarningActive);
+}
+
+// Nationwide shape: same one proxy fetch, but no per-state stateScope/
+// filtering — computeWarningStateNationwide() does that itself, once per
+// state, entirely client-side (see that function's own comment for why
+// no extra requests are needed).
+async function fetchRainWarningsRaw() {
+  const resp = await fetchWithTimeout(RAIN_PROXY_URL, 8000);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  return normalizeRainRows(data).filter(isWarningActive);
 }
 
 async function fetchActiveWarnings(cfg) {
@@ -363,6 +402,48 @@ function computeWarningState(warnings, cfg) {
   });
 
   return { scope, districts, stateTier };
+}
+
+// Nationwide equivalent of computeWarningState() — instead of one cfg, runs
+// each warning through EVERY real state's own extractStateDistricts()/
+// parseRainForState() unchanged. This works because a single MET bulletin's
+// raw text already lists multiple states in one string (that's exactly how
+// the single-state path pulls out just its own slice today) — so no new
+// parsing logic is needed, just looping the existing per-state parsers in
+// memory over one already-fetched, unfiltered batch (see
+// buildWarningApiUrl()'s no-contains branch and fetchRainWarningsRaw()).
+//
+// Returns per-district tiers (same shape as computeWarningState) PLUS a
+// stateCode → tier wash map, since a vague "whole state, no district
+// detail" warning must only wash THAT state's districts — unlike the
+// single-state page (only one state ever on screen, so a bare
+// warningScope === 'state' flag was enough), nationwide mode renders many
+// states at once and needs to know which one each wash belongs to.
+function computeWarningStateNationwide(warnings, allStates) {
+  const districts = new Map(); // district name → highest tier
+  const stateWash = new Map(); // stateCode → highest tier
+
+  const stateCfgs = Object.values(allStates).filter(s => s.apiName && s.stateCode);
+
+  warnings.forEach(w => {
+    stateCfgs.forEach(stateCfg => {
+      const parsed = w.source === 'rain'
+        ? parseRainForState(w.text_en || w.text_bm, stateCfg)
+        : extractStateDistricts(w, stateCfg);
+      if (parsed.scope === 'marine' || parsed.scope === null) return;
+      if (parsed.scope === 'state') {
+        const t = parsed.tier || 'amaran';
+        const cur = stateWash.get(stateCfg.stateCode);
+        if (!cur || TIER_RANK[t] > TIER_RANK[cur]) stateWash.set(stateCfg.stateCode, t);
+      }
+      Object.entries(parsed.tiers || {}).forEach(([d, t]) => {
+        const cur = districts.get(d);
+        if (!cur || TIER_RANK[t] > TIER_RANK[cur]) districts.set(d, t);
+      });
+    });
+  });
+
+  return { districts, stateWash };
 }
 
 // ---------------------------------------------------------------------

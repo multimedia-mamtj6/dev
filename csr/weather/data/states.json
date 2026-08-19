@@ -1,12 +1,19 @@
 {
+  "malaysia": {
+    "displayName": "Malaysia",
+    "apiName": null,
+    "stateCode": null,
+    "districts": [],
+    "aliases": {}
+  },
   "pahang": {
     "displayName": "Pahang",
     "apiName": "Pahang",
     "stateCode": "PHG",
     "districts": ["Bentong", "Bera", "Cameron Highlands", "Jerantut", "Kuantan", "Lipis", "Maran", "Pekan", "Raub", "Rompin", "Temerloh"],
     "aliases": { "kuala lipis": "Lipis", "cameron highland": "Cameron Highlands", "tanah tinggi cameron": "Cameron Highlands" },
-    "center": [3.8126, 102.3275],
-    "zoom": 8
+    "center": [3.6066, 102.7932],
+    "zoom": 8.7
   },
   "terengganu": {
     "displayName": "Terengganu",

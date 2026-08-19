@@ -1,11 +1,13 @@
 /* =====================================================================
    csr/weather — interactive weather page stylesheet
-   Layout ported from csr/weather/paparan/style.css (header/top-bar,
-   floating legend-card, forecast card, tier-grouped warning cards) but
-   kept RESPONSIVE — no fixed 1920x1080 #stage/scale-transform, that's
-   paparan's TV-kiosk-specific mechanism and wrong for a normal
-   resizable browser page. Theme tokens are identical to paparan's so
-   both pages share one palette.
+   Fixed 1920x1080 design (#stage), uniformly scaled by JS to fit any
+   screen — same mechanism as csr/weather/paparan/style.css, so sizing,
+   spacing and proportions match paparan exactly rather than being
+   independently tuned. Everything below uses fixed px tuned for that
+   canvas, not vw-relative clamp() (which would fight the outer scale
+   transform). Only genuine content differences from paparan (multi-state
+   error banner, the location popover, the biasa/dipilih legend rows,
+   the warn-card issued-time meta) are index.html-specific additions.
    ===================================================================== */
 
 * {
@@ -40,22 +42,30 @@
 
 html,
 body {
+    height: 100%;
     margin: 0;
+    overflow: hidden;
+    /* signage-style canvas never scrolls, matches paparan */
+    background: var(--bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage — fixed 1920x1080 canvas, centered + scaled by JS             */
+/* ------------------------------------------------------------------ */
+#stage {
+    width: 1920px;
+    height: 1080px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform-origin: center center;
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
-}
-
-body {
-    padding: 24px 16px;
-}
-
-.page-wrap {
-    max-width: 1200px;
-    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    padding: 48px 16px;
+    gap: 28px;
 }
 
 .panel {
@@ -71,28 +81,28 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex: 0 0 auto;
 }
 
 .title-block {
+    position: relative;
+    /* anchors .location-popover */
     display: flex;
     align-items: baseline;
     gap: 14px;
-    flex-wrap: wrap;
 }
 
 .title-block h1 {
     margin: 0;
     font-family: 'Archivo', sans-serif;
     font-weight: 800;
-    font-size: 28px;
+    font-size: 34px;
     letter-spacing: -0.01em;
     color: var(--text);
 }
 
 .title-block .subtitle {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     color: var(--muted);
 }
@@ -100,7 +110,7 @@ body {
 .top-bar-right {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 24px;
 }
 
 .clock-block {
@@ -113,12 +123,12 @@ body {
 #live-clock {
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
-    font-size: 22px;
+    font-size: 28px;
     color: var(--text);
 }
 
 #live-date {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--muted);
 }
@@ -126,12 +136,12 @@ body {
 .theme-toggle-btn {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text);
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 8px 16px;
+    padding: 10px 20px;
     cursor: pointer;
     white-space: nowrap;
 }
@@ -140,12 +150,13 @@ body {
    for a real warning. */
 #test-mode-banner {
     display: none;
-    padding: 10px 14px;
+    flex: 0 0 auto;
+    padding: 10px 16px;
     border: 2px dashed #7c3aed;
     border-radius: 10px;
     background: var(--panel);
     color: #a78bfa;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
 }
 
@@ -155,12 +166,13 @@ body {
 
 #state-error-banner {
     display: none;
-    padding: 10px 14px;
+    flex: 0 0 auto;
+    padding: 10px 16px;
     border: 2px dashed #ef4444;
     border-radius: 10px;
     background: var(--panel);
     color: #fca5a5;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
 }
 
@@ -169,49 +181,84 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
-/* Controls (state/district selects) — no analog in paparan (it has no */
-/* dropdowns); styled to match the surrounding panel language.         */
+/* Location popover (state/district selects) — no analog in paparan   */
+/* (it has no dropdowns). Tucked behind a pin-icon toggle in the title */
+/* instead of a permanently visible controls bar. The whole #stage     */
+/* scales as one unit, so this uses stage-space px, not viewport vw.   */
 /* ------------------------------------------------------------------ */
-.controls {
-    display: flex;
-    flex-wrap: wrap;
+.location-toggle-btn {
+    display: inline-flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    cursor: pointer;
 }
 
-.controls label {
-    font-size: 13px;
+.location-toggle-btn[aria-expanded="true"] {
+    color: var(--text);
+    border-color: var(--text);
+}
+
+.location-popover {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 1200;
+    /* above Leaflet panes/tooltips (~700) and .legend-card (1000) */
+    width: 340px;
+    padding: 16px 20px;
+}
+
+.location-popover:not([hidden]) {
+    display: block;
+}
+
+.location-popover .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.location-popover .controls label {
+    font-size: 14px;
     font-weight: 600;
     color: var(--muted);
 }
 
 select {
-    padding: 9px 12px;
+    padding: 10px 14px;
     border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--panel);
     color: var(--text);
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
+    width: 100%;
 }
 
 /* ------------------------------------------------------------------ */
 /* Main: map panel left, content column right                         */
 /* ------------------------------------------------------------------ */
 main {
+    flex: 1;
+    min-height: 0;
     display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    /* stacks on narrow viewports */
+    gap: 28px;
 }
 
 #map-panel {
-    flex: 1 1 620px;
-    height: 600px;
+    flex: 0 0 61%;
     position: relative;
     overflow: hidden;
-    /* clip Leaflet tiles to the rounded corners */
+    /* clip Leaflet tiles to the 20px rounded corners */
 }
 
 #map {
@@ -224,7 +271,7 @@ main {
     align-items: center;
     justify-content: center;
     color: var(--muted);
-    font-size: 15px;
+    font-size: 20px;
     text-align: center;
     background: var(--panel);
 }
@@ -247,6 +294,24 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .leaflet-tooltip.district-label-pill::before {
+    display: none;
+}
+
+/* State name pills (nationwide mode) — same pill mechanism as the district
+   labels above, but bolder/larger so a state name doesn't read as just
+   another district at a glance. */
+.leaflet-tooltip.state-label-pill {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font: 700 14px 'Archivo', sans-serif;
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+    white-space: nowrap;
+}
+
+.leaflet-tooltip.state-label-pill::before {
     display: none;
 }
 
@@ -318,16 +383,18 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .right-col {
-    flex: 1 1 360px;
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 22px;
 }
 
 /* ------------------------------------------------------------------ */
 /* Forecast card                                                       */
 /* ------------------------------------------------------------------ */
 .forecast-card {
+    flex: 0 0 auto;
     padding: 0;
     overflow: hidden;
     /* clip .forecast-head's own rounded top corners flush with the card's */
@@ -337,21 +404,20 @@ body.map-dark .leaflet-tile-pane {
     display: flex;
     align-items: baseline;
     gap: 10px;
-    padding: 18px 24px;
+    padding: 18px 28px;
     border: 3px solid transparent;
     border-radius: 20px 20px 0 0;
-    flex-wrap: wrap;
 }
 
 .forecast-head h2 {
     margin: 0;
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
-    font-size: 22px;
+    font-size: 26px;
 }
 
 .forecast-head span {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--muted);
 }
@@ -370,14 +436,13 @@ body.map-dark .leaflet-tile-pane {
 .forecast-body {
     display: flex;
     align-items: center;
-    gap: 28px;
-    padding: 18px 24px 22px;
-    flex-wrap: wrap;
+    gap: 36px;
+    padding: 18px 28px 22px;
 }
 
 .forecast-temp {
     font-family: 'Archivo', sans-serif;
-    font-size: 44px;
+    font-size: 56px;
     font-weight: 800;
     white-space: nowrap;
 }
@@ -385,17 +450,16 @@ body.map-dark .leaflet-tile-pane {
 .forecast-temp small {
     display: block;
     font-family: 'Inter', sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 400;
     color: var(--muted);
 }
 
 .forecast-slots {
     display: flex;
-    gap: 24px;
+    gap: 32px;
     flex: 1;
     justify-content: space-around;
-    flex-wrap: wrap;
 }
 
 .forecast-slot {
@@ -404,7 +468,7 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .forecast-slot .slot-name {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
     font-weight: 600;
     text-transform: uppercase;
@@ -412,12 +476,31 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .forecast-slot .slot-icon {
-    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    font-size: 40px;
+    /* fallback size if a phrase falls through to the emoji fallback */
     line-height: 1.3;
 }
 
+.forecast-slot .slot-icon .wicon {
+    width: 52px;
+    height: 52px;
+}
+
+/* Pale shapes (mainly the sun's gradYellow fill + light ray stroke) lose
+   contrast against the light theme's near-white panel. A shape-following
+   shadow (vs a rectangular box-shadow) keeps the icon looking like an
+   icon rather than boxing it in a badge. Dark theme doesn't need this —
+   its panel is already dark enough for every icon to read fine. */
+:root[data-theme="light"] .forecast-slot .slot-icon .wicon {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.35));
+}
+
 .forecast-slot .slot-text {
-    font-size: 14px;
+    font-size: 16px;
     color: var(--text);
     line-height: 1.25;
 }
@@ -427,12 +510,22 @@ body.map-dark .leaflet-tile-pane {
 /* ------------------------------------------------------------------ */
 .warn-card {
     flex: 0 0 auto;
-    padding: 16px 24px;
+    max-height: 100%;
+    padding: 16px 28px;
     display: flex;
     flex-direction: column;
     border-left: 8px solid transparent;
     overflow: visible;
     /* never silently clip a warning row */
+}
+
+/* This class's own `display: flex` above otherwise beats the browser's
+   built-in `[hidden] { display: none }` rule (author CSS always wins over
+   the user-agent stylesheet, even at equal selector specificity) — without
+   this, setting el.hidden = true in nationwide mode left an empty,
+   content-less box on screen instead of actually hiding the card. */
+.warn-card[hidden] {
+    display: none;
 }
 
 .warn-card.empty {
@@ -447,18 +540,17 @@ body.map-dark .leaflet-tile-pane {
     border-bottom: 2px solid var(--border);
     padding-bottom: 8px;
     margin-bottom: 8px;
-    flex-wrap: wrap;
 }
 
 .warn-card-head h2 {
     margin: 0;
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
-    font-size: 20px;
+    font-size: 24px;
 }
 
 .warn-more {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--muted);
     white-space: nowrap;
@@ -466,7 +558,7 @@ body.map-dark .leaflet-tile-pane {
 
 .meta-issued {
     margin-left: auto;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--muted);
     white-space: nowrap;
@@ -478,7 +570,7 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .warn-marine-note {
-    font-size: 14px;
+    font-size: 15px;
     color: #38bdf8;
     margin-bottom: 10px;
 }
@@ -499,7 +591,6 @@ body.map-dark .leaflet-tile-pane {
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
-    flex-wrap: wrap;
 }
 
 .tier-swatch {
@@ -510,13 +601,13 @@ body.map-dark .leaflet-tile-pane {
 }
 
 .tier-label {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
 }
 
 .tier-sehingga {
     margin-left: auto;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted);
     white-space: nowrap;
 }
@@ -531,7 +622,7 @@ body.map-dark .leaflet-tile-pane {
     display: inline-block;
     padding: 6px 16px;
     border-radius: 999px;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     line-height: 1.2;
     white-space: nowrap;
@@ -568,10 +659,100 @@ body.map-dark .leaflet-tile-pane {
 /* Footer                                                              */
 /* ------------------------------------------------------------------ */
 #page-footer {
+    flex: 0 0 auto;
     display: flex;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 6px;
-    font-size: 13px;
+    font-size: 15px;
     color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animated weather icons (forecast slots) — ported from                */
+/* csr/weather/paparan/style.css for visual parity. See the             */
+/* <svg><defs> sprite near the top of index.html's <body> for the       */
+/* symbol/gradient definitions these classes animate.                   */
+/* ------------------------------------------------------------------ */
+.w-long-ray {
+    stroke: #ffdd1a;
+    stroke-width: 3;
+    stroke-dasharray: 10;
+    animation: w-long-ray 4s linear infinite;
+}
+
+@keyframes w-long-ray {
+    from { stroke-dashoffset: 100; }
+    to { stroke-dashoffset: 0; }
+}
+
+.w-short-ray {
+    stroke: #ffdd1a;
+    stroke-width: 1.5;
+    stroke-dasharray: 3;
+    animation: w-short-ray 3s linear infinite;
+}
+
+@keyframes w-short-ray {
+    from { stroke-dashoffset: 20; }
+    to { stroke-dashoffset: 0; }
+}
+
+.w-cloud-float {
+    animation: w-cloud-float 8s linear infinite;
+}
+
+@keyframes w-cloud-float {
+    0%, 100% { transform: translate(0px, 15px); opacity: 0.75; }
+    25% { transform: translate(15px, 0px); opacity: 1; }
+    50% { transform: translate(30px, 0px); opacity: 1; }
+    75% { transform: translate(25px, 0px); opacity: 1; }
+}
+
+.w-cloud-float-reverse {
+    animation: w-cloud-float-reverse 6s linear infinite;
+}
+
+@keyframes w-cloud-float-reverse {
+    0%, 100% { transform: translate(0px, -15px); opacity: 0.75; }
+    25% { transform: translate(-15px, 0px); opacity: 1; }
+    50% { transform: translate(-30px, 0px); opacity: 1; }
+    75% { transform: translate(-25px, 0px); opacity: 1; }
+}
+
+.w-drop1 { animation: w-rain 1s linear infinite; }
+.w-drop2 { animation: w-rain 2s linear infinite 1s; }
+.w-drop3 { animation: w-rain 1s linear infinite 0.5s; }
+.w-drop4 { animation: w-rain 2s linear infinite 0.8s; }
+
+@keyframes w-rain {
+    0% { opacity: 1; }
+    25% { transform: translateY(5px); opacity: 1; }
+    50% { transform: translateY(15px); opacity: 1; }
+    75% { transform: translateY(25px); opacity: 0.75; }
+    100% { transform: translateY(35px); opacity: 0; }
+}
+
+.w-lighting { animation: w-flash 2.5s linear infinite; }
+.w-lighting.w-delay-1 { animation-delay: 1s; }
+
+.w-star { animation: w-flash 3s linear infinite; }
+.w-star.w-delay-1 { animation-delay: 1s; }
+.w-star.w-delay-2 { animation-delay: 2s; }
+
+@keyframes w-flash {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0; }
+}
+
+.w-mist {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: w-mist 5s linear infinite alternate;
+}
+
+@keyframes w-mist {
+    from { transform: translateX(-10px); }
+    to { transform: translateX(17px); }
 }

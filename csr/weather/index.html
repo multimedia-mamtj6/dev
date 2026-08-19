@@ -28,10 +28,106 @@
 
 <body>
 
-  <div class="page-wrap">
+  <!-- Animated weather-icon sprite (gradients + symbols, reused via <use>
+       by forecastIcon() in the script below). Design credit:
+       Atiya Haider (https://codepen.io/atiyahaider), adapted from a public
+       CodePen — no snow/ice symbols kept, Malaysia's forecast never uses them.
+       Ported from csr/weather/paparan/index.html for visual parity. -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+    <defs>
+      <radialGradient id="gradYellow" cx="50%" cy="50%" r="80%" fx="90%" fy="80%">
+        <stop offset="0%" stop-color="yellow" />
+        <stop offset="100%" stop-color="orange" />
+      </radialGradient>
+      <radialGradient id="gradDarkGray" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+        <stop offset="0%" stop-color="white" />
+        <stop offset="70%" stop-color="gray" />
+        <stop offset="100%" stop-color="dimgray" />
+      </radialGradient>
+      <radialGradient id="gradGray" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+        <stop offset="0%" stop-color="white" />
+        <stop offset="100%" stop-color="darkgray" />
+      </radialGradient>
+      <linearGradient id="gradWhite" x1="40%" y1="50%" x2="90%" y2="90%">
+        <stop offset="0%" stop-color="white" />
+        <stop offset="100%" stop-color="darkgray" />
+      </linearGradient>
+    </defs>
+
+    <symbol id="wicon-sun">
+      <circle cx="50" cy="50" r="20" fill="url(#gradYellow)" />
+      <line x1="50" y1="27" x2="50" y2="2" class="w-long-ray" />
+      <line x1="50" y1="73" x2="50" y2="98" class="w-long-ray" />
+      <line x1="27" y1="50" x2="2" y2="50" class="w-long-ray" />
+      <line x1="73" y1="50" x2="98" y2="50" class="w-long-ray" />
+      <line x1="34" y1="34" x2="16" y2="16" class="w-long-ray" />
+      <line x1="66" y1="66" x2="84" y2="84" class="w-long-ray" />
+      <line x1="34" y1="66" x2="16" y2="84" class="w-long-ray" />
+      <line x1="66" y1="34" x2="84" y2="16" class="w-long-ray" />
+      <line x1="59" y1="29" x2="66" y2="13" class="w-short-ray" />
+      <line x1="71" y1="42" x2="87" y2="35" class="w-short-ray" />
+      <line x1="71" y1="58.5" x2="87" y2="65" class="w-short-ray" />
+      <line x1="59" y1="71" x2="66" y2="87" class="w-short-ray" />
+      <line x1="41" y1="71" x2="34" y2="87" class="w-short-ray" />
+      <line x1="29.5" y1="58.5" x2="13" y2="66" class="w-short-ray" />
+      <line x1="29" y1="42" x2="13" y2="35" class="w-short-ray" />
+      <line x1="41" y1="29" x2="35" y2="13" class="w-short-ray" />
+    </symbol>
+
+    <symbol id="wicon-moon">
+      <path d="M60,20 A30,30 0 1,0 90,65 22,22 0 1,1 60,20z" fill="url(#gradYellow)" />
+    </symbol>
+
+    <symbol id="wicon-star">
+      <polygon points="5,0 2,10 10,4 0,4 8,10" fill="url(#gradYellow)" />
+    </symbol>
+
+    <symbol id="wicon-gray-cloud">
+      <path d="M20,15 Q25,0 45,11 Q60,5 60,20 A30,15 5 1,1 20,15 Z" />
+    </symbol>
+
+    <symbol id="wicon-white-cloud">
+      <path fill="url(#gradWhite)" d="M11,47 Q13,37 21,42 Q31,30 41,38 A28,21 -25 1,1 35,75 Q23,85 19,73 A12,12 0 0,1 11,47Z" />
+    </symbol>
+
+    <symbol id="wicon-rain-drop">
+      <path fill="lightblue" d="M10 0 Q10,0 14,7 A5,5 0 1,1 6,7 Q10,0 10,0Z" />
+    </symbol>
+
+    <symbol id="wicon-thunder-bolt">
+      <path fill="#ffdd1a" d="M15,0 L1,23 L8,23 L0,40 L15,19 L8,19Z" />
+    </symbol>
+
+    <symbol id="wicon-mist">
+      <path d="M5,34 L43,34" />
+      <path d="M10,40 L40,40 Q51.5,40 50,35 T60,30 L80,30" />
+      <path d="M15,45 L45,45 Q56.5,45 55,40 T65,35 L90,35" />
+      <path d="M60,42 L85,42" />
+    </symbol>
+  </svg>
+
+  <div id="stage">
     <header class="top-bar">
       <div class="title-block">
         <h1 id="page-heading">Cuaca Pahang</h1>
+        <button id="location-toggle" class="location-toggle-btn" type="button"
+                aria-haspopup="true" aria-expanded="false" aria-controls="location-popover"
+                aria-label="Tukar negeri / daerah">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path fill="currentColor" d="M12 2C7.86 2 4.5 5.36 4.5 9.5c0 5.25 6.6 11.68 6.88 11.95a.9.9 0 0 0 1.24 0C12.9 21.18 19.5 14.75 19.5 9.5 19.5 5.36 16.14 2 12 2zm0 10.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5z"/>
+          </svg>
+        </button>
+        <div id="location-popover" class="location-popover panel" hidden>
+          <div class="controls">
+            <label for="stateSelect">Negeri:</label>
+            <select id="stateSelect"></select>
+
+            <label for="districtSelect">Daerah:</label>
+            <select id="districtSelect">
+              <option value="">-- Pilih Daerah --</option>
+            </select>
+          </div>
+        </div>
         <span class="subtitle" id="page-subtitle">Amaran &amp; Peta Daerah</span>
       </div>
       <div class="top-bar-right">
@@ -45,16 +141,6 @@
 
     <div id="test-mode-banner"></div>
     <div id="state-error-banner"></div>
-
-    <div class="controls panel">
-      <label for="stateSelect">Negeri:</label>
-      <select id="stateSelect"></select>
-
-      <label for="districtSelect">Daerah:</label>
-      <select id="districtSelect">
-        <option value="">-- Pilih Daerah --</option>
-      </select>
-    </div>
 
     <main>
       <div id="map-panel" class="panel">
@@ -71,7 +157,7 @@
       </div>
 
       <div class="right-col">
-        <section class="forecast-card panel" id="forecast-card">
+        <section class="forecast-card panel" id="forecast-card" hidden>
           <div class="forecast-head" id="forecast-head">
             <h2 id="forecast-district-name">Pilih daerah</h2><span>Ramalan Cuaca</span>
             <span class="forecast-warn-badge" id="forecast-warn-badge">
@@ -110,6 +196,8 @@
       <span id="footer-updated">—</span>
     </footer>
   </div>
+  <!-- /#stage -->
+
 
   <!-- 2. Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -154,10 +242,13 @@
     let map, geojsonLayer;
     let cfg = null;                   // active state's config entry (from states.json)
     let STATE_CONFIG = null;          // all loaded states, keyed by states.json's own keys
+    let isNationwide = false;         // true for the "malaysia" entry (cfg.stateCode === null)
     let focusDistrict = null;         // district the forecast card follows; null = placeholder
-    let warningDistricts = new Map(); // district name → severity tier
-    let warningScope = null;          // null | 'district' | 'state'
-    let warningStateTier = null;      // tier for the whole-state wash, when scope === 'state'
+    let warningDistricts = new Map(); // district name → severity tier (single-state mode)
+    let warningScope = null;          // null | 'district' | 'state' (single-state mode)
+    let warningStateTier = null;      // tier for the whole-state wash, when scope === 'state' (single-state mode)
+    let nationwideDistrictTiers = new Map(); // district name → severity tier (nationwide mode)
+    let nationwideStateWash = new Map();     // stateCode → severity tier, vague state-wide warnings (nationwide mode)
     let activeWarnings = [];          // filtered, currently-active warning objects
     let lastCheckedAt = null;
     let forecastToday = null;         // today's row from the forecast API, once fetched
@@ -200,6 +291,51 @@
     }
 
     // =========================================================
+    // Location popover — Negeri/Daerah selects tucked behind a pin-icon
+    // toggle in the title, anchored via .title-block { position: relative }
+    // (see style.css). Only the show/hide chrome lives here; the selects'
+    // own change handlers (populateStateSelect/populateDistrictSelect) are
+    // unchanged and unaffected by where the markup physically sits.
+    // =========================================================
+    function initLocationPopover() {
+      const btn = document.getElementById('location-toggle');
+      const pop = document.getElementById('location-popover');
+
+      function open() {
+        pop.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        document.getElementById('stateSelect').focus();
+      }
+      function close(opts) {
+        const refocus = opts && opts.refocus;
+        if (pop.hidden) return;
+        pop.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        if (refocus) btn.focus();
+      }
+
+      btn.addEventListener('click', () => pop.hidden ? open() : close());
+
+      document.addEventListener('click', (e) => {
+        if (pop.hidden) return;
+        // btn.contains(), not e.target !== btn — a click on the icon
+        // button's inner <svg>/<path> has THAT as e.target, not the
+        // button itself, so a strict !== check closed the popover in
+        // the same click that just opened it.
+        if (!pop.contains(e.target) && !btn.contains(e.target)) close();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !pop.hidden) close({ refocus: true });
+      });
+
+      // Auto-close after a district pick — the map pan + forecast-card
+      // update are the visible confirmation. The state select's own change
+      // handler navigates the whole page away, so it doesn't need this.
+      document.getElementById('districtSelect').addEventListener('change', () => close());
+    }
+
+    // =========================================================
     // Live clock + date
     // =========================================================
     function renderClock() {
@@ -211,18 +347,47 @@
     }
 
     // =========================================================
+    // 1920x1080 fixed-canvas stage, uniformly scaled to fit whatever
+    // screen this loads on — same mechanism as csr/weather/paparan/.
+    // =========================================================
+    function applyStageScale() {
+      const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      document.getElementById('stage').style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    // =========================================================
     // Map — LOCKED: no drag/zoom/hover/click (matches paparan; a
     // dropdown selection still drives the view programmatically).
     // =========================================================
+    // Grey (#8a8a8a) borders on every district regardless of warning
+    // state — a local override so weather-core.js's shared defaultStyle
+    // (also used elsewhere) never gets touched. Matches paparan's map
+    // border styling exactly.
+    const PAGE_DEFAULT_STYLE = { ...defaultStyle, color: '#8a8a8a' };
+
     function baseStyle(feature) {
       const name = feature.properties.name;
+
+      if (isNationwide) {
+        const tier = nationwideDistrictTiers.get(name);
+        if (tier) return { ...districtWarningStyle(tier), color: '#8a8a8a', weight: 2 };
+        // Vague "whole state, no district detail" wash — scoped to just
+        // that state's own features via properties.state, since nationwide
+        // mode renders every state at once (unlike single-state mode,
+        // where a bare warningScope === 'state' flag was enough because
+        // only one state's polygons were ever on screen).
+        const wash = nationwideStateWash.get(feature.properties.state);
+        if (wash) return { ...stateWarningStyle(wash), color: '#8a8a8a', weight: 2 };
+        return PAGE_DEFAULT_STYLE;
+      }
+
       const tier = warningDistricts.get(name);
       // District-specific tier paints on top even under a state-wide wash,
       // so "SEKSYEN A: <State> (Maran)" stays visible inside a vaguer
       // whole-state section from another bulletin.
-      if (tier) return districtWarningStyle(tier);
-      if (warningScope === 'state') return stateWarningStyle(warningStateTier);
-      return defaultStyle;
+      if (tier) return { ...districtWarningStyle(tier), color: '#8a8a8a', weight: 2 };
+      if (warningScope === 'state') return { ...stateWarningStyle(warningStateTier), color: '#8a8a8a', weight: 2 };
+      return PAGE_DEFAULT_STYLE;
     }
 
     // Dropdown "jump to district" selection — an outline-only override on
@@ -252,6 +417,32 @@
       }
     }
 
+    // One label per state (nationwide mode only) — groups the already-
+    // rendered district layers by feature.properties.state and places a
+    // single tooltip at the combined bounds' center of each group, instead
+    // of a per-district label for every district in the country at once.
+    function addStateLabels() {
+      const stateNameByCode = {};
+      Object.values(STATE_CONFIG).forEach(s => {
+        if (s.stateCode) stateNameByCode[s.stateCode] = s.displayName;
+      });
+
+      const layersByState = new Map();
+      geojsonLayer.eachLayer(layer => {
+        const code = layer.feature.properties.state;
+        if (!layersByState.has(code)) layersByState.set(code, []);
+        layersByState.get(code).push(layer);
+      });
+
+      layersByState.forEach((layers, code) => {
+        const center = L.featureGroup(layers).getBounds().getCenter();
+        L.tooltip({ permanent: true, direction: 'center', className: 'state-label-pill' })
+          .setLatLng(center)
+          .setContent(stateNameByCode[code] || code)
+          .addTo(map);
+      });
+    }
+
     function loadGeoJSON() {
       fetchWithTimeout(GEOJSON_URL, 8000)
         .then(res => {
@@ -261,17 +452,23 @@
         .then(data => {
           const stateData = {
             type: "FeatureCollection",
-            features: data.features.filter(f => f.properties.state === cfg.stateCode)
+            features: isNationwide ? data.features : data.features.filter(f => f.properties.state === cfg.stateCode)
           };
 
           geojsonLayer = L.geoJSON(stateData, {
             style: baseStyle,
             onEachFeature: (feature, layer) => {
+              // Nationwide mode shows one label per STATE instead (see
+              // addStateLabels() below) — a per-district label for every
+              // district in the country at once is unreadable clutter.
+              if (isNationwide) return;
               layer.bindTooltip(feature.properties.name, {
                 permanent: true, direction: 'center', className: 'district-label-pill'
               });
             }
           }).addTo(map);
+
+          if (isNationwide) addStateLabels();
 
           resetMapView();
           refreshWarnings(); // initial load — map is already visible by now
@@ -329,6 +526,10 @@
       const sel = document.getElementById('districtSelect');
       sel.innerHTML = '<option value="">-- Pilih Daerah --</option>' +
         cfg.districts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+      // Nationwide mode (cfg.districts === []) has no single district to
+      // jump to — disable rather than leave an active-looking select with
+      // only the placeholder option.
+      sel.disabled = cfg.districts.length === 0;
       sel.addEventListener('change', () => highlightByName(sel.value));
     }
 
@@ -472,13 +673,29 @@
     }
 
     function renderCards() {
+      const thunderCard = document.getElementById('card-thunder');
+      const rainCard = document.getElementById('card-rain');
+
+      // Nationwide mode has no single cfg to scope stateScopeOf()/pill
+      // wording against (cfg.apiName is null — calling into it here would
+      // throw) — the coloured map already communicates where warnings are;
+      // the two per-state text cards stay hidden until a real state is
+      // picked from the Negeri select.
+      if (isNationwide) {
+        thunderCard.hidden = true;
+        rainCard.hidden = true;
+        return;
+      }
+      thunderCard.hidden = false;
+      rainCard.hidden = false;
+
       const rain = newestFirst(activeWarnings.filter(w => w.source === 'rain'));
       const others = newestFirst(activeWarnings.filter(w => w.source !== 'rain'));
       const land = others.filter(w => stateScopeOf(w, cfg).scope !== 'marine');
       const marineCount = others.length - land.length;
 
-      renderWarnCard(document.getElementById('card-thunder'), 'Ribut Petir / Hujan Lebat', land, marineCount);
-      renderWarnCard(document.getElementById('card-rain'), 'Amaran Hujan Berterusan', rain, 0);
+      renderWarnCard(thunderCard, 'Ribut Petir / Hujan Lebat', land, marineCount);
+      renderWarnCard(rainCard, 'Amaran Hujan Berterusan', rain, 0);
     }
 
     function updateFooter() {
@@ -489,8 +706,47 @@
         `Dikemaskini ${timeText} · Auto setiap 3 minit`;
     }
 
+    // Nationwide mode: one thunderstorm fetch (buildWarningApiUrl omits
+    // contains= when cfg.apiName is null, see weather-core.js) + one rain
+    // fetch (fetchRainWarningsRaw — the proxy was already unfiltered),
+    // aggregated across all 16 states in memory by
+    // computeWarningStateNationwide(). Same request count as single-state
+    // mode — see the conversation that settled on this approach instead of
+    // looping fetchActiveWarnings() once per state. ?testWarning= fixtures
+    // are single-cfg only (getTestWarningFixture needs a real cfg.apiName)
+    // and are simply ignored here — ?raw/live data is used instead.
+    async function refreshWarningsNationwide() {
+      const [thunder, rain] = await Promise.allSettled([
+        fetchActiveWarnings(cfg),
+        fetchRainWarningsRaw(),
+      ]);
+
+      if (thunder.status === 'rejected' && rain.status === 'rejected') {
+        console.warn('[weather] Both warning sources failed:', thunder.reason?.message, rain.reason?.message);
+      } else {
+        if (thunder.status === 'rejected') console.warn('[weather] data.gov.my warnings failed:', thunder.reason?.message);
+        if (rain.status === 'rejected') console.warn('[weather] rain proxy failed (expected under local static server):', rain.reason?.message);
+        const combined = [
+          ...(thunder.status === 'fulfilled' ? thunder.value : []),
+          ...(rain.status === 'fulfilled' ? rain.value : []),
+        ];
+        const state = computeWarningStateNationwide(combined, STATE_CONFIG);
+        nationwideDistrictTiers = state.districts;
+        nationwideStateWash = state.stateWash;
+      }
+    }
+
     async function refreshWarnings() {
       lastCheckedAt = new Date();
+
+      if (isNationwide) {
+        await refreshWarningsNationwide();
+        repaintMap();
+        renderCards();
+        applyForecastWarningAccent();
+        updateFooter();
+        return;
+      }
 
       const fixture = getTestWarningFixture(TEST_WARNING_PARAM, cfg);
       if (fixture !== undefined) {
@@ -553,17 +809,89 @@
       return `${y}-${m}-${day}`;
     }
 
+    // Finite set of Malay phrases from the API → icon. Unmapped phrases warn
+    // instead of silently showing the wrong sky. 'berangin' (windy) has no
+    // matching symbol in the sprite, so it still falls back to an emoji.
+    // Ported from csr/weather/paparan/index.html's forecastIcon() for visual
+    // parity — see this file's <svg><defs> sprite near the top of <body>.
     function forecastIcon(phrase, slot) {
       const p = (phrase || '').toLowerCase();
       if (!p) return '—';
-      if (p.includes('ribut petir')) return '⛈️';
-      if (p.includes('tiada hujan')) return slot === 'malam' ? '🌙' : '☀️';
-      if (p.includes('hujan')) return (p.includes('beberapa') || p.includes('satu dua')) ? '🌦️' : '🌧️';
-      if (p.includes('jerebu')) return '🌫️';
+
+      const svg = (inner) => `<svg class="wicon" viewBox="0 0 100 100">${inner}</svg>`;
+
+      if (p.includes('ribut petir')) {
+        return svg(
+          '<use href="#wicon-gray-cloud" class="w-cloud-float" fill="url(#gradGray)"/>' +
+          '<use href="#wicon-gray-cloud" x="25" y="10" class="w-cloud-float-reverse" fill="url(#gradDarkGray)"/>' +
+          '<use href="#wicon-thunder-bolt" x="30" y="61" class="w-lighting"/>' +
+          '<use href="#wicon-white-cloud" x="7"/>' +
+          '<use href="#wicon-thunder-bolt" x="45" y="56" class="w-lighting w-delay-1"/>'
+        );
+      }
+
+      if (p.includes('tiada hujan')) {
+        return slot === 'malam'
+          ? svg(
+            '<use href="#wicon-moon" x="-15"/>' +
+            '<use href="#wicon-star" x="42" y="30" class="w-star"/>' +
+            '<use href="#wicon-star" x="61" y="32" class="w-star w-delay-1"/>' +
+            '<use href="#wicon-star" x="55" y="50" class="w-star w-delay-2"/>'
+          )
+          : svg('<use href="#wicon-sun"/>');
+      }
+
+      if (p.includes('hujan')) {
+        if (p.includes('beberapa') || p.includes('satu dua')) {
+          return slot === 'malam'
+            ? svg(
+              '<use href="#wicon-moon" x="-20" y="-15"/>' +
+              '<use href="#wicon-gray-cloud" class="w-cloud-float" fill="url(#gradGray)"/>' +
+              '<use href="#wicon-rain-drop" x="25" y="65" class="w-drop1"/>' +
+              '<use href="#wicon-rain-drop" x="45" y="65" class="w-drop3"/>' +
+              '<use href="#wicon-white-cloud" x="7"/>'
+            )
+            : svg(
+              '<use href="#wicon-sun" x="-12" y="-18"/>' +
+              '<use href="#wicon-gray-cloud" class="w-cloud-float" fill="url(#gradGray)"/>' +
+              '<use href="#wicon-rain-drop" x="25" y="65" class="w-drop1"/>' +
+              '<use href="#wicon-rain-drop" x="45" y="65" class="w-drop3"/>' +
+              '<use href="#wicon-white-cloud" x="7"/>'
+            );
+        }
+        return svg(
+          '<use href="#wicon-gray-cloud" x="25" y="10" class="w-cloud-float-reverse" fill="url(#gradDarkGray)"/>' +
+          '<use href="#wicon-rain-drop" x="15" y="65" class="w-drop4"/>' +
+          '<use href="#wicon-rain-drop" x="25" y="65" class="w-drop1"/>' +
+          '<use href="#wicon-rain-drop" x="37" y="65" class="w-drop2"/>' +
+          '<use href="#wicon-rain-drop" x="50" y="65" class="w-drop3"/>' +
+          '<use href="#wicon-white-cloud" x="5" y="-7"/>'
+        );
+      }
+
+      if (p.includes('jerebu')) {
+        return svg(
+          '<use href="#wicon-gray-cloud" class="w-cloud-float" fill="url(#gradDarkGray)" x="0" y="20"/>' +
+          '<use href="#wicon-gray-cloud" x="30" y="30" class="w-cloud-float-reverse" fill="url(#gradGray)"/>' +
+          '<use href="#wicon-mist" x="0" y="30" class="w-mist"/>'
+        );
+      }
+
       if (p.includes('berangin')) return '💨';
-      if (p.includes('berawan') || p.includes('mendung')) return '☁️';
+
+      if (p.includes('berawan') || p.includes('mendung')) {
+        return svg(
+          '<use href="#wicon-gray-cloud" class="w-cloud-float" fill="url(#gradGray)"/>' +
+          '<use href="#wicon-white-cloud" x="7"/>'
+        );
+      }
+
       console.warn('[weather] Unmapped forecast phrase:', phrase);
-      return '🌤️';
+      return svg(
+        '<use href="#wicon-sun" x="-12" y="-18"/>' +
+        '<use href="#wicon-gray-cloud" class="w-cloud-float" fill="url(#gradGray)"/>' +
+        '<use href="#wicon-white-cloud" x="7"/>'
+      );
     }
 
     function tierWash(hex, alpha) {
@@ -596,12 +924,23 @@
     }
 
     function renderForecast() {
-      applyForecastWarningAccent();
-      document.getElementById('forecast-district-name').textContent = focusDistrict || 'Pilih daerah';
+      const card = document.getElementById('forecast-card');
 
-      if (!focusDistrict || !forecastToday) {
-        // No district picked yet, or first fetch hasn't landed — keep
-        // "—" placeholders (never show stale data from a prior district).
+      // No district picked yet — hide the whole card rather than showing
+      // it full of "—" placeholders. card starts `hidden` in the markup
+      // too, so there's no flash of an empty card before this runs.
+      if (!focusDistrict) {
+        card.hidden = true;
+        return;
+      }
+      card.hidden = false;
+
+      applyForecastWarningAccent();
+      document.getElementById('forecast-district-name').textContent = focusDistrict;
+
+      if (!forecastToday) {
+        // District just picked, first fetch hasn't landed yet — keep "—"
+        // placeholders (never show stale data from a prior district).
         document.getElementById('forecast-temp').textContent = '—';
         ['pagi', 'petang', 'malam'].forEach(slot => {
           document.getElementById(`slot-icon-${slot}`).textContent = '—';
@@ -615,7 +954,7 @@
         (f.min_temp != null && f.max_temp != null) ? `${f.min_temp}° – ${f.max_temp}°` : '—';
       [['pagi', f.morning_forecast], ['petang', f.afternoon_forecast], ['malam', f.night_forecast]]
         .forEach(([slot, phrase]) => {
-          document.getElementById(`slot-icon-${slot}`).textContent = forecastIcon(phrase, slot);
+          document.getElementById(`slot-icon-${slot}`).innerHTML = forecastIcon(phrase, slot);
           document.getElementById(`slot-text-${slot}`).textContent = phrase || '—';
         });
     }
@@ -644,6 +983,14 @@
     // Boot + refresh loop
     // =========================================================
     async function boot() {
+      // Runs unconditionally, before the states.json fetch below — without
+      // this, a fetch failure would leave #stage un-scaled/mispositioned
+      // (top:50%/left:50% with no transform) and the error banner itself
+      // would be invisible. Matches paparan's own unconditional placement.
+      applyStageScale();
+      window.addEventListener('load', applyStageScale);
+      window.addEventListener('resize', applyStageScale);
+
       try {
         STATE_CONFIG = await loadStateConfig();
       } catch (e) {
@@ -659,15 +1006,17 @@
         showStateBanner(`Negeri tidak dikenali: "${params.get('state')}" — kembali ke Pahang.`);
         cfg = STATE_CONFIG['pahang'] || Object.values(STATE_CONFIG)[0];
       }
+      isNationwide = !cfg.stateCode;
 
       document.title = `Cuaca ${cfg.displayName} — Amaran & Peta Daerah`;
       document.getElementById('page-heading').textContent = `Cuaca ${cfg.displayName}`;
 
       populateStateSelect(stateKey in STATE_CONFIG ? stateKey : 'pahang');
       populateDistrictSelect();
+      initLocationPopover();
       initThemeToggle();
       renderClock();
-      renderForecast(); // paint the "Pilih daerah" placeholder immediately
+      renderForecast(); // hides the forecast card immediately (no district picked yet)
       renderCards();    // paint both empty warning-card states immediately, before first fetch
 
       // =========================================================
@@ -683,6 +1032,7 @@
         boxZoom: false,
         keyboard: false,
         touchZoom: false,
+        zoomSnap: 0, // no rounding — needed so cfg.zoom's fractional values (e.g. Pahang's 8.7, matching paparan) aren't snapped to an integer
       }).setView(cfg.center || [4.2105, 108.9758], cfg.zoom || 6); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
 
       // NOTE: hostname must be {s}.basemaps.cartocdn.com — an extra ".tile."
