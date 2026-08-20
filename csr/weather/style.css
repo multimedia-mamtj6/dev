@@ -756,3 +756,63 @@ body.map-dark .leaflet-tile-pane {
     from { transform: translateX(-10px); }
     to { transform: translateX(17px); }
 }
+
+/* ------------------------------------------------------------------ */
+/* ?raw debug overlay — sits outside #stage (fixed to the real         */
+/* viewport) so it isn't shrunk by applyStageScale()'s TV scale        */
+/* transform. Colors are fixed, not theme tokens — a debug view should */
+/* look the same regardless of the page's own light/dark toggle.       */
+/* Ported from csr/weather/paparan/style.css. */
+/* ------------------------------------------------------------------ */
+.raw-debug-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow-y: auto;
+    background: #05070c;
+    color: #f2f4f8;
+    font-family: 'Inter', sans-serif;
+    padding: 24px 32px 64px;
+}
+
+.raw-debug-overlay h1 {
+    font-size: 22px;
+    margin: 0 0 20px;
+}
+
+.raw-debug-section {
+    margin-bottom: 28px;
+}
+
+.raw-debug-section h2 {
+    font-size: 16px;
+    margin: 0 0 4px;
+}
+
+.raw-debug-url {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #8b95a8;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.raw-debug-pre {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #0d121c;
+    border: 1px solid #1d2534;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0;
+}
+
+.raw-debug-note {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #8b95a8;
+    margin: -8px 0 28px;
+}

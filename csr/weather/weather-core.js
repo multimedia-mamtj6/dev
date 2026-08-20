@@ -199,6 +199,52 @@ function isMarineBulletin(warning) {
 // where most states are NOT mentioned in any given bulletin. Without the
 // gate, every unmentioned state fell through to the vague "state" branch
 // below and got incorrectly washed by every bulletin, mentioned or not.
+// Splits a comma-separated list on TOP-LEVEL commas only — commas inside
+// "(...)" sub-groups (e.g. a division's district breakdown) don't count
+// as separators. Used by extractRegionGroupDistricts() below.
+function splitTopLevelGroups(text) {
+  const tokens = [];
+  let depth = 0, current = '';
+  for (const ch of text) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    if (ch === ',' && depth === 0) {
+      tokens.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) tokens.push(current);
+  return tokens.map(t => t.trim()).filter(Boolean);
+}
+
+// Resolves a Sabah/Sarawak-style division-grouped segment, e.g. "Interior
+// (Kuala Penyu, Beaufort and Membakut), West Coast (Papar, Penampang,
+// Putatan and Kota Kinabalu)". Each top-level entry is either
+// "Label (district, district)" — only the parenthesized districts count,
+// the label is MET's division/region name and is NOT itself necessarily
+// affected (confirmed by bulletins that repeat the label inside its own
+// parens when they DO mean it, e.g. "Mukah (Daro, Matu, Mukah and
+// Dalat)") — or a bare "District" with no sub-breakdown, which IS itself
+// the affected district (e.g. "Sarikei", "Limbang").
+function extractRegionGroupDistricts(segment, cfg) {
+  const resolved = new Set();
+  splitTopLevelGroups(segment).forEach(token => {
+    const m = token.match(/^(.*?)\s*\(([^)]+)\)$/);
+    if (m) {
+      splitDistrictList(m[2]).forEach(raw => {
+        const d = resolveDistrictName(raw, cfg);
+        if (d) resolved.add(d);
+      });
+    } else {
+      const d = resolveDistrictName(token, cfg);
+      if (d) resolved.add(d);
+    }
+  });
+  return Array.from(resolved);
+}
+
 function extractStateDistricts(warning, cfg) {
   const text = warning.text_en || warning.text_bm || '';
 
@@ -217,6 +263,27 @@ function extractStateDistricts(warning, cfg) {
     resolved.forEach(d => { tiers[d] = 'amaran'; });
     return { scope: 'district', districts: resolved, tiers, tier: null };
   }
+
+  // Sabah/Sarawak-style bulletins group districts under a named division,
+  // e.g. "Sabah: Interior (Kuala Penyu, Beaufort and Membakut), West
+  // Coast (Papar, Penampang, Putatan and Kota Kinabalu)" — the state name
+  // is followed by a colon (not a direct paren) and a comma-separated
+  // list of division groups, ending at the next "•" bulletin separator,
+  // the "until"/"sehingga" clause, or end of string.
+  const groupRe = new RegExp(
+    escapeRegExp(cfg.apiName) + '\\s*:\\s*([\\s\\S]*?)(?=\\s*•|\\s+until\\b|\\s+sehingga\\b|$)',
+    'i'
+  );
+  const groupMatch = text.match(groupRe);
+  if (groupMatch) {
+    const resolved = extractRegionGroupDistricts(groupMatch[1], cfg);
+    if (resolved.length) {
+      const tiers = {};
+      resolved.forEach(d => { tiers[d] = 'amaran'; });
+      return { scope: 'district', districts: resolved, tiers, tier: null };
+    }
+  }
+
   if (isMarineBulletin(warning)) {
     return { scope: 'marine', districts: [], tiers: {}, tier: null };
   }

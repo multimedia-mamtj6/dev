@@ -181,6 +181,7 @@
         "tambunan",
         "beaufort",
         "kuala-penyu",
+        "membakut",
         "sipitang",
         "telupid"
     ],
@@ -193,6 +194,7 @@
         "ranau",
         "kota-belud",
         "kuala-penyu",
+        "membakut",
         "sipitang",
         "beaufort",
         "ft-labuan"
@@ -335,6 +337,7 @@
     ],
     "interior": [
         "kuala-penyu",
+        "membakut",
         "sipitang",
         "beaufort",
         "nabawan",

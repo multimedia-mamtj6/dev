@@ -263,6 +263,11 @@
       return null;
     })();
 
+    // ?raw — shows a debug overlay with the actual unprocessed API
+    // responses. Ported from csr/weather/paparan/index.html. All-lowercase
+    // (unlike ?testWarning=) so it can't be mistyped into a different case.
+    const RAW_PARAM = new URLSearchParams(window.location.search).has('raw');
+
     function showStateBanner(msg) {
       const el = document.getElementById('state-error-banner');
       el.textContent = msg;
@@ -353,6 +358,67 @@
     function applyStageScale() {
       const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
       document.getElementById('stage').style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    // =========================================================
+    // ?raw — debug overlay, fixed on top of #stage (not inside it, so it
+    // isn't shrunk by applyStageScale()'s TV scale transform). Fetches the
+    // real endpoints fresh and shows each response's actual text — not the
+    // normalized objects fetchActiveWarnings()/fetchRainWarnings() return.
+    // Ported from csr/weather/paparan/index.html, adapted for this page's
+    // multi-state/nationwide config: the warning URL is built from the
+    // active `cfg` via buildWarningApiUrl() (paparan hardcodes a single
+    // Pahang URL instead), and the forecast source is only shown when a
+    // district is actually resolvable — either already focused (a district
+    // was picked before ?raw was opened) or given via ?district= in the
+    // URL directly, since boot() may call this before the async GeoJSON
+    // load has processed that preselect. Nationwide mode has no single
+    // district to forecast, so that source is simply omitted there.
+    // =========================================================
+    function initRawDebugOverlay() {
+      const overlay = document.createElement('div');
+      overlay.className = 'raw-debug-overlay';
+      overlay.innerHTML = '<h1>Data Mentah API (?raw)</h1>';
+      document.body.appendChild(overlay);
+
+      const sources = [
+        ['Amaran Ribut Petir (warning)', buildWarningApiUrl(cfg)],
+        ['Amaran Hujan Berterusan (rain proxy)', RAIN_PROXY_URL],
+      ];
+
+      const districtParam = new URLSearchParams(window.location.search).get('district');
+      const forecastDistrict = focusDistrict ||
+        (districtParam && cfg.districts.includes(districtParam) ? districtParam : null);
+      if (forecastDistrict) {
+        sources.unshift([
+          `Ramalan Cuaca (forecast) — ${forecastDistrict}`,
+          `https://api.data.gov.my/weather/forecast?contains=${encodeURIComponent(forecastDistrict)}@location__location_name`,
+        ]);
+      } else if (!isNationwide) {
+        const note = document.createElement('div');
+        note.className = 'raw-debug-note';
+        note.textContent = 'Ramalan Cuaca tidak dipaparkan — belum ada daerah dipilih (guna ?district=).';
+        overlay.appendChild(note);
+      }
+
+      sources.forEach(([label, url]) => {
+        const section = document.createElement('section');
+        section.className = 'raw-debug-section';
+        section.innerHTML = `<h2>${escapeHtml(label)}</h2>` +
+          `<div class="raw-debug-url">${escapeHtml(url)}</div>` +
+          `<pre class="raw-debug-pre">Memuatkan…</pre>`;
+        overlay.appendChild(section);
+        const pre = section.querySelector('.raw-debug-pre');
+
+        fetchWithTimeout(url, 8000)
+          .then(res => res.text().then(text => ({ ok: res.ok, status: res.status, text })))
+          .then(({ ok, status, text }) => {
+            let body = text;
+            try { body = JSON.stringify(JSON.parse(text), null, 2); } catch (e) { /* not JSON — show raw text as-is */ }
+            pre.textContent = (ok ? '' : `HTTP ${status}\n\n`) + body;
+          })
+          .catch(err => { pre.textContent = 'Gagal memuatkan: ' + err.message; });
+      });
     }
 
     // =========================================================
@@ -1043,6 +1109,7 @@
       }).addTo(map);
 
       initTestModeBanner();
+      if (RAW_PARAM) initRawDebugOverlay();
       loadGeoJSON();
 
       // No point polling on an interval when serving a static fixture —
