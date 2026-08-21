@@ -486,9 +486,17 @@ function computeWarningState(warnings, cfg) {
 // single-state page (only one state ever on screen, so a bare
 // warningScope === 'state' flag was enough), nationwide mode renders many
 // states at once and needs to know which one each wash belongs to.
+//
+// Also returns `perState` (stateCode → summary), accumulated in this same
+// loop — a nationwide-only plain-text warning panel needs one line per
+// affected state (tier, district count, valid_to, which source(s)), and
+// this loop already computes exactly that per (warning, state) pair. Doing
+// it here avoids a second pass re-deriving the same parse.
 function computeWarningStateNationwide(warnings, allStates) {
   const districts = new Map(); // district name → highest tier
   const stateWash = new Map(); // stateCode → highest tier
+  const perState = new Map();  // stateCode → { tier, scope, districtCount, validTo, sources }
+  const districtSets = new Map(); // stateCode → Set(district) — private accumulator for perState's districtCount
 
   const stateCfgs = Object.values(allStates).filter(s => s.apiName && s.stateCode);
 
@@ -507,10 +515,30 @@ function computeWarningStateNationwide(warnings, allStates) {
         const cur = districts.get(d);
         if (!cur || TIER_RANK[t] > TIER_RANK[cur]) districts.set(d, t);
       });
+
+      // Highest tier this (warning, state) pair carries — mirrors the
+      // accentTier logic renderWarnCard() already uses per-card.
+      let tier = parsed.tier || 'amaran';
+      Object.values(parsed.tiers || {}).forEach(t => {
+        if (TIER_RANK[t] > TIER_RANK[tier]) tier = t;
+      });
+
+      const code = stateCfg.stateCode;
+      if (!districtSets.has(code)) districtSets.set(code, new Set());
+      if (parsed.scope === 'district') parsed.districts.forEach(d => districtSets.get(code).add(d));
+
+      const cur = perState.get(code);
+      const isHigher = !cur || TIER_RANK[tier] > TIER_RANK[cur.tier];
+      const entry = cur || { tier, scope: parsed.scope, validTo: w.valid_to, sources: new Set() };
+      if (isHigher) { entry.tier = tier; entry.scope = parsed.scope; entry.validTo = w.valid_to; }
+      entry.sources.add(w.source === 'rain' ? 'rain' : 'amaran');
+      perState.set(code, entry);
     });
   });
 
-  return { districts, stateWash };
+  perState.forEach((entry, code) => { entry.districtCount = districtSets.get(code).size; });
+
+  return { districts, stateWash, perState };
 }
 
 // ---------------------------------------------------------------------

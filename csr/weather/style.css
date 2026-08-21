@@ -1,43 +1,18 @@
 /* =====================================================================
    csr/weather — interactive weather page stylesheet
-   Fixed 1920x1080 design (#stage), uniformly scaled by JS to fit any
-   screen — same mechanism as csr/weather/paparan/style.css, so sizing,
-   spacing and proportions match paparan exactly rather than being
-   independently tuned. Everything below uses fixed px tuned for that
-   canvas, not vw-relative clamp() (which would fight the outer scale
-   transform). Only genuine content differences from paparan (multi-state
-   error banner, the location popover, the biasa/dipilih legend rows,
-   the warn-card issued-time meta) are index.html-specific additions.
+   Redesigned (2026-08-20) to a full-viewport interactive map with
+   Tailwind-styled floating panels — see index.html for the Tailwind
+   setup and DOM. Only what Tailwind utilities genuinely can't express
+   lives here: the map's own background (must outrank leaflet.css's own
+   .leaflet-container rule), a [hidden] safety net, Leaflet tooltip
+   pill internals (no Tailwind equivalent for hiding the tooltip arrow),
+   and the animated weather-icon keyframes (unrelated to this redesign,
+   ported from csr/weather/paparan/style.css, kept verbatim) plus the
+   ?raw debug overlay (deliberately theme-independent, also kept as-is).
    ===================================================================== */
 
 * {
     box-sizing: border-box;
-}
-
-/* ------------------------------------------------------------------ */
-/* Theme tokens — same values as csr/weather/paparan/style.css         */
-/* ------------------------------------------------------------------ */
-:root[data-theme="dark"] {
-    --bg: #05070c;
-    --panel: #0d121c;
-    --border: #1d2534;
-    --text: #f2f4f8;
-    --muted: #8b95a8;
-}
-
-:root[data-theme="light"] {
-    --bg: #eef1f6;
-    --panel: #ffffff;
-    --border: #dde2ec;
-    --text: #12151c;
-    --muted: #5b6474;
-}
-
-:root {
-    --tier-amaran: #2516d2;
-    --tier-waspada: #fdfe00;
-    --tier-buruk: #fea402;
-    --tier-bahaya: #fa0101;
 }
 
 html,
@@ -45,444 +20,44 @@ body {
     height: 100%;
     margin: 0;
     overflow: hidden;
-    /* signage-style canvas never scrolls, matches paparan */
-    background: var(--bg);
+    /* full-viewport map owns all scroll/drag gestures — the page itself
+       must never also scroll underneath it. */
 }
 
 /* ------------------------------------------------------------------ */
-/* Stage — fixed 1920x1080 canvas, centered + scaled by JS             */
+/* Map background ("sea"/void behind both GeoJSON layers) — must beat  */
+/* leaflet.css's own .leaflet-container background rule, so this pairs */
+/* an id with a class for higher specificity regardless of the         */
+/* Tailwind Play CDN <style> tag's injection order.                    */
 /* ------------------------------------------------------------------ */
-#stage {
-    width: 1920px;
-    height: 1080px;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform-origin: center center;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', system-ui, sans-serif;
-    display: flex;
-    flex-direction: column;
-    padding: 48px 16px;
-    gap: 28px;
+#map.leaflet-container {
+    background: #05070c;
 }
 
-.panel {
-    border-radius: 20px;
-    background: var(--panel);
-    border: 1px solid var(--border);
+html.light #map.leaflet-container {
+    background: #eef1f6;
 }
 
-/* ------------------------------------------------------------------ */
-/* Header                                                              */
-/* ------------------------------------------------------------------ */
-.top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex: 0 0 auto;
-}
-
-.title-block {
-    position: relative;
-    /* anchors .location-popover */
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-}
-
-.title-block h1 {
-    margin: 0;
-    font-family: 'Archivo', sans-serif;
-    font-weight: 800;
-    font-size: 34px;
-    letter-spacing: -0.01em;
-    color: var(--text);
-}
-
-.title-block .subtitle {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--muted);
-}
-
-.top-bar-right {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-}
-
-.clock-block {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    line-height: 1.3;
-}
-
-#live-clock {
-    font-family: 'Archivo', sans-serif;
-    font-weight: 700;
-    font-size: 28px;
-    color: var(--text);
-}
-
-#live-date {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--muted);
-}
-
-.theme-toggle-btn {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--text);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 10px 20px;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-/* Test-mode / unrecognized-state indicators — must never be mistaken
-   for a real warning. */
-#test-mode-banner {
-    display: none;
-    flex: 0 0 auto;
-    padding: 10px 16px;
-    border: 2px dashed #7c3aed;
-    border-radius: 10px;
-    background: var(--panel);
-    color: #a78bfa;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-#test-mode-banner.active {
-    display: block;
-}
-
-#state-error-banner {
-    display: none;
-    flex: 0 0 auto;
-    padding: 10px 16px;
-    border: 2px dashed #ef4444;
-    border-radius: 10px;
-    background: var(--panel);
-    color: #fca5a5;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-#state-error-banner.active {
-    display: block;
-}
-
-/* ------------------------------------------------------------------ */
-/* Location popover (state/district selects) — no analog in paparan   */
-/* (it has no dropdowns). Tucked behind a pin-icon toggle in the title */
-/* instead of a permanently visible controls bar. The whole #stage     */
-/* scales as one unit, so this uses stage-space px, not viewport vw.   */
-/* ------------------------------------------------------------------ */
-.location-toggle-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--muted);
-    cursor: pointer;
-}
-
-.location-toggle-btn[aria-expanded="true"] {
-    color: var(--text);
-    border-color: var(--text);
-}
-
-.location-popover {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    z-index: 1200;
-    /* above Leaflet panes/tooltips (~700) and .legend-card (1000) */
-    width: 340px;
-    padding: 16px 20px;
-}
-
-.location-popover:not([hidden]) {
-    display: block;
-}
-
-.location-popover .controls {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.location-popover .controls label {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--muted);
-}
-
-select {
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    width: 100%;
-}
-
-/* ------------------------------------------------------------------ */
-/* Main: map panel left, content column right                         */
-/* ------------------------------------------------------------------ */
-main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    gap: 28px;
-}
-
-#map-panel {
-    flex: 0 0 61%;
-    position: relative;
-    overflow: hidden;
-    /* clip Leaflet tiles to the 20px rounded corners */
-}
-
-#map {
-    height: 100%;
-    width: 100%;
-}
-
-#map.map-error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    font-size: 20px;
-    text-align: center;
-    background: var(--panel);
-}
-
-body.map-dark .leaflet-tile-pane {
-    filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.85) saturate(.7);
-}
-
-/* District name pills — Leaflet permanent tooltips (map is locked, no
-   hover/click, so these are the only always-visible district labels). */
-.leaflet-tooltip.district-label-pill {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 2px 10px;
-    font: 600 12px 'Inter', sans-serif;
-    color: var(--text);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
-    white-space: nowrap;
-}
-
-.leaflet-tooltip.district-label-pill::before {
-    display: none;
-}
-
-/* State name pills (nationwide mode) — same pill mechanism as the district
-   labels above, but bolder/larger so a state name doesn't read as just
-   another district at a glance. */
-.leaflet-tooltip.state-label-pill {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 4px 14px;
-    font: 700 14px 'Archivo', sans-serif;
-    color: var(--text);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
-    white-space: nowrap;
-}
-
+/* Leaflet tooltip pill arrow — no Tailwind utility for this; everything
+   else about these pills (background/border/padding/font/shadow) is a
+   Tailwind className string passed straight into each L.tooltip() call
+   in index.html. */
+.leaflet-tooltip.district-label-pill::before,
 .leaflet-tooltip.state-label-pill::before {
     display: none;
 }
 
-/* Floating legend, top-right of the map */
-.legend-card {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 1000;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 18px;
-    font-family: 'Inter', sans-serif;
-    color: var(--text);
-}
-
-.legend-title {
-    font-family: 'Archivo', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-
-.legend-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 4px;
-}
-
-.legend-row:last-child {
-    margin-bottom: 0;
-}
-
-.legend-swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    flex: 0 0 auto;
-}
-
-.legend-swatch[data-tier="biasa"] {
-    background: #ffffff;
-    border: 1px solid #94a3b8;
-}
-
-.legend-swatch[data-tier="dipilih"] {
-    background: transparent;
-    border: 3px solid #1d4ed8;
-}
-
-.legend-swatch[data-tier="amaran"] {
-    background: var(--tier-amaran);
-}
-
-.legend-swatch[data-tier="waspada"] {
-    background: var(--tier-waspada);
-}
-
-.legend-swatch[data-tier="buruk"] {
-    background: var(--tier-buruk);
-}
-
-.legend-swatch[data-tier="bahaya"] {
-    background: var(--tier-bahaya);
-}
-
-.right-col {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Forecast card                                                       */
-/* ------------------------------------------------------------------ */
-.forecast-card {
-    flex: 0 0 auto;
-    padding: 0;
-    overflow: hidden;
-    /* clip .forecast-head's own rounded top corners flush with the card's */
-}
-
-.forecast-head {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    padding: 18px 28px;
-    border: 3px solid transparent;
-    border-radius: 20px 20px 0 0;
-}
-
-.forecast-head h2 {
-    margin: 0;
-    font-family: 'Archivo', sans-serif;
-    font-weight: 700;
-    font-size: 26px;
-}
-
-.forecast-head span {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--muted);
-}
-
-.forecast-warn-badge {
-    display: none;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-}
-
-.forecast-warn-badge.active {
-    display: flex;
-}
-
-.forecast-body {
-    display: flex;
-    align-items: center;
-    gap: 36px;
-    padding: 18px 28px 22px;
-}
-
-.forecast-temp {
-    font-family: 'Archivo', sans-serif;
-    font-size: 56px;
-    font-weight: 800;
-    white-space: nowrap;
-}
-
-.forecast-temp small {
-    display: block;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--muted);
-}
-
-.forecast-slots {
-    display: flex;
-    gap: 32px;
-    flex: 1;
-    justify-content: space-around;
-}
-
-.forecast-slot {
-    text-align: center;
-    min-width: 0;
-}
-
-.forecast-slot .slot-name {
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.forecast-slot .slot-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 52px;
-    font-size: 40px;
-    /* fallback size if a phrase falls through to the emoji fallback */
-    line-height: 1.3;
+/* This class's own layout classes (flex/block) otherwise beat the
+   browser's built-in [hidden]{display:none} rule at equal specificity —
+   without this, el.hidden = true left an empty, content-less box on
+   screen instead of actually hiding the card (same failure mode this
+   page has hit before). */
+#card-rain[hidden],
+#card-thunder[hidden],
+#forecast-card[hidden],
+#forecast-warn-badge[hidden],
+#location-popover[hidden] {
+    display: none !important;
 }
 
 .forecast-slot .slot-icon .wicon {
@@ -495,175 +70,8 @@ body.map-dark .leaflet-tile-pane {
    shadow (vs a rectangular box-shadow) keeps the icon looking like an
    icon rather than boxing it in a badge. Dark theme doesn't need this —
    its panel is already dark enough for every icon to read fine. */
-:root[data-theme="light"] .forecast-slot .slot-icon .wicon {
+html.light .forecast-slot .slot-icon .wicon {
     filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.35));
-}
-
-.forecast-slot .slot-text {
-    font-size: 16px;
-    color: var(--text);
-    line-height: 1.25;
-}
-
-/* ------------------------------------------------------------------ */
-/* Warning cards                                                       */
-/* ------------------------------------------------------------------ */
-.warn-card {
-    flex: 0 0 auto;
-    max-height: 100%;
-    padding: 16px 28px;
-    display: flex;
-    flex-direction: column;
-    border-left: 8px solid transparent;
-    overflow: visible;
-    /* never silently clip a warning row */
-}
-
-/* This class's own `display: flex` above otherwise beats the browser's
-   built-in `[hidden] { display: none }` rule (author CSS always wins over
-   the user-agent stylesheet, even at equal selector specificity) — without
-   this, setting el.hidden = true in nationwide mode left an empty,
-   content-less box on screen instead of actually hiding the card. */
-.warn-card[hidden] {
-    display: none;
-}
-
-.warn-card.empty {
-    background: var(--panel);
-    opacity: .6;
-}
-
-.warn-card-head {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    border-bottom: 2px solid var(--border);
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-}
-
-.warn-card-head h2 {
-    margin: 0;
-    font-family: 'Archivo', sans-serif;
-    font-weight: 700;
-    font-size: 24px;
-}
-
-.warn-more {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--muted);
-    white-space: nowrap;
-}
-
-.meta-issued {
-    margin-left: auto;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--muted);
-    white-space: nowrap;
-}
-
-.rel-chip {
-    font-weight: 600;
-    color: var(--text);
-}
-
-.warn-marine-note {
-    font-size: 15px;
-    color: #38bdf8;
-    margin-bottom: 10px;
-}
-
-/* One row per active severity tier */
-.warn-card-tier-row {
-    padding: 8px 0;
-    border-top: 1px solid var(--border);
-}
-
-.warn-card-tier-row:first-of-type {
-    border-top: none;
-    padding-top: 0;
-}
-
-.tier-row-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-}
-
-.tier-swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    flex: 0 0 auto;
-}
-
-.tier-label {
-    font-size: 17px;
-    font-weight: 600;
-}
-
-.tier-sehingga {
-    margin-left: auto;
-    font-size: 14px;
-    color: var(--muted);
-    white-space: nowrap;
-}
-
-.tier-row-districts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.warn-pill {
-    display: inline-block;
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.2;
-    white-space: nowrap;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
-}
-
-/* Bahaya: pulsing dot + soft glowing border */
-@keyframes bahaya-pulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(250, 1, 1, 0.45);
-    }
-
-    50% {
-        box-shadow: 0 0 24px 6px rgba(250, 1, 1, 0.35);
-    }
-}
-
-.warn-card.tier-bahaya-active {
-    animation: bahaya-pulse 3s ease-in-out infinite;
-}
-
-.pulse-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--tier-bahaya);
-    animation: bahaya-pulse 3s ease-in-out infinite;
-}
-
-/* ------------------------------------------------------------------ */
-/* Footer                                                              */
-/* ------------------------------------------------------------------ */
-#page-footer {
-    flex: 0 0 auto;
-    display: flex;
-    justify-content: space-between;
-    font-size: 15px;
-    color: var(--muted);
 }
 
 /* ------------------------------------------------------------------ */
@@ -745,7 +153,7 @@ body.map-dark .leaflet-tile-pane {
 
 .w-mist {
     fill: none;
-    stroke: var(--muted);
+    stroke: #8b95a8;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -758,11 +166,32 @@ body.map-dark .leaflet-tile-pane {
 }
 
 /* ------------------------------------------------------------------ */
-/* ?raw debug overlay — sits outside #stage (fixed to the real         */
-/* viewport) so it isn't shrunk by applyStageScale()'s TV scale        */
-/* transform. Colors are fixed, not theme tokens — a debug view should */
-/* look the same regardless of the page's own light/dark toggle.       */
-/* Ported from csr/weather/paparan/style.css. */
+/* Bahaya: pulsing glow — kept as a real @keyframes animation (Tailwind's */
+/* built-in animate-pulse only pulses opacity, not a colored box-shadow). */
+/* ------------------------------------------------------------------ */
+@keyframes bahaya-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(250, 1, 1, 0.45); }
+    50% { box-shadow: 0 0 24px 6px rgba(250, 1, 1, 0.35); }
+}
+
+.tier-bahaya-active {
+    animation: bahaya-pulse 3s ease-in-out infinite;
+}
+
+.pulse-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fa0101;
+    animation: bahaya-pulse 3s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/* ?raw debug overlay — fixed to the real viewport, always on top.     */
+/* Colors are fixed, not theme tokens — a debug view should look the   */
+/* same regardless of the page's own light/dark toggle.                */
+/* Ported from csr/weather/paparan/style.css.                          */
 /* ------------------------------------------------------------------ */
 .raw-debug-overlay {
     position: fixed;
