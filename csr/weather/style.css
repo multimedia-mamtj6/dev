@@ -56,7 +56,8 @@ html.light #map.leaflet-container {
 #card-thunder[hidden],
 #forecast-card[hidden],
 #forecast-warn-badge[hidden],
-#location-popover[hidden] {
+#location-popover[hidden],
+#page-footer[hidden] {
     display: none !important;
 }
 
