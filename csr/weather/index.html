@@ -359,13 +359,18 @@
         const isDark = document.documentElement.classList.toggle('dark');
         document.documentElement.classList.toggle('light', !isDark);
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        if (tileLayer) tileLayer.setUrl(tileUrlForTheme());
+        // Recreate the tile layer from scratch rather than tileLayer.setUrl()
+        // — setUrl()'s redraw() reuses the existing layer's internal zoom-level
+        // container/transform state, which can end up stale relative to the
+        // GeoJSON overlay at a fractional zoom (zoomSnap: 0), rendering the
+        // basemap visibly offset until a real zoom/pan forces a recompute. A
+        // freshly added layer computes its transform from scratch against the
+        // CURRENT map view, so there's nothing stale to inherit.
+        if (map && tileLayer) {
+          map.removeLayer(tileLayer);
+          initTileLayer();
+        }
         if (stateBoundaryLayer) stateBoundaryLayer.setStyle({ color: stateBoundaryColor() });
-        // setUrl()'s redraw() reloads tiles but doesn't recompute the tile
-        // pane's fractional-zoom scale transform (only a real zoom/pan
-        // does) — force that recompute so the basemap doesn't render
-        // misaligned/blocky until the user manually zooms.
-        if (map) map.setView(map.getCenter(), map.getZoom(), { animate: false });
       });
     }
 
