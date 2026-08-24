@@ -279,11 +279,6 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Turf.js — nationwide mode only, to dissolve district polygons into
-       real state-boundary outlines (see buildStateBoundaryLayer() below).
-       Not needed by single-state mode. -->
-  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-
   <!-- Shared fetch/parse/severity logic (also used by paparan/'s own
        independent fork — see that file's header comment) —
        ABSOLUTE path, the Vercel cleanUrls lesson -->
@@ -650,66 +645,39 @@
       return document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000';
     }
 
-    // Real state-boundary outlines for nationwide mode — dissolves every
-    // district polygon sharing the same properties.state into one merged
-    // outline per state, via Turf.js (there's no separate state-level
-    // GeoJSON source, only the district one). Weight matches the CURRENT
-    // thickness districts used to have (2, from weather-core.js's shared
-    // defaultStyle) — only the colour changes (to black/white depending on
-    // theme, see stateBoundaryColor); districts themselves go thin (see
-    // NATIONWIDE_DISTRICT_WEIGHT above) so this layer reads as the real
-    // state border, not just another district line at the same weight.
+    // Real state-boundary outlines for nationwide mode. Previously derived
+    // at runtime from the district polygons via Turf.js (pad every district
+    // out a few km, dissolve by state, shrink back — needed because
+    // adjacent districts' shared edges in jakim.geojson aren't quite
+    // coincident, so a plain dissolve left the seams unmerged). That
+    // buffer round-trip isn't lossless: it smooths away anything narrower
+    // than the buffer radius, which showed up as a doubled/jagged line on
+    // tightly winding river borders (e.g. Terengganu/Perak).
     //
-    // A plain turf.dissolve() on the raw district polygons barely merges
-    // anything (verified offline: 59 districts across 6 states dissolved
-    // down to only 51 features, should be ~6-10) — adjacent districts'
-    // shared edges in jakim.geojson aren't quite coincident, so dissolve's
-    // edge-matching mostly fails and leaves near-duplicate borders drawn
-    // right on top of each other, which is what actually produced the
-    // jagged/doubled look, not float rendering noise. Fix: pad every
-    // district out by a few km first (closes those tiny seam gaps so
-    // dissolve's edges genuinely overlap), dissolve, then shrink back by
-    // the same amount to restore the true outline — the standard
-    // "buffer-dissolve-unbuffer" trick for imperfectly-topologized source
-    // polygons. Verified offline against the real dataset: nationwide
-    // round-trip area lands within ~1% of the un-padded total, and
-    // genuinely separate pieces (real offshore islands, e.g. Pahang's
-    // Tioman) correctly remain their own polygon rather than being forced
-    // to merge into the mainland.
-    const STATE_BOUNDARY_BUFFER_KM = 3;
+    // The same source repo actually ships a dedicated state-level file —
+    // malaysia.state.geojson, 16 features, real traced state boundaries,
+    // not derived from the district data at all (confirmed: its per-state
+    // bounding boxes match the district file's to within ~10m, so it
+    // registers correctly against the district polygons already on the
+    // map). Fetching it directly needs zero client-side geometry
+    // computation and has no smoothing artifact — dropped the Turf.js
+    // dependency entirely since this was its only use in this file.
+    const STATE_GEOJSON_URL = 'https://raw.githubusercontent.com/mptwaktusolat/jakim.geojson/refs/heads/master/malaysia.state.geojson';
 
-    function buildStateBoundaryLayer(districtFeatureCollection) {
-      if (typeof turf === 'undefined') {
-        console.warn('[weather] turf.js failed to load — state borders unavailable, districts keep their thin grey borders only.');
-        return null;
-      }
-      try {
-        const padded = {
-          type: 'FeatureCollection',
-          features: turf.flatten(districtFeatureCollection).features.map(f => {
-            const b = turf.buffer(f, STATE_BOUNDARY_BUFFER_KM, { units: 'kilometers' });
-            b.properties = f.properties;
-            return b;
-          }),
-        };
-        const dissolved = turf.dissolve(padded, { propertyName: 'state' });
-        const shrunk = {
-          type: 'FeatureCollection',
-          features: dissolved.features.map(f => {
-            const b = turf.buffer(f, -STATE_BOUNDARY_BUFFER_KM, { units: 'kilometers' });
-            if (!b || !b.geometry) return f; // erosion collapsed a sliver — keep the padded shape rather than drop it
-            b.properties = f.properties;
-            return b;
-          }),
-        };
-        return L.geoJSON(shrunk, {
+    function buildStateBoundaryLayer() {
+      return fetchWithTimeout(STATE_GEOJSON_URL, 8000)
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(data => L.geoJSON(data, {
           style: { color: stateBoundaryColor(), weight: 2, fill: false, interactive: false },
           interactive: false,
+        }))
+        .catch(err => {
+          console.warn('[weather] State-boundary fetch failed — districts keep their thin grey borders only:', err.message);
+          return null;
         });
-      } catch (e) {
-        console.warn('[weather] State-boundary dissolve failed:', e.message);
-        return null;
-      }
     }
 
     function loadGeoJSON() {
@@ -740,8 +708,10 @@
 
           if (isNationwide) {
             addStateLabels();
-            stateBoundaryLayer = buildStateBoundaryLayer(stateData);
-            if (stateBoundaryLayer) stateBoundaryLayer.addTo(map);
+            buildStateBoundaryLayer().then(layer => {
+              stateBoundaryLayer = layer;
+              if (layer) layer.addTo(map);
+            });
           }
 
           resetMapView();
