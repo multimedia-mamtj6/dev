@@ -361,6 +361,11 @@
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         if (tileLayer) tileLayer.setUrl(tileUrlForTheme());
         if (stateBoundaryLayer) stateBoundaryLayer.setStyle({ color: stateBoundaryColor() });
+        // setUrl()'s redraw() reloads tiles but doesn't recompute the tile
+        // pane's fractional-zoom scale transform (only a real zoom/pan
+        // does) — force that recompute so the basemap doesn't render
+        // misaligned/blocky until the user manually zooms.
+        if (map) map.setView(map.getCenter(), map.getZoom(), { animate: false });
       });
     }
 
