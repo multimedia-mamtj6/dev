@@ -287,9 +287,21 @@ function extractStateDistricts(warning, cfg) {
   if (isMarineBulletin(warning)) {
     return { scope: 'marine', districts: [], tiers: {}, tier: null };
   }
-  // State name mentioned with no parenthetical detail and no marine
-  // phrasing — MET was vague about which district, so treat as a
-  // whole-state land advisory.
+
+  // This last-resort fallback ("MET was vague about which district")
+  // must only fire for a genuine hazard bulletin naming the state as its
+  // subject ("... the state of Pahang" / "... negeri Pahang") — not any
+  // document that merely references the state in passing. Confirmed live
+  // 2026-08-26: a "Tropical Storm Advisory" bulletin (unrelated hazard
+  // type, "Threat to Malaysia: No significant impact") mentioned Sabah
+  // only as a distance reference — "Approximately 1691 km from Northwest
+  // Kudat, Sabah" — and without this guard the bare \bSabah\b match above
+  // fell all the way through to here, incorrectly washing the entire
+  // state on the map.
+  const stateAdvisoryRe = new RegExp('(?:state of|negeri)\\s+' + escapeRegExp(cfg.apiName) + '\\b', 'i');
+  if (!stateAdvisoryRe.test(text)) {
+    return { scope: null, districts: [], tiers: {}, tier: null };
+  }
   return { scope: 'state', districts: cfg.districts.slice(), tiers: {}, tier: 'amaran' };
 }
 
@@ -433,12 +445,98 @@ async function fetchRainWarningsRaw() {
   return normalizeRainRows(data).filter(isWarningActive);
 }
 
+// ---------------------------------------------------------------------
+// Duplicate-bulletin resolution — data.gov.my's warning endpoint returns
+// one row PER NUMBERED ITEM of a combined bulletin (e.g. "1) ... negeri
+// Terengganu ... sehingga 2:00 Pagi ... 2) ... Sabah ... sehingga 4:00
+// Pagi ... 3) ... Sarawak ... sehingga 3:00 Pagi"), but every row repeats
+// the FULL combined text verbatim and only its own valid_to actually
+// belongs to its own numbered item — confirmed against MET's own printed
+// bulletin poster, which prints one line per item, each with that item's
+// own "sehingga" expiry. Left un-deduped, a query matching more than one
+// of these rows shows a misleading "+N lagi" badge and may display the
+// WRONG item's expiry for the state actually being rendered (whichever
+// row the API happened to return first). Rain bulletins are excluded —
+// their SEKSYEN structure/termination handling in parseRainForState()
+// already covers multi-section bulletins a different way.
+// ---------------------------------------------------------------------
+function bulletinSignature(w) {
+  return `${w.warning_issue?.issued || ''}|${w.heading_bm || w.heading_en || ''}|${w.text_bm || w.text_en || ''}`;
+}
+
+// Picks the one row in a duplicate group whose valid_to genuinely belongs
+// to `segmentText` (the slice of the bulletin starting at the target
+// state's own mention) — matched by comparing valid_to's clock time (hour
+// mod 12, minute) against the "sehingga/until H:MM" clause immediately
+// following that mention. Falls back to the group's first row if no
+// digit match is found (unusual bulletin wording), so nothing is ever
+// dropped silently.
+function pickRowForSegment(group, segmentText) {
+  const m = segmentText.match(/(?:sehingga|until)\s+(\d{1,2}):(\d{2})/i);
+  if (!m) return group[0];
+  const h = parseInt(m[1], 10) % 12;
+  const min = parseInt(m[2], 10);
+  const hit = group.find(w => {
+    if (!w.valid_to) return false;
+    const d = new Date(w.valid_to);
+    return !isNaN(d.getTime()) && d.getHours() % 12 === h && d.getMinutes() === min;
+  });
+  return hit || group[0];
+}
+
+// Groups `warnings` by bulletinSignature() and, for a duplicate group
+// belonging to a single named state (apiName truthy — nationwide's own
+// unfiltered fetch is handled per-state inside computeWarningStateNationwide
+// instead), collapses it down to the one row that actually belongs to
+// `cfg`'s state via pickRowForSegment(). Non-duplicate and rain-source
+// rows pass through unchanged.
+function resolveDuplicateBulletins(warnings, cfg) {
+  if (!cfg.apiName) return warnings; // nationwide's raw fetch — leave duplicates for computeWarningStateNationwide to resolve per-state
+
+  const groups = new Map();
+  warnings.forEach(w => {
+    const key = (w.source === 'rain' ? 'rain:' : '') + bulletinSignature(w);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(w);
+  });
+
+  const result = [];
+  groups.forEach((group, key) => {
+    if (group.length === 1 || key.startsWith('rain:')) {
+      result.push(...group);
+      return;
+    }
+    const text = group[0].text_bm || group[0].text_en || '';
+    const idx = text.search(new RegExp('\\b' + escapeRegExp(cfg.apiName) + '\\b', 'i'));
+    const segmentText = idx >= 0 ? text.slice(idx) : text;
+    result.push(pickRowForSegment(group, segmentText));
+  });
+  return result;
+}
+
+// Splits a combined bulletin's free text into its enumerated items ("1)
+// ... sehingga <time>; <date>. 2) ... sehingga <time>; <date>. ...") — MET
+// sometimes issues ONE bulletin covering several states/areas this way,
+// each numbered item carrying its own expiry (see pickRowForSegment()
+// above). Bulletins with no numbering (a single area) come back as a
+// single-element array holding the whole text. Used by index.html's
+// renderNationwidePanel() so the summary bar shows one line per item,
+// matching MET's own printed poster, instead of naively slicing from the
+// first "sehingga" to the end of the string — which silently dropped
+// every item after the first.
+function splitBulletinItems(text) {
+  const str = String(text || '').trim();
+  if (!str) return [];
+  const parts = str.split(/(?=\d+\)\s+)/).map(s => s.trim()).filter(Boolean);
+  return parts.length > 1 ? parts : [str];
+}
+
 async function fetchActiveWarnings(cfg) {
   const resp = await fetchWithTimeout(buildWarningApiUrl(cfg));
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const data = await resp.json();
   const rows = Array.isArray(data) ? data : [];
-  return rows.filter(isWarningActive);
+  return resolveDuplicateBulletins(rows.filter(isWarningActive), cfg);
 }
 
 // Rain warnings carry a precomputed `stateScope` (SEKSYEN-aware);
@@ -500,8 +598,26 @@ function computeWarningStateNationwide(warnings, allStates) {
 
   const stateCfgs = Object.values(allStates).filter(s => s.apiName && s.stateCode);
 
+  // Grouped once — duplicate bulletin rows (see resolveDuplicateBulletins
+  // above) need a different representative row picked per state, but the
+  // grouping itself is state-independent.
+  const groups = new Map();
   warnings.forEach(w => {
-    stateCfgs.forEach(stateCfg => {
+    const key = (w.source === 'rain' ? 'rain:' : '') + bulletinSignature(w);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(w);
+  });
+
+  stateCfgs.forEach(stateCfg => {
+    groups.forEach((group, key) => {
+      let w = group[0];
+      if (group.length > 1 && !key.startsWith('rain:')) {
+        const text = group[0].text_bm || group[0].text_en || '';
+        const idx = text.search(new RegExp('\\b' + escapeRegExp(stateCfg.apiName) + '\\b', 'i'));
+        const segmentText = idx >= 0 ? text.slice(idx) : text;
+        w = pickRowForSegment(group, segmentText);
+      }
+
       const parsed = w.source === 'rain'
         ? parseRainForState(w.text_en || w.text_bm, stateCfg)
         : extractStateDistricts(w, stateCfg);
@@ -620,7 +736,7 @@ function getTestWarningFixture(param, cfg) {
   if (param === 'none') return [];
 
   if (param === 'state') {
-    return [{ ...base, text_en: `Test warning affecting ${cfg.apiName} generally.`, text_bm: `Amaran ujian yang menjejaskan ${cfg.apiName} secara umum.` }];
+    return [{ ...base, text_en: `Thunderstorms are expected over the state of ${cfg.apiName} generally.`, text_bm: `Ribut petir dijangka di negeri ${cfg.apiName} secara umum.` }];
   }
 
   if (param === 'marine') {
