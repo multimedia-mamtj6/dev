@@ -103,11 +103,12 @@ function districtWarningStyle(tier) {
   return { fillColor: c.fill, weight: 3, opacity: 1, color: c.border, fillOpacity: 0.85 };
 }
 
-// Whole-state advisory: same tier hue, washed out — MET was vague about
-// which districts, so don't paint it as loudly as a confirmed district hit.
+// Whole-state advisory — same tier hue and fill weight as a confirmed
+// district hit (by request; this used to render washed out at 0.35
+// fillOpacity to signal "MET was vague about which district", but the
+// site now shows state-wide warnings just as solidly as district ones).
 function stateWarningStyle(tier) {
-  const c = TIER_COLORS[tier] || TIER_COLORS.amaran;
-  return { fillColor: c.fill, weight: 2, opacity: 1, color: c.border, fillOpacity: 0.35 };
+  return districtWarningStyle(tier);
 }
 
 // ---------------------------------------------------------------------
@@ -299,7 +300,25 @@ function extractStateDistricts(warning, cfg) {
   // fell all the way through to here, incorrectly washing the entire
   // state on the map.
   const stateAdvisoryRe = new RegExp('(?:state of|negeri)\\s+' + escapeRegExp(cfg.apiName) + '\\b', 'i');
-  if (!stateAdvisoryRe.test(text)) {
+
+  // Second, independent signal for the same fallback: a multi-state
+  // bulletin only says "negeri"/"the state of" once, before the FIRST
+  // state in a "•"-bulleted list — every state after that is bare by
+  // construction, whether or not it also has its own (districts) list.
+  // Confirmed live 2026-08-26: "...negeri Kedah (Langkawi) • Negeri
+  // Sembilan (...) • Melaka • Johor (...)" — Melaka has no district list
+  // AND no adjacent "negeri", so stateAdvisoryRe alone missed it and it
+  // rendered with no wash at all. This checks the state name is flanked
+  // by "•"/"negeri" on one side and "•"/end/the validity clause on the
+  // other — i.e. it's clearly its own bulleted item, not a name that
+  // just happens to appear elsewhere in unrelated prose (the Kudat/Sabah
+  // case above: preceded by ", ", not "•" or "negeri" — doesn't match).
+  const bulletedStateRe = new RegExp(
+    '(?:\\bnegeri\\s+|•\\s*)' + escapeRegExp(cfg.apiName) + '\\s*(?=\\s*•|$|\\s+(?:until|sehingga)\\b)',
+    'i'
+  );
+
+  if (!stateAdvisoryRe.test(text) && !bulletedStateRe.test(text)) {
     return { scope: null, districts: [], tiers: {}, tier: null };
   }
   return { scope: 'state', districts: cfg.districts.slice(), tiers: {}, tier: 'amaran' };

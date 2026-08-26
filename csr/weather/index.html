@@ -338,6 +338,12 @@
     // mistyped into a different case.
     const RAW_PARAM = new URLSearchParams(window.location.search).has('raw');
 
+    // ?debugzoom=1 — on-screen current-zoom readout, for hand-tuning
+    // NATIONWIDE_LABEL_ZOOM_THRESHOLD (same "let them find it, then
+    // hardcode it" technique as paparan/'s ?debugMap=1 framing tool).
+    // All-lowercase for the same reason as ?raw — see its own comment.
+    const DEBUG_ZOOM_PARAM = new URLSearchParams(window.location.search).has('debugzoom');
+
     function showStateBanner(msg) {
       const el = document.getElementById('state-error-banner');
       el.textContent = msg;
@@ -500,6 +506,15 @@
       });
     }
 
+    function initDebugZoomReadout() {
+      const badge = document.createElement('div');
+      badge.style.cssText = 'position:fixed;bottom:12px;left:12px;z-index:2000;background:#000;color:#0f0;font:12px monospace;padding:4px 8px;border-radius:4px;pointer-events:none;';
+      document.body.appendChild(badge);
+      const update = () => { badge.textContent = 'zoom: ' + map.getZoom().toFixed(2); };
+      map.on('zoom', update);
+      update();
+    }
+
     // =========================================================
     // Basemap tile layer — CARTO's label-free variants (no place names,
     // no roads emphasis), theme-matched. Sits in Leaflet's default
@@ -592,37 +607,88 @@
     function resetMapView() {
       if (cfg.center && cfg.zoom != null) {
         map.setView(cfg.center, cfg.zoom);
+      } else if (isNationwide && geojsonLayer) {
+        // Not fitBounds()+setZoom() — chaining the two races against
+        // fitBounds()'s own zoom animation and the setZoom() can get
+        // silently dropped. One atomic setView() with fitBounds()'s own
+        // center avoids that entirely.
+        map.setView(geojsonLayer.getBounds().getCenter(), NATIONWIDE_DEFAULT_ZOOM);
       } else if (geojsonLayer) {
         map.fitBounds(geojsonLayer.getBounds());
       }
     }
 
-    // One label per state (nationwide mode only) — groups the already-
-    // rendered district layers by feature.properties.state and places a
-    // single tooltip at the combined bounds' center of each group, instead
-    // of a per-district label for every district in the country at once.
-    function addStateLabels() {
-      const stateNameByCode = {};
-      Object.values(STATE_CONFIG).forEach(s => {
-        if (s.stateCode) stateNameByCode[s.stateCode] = s.displayName;
-      });
+    // Nationwide-mode district labels — replaces the old always-on
+    // per-state pill. Below NATIONWIDE_LABEL_ZOOM_THRESHOLD the map shows
+    // no permanent text at all (matches the "general map" screenshot);
+    // pointing at a district (hover on desktop, tap on touch) shows just
+    // its STATE name on demand. At/above the threshold every district's
+    // own tooltip switches to automatic + permanent, reading
+    // "District, State" (matches the "zoomed in" screenshot) — no
+    // interaction needed once you're zoomed in that far.
+    //
+    // Hand-tuned via ?debugzoom=1 (same "let them find it, then hardcode
+    // it" technique used for Pahang's center/zoom in paparan/).
+    const NATIONWIDE_LABEL_ZOOM_THRESHOLD = 8.63;
 
-      const layersByState = new Map();
+    // Nationwide mode's own default framing zoom (also hand-tuned via
+    // ?debugzoom=1) — resetMapView() below keeps fitBounds()'s computed
+    // CENTER but overrides its zoom with this, since fitBounds alone
+    // tended to leave the initial view either too tight or too loose.
+    const NATIONWIDE_DEFAULT_ZOOM = 6.53;
+
+    const STATE_HOVER_LABEL_CLASS = 'state-hover-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-3.5 py-1 text-sm font-bold font-display text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
+    const DISTRICT_STATE_LABEL_CLASS = 'district-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
+
+    // (pointer: coarse) is the accepted proxy for "primary input is touch"
+    // — desktops with a touchscreen but a mouse as primary pointer report
+    // fine here, which is what we want (mouse hover already works via
+    // Leaflet's own non-permanent-tooltip default, no extra code needed).
+    const IS_TOUCH_PRIMARY = window.matchMedia('(pointer: coarse)').matches;
+
+    let nationwideLabelsZoomedIn = false; // mirrors the mode every nationwide layer's tooltip is currently bound in
+
+    function stateDisplayNameForCode(code) {
+      const entry = Object.values(STATE_CONFIG).find(s => s.stateCode === code);
+      return entry ? entry.displayName : code;
+    }
+
+    // Zoomed-out mode for one district layer: state name only, on-demand.
+    // Touch has no mouseout to close a hover tooltip, so a tap opens it and
+    // a short timer closes it again — desktop just gets Leaflet's default
+    // hover show/hide, no extra listener needed.
+    function bindNationwideHoverTooltip(layer, feature) {
+      layer.bindTooltip(stateDisplayNameForCode(feature.properties.state), {
+        permanent: false, direction: 'center', className: STATE_HOVER_LABEL_CLASS
+      });
+      if (IS_TOUCH_PRIMARY) {
+        layer.on('click', () => {
+          if (nationwideLabelsZoomedIn) return; // already automatic+permanent, nothing to toggle
+          layer.openTooltip();
+          setTimeout(() => layer.closeTooltip(), 2500);
+        });
+      }
+    }
+
+    // Re-evaluates every nationwide district layer's tooltip mode against
+    // the current zoom. Cheap no-op when the mode hasn't changed (checked
+    // once up front) — safe to call from zoomend on every zoom tick.
+    function applyNationwideLabelMode() {
+      if (!isNationwide || !geojsonLayer) return;
+      const zoomedIn = map.getZoom() >= NATIONWIDE_LABEL_ZOOM_THRESHOLD;
+      if (zoomedIn === nationwideLabelsZoomedIn) return;
+      nationwideLabelsZoomedIn = zoomedIn;
+
       geojsonLayer.eachLayer(layer => {
-        const code = layer.feature.properties.state;
-        if (!layersByState.has(code)) layersByState.set(code, []);
-        layersByState.get(code).push(layer);
-      });
-
-      layersByState.forEach((layers, code) => {
-        const center = L.featureGroup(layers).getBounds().getCenter();
-        L.tooltip({
-          permanent: true, direction: 'center',
-          className: 'state-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-3.5 py-1 text-sm font-bold font-display text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm'
-        })
-          .setLatLng(center)
-          .setContent(stateNameByCode[code] || code)
-          .addTo(map);
+        const feature = layer.feature;
+        layer.unbindTooltip();
+        if (zoomedIn) {
+          layer.bindTooltip(`${feature.properties.name}, ${stateDisplayNameForCode(feature.properties.state)}`, {
+            permanent: true, direction: 'center', className: DISTRICT_STATE_LABEL_CLASS
+          }).openTooltip();
+        } else {
+          bindNationwideHoverTooltip(layer, feature);
+        }
       });
     }
 
@@ -683,10 +749,15 @@
           geojsonLayer = L.geoJSON(stateData, {
             style: baseStyle,
             onEachFeature: (feature, layer) => {
-              // Nationwide mode shows one label per STATE instead (see
-              // addStateLabels() below) — a per-district label for every
-              // district in the country at once is unreadable clutter.
-              if (isNationwide) return;
+              // Nationwide mode starts every district in the zoomed-out,
+              // on-demand "state name only" tooltip mode — applyNationwideLabelMode()
+              // (driven by zoomend, plus the explicit call right after
+              // resetMapView() below) flips it to automatic per-district
+              // labels once the viewer zooms in far enough.
+              if (isNationwide) {
+                bindNationwideHoverTooltip(layer, feature);
+                return;
+              }
               layer.bindTooltip(feature.properties.name, {
                 permanent: true, direction: 'center',
                 className: 'district-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm'
@@ -695,7 +766,6 @@
           }).addTo(map);
 
           if (isNationwide) {
-            addStateLabels();
             buildStateBoundaryLayer().then(layer => {
               stateBoundaryLayer = layer;
               if (layer) layer.addTo(map);
@@ -703,6 +773,34 @@
           }
 
           resetMapView();
+
+          // The tile layer is created here — deliberately NOT eagerly at
+          // boot(), before this state's real view is known. resetMapView()
+          // can jump the zoom several levels in one step for any
+          // auto-fitBounds() state (no hand-tuned cfg.center/cfg.zoom) — e.g.
+          // Negeri Sembilan's provisional NATIONWIDE_DEFAULT_ZOOM (6.53) to
+          // its own tight fitBounds() zoom (~10.45). Confirmed live: a tile
+          // layer created at that provisional zoom and then corrected via
+          // map.removeLayer()+initTileLayer() shortly after can leave stale
+          // tiles/levels behind — either the old zoom's container stuck at
+          // opacity:1 (a pale, ~11x-scaled band across the map), or, once
+          // deferred to 'moveend' to dodge THAT race, a live-network-only gap
+          // while the freshly-recreated layer's tiles reload from scratch.
+          // Simplest fix that avoids both failure modes: never create a tile
+          // layer at the wrong zoom in the first place. There is nothing
+          // useful to show under a still-loading district layer anyway (no
+          // polygons, no labels, just bare tiles), so waiting costs nothing.
+          //
+          // Still deferred to 'moveend' (fires even for a no-op setView, e.g.
+          // Pahang's hand-tuned view re-applying the identical provisional
+          // one — confirmed live) rather than called synchronously: resetMapView()'s
+          // setView()/fitBounds() still animates, and map.getZoom() returns
+          // the ANIMATION'S TARGET zoom immediately, not what's currently on
+          // screen — creating the layer synchronously would fetch the right
+          // tiles but position them against a view that's still mid-transition.
+          map.once('moveend', initTileLayer);
+
+          applyNationwideLabelMode(); // covers the case where the initial fitBounds view already sits above the threshold
           refreshWarnings(); // initial load — map is already visible by now
 
           const preselect = new URLSearchParams(window.location.search).get('district');
@@ -1401,12 +1499,18 @@
         keyboard: true,
         touchZoom: true,
         zoomSnap: 0, // no rounding — needed so cfg.zoom's fractional values (e.g. Pahang's 8.7) aren't snapped to an integer
-      }).setView(cfg.center || [4.2105, 108.9758], cfg.zoom || 6); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
+      }).setView(cfg.center || [4.2105, 108.9758], cfg.zoom || NATIONWIDE_DEFAULT_ZOOM); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
 
-      initTileLayer();
+      map.on('zoomend', applyNationwideLabelMode); // no-op outside nationwide mode / before geojsonLayer exists
+
+      // initTileLayer() itself is deferred to loadGeoJSON() below, once the
+      // map's FINAL view (resetMapView()) is already known — see that
+      // function's own comment for why creating it against this provisional
+      // view first would be a mistake, not just a missed optimization.
 
       initTestModeBanner();
       if (RAW_PARAM) initRawDebugOverlay();
+      if (DEBUG_ZOOM_PARAM) initDebugZoomReadout();
       loadGeoJSON();
 
       // No point polling on an interval when serving a static fixture —

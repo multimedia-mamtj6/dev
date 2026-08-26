@@ -43,7 +43,7 @@ html.light #map.leaflet-container {
    Tailwind className string passed straight into each L.tooltip() call
    in index.html. */
 .leaflet-tooltip.district-label-pill::before,
-.leaflet-tooltip.state-label-pill::before {
+.leaflet-tooltip.state-hover-pill::before {
     display: none;
 }
 
