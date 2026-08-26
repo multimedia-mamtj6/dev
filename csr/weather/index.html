@@ -126,7 +126,7 @@
   <div id="map" class="fixed inset-0 z-0"></div>
 
   <!-- Top-left cluster: brand/controls bar + (nationwide-only) plain-text summary -->
-  <div id="topleft-stack" class="fixed top-4 left-4 z-[1000] flex flex-col gap-3 max-w-sm">
+  <div id="topleft-stack" class="fixed top-4 left-4 z-[1000] flex flex-col gap-3 max-w-lg">
     <header id="brand-bar"
       class="relative flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md px-4 py-2.5 shadow-lg">
       <h1 id="page-heading" class="font-display font-bold text-base text-zinc-900 dark:text-zinc-100 whitespace-nowrap m-0">
@@ -772,14 +772,13 @@
             });
           }
 
-          resetMapView();
-
           // The tile layer is created here — deliberately NOT eagerly at
           // boot(), before this state's real view is known. resetMapView()
           // can jump the zoom several levels in one step for any
           // auto-fitBounds() state (no hand-tuned cfg.center/cfg.zoom) — e.g.
           // Negeri Sembilan's provisional NATIONWIDE_DEFAULT_ZOOM (6.53) to
-          // its own tight fitBounds() zoom (~10.45). Confirmed live: a tile
+          // its own tight fitBounds() zoom (~10.45), or worse for a small
+          // single-district state like Kuala Lumpur. Confirmed live: a tile
           // layer created at that provisional zoom and then corrected via
           // map.removeLayer()+initTileLayer() shortly after can leave stale
           // tiles/levels behind — either the old zoom's container stuck at
@@ -791,14 +790,23 @@
           // useful to show under a still-loading district layer anyway (no
           // polygons, no labels, just bare tiles), so waiting costs nothing.
           //
-          // Still deferred to 'moveend' (fires even for a no-op setView, e.g.
-          // Pahang's hand-tuned view re-applying the identical provisional
-          // one — confirmed live) rather than called synchronously: resetMapView()'s
-          // setView()/fitBounds() still animates, and map.getZoom() returns
-          // the ANIMATION'S TARGET zoom immediately, not what's currently on
-          // screen — creating the layer synchronously would fetch the right
-          // tiles but position them against a view that's still mid-transition.
+          // MUST be registered BEFORE resetMapView() runs, not after — this
+          // was the actual live bug (confirmed via user report: map stayed
+          // permanently blank until manually zooming). Leaflet only animates
+          // a view change (async 'moveend', ~250ms later) for a SMALL zoom
+          // delta, like Pahang's hand-tuned view re-applying the identical
+          // provisional one. A LARGE jump — exactly the auto-fitBounds()
+          // case this comment opened with — skips the animation and resolves
+          // synchronously, firing 'moveend' immediately, inside the
+          // resetMapView() call itself. Registering the listener AFTER that
+          // call therefore missed the event outright; since .once() only
+          // unregisters after actually firing, the dangling listener stayed
+          // armed and silently caught the NEXT 'moveend' instead — whatever
+          // interaction (e.g. the user manually zooming) happened to
+          // trigger one. Registering first makes this correct regardless of
+          // which path Leaflet takes.
           map.once('moveend', initTileLayer);
+          resetMapView();
 
           applyNationwideLabelMode(); // covers the case where the initial fitBounds view already sits above the threshold
           refreshWarnings(); // initial load — map is already visible by now
