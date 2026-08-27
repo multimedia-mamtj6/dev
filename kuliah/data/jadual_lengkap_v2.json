@@ -305,7 +305,8 @@
             "nama_penceramah": "Ustaz Wahid Ghaffar",
             "tajuk_kuliah": "Kuliah Khas Maulidur Rasul",
             "poster_url": "https://qeantrmluevgybkwgvbq.supabase.co/storage/v1/object/public/kuliah-assets/posters/101-ceramah-khas-1787798348630.png",
-            "square_url": null
+            "square_url": null,
+            "khas": true
           },
           "cuti_umum": null
         },
