@@ -182,16 +182,10 @@
   <!-- Side column: legend + forecast + 2 warning cards. Always right —
        standardized across every state, including Sabah/Sarawak, which
        used to flip to the left. -->
-  <div id="side-column" class="fixed top-4 bottom-4 right-4 z-[1000] flex flex-col gap-3 w-[400px] max-w-[92vw] overflow-y-auto">
+  <div id="side-column" class="fixed top-4 bottom-4 right-4 z-[1000] flex flex-col gap-3 w-[440px] max-w-[92vw] overflow-y-auto">
     <section id="map-legend"
       class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md p-4 shadow-lg shrink-0">
       <div class="font-display font-bold text-sm text-zinc-900 dark:text-zinc-100 mb-2">Status Daerah</div>
-      <div class="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-        <span class="w-3.5 h-3.5 rounded shrink-0 bg-white border border-slate-400"></span>Biasa
-      </div>
-      <div class="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-        <span class="w-3.5 h-3.5 rounded shrink-0 border-[3px] border-blue-700"></span>Dipilih
-      </div>
       <div class="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
         <span class="w-3.5 h-3.5 rounded shrink-0" style="background:#2516d2"></span>Ribut Petir / Hujan Lebat
       </div>
@@ -216,23 +210,23 @@
           <span class="tier-label text-sm font-semibold text-zinc-900 dark:text-zinc-100"></span>
         </span>
       </div>
-      <div class="flex items-center gap-8 px-5 pb-5 pt-1">
+      <div class="flex flex-col gap-3 px-5 pb-5 pt-1">
         <div class="font-display text-4xl font-extrabold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
           <span id="forecast-temp">—</span>
           <small class="block font-sans text-xs font-normal text-zinc-500 dark:text-zinc-400">min – maks hari ini</small>
         </div>
-        <div class="flex gap-6 flex-1 justify-around">
-          <div class="text-center min-w-0">
+        <div class="flex gap-6 justify-around">
+          <div class="forecast-slot text-center min-w-0">
             <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Pagi</div>
             <div class="slot-icon flex items-center justify-center h-12 text-2xl" id="slot-icon-pagi">—</div>
             <div class="slot-text text-sm text-zinc-900 dark:text-zinc-100" id="slot-text-pagi">—</div>
           </div>
-          <div class="text-center min-w-0">
+          <div class="forecast-slot text-center min-w-0">
             <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Petang</div>
             <div class="slot-icon flex items-center justify-center h-12 text-2xl" id="slot-icon-petang">—</div>
             <div class="slot-text text-sm text-zinc-900 dark:text-zinc-100" id="slot-text-petang">—</div>
           </div>
-          <div class="text-center min-w-0">
+          <div class="forecast-slot text-center min-w-0">
             <div class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Malam</div>
             <div class="slot-icon flex items-center justify-center h-12 text-2xl" id="slot-icon-malam">—</div>
             <div class="slot-text text-sm text-zinc-900 dark:text-zinc-100" id="slot-text-malam">—</div>
@@ -344,6 +338,12 @@
     // All-lowercase for the same reason as ?raw — see its own comment.
     const DEBUG_ZOOM_PARAM = new URLSearchParams(window.location.search).has('debugzoom');
 
+    // ?debug — self-documenting overlay listing every test/debug query
+    // param this page supports (this constant included), so testers don't
+    // have to grep the source to remember the ?testWarning= syntax etc.
+    // All-lowercase for the same reason as ?raw.
+    const DEBUG_PARAM = new URLSearchParams(window.location.search).has('debug');
+
     function showStateBanner(msg) {
       const el = document.getElementById('state-error-banner');
       el.textContent = msg;
@@ -444,7 +444,7 @@
     function renderClock() {
       const now = new Date();
       document.getElementById('live-clock').textContent =
-        now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+        now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }).replace('PG', 'AM').replace('PTG', 'PM');
       document.getElementById('live-date').textContent =
         now.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
@@ -506,13 +506,94 @@
       });
     }
 
+    // Shows both zoom AND center (lat/lng) — not just zoom — so a dev can
+    // hand-tune a new state's cfg.center/cfg.zoom pair (see resetMapView():
+    // only Pahang has a hand-tuned pair today, every other state still
+    // falls back to a bare fitBounds()) the same way NATIONWIDE_DEFAULT_ZOOM
+    // and the 8.63 label threshold were tuned live via this same param.
     function initDebugZoomReadout() {
       const badge = document.createElement('div');
-      badge.style.cssText = 'position:fixed;bottom:12px;left:12px;z-index:2000;background:#000;color:#0f0;font:12px monospace;padding:4px 8px;border-radius:4px;pointer-events:none;';
+      badge.style.cssText = 'position:fixed;bottom:12px;left:12px;z-index:2000;background:#000;color:#0f0;font:12px monospace;padding:4px 8px;border-radius:4px;white-space:pre;cursor:pointer;';
+      badge.title = 'Klik untuk salin';
       document.body.appendChild(badge);
-      const update = () => { badge.textContent = 'zoom: ' + map.getZoom().toFixed(2); };
-      map.on('zoom', update);
+
+      let text = '';
+      const update = () => {
+        const c = map.getCenter();
+        text = `zoom: ${map.getZoom().toFixed(2)}\ncenter: [${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}]`;
+        badge.textContent = text;
+      };
+      map.on('zoom move', update);
       update();
+
+      badge.addEventListener('click', () => {
+        navigator.clipboard.writeText(text).then(() => {
+          badge.textContent = 'Disalin!';
+          setTimeout(() => { badge.textContent = text; }, 600);
+        });
+      });
+    }
+
+    // =========================================================
+    // ?debug — self-documenting overlay listing every test/debug query
+    // param this page supports. Static content only (no fetches, unlike
+    // ?raw) — reuses .raw-debug-* overlay styling for visual consistency.
+    // Keep this list in sync whenever a new ?param is added to the page.
+    // =========================================================
+    function initDebugOverlay() {
+      const overlay = document.createElement('div');
+      overlay.className = 'raw-debug-overlay';
+      overlay.innerHTML = '<h1>Parameter Ujian/Debug (?debug)</h1>';
+      document.body.appendChild(overlay);
+
+      const params = [
+        {
+          name: '?state=',
+          desc: 'Papar negeri tertentu. Kosongkan/hilang = paparan seluruh Malaysia.',
+          examples: ['?state=pahang', '?state=malaysia'],
+        },
+        {
+          name: '?district=',
+          desc: 'Pra-pilih daerah semasa halaman dimuatkan (mesti nama daerah sah bagi negeri semasa). Turut dikemaskini secara automatik apabila daerah dipilih dari dropdown.',
+          examples: ['?state=pahang&district=Temerloh'],
+        },
+        {
+          name: '?testWarning=',
+          desc: 'Ganti data amaran sebenar dengan data ujian (fixture) — tidak menyentuh rangkaian sebenar. Boleh gabung dua jenis dengan "|".',
+          examples: [
+            '?testWarning=none',
+            '?testWarning=state',
+            '?testWarning=marine',
+            '?testWarning=district:Temerloh',
+            '?testWarning=district:Kuantan,Pekan',
+            '?testWarning=rain',
+            '?testWarning=rain:Temerloh,Maran',
+            '?testWarning=rain:buruk',
+            '?testWarning=rain:bahaya:Maran',
+            '?testWarning=rain:buruk:Maran;waspada:Temerloh,Bera',
+            '?testWarning=district:Kuantan,Pekan|rain:buruk:Maran',
+          ],
+        },
+        {
+          name: '?raw',
+          desc: 'Papar respons API mentah (belum diproses) bagi amaran/hujan/ramalan.',
+          examples: ['?raw', '?state=pahang&district=Temerloh&raw'],
+        },
+        {
+          name: '?debugzoom=1',
+          desc: 'Papar bacaan zoom + kedudukan tengah peta (lat/lng) semasa di sudut bawah kiri — untuk menala threshold label daerah nationwide, atau cfg.center/cfg.zoom sesuatu negeri.',
+          examples: ['?debugzoom=1'],
+        },
+      ];
+
+      params.forEach(p => {
+        const section = document.createElement('section');
+        section.className = 'raw-debug-section';
+        section.innerHTML = `<h2>${escapeHtml(p.name)}</h2>` +
+          `<div class="raw-debug-url">${escapeHtml(p.desc)}</div>` +
+          `<pre class="raw-debug-pre">${p.examples.map(escapeHtml).join('\n')}</pre>`;
+        overlay.appendChild(section);
+      });
     }
 
     // =========================================================
@@ -528,10 +609,58 @@
       return document.documentElement.classList.contains('dark');
     }
 
+    // Replaces Leaflet's built-in scrollWheelZoom (disabled in the L.map()
+    // options above). That built-in handler moves zoom by an inconsistent
+    // amount per notch — raw wheel deltaY ÷ wheelPxPerZoomLevel, and
+    // deltaY itself varies wildly across mice/trackpads/OSes — and the fix
+    // for that (a nonzero zoomSnap) isn't usable here: zoomSnap rounds
+    // EVERY zoom-setting call, including the hand-tuned per-state
+    // cfg.zoom values (e.g. Pahang's 8.7) and NATIONWIDE_DEFAULT_ZOOM,
+    // onto its grid — silently drifting those off their exact tuned
+    // values. So instead: accumulate raw wheel deltaY, and each time it
+    // crosses one "notch" worth, step the zoom by exactly 0.2 — leaving
+    // zoomSnap: 0 (and every other zoom-setting call) untouched.
+    // Wheel input is only ever ACCUMULATED synchronously in the listener —
+    // the actual map.setZoomAround() call is batched onto a ~40ms timer
+    // (same cadence Leaflet's own built-in handler uses internally). Fast
+    // scrolling/trackpads fire many raw wheel events per few ms; committing
+    // a zoom change on every single one interrupts the previous CSS zoom
+    // transition before it finishes playing, which is what read as jitter.
+    // Batching means a fast scroll just accumulates a bigger step and
+    // commits it once per tick, so each transition actually gets to play.
+    function initStepWheelZoom(map) {
+      const STEP = 0.2;
+      const NOTCH_PX = 100; // one physical mouse-wheel notch's deltaY (Chrome/Windows default)
+      const BATCH_MS = 40;
+      let accumPx = 0;
+      let lastEvent = null;
+      let timer = null;
+
+      const commit = () => {
+        timer = null;
+        let steps = 0;
+        while (Math.abs(accumPx) >= NOTCH_PX) {
+          steps += accumPx > 0 ? -1 : 1; // wheel down (deltaY > 0) = zoom out
+          accumPx -= NOTCH_PX * Math.sign(accumPx);
+        }
+        if (!steps) return;
+        const current = map.getZoom();
+        const target = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), Math.round((current + steps * STEP) * 100) / 100));
+        if (target !== current) map.setZoomAround(map.mouseEventToContainerPoint(lastEvent), target);
+      };
+
+      map.getContainer().addEventListener('wheel', (e) => {
+        e.preventDefault();
+        accumPx += e.deltaY;
+        lastEvent = e;
+        if (!timer) timer = setTimeout(commit, BATCH_MS);
+      }, { passive: false });
+    }
+
     function tileUrlForTheme() {
       return isDarkMode()
-        ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+        ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png?key=cb1_2ahu_1_777d1bcc5e262415ab5f6e5b'
+        : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png?key=cb1_2ahu_1_777d1bcc5e262415ab5f6e5b';
     }
 
     // NOTE: hostname must be {s}.basemaps.cartocdn.com — an extra ".tile."
@@ -585,16 +714,25 @@
       return PAGE_DEFAULT_STYLE;
     }
 
-    // Dropdown "jump to district" selection — an outline-only override on
-    // top of whatever fill baseStyle() would give, so a selected district
-    // that's also under an active warning still shows its warning color.
-    function selectionStyle(feature) {
-      const base = baseStyle(feature);
-      return Object.assign({}, base, {
-        weight: 4,
-        color: '#1d4ed8',
-        fillOpacity: Math.min(1, (base.fillOpacity || 0.6) + 0.1)
-      });
+    // Dropdown "jump to district" selection — a separate yellow halo layer
+    // drawn behind the district's own path, so its real border (grey, or
+    // whatever warning colour baseStyle() gave it) stays fully visible on
+    // top and only the extra width of the halo peeks out around it.
+    const SELECTION_HALO_STYLE = {
+      color: '#facc15',
+      weight: 8,
+      opacity: 1,
+      fill: false,
+      interactive: false
+    };
+
+    let selectionHaloLayer = null;
+
+    function clearSelectionHalo() {
+      if (selectionHaloLayer) {
+        map.removeLayer(selectionHaloLayer);
+        selectionHaloLayer = null;
+      }
     }
 
     function repaintMap() {
@@ -607,12 +745,8 @@
     function resetMapView() {
       if (cfg.center && cfg.zoom != null) {
         map.setView(cfg.center, cfg.zoom);
-      } else if (isNationwide && geojsonLayer) {
-        // Not fitBounds()+setZoom() — chaining the two races against
-        // fitBounds()'s own zoom animation and the setZoom() can get
-        // silently dropped. One atomic setView() with fitBounds()'s own
-        // center avoids that entirely.
-        map.setView(geojsonLayer.getBounds().getCenter(), NATIONWIDE_DEFAULT_ZOOM);
+      } else if (isNationwide) {
+        map.setView(NATIONWIDE_DEFAULT_CENTER, NATIONWIDE_DEFAULT_ZOOM);
       } else if (geojsonLayer) {
         map.fitBounds(geojsonLayer.getBounds());
       }
@@ -631,11 +765,12 @@
     // it" technique used for Pahang's center/zoom in paparan/).
     const NATIONWIDE_LABEL_ZOOM_THRESHOLD = 8.63;
 
-    // Nationwide mode's own default framing zoom (also hand-tuned via
-    // ?debugzoom=1) — resetMapView() below keeps fitBounds()'s computed
-    // CENTER but overrides its zoom with this, since fitBounds alone
-    // tended to leave the initial view either too tight or too loose.
-    const NATIONWIDE_DEFAULT_ZOOM = 6.53;
+    // Nationwide mode's own default framing — center AND zoom, both
+    // hand-tuned via ?debugzoom=1. resetMapView() below sets this directly
+    // rather than fitBounds(), which tended to leave the initial view
+    // either too tight or too loose.
+    const NATIONWIDE_DEFAULT_CENTER = [3.8648, 109.3107];
+    const NATIONWIDE_DEFAULT_ZOOM = 6.4;
 
     const STATE_HOVER_LABEL_CLASS = 'state-hover-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-3.5 py-1 text-sm font-bold font-display text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
     const DISTRICT_STATE_LABEL_CLASS = 'district-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
@@ -776,7 +911,7 @@
           // boot(), before this state's real view is known. resetMapView()
           // can jump the zoom several levels in one step for any
           // auto-fitBounds() state (no hand-tuned cfg.center/cfg.zoom) — e.g.
-          // Negeri Sembilan's provisional NATIONWIDE_DEFAULT_ZOOM (6.53) to
+          // Negeri Sembilan's provisional NATIONWIDE_DEFAULT_ZOOM (6.4) to
           // its own tight fitBounds() zoom (~10.45), or worse for a small
           // single-district state like Kuala Lumpur. Confirmed live: a tile
           // layer created at that provisional zoom and then corrected via
@@ -825,6 +960,22 @@
         });
     }
 
+    // Keeps ?district= in the address bar in sync with the current
+    // selection — replaceState (not pushState) so flipping between
+    // districts doesn't spam browser history, it just makes the current
+    // URL shareable/bookmarkable as-is.
+    function syncDistrictParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      if (name) {
+        params.set('district', name);
+      } else {
+        params.delete('district');
+      }
+      const query = params.toString();
+      const newUrl = window.location.pathname + (query ? `?${query}` : '') + window.location.hash;
+      history.replaceState(null, '', newUrl);
+    }
+
     /**
      * Single entry point for "district selection changed" — drives both
      * the map highlight/zoom and the forecast card. Called from the
@@ -833,11 +984,13 @@
      */
     function highlightByName(name) {
       focusDistrict = name || null;
+      syncDistrictParam(focusDistrict);
       forecastToday = null;
       renderForecast(); // placeholder / new name immediately, no stale data flash
       if (focusDistrict) refreshForecast();
 
       if (!name) {
+        clearSelectionHalo();
         repaintMap();
         resetMapView();
         return;
@@ -845,9 +998,10 @@
 
       geojsonLayer.eachLayer(function (layer) {
         if (layer.feature.properties.name === name) {
-          layer.setStyle(selectionStyle(layer.feature));
+          clearSelectionHalo();
+          selectionHaloLayer = L.geoJSON(layer.feature, { style: SELECTION_HALO_STYLE }).addTo(map);
+          geojsonLayer.resetStyle(layer);
           layer.bringToFront();
-          map.fitBounds(layer.getBounds(), { padding: [20, 20] });
         } else {
           geojsonLayer.resetStyle(layer);
         }
@@ -927,7 +1081,7 @@
     function formatTimeShort(iso) {
       const d = new Date(iso);
       if (isNaN(d.getTime())) return null;
-      return d.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return d.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true }).replace('PG', 'AM').replace('PTG', 'PM');
     }
 
     const WARN_CARD_BASE = 'rounded-xl border border-zinc-200 dark:border-zinc-700 border-l-8 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-lg p-4 shrink-0';
@@ -988,7 +1142,7 @@
                 <span class="w-3.5 h-3.5 rounded shrink-0" style="background:${c.fill}"></span>
                 <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(tierRowLabel(tier))}</span>
               </div>
-              <div class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 mb-1.5">sehingga ${escapeHtml(sehinggaShort)}${sehinggaRel ? ` · <span class="font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(sehinggaRel)}</span>` : ''}</span>
+              <div class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 mb-1.5">sehingga ${escapeHtml(sehinggaShort)}${sehinggaRel ? ` · <span class="font-semibold text-zinc-900 dark:text-zinc-100">${escapeHtml(sehinggaRel)}</span>` : ''}</div>
               <div class="flex flex-wrap gap-2">${districtsHtml}</div>
             </div>`;
         }).join('');
@@ -1152,7 +1306,7 @@
             const itemsHtml = splitBulletinItems(w.text_bm || w.text_en || '').map(part => {
               const row = pickRowForSegment(g.items, part);
               const sehingga = row.valid_to
-                ? `${new Date(row.valid_to).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}, ${new Date(row.valid_to).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                ? `${new Date(row.valid_to).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }).replace('PG', 'AM').replace('PTG', 'PM')}, ${new Date(row.valid_to).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })}`
                 : '—';
               const body = boldStateNames(escapeHtml(extractBulletinBody(part)));
               return `
@@ -1178,7 +1332,7 @@
 
     function updateFooter() {
       const timeText = lastCheckedAt
-        ? lastCheckedAt.toLocaleString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+        ? lastCheckedAt.toLocaleString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('PG', 'AM').replace('PTG', 'PM')
         : '—';
       const text = `Dikemaskini ${timeText} · Auto setiap 3 minit`;
       document.getElementById('footer-updated').textContent = text;
@@ -1501,15 +1655,16 @@
       map = L.map('map', {
         zoomControl: true,
         dragging: true,
-        scrollWheelZoom: true,
+        scrollWheelZoom: false, // replaced by initStepWheelZoom() below — see its own comment for why
         doubleClickZoom: true,
         boxZoom: true,
         keyboard: true,
         touchZoom: true,
         zoomSnap: 0, // no rounding — needed so cfg.zoom's fractional values (e.g. Pahang's 8.7) aren't snapped to an integer
-      }).setView(cfg.center || [4.2105, 108.9758], cfg.zoom || NATIONWIDE_DEFAULT_ZOOM); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
+      }).setView(cfg.center || NATIONWIDE_DEFAULT_CENTER, cfg.zoom || NATIONWIDE_DEFAULT_ZOOM); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
 
       map.on('zoomend', applyNationwideLabelMode); // no-op outside nationwide mode / before geojsonLayer exists
+      initStepWheelZoom(map);
 
       // initTileLayer() itself is deferred to loadGeoJSON() below, once the
       // map's FINAL view (resetMapView()) is already known — see that
@@ -1519,6 +1674,7 @@
       initTestModeBanner();
       if (RAW_PARAM) initRawDebugOverlay();
       if (DEBUG_ZOOM_PARAM) initDebugZoomReadout();
+      if (DEBUG_PARAM) initDebugOverlay();
       loadGeoJSON();
 
       // No point polling on an interval when serving a static fixture —

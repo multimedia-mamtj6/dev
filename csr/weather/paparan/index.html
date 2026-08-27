@@ -243,7 +243,7 @@
     function renderClock() {
       const now = new Date();
       document.getElementById('live-clock').textContent =
-        now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+        now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }).replace('PG', 'AM').replace('PTG', 'PM');
       document.getElementById('live-date').textContent =
         now.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
@@ -330,7 +330,7 @@
 
     // hostname must be {s}.basemaps.cartocdn.com — an extra ".tile." level
     // breaks TLS (wildcard cert covers one subdomain level only).
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_2ahu_1_777d1bcc5e262415ab5f6e5b', {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(map);
 
@@ -401,7 +401,7 @@
     function formatTimeBM(iso) {
       const d = new Date(iso);
       if (isNaN(d.getTime())) return null;
-      return d.toLocaleString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+      return d.toLocaleString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).replace('PG', 'AM').replace('PTG', 'PM');
     }
 
     // Compact HH:MM (no date) for the redesigned cards' inline
@@ -410,7 +410,7 @@
     function formatTimeShort(iso) {
       const d = new Date(iso);
       if (isNaN(d.getTime())) return null;
-      return d.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return d.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true }).replace('PG', 'AM').replace('PTG', 'PM');
     }
 
     // =========================================================
@@ -521,7 +521,7 @@
 
     function updateFooter() {
       const timeText = lastCheckedAt
-        ? lastCheckedAt.toLocaleString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+        ? lastCheckedAt.toLocaleString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('PG', 'AM').replace('PTG', 'PM')
         : '—';
       document.getElementById('footer-updated').textContent =
         `Dikemaskini ${timeText} · Auto setiap 3 minit`;

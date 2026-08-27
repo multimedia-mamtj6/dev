@@ -290,3 +290,20 @@ Replaced the always-on per-state pill (`addStateLabels()`, one permanent tooltip
 - Verified live via Playwright against local `python -m http.server`: zoomed-out default view shows zero permanent pills (screenshot-confirmed); hovering a district shows its state name only (confirmed "Terengganu" on hover); zooming in via the UI zoom control past the threshold shows automatic permanent `"District, State"` labels (confirmed "Kuala Selangor, Selangor", "Matu, Sarawak", etc., 160 total bound across the whole nationwide layer); zooming back out below the threshold correctly reverts to zero permanent labels — toggle confirmed bidirectional, not one-way.
 - Re-verified after both constants landed: default nationwide load sits at zoom 6.53 with zero permanent labels; `setZoom(8.5)` (below 8.63) still shows zero; `setZoom(8.7)` (above 8.63) shows all 160 district-label-pills automatically.
 - **Not yet done**: check on real mobile/touch hardware that tap-to-show-state-name-then-auto-hide feels right (only verified logically via `(pointer: coarse)`, not against a real touchscreen).
+
+## v9 — PLANNED: migrate CARTO basemap from raster to vector (not built)
+
+### Why
+
+CARTO's raster (PNG) basemaps are being retired — they're requiring an API key even for the free tier now (previously anonymous), and per CARTO's own basemaps FAQ (docs.carto.com/faqs/carto-basemaps), raster cartography may stop receiving data updates while vector keeps moving. Vector is also sharper (no @2x raster requests), restyleable at runtime, and cheaper to serve.
+
+### Why it's not a quick swap
+
+`index.html` and `paparan/index.html` both use plain Leaflet (`L.tileLayer`) for the basemap, which only speaks raster PNG tiles — see `tileUrlForTheme()`/`initTileLayer()` in `index.html` (~line 531) and the equivalent in `paparan/index.html`. Rendering CARTO's vector basemaps requires a different renderer (MapLibre GL JS), which is a bigger lift than a URL change:
+
+- The whole map layer — GeoJSON district polygons, the yellow selection-halo layer, warning-tier fills, state-boundary overlay, zoom-gated district labels (v8) — is built directly on Leaflet's API and assumptions.
+- MapLibre GL JS has its own (different) API for adding GeoJSON layers, styling, and interaction; this would mean rewriting the map initialization and every layer that touches it, not just the tile source, for both `index.html` and `paparan/`.
+
+### Current status
+
+CARTO API key requested (2026-08-27) — key covers both raster and vector, so getting it now doesn't lock in a choice. Staying on raster for now (works as-is with the existing Leaflet setup); revisit the MapLibre GL JS migration later when there's bandwidth for the rewrite, or sooner if CARTO actually freezes/drops the raster styles.
