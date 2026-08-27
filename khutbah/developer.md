@@ -1,11 +1,14 @@
 # developer.md — handoff notes for next-window me
 
-> **Update**: a newer, shorter session happened after everything below — see
-> `khutbah/DEV_NOTES.md` for that one. Short version: `index.html` now exists
+> **Update**: newer sessions happened after everything below — see
+> `khutbah/DEV_NOTES.md` for those. Short version: `index.html` now exists
 > (copy of `paparan-tajuk.html`, made by the user) and is the new
-> live/primary page; a CSV-quoting bug that truncated sermon titles at
-> embedded commas was found and fixed there only. Everything below is still
-> valid history/context, just predates `index.html` existing.
+> live/primary page, with a CSV-quoting bug that truncated sermon titles at
+> embedded commas found and fixed there only; separately, a full pass over
+> `google_app_script/` mapped its two-sheet architecture, fixed a duplicate
+> function and an orphaned trigger, and added a SIRI/year auto-update plus a
+> "Link Log" history sheet. Everything below is still valid history/context,
+> just predates all of that.
 
 ## Where we are right now
 

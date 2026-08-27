@@ -26,12 +26,45 @@ function generateKhutbahLink() {
   const finalLink = `https://mufti.pahang.gov.my/khutbah/${year}/${gregorianDate}m-${hijriDate}h`;
   console.log("Final Generated Link: " + finalLink);
 
+  // Capture the outgoing link before it's overwritten, for the log
+  const oldLink = sheet.getRange("A2").getValue();
+
   // Insert the link into cell A2
   sheet.getRange("A2").setValue(finalLink);
   console.log("Link inserted successfully into cell A2.");
 
+  // Update the "MIMBAR JUMAAT SIRI n | yyyy" heading in B2, using the
+  // khutbah's own Friday date (not today's date) so it stays correct
+  // near month boundaries.
+  const siriNumber = nextFriday.getMonth() + 1; // 1-based month
+  const siriYear = nextFriday.getFullYear();
+  const siriText = `MIMBAR JUMAAT SIRI ${siriNumber} | ${siriYear}`;
+  sheet.getRange("B2").setValue(siriText);
+  console.log(`B2 updated: ${siriText}`);
+
+  // Record this update in the "Link Log" sheet
+  logLinkUpdate(oldLink, finalLink, siriText);
+
   // Call extractKhutbahData after inserting the link
   extractKhutbahData();
+}
+
+/**
+ * Appends a row to the "Link Log" sheet recording a link update
+ * (timestamp, previous link, new link, and the SIRI heading at the time).
+ * Creates the sheet with a header row on first use.
+ */
+function logLinkUpdate(oldLink, newLink, siriText) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let logSheet = ss.getSheetByName("Link Log");
+
+  if (!logSheet) {
+    logSheet = ss.insertSheet("Link Log");
+    logSheet.appendRow(["Timestamp", "Old Link", "New Link", "Siri"]);
+  }
+
+  logSheet.appendRow([new Date(), oldLink, newLink, siriText]);
+  console.log("Logged link update to 'Link Log' sheet.");
 }
 
 /**
@@ -188,13 +221,4 @@ function getPreviousFriday() {
   const pastFriday = new Date(today);
   pastFriday.setDate(today.getDate() - daysSinceLastFriday);
   return pastFriday;
-}
-
-/**
- * Placeholder function call. Assumes this function exists in another script file.
- */
-function extractKhutbahData() {
-  // This function is defined in your "get tajuk khutbah.gs" file.
-  // No implementation is needed here.
-  console.log("Calling extractKhutbahData()...");
 }
