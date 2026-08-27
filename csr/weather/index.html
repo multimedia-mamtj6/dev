@@ -385,7 +385,7 @@
           map.removeLayer(tileLayer);
           initTileLayer();
         }
-        if (stateBoundaryLayer) stateBoundaryLayer.setStyle({ color: stateBoundaryColor() });
+        restyleStateBoundary();
       });
     }
 
@@ -939,6 +939,21 @@
       return document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000';
     }
 
+    // Leaflet's stroke `weight` is a fixed SCREEN-pixel width, not a
+    // world-space one — it doesn't scale with zoom the way the polygons
+    // themselves do. A flat weight that looks right zoomed into one state
+    // reads as disproportionately thick at the nationwide default zoom,
+    // where every state is much smaller on screen. Thinner below/at this
+    // threshold, normal thickness above it — re-applied live on zoomend.
+    const STATE_BOUNDARY_THIN_ZOOM_MAX = 7.8;
+    function stateBoundaryWeight() {
+      return map.getZoom() <= STATE_BOUNDARY_THIN_ZOOM_MAX ? 1 : 2;
+    }
+
+    function restyleStateBoundary() {
+      if (stateBoundaryLayer) stateBoundaryLayer.setStyle({ color: stateBoundaryColor(), weight: stateBoundaryWeight() });
+    }
+
     // Real state-boundary outlines for nationwide mode. Previously derived
     // at runtime from the district polygons via Turf.js (pad every district
     // out a few km, dissolve by state, shrink back — needed because
@@ -965,7 +980,7 @@
           return res.json();
         })
         .then(data => L.geoJSON(data, {
-          style: { color: stateBoundaryColor(), weight: 2, fill: false, interactive: false },
+          style: { color: stateBoundaryColor(), weight: stateBoundaryWeight(), fill: false, interactive: false },
           interactive: false,
         }))
         .catch(err => {
@@ -1789,6 +1804,7 @@
       // default anymore, just a reasonable center of the country).
 
       map.on('zoomend', applyNationwideLabelMode); // no-op outside nationwide mode / before geojsonLayer exists
+      map.on('zoomend', restyleStateBoundary); // no-op before stateBoundaryLayer exists (single-state mode never creates one)
       initStepWheelZoom(map);
 
       // initTileLayer() itself is deferred to loadGeoJSON() below, once the
