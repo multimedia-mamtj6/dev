@@ -120,18 +120,20 @@ function renderCalendar() {
                 if (row?.cuti_umum) {
                     html += `<span class="holiday-tag">${escapeHtml(row.cuti_umum)}</span>`;
                 }
+                const subuhKhasCls   = row?.subuh_khas   ? ' khas' : '';
+                const maghribKhasCls = row?.maghrib_khas ? ' khas' : '';
                 if (row?.subuh_pending) {
-                    html += `<span class="session-tag pending">S: Belum Ditetapkan</span>`;
+                    html += `<span class="session-tag pending${subuhKhasCls}">S: Belum Ditetapkan</span>`;
                 } else if (row?.subuh) {
-                    const subuhClass = isYasinEntry(row.subuh) ? 'session-tag yasin' : 'session-tag subuh';
+                    const subuhClass = (isYasinEntry(row.subuh) ? 'session-tag yasin' : 'session-tag subuh') + subuhKhasCls;
                     html += `<span class="${subuhClass}">S: ${escapeHtml(row.subuh.short_name || row.subuh.full_name)}</span>`;
                 } else if (row) {
                     html += `<span class="session-tag empty">S: Tiada</span>`;
                 }
                 if (row?.maghrib_pending) {
-                    html += `<span class="session-tag pending">M: Belum Ditetapkan</span>`;
+                    html += `<span class="session-tag pending${maghribKhasCls}">M: Belum Ditetapkan</span>`;
                 } else if (row?.maghrib) {
-                    const maghribClass = isYasinEntry(row.maghrib) ? 'session-tag yasin' : 'session-tag maghrib';
+                    const maghribClass = (isYasinEntry(row.maghrib) ? 'session-tag yasin' : 'session-tag maghrib') + maghribKhasCls;
                     html += `<span class="${maghribClass}">M: ${escapeHtml(row.maghrib.short_name || row.maghrib.full_name)}</span>`;
                 } else if (row) {
                     html += `<span class="session-tag empty">M: Tiada</span>`;
@@ -171,8 +173,10 @@ function renderMobileDayList() {
         const maghribPending = !!row?.maghrib_pending;
         const subuhName   = row?.subuh   ? escapeHtml(row.subuh.short_name   || row.subuh.full_name)   : null;
         const maghribName = row?.maghrib ? escapeHtml(row.maghrib.short_name || row.maghrib.full_name) : null;
-        const subuhClass   = subuhPending   ? 'mdc-s mdc-pending' : (subuhName   ? (isYasinEntry(row.subuh)   ? 'mdc-s mdc-yasin' : 'mdc-s')   : 'mdc-empty');
-        const maghribClass = maghribPending ? 'mdc-m mdc-pending' : (maghribName ? (isYasinEntry(row.maghrib) ? 'mdc-m mdc-yasin' : 'mdc-m')   : 'mdc-empty');
+        let subuhClass   = subuhPending   ? 'mdc-s mdc-pending' : (subuhName   ? (isYasinEntry(row.subuh)   ? 'mdc-s mdc-yasin' : 'mdc-s')   : 'mdc-empty');
+        let maghribClass = maghribPending ? 'mdc-m mdc-pending' : (maghribName ? (isYasinEntry(row.maghrib) ? 'mdc-m mdc-yasin' : 'mdc-m')   : 'mdc-empty');
+        if (row?.subuh_khas   && subuhClass.startsWith('mdc-s'))   subuhClass   += ' mdc-khas';
+        if (row?.maghrib_khas && maghribClass.startsWith('mdc-m')) maghribClass += ' mdc-khas';
 
         html += `<div class="${cls}" onclick="openModal('${dateStr}')">
             <div class="mdc-date">${d}</div>

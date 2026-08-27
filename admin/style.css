@@ -322,6 +322,7 @@ body {
 .session-tag.yasin { background: #dcfce7; color: #15803d; }
 .session-tag.empty { color: #9ca3af; font-style: italic; }
 .session-tag.pending { background: #fff7ed; color: #c2410c; border: 1px dashed #fb923c; }
+.session-tag.khas { background: #f3e8ff; color: #6b21a8; }
 
 .holiday-tag {
   font-size: 0.65rem;
@@ -831,6 +832,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary)
   .mdc-yasin { color: #15803d; }
   .mdc-empty { color: var(--text-muted); font-style: italic; }
   .mdc-pending { color: #c2410c; font-style: italic; }
+  .mdc-khas { color: #6b21a8; font-weight: 600; }
   .mdc-arrow { color: var(--text-muted); font-size: 1rem; flex-shrink: 0; }
 }
 
