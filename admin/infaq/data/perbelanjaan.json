@@ -7,27 +7,27 @@
       },
       "tahunLepas": {
         "tahun": 2025,
-        "jumlah": 78152.43000000001
+        "jumlah": 77252.43
       },
       "bulanIni": {
-        "bulan": "JUL",
+        "bulan": "OGO",
         "jumlah": 0
       },
       "bulanLepas": {
-        "bulan": "JUN",
+        "bulan": "JUL",
         "jumlah": 0
       }
     }
   },
   "paparanBulanIni": {
     "Tahun": 2026,
-    "Bulan": "JUL",
+    "Bulan": "OGO",
     "Jumlah": 0,
     "JumlahKumulatif": 0
   },
   "paparanBulanLepas": {
     "Tahun": 2026,
-    "Bulan": "JUN",
+    "Bulan": "JUL",
     "Jumlah": 0,
     "JumlahKumulatif": 0
   },
@@ -57,7 +57,7 @@
         3341.9,
         2754.25,
         6940.35,
-        3116.15,
+        2216.15,
         8953.66,
         9799.25,
         15845.6
@@ -71,10 +71,10 @@
         30743.170000000002,
         33497.42,
         40437.77,
-        43553.92,
-        52507.58,
-        62306.83,
-        78152.43000000001
+        42653.92,
+        51607.58,
+        61406.83,
+        77252.43000000001
       ]
     },
     "2026": {
@@ -123,5 +123,5 @@
       ]
     }
   },
-  "tarikhKemaskini": "2026-07-23T06:22:32.993Z"
+  "tarikhKemaskini": "2026-08-27T16:30:05.185Z"
 }
