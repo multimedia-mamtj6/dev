@@ -183,6 +183,19 @@
        standardized across every state, including Sabah/Sarawak, which
        used to flip to the left. -->
   <div id="side-column" class="fixed top-4 bottom-4 right-4 z-[1000] flex flex-col gap-3 w-[440px] max-w-[92vw] overflow-y-auto">
+    <!-- Mobile-only (<768px) pull tab — desktop never shows this (see
+         style.css's mobile media query for the display override). Acts
+         as #side-column's peek-state content and expand/collapse toggle;
+         see setSheetExpanded()/initSheetHandle() in the inline script. -->
+    <button id="sheet-handle" type="button" aria-expanded="false" aria-controls="side-column"
+      class="hidden relative items-center gap-2 px-4 pt-3.5 pb-2.5 text-left shrink-0">
+      <span class="absolute top-1.5 left-1/2 -translate-x-1/2 w-10 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600"></span>
+      <span id="sheet-handle-text" class="font-display font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">—</span>
+      <svg id="sheet-handle-chevron" class="ml-auto shrink-0 transition-transform" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+        <path fill="currentColor" d="M7 10l5 5 5-5z" />
+      </svg>
+    </button>
+
     <section id="map-legend"
       class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md p-4 shadow-lg shrink-0">
       <div class="font-display font-bold text-sm text-zinc-900 dark:text-zinc-100 mb-2">Status Daerah</div>
@@ -431,11 +444,82 @@
       const chevron = document.getElementById('nationwide-summary-chevron');
 
       btn.addEventListener('click', () => {
+        // Mobile: this button drives the SHARED bottom-sheet footprint
+        // (#nationwide-summary-bar's own max-height, see style.css's
+        // mobile media query) instead of the desktop-only internal
+        // list.hidden accordion below — the two default to OPPOSITE
+        // starting states (list.hidden starts false/open for desktop;
+        // the shared sheet starts collapsed/peeking for mobile), so
+        // reusing list.hidden's toggle here would desync on the very
+        // first tap. Leave list.hidden alone (stays visible) on mobile.
+        if (isMobileViewport()) {
+          const expanded = !document.documentElement.classList.contains('mobile-sheet-expanded');
+          setSheetExpanded(expanded);
+          btn.setAttribute('aria-expanded', String(expanded));
+          chevron.style.transform = expanded ? '' : 'rotate(-90deg)';
+          return;
+        }
         const collapsed = !list.hidden;
         list.hidden = collapsed;
         btn.setAttribute('aria-expanded', String(!collapsed));
         chevron.style.transform = collapsed ? 'rotate(-90deg)' : '';
       });
+    }
+
+    // =========================================================
+    // Mobile bottom sheet (<768px) — #side-column and
+    // #nationwide-summary-bar are repositioned into one shared bottom-
+    // anchored footprint by style.css's mobile media query; only one is
+    // ever visible at a time (mode-driven, same mutual exclusion as
+    // desktop — see renderCards()/renderNationwidePanel()), so sharing
+    // one expand/collapse class on <html> for both is correct, not a
+    // compromise. Tap-only (no drag gesture) — deliberately simple, to
+    // avoid fighting the map's own touch-pan underneath.
+    // =========================================================
+    function setSheetExpanded(expanded) {
+      document.documentElement.classList.toggle('mobile-sheet-expanded', expanded);
+      const handle = document.getElementById('sheet-handle');
+      if (handle) {
+        handle.setAttribute('aria-expanded', String(expanded));
+        const chevron = document.getElementById('sheet-handle-chevron');
+        if (chevron) chevron.style.transform = expanded ? 'rotate(-90deg)' : '';
+      }
+    }
+
+    function initSheetHandle() {
+      const handle = document.getElementById('sheet-handle');
+      if (!handle) return;
+      handle.addEventListener('click', () => {
+        setSheetExpanded(!document.documentElement.classList.contains('mobile-sheet-expanded'));
+      });
+    }
+
+    // One-line peek-state summary for single-state mode (#sheet-handle-text).
+    // Nationwide mode's own #nationwide-summary-toggle button already reads
+    // as a one-line status row (title + count chip + updated-at) and needs
+    // no separate summary text.
+    function updateSheetHandleText() {
+      const textEl = document.getElementById('sheet-handle-text');
+      if (!textEl || isNationwide) return;
+      if (!focusDistrict) {
+        textEl.textContent = `${cfg.displayName} — pilih daerah`;
+        return;
+      }
+      const land = activeWarnings.filter(w => {
+        const scope = stateScopeOf(w, cfg).scope;
+        return scope && scope !== 'marine';
+      });
+      if (!land.length) {
+        textEl.textContent = `${focusDistrict} — Tiada amaran aktif`;
+        return;
+      }
+      let tier = 'amaran';
+      land.forEach(w => {
+        const parsed = stateScopeOf(w, cfg);
+        if (parsed.tier && TIER_RANK[parsed.tier] > TIER_RANK[tier]) tier = parsed.tier;
+        Object.values(parsed.tiers || {}).forEach(t => { if (TIER_RANK[t] > TIER_RANK[tier]) tier = t; });
+      });
+      textEl.textContent = `${focusDistrict} — ${tierRowLabel(tier)}`;
     }
 
     // =========================================================
@@ -517,19 +601,26 @@
       badge.title = 'Klik untuk salin';
       document.body.appendChild(badge);
 
-      let text = '';
+      let copyText = '';
       const update = () => {
         const c = map.getCenter();
-        text = `zoom: ${map.getZoom().toFixed(2)}\ncenter: [${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}]`;
-        badge.textContent = text;
+        const w = window.innerWidth;
+        copyText = `zoom: ${map.getZoom().toFixed(2)}\ncenter: [${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}]`;
+        // The MOBILE/DESKTOP line is a display-only hint (resize the
+        // window / use devtools' device toolbar to check which side of
+        // the 768px breakpoint you're tuning) — not included in the
+        // copied text, since it's not meant to be pasted into states.json.
+        badge.textContent = `${w < 768 ? 'MOBILE' : 'DESKTOP'} (${w}px)\n${copyText}`;
       };
       map.on('zoom move', update);
+      window.addEventListener('resize', update);
       update();
 
       badge.addEventListener('click', () => {
-        navigator.clipboard.writeText(text).then(() => {
+        navigator.clipboard.writeText(copyText).then(() => {
+          const prev = badge.textContent;
           badge.textContent = 'Disalin!';
-          setTimeout(() => { badge.textContent = text; }, 600);
+          setTimeout(() => { badge.textContent = prev; }, 600);
         });
       });
     }
@@ -739,14 +830,38 @@
       if (geojsonLayer) geojsonLayer.setStyle(baseStyle);
     }
 
+    // Below 768px (matches this repo's own established desktop/mobile
+    // breakpoint), states.json's optional per-state cfg.mobile.{zoom,center}
+    // take over from the desktop cfg.zoom/cfg.center — hand-tuned the same
+    // way (?debugzoom=1), independently, since a phone's portrait aspect
+    // ratio needs its own framing. Missing/unset cfg.mobile falls back to
+    // the desktop values, so nothing breaks until a state's actually been
+    // tuned for mobile.
+    function isMobileViewport() {
+      return window.innerWidth < 768;
+    }
+
+    function activeCenter() {
+      return (isMobileViewport() && cfg.mobile && cfg.mobile.center) ? cfg.mobile.center : cfg.center;
+    }
+
+    function activeZoom() {
+      return (isMobileViewport() && cfg.mobile && cfg.mobile.zoom != null) ? cfg.mobile.zoom : cfg.zoom;
+    }
+
     // Resets the map to the active state's own framing — cfg.center/zoom
+    // (or their mobile counterparts, see activeCenter()/activeZoom() above)
     // when hand-tuned (Pahang), else fitBounds to whatever districts are
     // actually loaded (any other state, until it gets its own tuned value).
     function resetMapView() {
-      if (cfg.center && cfg.zoom != null) {
-        map.setView(cfg.center, cfg.zoom);
+      const center = activeCenter(), zoom = activeZoom();
+      if (center && zoom != null) {
+        map.setView(center, zoom);
       } else if (isNationwide) {
-        map.setView(NATIONWIDE_DEFAULT_CENTER, NATIONWIDE_DEFAULT_ZOOM);
+        map.setView(
+          isMobileViewport() ? NATIONWIDE_DEFAULT_CENTER_MOBILE : NATIONWIDE_DEFAULT_CENTER,
+          isMobileViewport() ? NATIONWIDE_DEFAULT_ZOOM_MOBILE : NATIONWIDE_DEFAULT_ZOOM
+        );
       } else if (geojsonLayer) {
         map.fitBounds(geojsonLayer.getBounds());
       }
@@ -771,6 +886,13 @@
     // either too tight or too loose.
     const NATIONWIDE_DEFAULT_CENTER = [3.8648, 109.3107];
     const NATIONWIDE_DEFAULT_ZOOM = 6.4;
+
+    // Mobile counterparts of the two constants above — same "hand-tune via
+    // ?debugzoom=1" workflow, done separately on a phone-width viewport.
+    // Defaulted equal to the desktop values for now (no behavior change
+    // until actually tuned) rather than guessed.
+    const NATIONWIDE_DEFAULT_CENTER_MOBILE = [3.8648, 109.3107];
+    const NATIONWIDE_DEFAULT_ZOOM_MOBILE = 6.4;
 
     const STATE_HOVER_LABEL_CLASS = 'state-hover-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-3.5 py-1 text-sm font-bold font-display text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
     const DISTRICT_STATE_LABEL_CLASS = 'district-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
@@ -987,7 +1109,18 @@
       syncDistrictParam(focusDistrict);
       forecastToday = null;
       renderForecast(); // placeholder / new name immediately, no stale data flash
-      if (focusDistrict) refreshForecast();
+      // Refreshes #sheet-handle-text immediately against whatever
+      // activeWarnings already holds — renderCards() (called from
+      // refreshWarnings()) will refine it again once new data arrives,
+      // but the peek text must not wait for that to reflect the pick.
+      updateSheetHandleText();
+      if (focusDistrict) {
+        refreshForecast();
+        // A district pick is the clearest possible "I want to see this"
+        // signal — reveal the sheet on mobile rather than leaving the
+        // viewer to notice/tap the peek handle themselves.
+        if (isMobileViewport()) setSheetExpanded(true);
+      }
 
       if (!name) {
         clearSelectionHalo();
@@ -1209,6 +1342,8 @@
         rainCard.hidden = false;
         renderWarnCard(rainCard, 'Amaran Hujan Berterusan', rain);
       }
+
+      updateSheetHandleText();
     }
 
     // =========================================================
@@ -1641,6 +1776,7 @@
       populateDistrictSelect();
       initLocationPopover();
       initNationwideSummaryToggle();
+      initSheetHandle();
       initThemeToggle();
       renderClock();
       renderForecast(); // hides the forecast card immediately (no district picked yet)
@@ -1661,7 +1797,10 @@
         keyboard: true,
         touchZoom: true,
         zoomSnap: 0, // no rounding — needed so cfg.zoom's fractional values (e.g. Pahang's 8.7) aren't snapped to an integer
-      }).setView(cfg.center || NATIONWIDE_DEFAULT_CENTER, cfg.zoom || NATIONWIDE_DEFAULT_ZOOM); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
+      }).setView(
+        activeCenter() || (isMobileViewport() ? NATIONWIDE_DEFAULT_CENTER_MOBILE : NATIONWIDE_DEFAULT_CENTER),
+        activeZoom() || (isMobileViewport() ? NATIONWIDE_DEFAULT_ZOOM_MOBILE : NATIONWIDE_DEFAULT_ZOOM)
+      ); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
 
       map.on('zoomend', applyNationwideLabelMode); // no-op outside nationwide mode / before geojsonLayer exists
       initStepWheelZoom(map);

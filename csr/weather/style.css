@@ -246,3 +246,120 @@ html.light .forecast-slot .slot-icon .wicon {
     color: #8b95a8;
     margin: -8px 0 28px;
 }
+
+/* ------------------------------------------------------------------ */
+/* Mobile layout (<768px) — desktop above this width is untouched.     */
+/* #map stays the same full-viewport fixed background it already is;  */
+/* #side-column and #nationwide-summary-bar (mutually exclusive by     */
+/* mode, same as desktop — see renderCards()/renderNationwidePanel())  */
+/* both get repositioned into one shared bottom-sheet footprint        */
+/* instead of their desktop fixed side/bottom positions. Peek/expand   */
+/* is a single class on <html>, toggled from index.html's              */
+/* setSheetExpanded() — driven by #sheet-handle (single-state mode) or */
+/* the existing #nationwide-summary-toggle button (nationwide mode,    */
+/* which already reads as a one-line status row).                     */
+/* ------------------------------------------------------------------ */
+@media (max-width: 767px) {
+    #topleft-stack {
+        left: 0;
+        right: 0;
+        top: 0;
+        max-width: 100%;
+        padding: 0.75rem;
+    }
+
+    #location-popover {
+        max-width: calc(100vw - 1.5rem);
+    }
+
+    #map-legend {
+        display: none;
+    }
+
+    /* Independently fixed, bottom-2-centered on desktop where it never
+       overlapped #side-column (which lived on the right). On mobile
+       #side-column now spans the full width at the same screen region,
+       and #page-footer's text would otherwise bleed through the flex
+       gap between #sheet-handle and the first card below it (no shared
+       opaque background fills that gap). Its info is secondary here —
+       drop it rather than relocate it into the sheet. */
+    #page-footer {
+        display: none;
+    }
+
+    #sheet-handle {
+        display: flex !important;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border-radius: 1rem 1rem 0 0;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    /* The updated-at footer text is secondary — dropping it (same call as
+       #page-footer above) keeps this row single-line at phone width, so
+       it matches #sheet-handle's peek height instead of wrapping to two
+       lines and pushing the shared max-height below out of sync. */
+    #nationwide-summary-footer {
+        display: none;
+    }
+
+    #nationwide-summary-toggle h2 {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    html.dark #sheet-handle {
+        background: rgba(24, 24, 27, 0.95);
+    }
+
+    #side-column,
+    #nationwide-summary-bar {
+        position: fixed;
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        max-height: 48px; /* #sheet-handle's own rendered height (44px) + a hair of breathing room — clips right after it, before the gap-3 spacing reveals any of the next card */
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+        border-radius: 1rem 1rem 0 0;
+    }
+
+    /* #nationwide-summary-bar's desktop class list centers it with
+       left:50% + translateX(-50%) (Tailwind's left-1/2 -translate-x-1/2).
+       The media query above resets left to 0 but never touched the
+       transform, so the box was still shifting itself left by half its
+       OWN width on top of that — pushing roughly half of it off-screen
+       and leaving what looked like a "detached" floating panel. */
+    #nationwide-summary-bar {
+        transform: none;
+    }
+
+    html.mobile-sheet-expanded #side-column,
+    html.mobile-sheet-expanded #nationwide-summary-bar {
+        max-height: 75vh;
+        overflow-y: auto;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* #side-column has no background of its own on desktop (each card
+       carries its own bg/border/shadow) — only #sheet-handle needs the
+       rounded-top sheet surface above. #nationwide-summary-bar already
+       has its own Tailwind bg/border/shadow classes; this just squares
+       off its bottom corners to sit flush with the screen edge. */
+    #side-column {
+        border-radius: 0;
+    }
+
+    #side-column > section {
+        margin: 0 0.75rem;
+    }
+
+    #side-column > section:last-child {
+        margin-bottom: 0.75rem;
+    }
+}
