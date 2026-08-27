@@ -284,7 +284,11 @@ async function saveUstaz() {
     saveBtn.textContent = 'Simpan';
 
     if (error) {
-        showToast('Gagal menyimpan: ' + error.message, 'error');
+        if (error.code === '23505' && error.message.includes('ustaz_short_name_key')) {
+            showToast('Nama Ringkas "' + shortName + '" sudah digunakan oleh penceramah lain. Sila gunakan Nama Ringkas yang lain.', 'error');
+        } else {
+            showToast('Gagal menyimpan: ' + error.message, 'error');
+        }
         return;
     }
 
