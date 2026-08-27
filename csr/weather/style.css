@@ -289,10 +289,6 @@ html.light .forecast-slot .slot-icon .wicon {
 
     #sheet-handle {
         display: flex !important;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
-        border-radius: 1rem 1rem 0 0;
-        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
     }
 
     /* The updated-at footer text is secondary — dropping it (same call as
@@ -309,10 +305,12 @@ html.light .forecast-slot .slot-icon .wicon {
         white-space: nowrap;
     }
 
-    html.dark #sheet-handle {
-        background: rgba(24, 24, 27, 0.95);
-    }
-
+    /* The actual sheet surface — both #side-column and
+       #nationwide-summary-bar get it directly (not just #sheet-handle),
+       since #side-column has no background of its own on desktop (each
+       card carries its own translucent bg-white/90 individually) — the
+       gap-3 spacing between cards and the side margins below were
+       showing the map straight through until this was added. */
     #side-column,
     #nationwide-summary-bar {
         position: fixed;
@@ -327,6 +325,14 @@ html.light .forecast-slot .slot-icon .wicon {
         overflow: hidden;
         transition: max-height 0.25s ease;
         border-radius: 1rem 1rem 0 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    html.dark #side-column,
+    html.dark #nationwide-summary-bar {
+        background: rgba(24, 24, 27, 0.95);
     }
 
     /* #nationwide-summary-bar's desktop class list centers it with
@@ -344,15 +350,6 @@ html.light .forecast-slot .slot-icon .wicon {
         max-height: 75vh;
         overflow-y: auto;
         padding-bottom: env(safe-area-inset-bottom, 0);
-    }
-
-    /* #side-column has no background of its own on desktop (each card
-       carries its own bg/border/shadow) — only #sheet-handle needs the
-       rounded-top sheet surface above. #nationwide-summary-bar already
-       has its own Tailwind bg/border/shadow classes; this just squares
-       off its bottom corners to sit flush with the screen edge. */
-    #side-column {
-        border-radius: 0;
     }
 
     #side-column > section {

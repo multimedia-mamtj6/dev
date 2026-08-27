@@ -593,8 +593,9 @@
     // Shows both zoom AND center (lat/lng) — not just zoom — so a dev can
     // hand-tune a new state's cfg.center/cfg.zoom pair (see resetMapView():
     // only Pahang has a hand-tuned pair today, every other state still
-    // falls back to a bare fitBounds()) the same way NATIONWIDE_DEFAULT_ZOOM
-    // and the 8.63 label threshold were tuned live via this same param.
+    // falls back to a bare fitBounds()) the same way "malaysia"'s own
+    // cfg.zoom/cfg.center and the 8.63 label threshold were tuned live via
+    // this same param.
     function initDebugZoomReadout() {
       const badge = document.createElement('div');
       badge.style.cssText = 'position:fixed;bottom:12px;left:12px;z-index:2000;background:#000;color:#0f0;font:12px monospace;padding:4px 8px;border-radius:4px;white-space:pre;cursor:pointer;';
@@ -705,8 +706,8 @@
     // amount per notch — raw wheel deltaY ÷ wheelPxPerZoomLevel, and
     // deltaY itself varies wildly across mice/trackpads/OSes — and the fix
     // for that (a nonzero zoomSnap) isn't usable here: zoomSnap rounds
-    // EVERY zoom-setting call, including the hand-tuned per-state
-    // cfg.zoom values (e.g. Pahang's 8.7) and NATIONWIDE_DEFAULT_ZOOM,
+    // EVERY zoom-setting call, including every state's (including
+    // "malaysia"'s own) hand-tuned cfg.zoom value, e.g. Pahang's 8.7,
     // onto its grid — silently drifting those off their exact tuned
     // values. So instead: accumulate raw wheel deltaY, and each time it
     // crosses one "notch" worth, step the zoom by exactly 0.2 — leaving
@@ -850,18 +851,14 @@
     }
 
     // Resets the map to the active state's own framing — cfg.center/zoom
-    // (or their mobile counterparts, see activeCenter()/activeZoom() above)
-    // when hand-tuned (Pahang), else fitBounds to whatever districts are
-    // actually loaded (any other state, until it gets its own tuned value).
+    // (or their mobile counterparts, see activeCenter()/activeZoom() above),
+    // every entry in states.json including "malaysia" itself now carries
+    // one, else fitBounds to whatever districts are actually loaded (only
+    // reachable for a state whose cfg.zoom/center are still unset).
     function resetMapView() {
       const center = activeCenter(), zoom = activeZoom();
       if (center && zoom != null) {
         map.setView(center, zoom);
-      } else if (isNationwide) {
-        map.setView(
-          isMobileViewport() ? NATIONWIDE_DEFAULT_CENTER_MOBILE : NATIONWIDE_DEFAULT_CENTER,
-          isMobileViewport() ? NATIONWIDE_DEFAULT_ZOOM_MOBILE : NATIONWIDE_DEFAULT_ZOOM
-        );
       } else if (geojsonLayer) {
         map.fitBounds(geojsonLayer.getBounds());
       }
@@ -879,20 +876,6 @@
     // Hand-tuned via ?debugzoom=1 (same "let them find it, then hardcode
     // it" technique used for Pahang's center/zoom in paparan/).
     const NATIONWIDE_LABEL_ZOOM_THRESHOLD = 8.63;
-
-    // Nationwide mode's own default framing — center AND zoom, both
-    // hand-tuned via ?debugzoom=1. resetMapView() below sets this directly
-    // rather than fitBounds(), which tended to leave the initial view
-    // either too tight or too loose.
-    const NATIONWIDE_DEFAULT_CENTER = [3.8648, 109.3107];
-    const NATIONWIDE_DEFAULT_ZOOM = 6.4;
-
-    // Mobile counterparts of the two constants above — same "hand-tune via
-    // ?debugzoom=1" workflow, done separately on a phone-width viewport.
-    // Defaulted equal to the desktop values for now (no behavior change
-    // until actually tuned) rather than guessed.
-    const NATIONWIDE_DEFAULT_CENTER_MOBILE = [3.8648, 109.3107];
-    const NATIONWIDE_DEFAULT_ZOOM_MOBILE = 6.4;
 
     const STATE_HOVER_LABEL_CLASS = 'state-hover-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-3.5 py-1 text-sm font-bold font-display text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
     const DISTRICT_STATE_LABEL_CLASS = 'district-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
@@ -1033,8 +1016,8 @@
           // boot(), before this state's real view is known. resetMapView()
           // can jump the zoom several levels in one step for any
           // auto-fitBounds() state (no hand-tuned cfg.center/cfg.zoom) — e.g.
-          // Negeri Sembilan's provisional NATIONWIDE_DEFAULT_ZOOM (6.4) to
-          // its own tight fitBounds() zoom (~10.45), or worse for a small
+          // Negeri Sembilan's provisional zoom (6.4, the boot()-time safety
+          // fallback) to its own tight fitBounds() zoom (~10.45), or worse for a small
           // single-district state like Kuala Lumpur. Confirmed live: a tile
           // layer created at that provisional zoom and then corrected via
           // map.removeLayer()+initTileLayer() shortly after can leave stale
@@ -1797,10 +1780,13 @@
         keyboard: true,
         touchZoom: true,
         zoomSnap: 0, // no rounding — needed so cfg.zoom's fractional values (e.g. Pahang's 8.7) aren't snapped to an integer
-      }).setView(
-        activeCenter() || (isMobileViewport() ? NATIONWIDE_DEFAULT_CENTER_MOBILE : NATIONWIDE_DEFAULT_CENTER),
-        activeZoom() || (isMobileViewport() ? NATIONWIDE_DEFAULT_ZOOM_MOBILE : NATIONWIDE_DEFAULT_ZOOM)
-      ); // provisional — resetMapView() (after GeoJSON loads) corrects this for auto-fit states
+      }).setView(activeCenter() || [3.8648, 109.3107], activeZoom() || 6.4);
+      // Provisional — resetMapView() (after GeoJSON loads) corrects this via
+      // fitBounds() for any state whose cfg.zoom/center are still unset (every
+      // current states.json entry has both, so the || fallback above is only
+      // a safety net against L.map().setView(null, null) throwing outright
+      // for a future state added without them — not a real nationwide-only
+      // default anymore, just a reasonable center of the country).
 
       map.on('zoomend', applyNationwideLabelMode); // no-op outside nationwide mode / before geojsonLayer exists
       initStepWheelZoom(map);
