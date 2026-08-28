@@ -21,6 +21,13 @@
       ]
     },
     {
+      "source": "/admin/infaq/data/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
       "source": "/waktu-solat",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" }
