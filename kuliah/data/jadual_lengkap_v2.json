@@ -3,7 +3,7 @@
     "2026-08": {
       "infoJadual": {
         "tajukBulan": "BULAN OGOS 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 27/8/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 28/8/2026"
       },
       "senaraiHari": [
         {
@@ -312,23 +312,13 @@
         },
         {
           "date": "2026-08-29",
-          "subuh": {
-            "nama_penceramah": "Ustaz Badrul Hisham",
-            "tajuk_kuliah": "Fadilat Sedekah",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg",
-            "square_url": null
-          },
+          "subuh": null,
           "maghrib": null,
           "cuti_umum": null
         },
         {
           "date": "2026-08-30",
-          "subuh": {
-            "nama_penceramah": "Ustaz Badrul Hisham",
-            "tajuk_kuliah": "Fadilat Sedekah",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg",
-            "square_url": null
-          },
+          "subuh": null,
           "maghrib": {
             "nama_penceramah": "Bacaan Yasiin & Tahlil",
             "tajuk_kuliah": null,
