@@ -3,7 +3,7 @@
     "perbelanjaan": {
       "tahunIni": {
         "tahun": 2026,
-        "jumlah": 83338.5
+        "jumlah": 110945.75
       },
       "tahunLepas": {
         "tahun": 2025,
@@ -11,25 +11,25 @@
       },
       "bulanIni": {
         "bulan": "OGO",
-        "jumlah": 0
+        "jumlah": 15282.25
       },
       "bulanLepas": {
         "bulan": "JUL",
-        "jumlah": 0
+        "jumlah": 12325
       }
     }
   },
   "paparanBulanIni": {
     "Tahun": 2026,
     "Bulan": "OGO",
-    "Jumlah": 0,
-    "JumlahKumulatif": 83338.5
+    "Jumlah": 15282.25,
+    "JumlahKumulatif": 110945.75
   },
   "paparanBulanLepas": {
     "Tahun": 2026,
     "Bulan": "JUL",
-    "Jumlah": 0,
-    "JumlahKumulatif": 83338.5
+    "Jumlah": 12325,
+    "JumlahKumulatif": 95663.5
   },
   "graf": {
     "2025": {
@@ -100,8 +100,8 @@
         18734.45,
         13021.7,
         14794.35,
-        0,
-        0,
+        12325,
+        15282.25,
         0,
         0,
         0,
@@ -114,14 +114,14 @@
         55522.45,
         68544.15,
         83338.5,
-        83338.5,
-        83338.5,
-        83338.5,
-        83338.5,
-        83338.5,
-        83338.5
+        95663.5,
+        110945.75,
+        110945.75,
+        110945.75,
+        110945.75,
+        110945.75
       ]
     }
   },
-  "tarikhKemaskini": "2026-08-27T16:35:31.574Z"
+  "tarikhKemaskini": "2026-08-28T23:39:02.558Z"
 }
