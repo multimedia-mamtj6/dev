@@ -182,7 +182,7 @@
   <!-- Side column: legend + forecast + 2 warning cards. Always right —
        standardized across every state, including Sabah/Sarawak, which
        used to flip to the left. -->
-  <div id="side-column" class="fixed top-4 bottom-4 right-4 z-[1000] flex flex-col gap-3 w-[440px] max-w-[92vw] overflow-y-auto">
+  <div id="side-column" class="fixed top-4 bottom-4 right-4 z-[1000] flex flex-col gap-3 w-[440px] max-w-[92vw] overflow-visible">
     <!-- Mobile-only (<768px) pull tab — desktop never shows this (see
          style.css's mobile media query for the display override). Acts
          as #side-column's peek-state content and expand/collapse toggle;
@@ -350,6 +350,12 @@
     // hardcode it" technique as paparan/'s ?debugMap=1 framing tool).
     // All-lowercase for the same reason as ?raw — see its own comment.
     const DEBUG_ZOOM_PARAM = new URLSearchParams(window.location.search).has('debugzoom');
+
+    // ?debugsize=1 — on-screen window.innerWidth×innerHeight readout, for
+    // measuring the real viewport across browser chrome states (fullscreen
+    // vs maximized with/without bookmarks bar) without opening DevTools.
+    // All-lowercase for the same reason as ?raw — see its own comment.
+    const DEBUG_SIZE_PARAM = new URLSearchParams(window.location.search).has('debugsize');
 
     // ?debug — self-documenting overlay listing every test/debug query
     // param this page supports (this constant included), so testers don't
@@ -626,6 +632,175 @@
       });
     }
 
+    // Fullscreen (F11) scale-up trigger — toggles .is-fullscreen on <html>,
+    // which style.css's own @media (min-width: 768px) block uses to bump
+    // the root font-size (scaling every rem-based Tailwind class sitewide)
+    // plus a couple of explicit px overrides for the few sizes that aren't
+    // rem-based. Same window.innerHeight >= screen.height - 1 heuristic as
+    // the ?debugsize=1 readout above — no browser API exists for "is F11
+    // fullscreen" directly (the Fullscreen API only covers JS-invoked
+    // requestFullscreen(), not the OS-level F11 a viewer actually presses).
+    // Deliberately dumb: this only reflects the raw browser signal — the
+    // desktop-only gating lives in CSS, matching how the mobile breakpoint
+    // is expressed everywhere else in this page (media query, not JS).
+    function updateFullscreenClass() {
+      document.documentElement.classList.toggle('is-fullscreen', window.innerHeight >= screen.height - 1);
+    }
+
+    // Auto-shrinks #side-column when the legend + forecast + warning cards
+    // together don't fit the fixed top-4..bottom-4 band (a multi-tier rain
+    // bulletin with many district pills is the main trigger, worse again
+    // under the fullscreen text bump above). This page runs unattended as
+    // physical signage in fullscreen, so anything left below the fold on
+    // the old overflow-y-auto would just never be seen by anyone — hence
+    // shrinking to fit instead of relying on scroll, with NO minimum scale
+    // floor: scroll is explicitly not wanted here, so this always shrinks
+    // by exactly however much is needed to fit, however small that gets.
+    // #side-column MUST stay overflow: visible (its default Tailwind class,
+    // see the HTML) for this to work — overflow: hidden clips content to
+    // the box's PRE-transform size, and transform: scale() only shrinks
+    // whatever survived that clip, it doesn't pull back in what was
+    // already discarded. With overflow: visible, nothing is clipped, so
+    // scaling the whole (taller) content by available/needed lands its
+    // rendered height at exactly `available`, fitting cleanly with no
+    // clip needed at all.
+    function fitSideColumnToViewport() {
+      const col = document.getElementById('side-column');
+      if (!col || isNationwide) return; // nationwide's side-column is legend-only — never tall enough to matter
+      const mobile = isMobileViewport();
+      // Mobile's #side-column is a collapsed/expanded bottom sheet (style.css's
+      // <768px block) — while COLLAPSED (peek state, max-height:48px) it's
+      // only ever meant to show #sheet-handle's one-line summary, not a
+      // microscopic version of every card, so this must not touch it there.
+      // Once EXPANDED (max-height:75vh), though, it has exactly the same
+      // "fixed budget, content may exceed it" shape as desktop's top-4..
+      // bottom-4 band, so the fit logic below applies there too.
+      if (mobile && !document.documentElement.classList.contains('mobile-sheet-expanded')) {
+        col.style.transform = '';
+        col.style.width = '';
+        col.style.maxWidth = '';
+        return;
+      }
+      col.style.transform = '';
+      if (!mobile) { col.style.width = ''; col.style.maxWidth = ''; } // mobile's own branch below manages these itself
+      // The origin must be the TOP of the box either way — content always
+      // flows downward starting from the box's own top edge regardless of
+      // whether the box itself is CSS-anchored via top (desktop) or bottom
+      // (mobile's sheet). Anchoring there is what makes the shrunk content
+      // land flush against BOTH edges of the available budget (scale ×
+      // needed = available, starting from a fixed top point) — anchoring
+      // at the box's bottom instead would shrink the excess toward that
+      // bottom point rather than pulling it up from the top, leaving the
+      // result floating mid-sheet instead of reaching the bottom edge.
+      // Mobile additionally anchors LEFT, to match fitMobileWidthPreserving()
+      // below deliberately over-widening the box before scaling it back down.
+      col.style.transformOrigin = mobile ? 'top left' : 'top right';
+      // Deferred to a rAF: the Tailwind Play CDN injects the actual CSS for
+      // newly-introduced utility classes (e.g. renderWarnCard()'s
+      // dynamically-built pill/tier markup) via a MutationObserver, which
+      // resolves AFTER the synchronous renderCards()/renderForecast() call
+      // that triggered this has already returned. Measuring
+      // clientHeight/scrollHeight synchronously here can catch the DOM
+      // mid-flight — still at default/unstyled (shorter) sizing for those
+      // classes — producing a scale that's too large for the content once
+      // Tailwind's styles actually land a moment later, with nothing left
+      // to trigger a re-fit against the final size.
+      requestAnimationFrame(() => {
+        if (mobile) { fitMobileWidthPreserving(col); return; }
+        const available = col.clientHeight;
+        const needed = col.scrollHeight;
+        if (available <= 0 || needed <= available) return;
+        col.style.transform = `scale(${available / needed})`;
+      });
+    }
+
+    // Desktop's plain scale() (fitSideColumnToViewport() above) shrinks
+    // width right along with height — fine for desktop's right-anchored
+    // floating panel, but mobile's sheet is meant to stay full-width like
+    // a native bottom sheet, not shrink into a smaller centered card.
+    // Fix: widen the box BEFORE scaling, by exactly the factor the scale
+    // will shrink it back by, so the two cancel out and the rendered
+    // width still lands at 100% — only the height compresses net overall.
+    // Complication: widening the box changes how its content WRAPS (a
+    // wider row fits more pills/text before wrapping to a new line), which
+    // changes scrollHeight, which changes the ideal scale, which changes
+    // how much to widen by — so this converges via a few iterations rather
+    // than a single closed-form calculation. Real content (mostly
+    // monotonic wrapping as width grows) settles within 2-3 passes.
+    function fitMobileWidthPreserving(col) {
+      col.style.width = '';
+      col.style.maxWidth = '';
+      col.style.transform = '';
+      const naturalWidth = col.getBoundingClientRect().width; // the CSS width:100% value, unscaled/unwidened
+      const available = col.clientHeight;
+      const needed = col.scrollHeight;
+      if (available <= 0 || needed <= available) return; // fits naturally already — no width/max-width override needed
+      // max-width:100% (style.css's <768px block) would otherwise clamp the
+      // deliberate over-width right back down to naturalWidth, silently
+      // defeating the whole point of widening before scaling.
+      col.style.maxWidth = 'none';
+      let scale = available / needed;
+      for (let i = 0; i < 3; i++) {
+        col.style.width = (naturalWidth / scale) + 'px';
+        const nextScale = Math.min(1, available / col.scrollHeight);
+        if (Math.abs(nextScale - scale) < 0.005) { scale = nextScale; break; }
+        scale = nextScale;
+      }
+      col.style.width = (naturalWidth / scale) + 'px';
+      col.style.transform = `scale(${scale})`;
+    }
+
+    // Belt-and-suspenders for fitSideColumnToViewport(): rather than relying
+    // on every current AND future render path (renderCards(), renderForecast(),
+    // an async fetch landing late, etc.) to remember to call it themselves —
+    // which already missed a couple of cases in practice — this watches
+    // #side-column for ANY actual content change and re-fits automatically.
+    // Deliberately NOT observing `attributes` — this function's own
+    // style.transform/classList writes are themselves attribute mutations,
+    // and including them would retrigger this observer in a pointless (if
+    // self-stabilizing) loop on every single fit call.
+    function initSideColumnFitObserver() {
+      const col = document.getElementById('side-column');
+      if (!col) return;
+      new MutationObserver(() => fitSideColumnToViewport())
+        .observe(col, { childList: true, subtree: true, characterData: true });
+
+      // Mobile's collapsed<->expanded toggle (setSheetExpanded()) animates
+      // #side-column's max-height over 0.25s (style.css's <768px block) —
+      // that's a pure CSS transition, not a DOM mutation the observer above
+      // would ever see, and clientHeight read mid-transition would reflect
+      // whatever height the animation happens to be at that instant, not
+      // its final 48px/75vh value. Re-fit once the transition actually ends.
+      col.addEventListener('transitionend', (e) => {
+        if (e.propertyName === 'max-height') fitSideColumnToViewport();
+      });
+    }
+
+    // ?debugsize=1 — viewport + screen size readout, top-right corner.
+    // Standalone (not folded into ?debugzoom=1's badge) since it's useful
+    // before the map even loads and doesn't need map.getZoom()/getCenter().
+    // Also surfaces screen.height/availHeight and the innerHeight-vs-
+    // screen.height comparison used to detect true F11 fullscreen (no
+    // dedicated browser API for that — see FULLSCREEN? line below).
+    function initDebugSizeReadout() {
+      const badge = document.createElement('div');
+      // bottom:100px (not the same bottom:12px as ?debugzoom=1's own badge
+      // below) — stacked above it so both readouts stay legible if both
+      // params are used together, instead of overlapping.
+      badge.style.cssText = 'position:fixed;bottom:100px;left:12px;z-index:2000;background:#000;color:#0f0;font:13px monospace;padding:4px 8px;border-radius:4px;white-space:pre;';
+      document.body.appendChild(badge);
+      const update = () => {
+        const isFullscreen = window.innerHeight >= screen.height - 1;
+        badge.textContent =
+          `inner:  ${window.innerWidth}×${window.innerHeight}\n` +
+          `outer:  ${window.outerWidth}×${window.outerHeight}\n` +
+          `screen: ${screen.width}×${screen.height} (avail ${screen.availWidth}×${screen.availHeight})\n` +
+          `FULLSCREEN? ${isFullscreen ? 'YES' : 'no'}`;
+      };
+      window.addEventListener('resize', update);
+      update();
+    }
+
     // =========================================================
     // ?debug — self-documenting overlay listing every test/debug query
     // param this page supports. Static content only (no fetches, unlike
@@ -675,6 +850,11 @@
           name: '?debugzoom=1',
           desc: 'Papar bacaan zoom + kedudukan tengah peta (lat/lng) semasa di sudut bawah kiri — untuk menala threshold label daerah nationwide, atau cfg.center/cfg.zoom sesuatu negeri.',
           examples: ['?debugzoom=1'],
+        },
+        {
+          name: '?debugsize=1',
+          desc: 'Papar bacaan window.innerWidth×innerHeight semasa di sudut atas kanan — untuk mengukur saiz viewport sebenar merentasi keadaan chrome pelayar (fullscreen vs maximized, dengan/tanpa bookmarks bar).',
+          examples: ['?debugsize=1'],
         },
       ];
 
@@ -878,7 +1058,11 @@
     const NATIONWIDE_LABEL_ZOOM_THRESHOLD = 8.63;
 
     const STATE_HOVER_LABEL_CLASS = 'state-hover-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-3.5 py-1 text-sm font-bold font-display text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
-    const DISTRICT_STATE_LABEL_CLASS = 'district-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm';
+    // Plain outlined text (no pill background) — style.css's own
+    // .leaflet-tooltip.district-label-pill rule strips Leaflet's default
+    // tooltip chrome and adds the white-fill/black-stroke halo that keeps
+    // this legible over either basemap without a dark: variant.
+    const DISTRICT_STATE_LABEL_CLASS = 'district-label-pill font-display font-bold text-xs whitespace-nowrap';
 
     // (pointer: coarse) is the accepted proxy for "primary input is touch"
     // — desktops with a touchscreen but a mouse as primary pointer report
@@ -923,7 +1107,11 @@
         const feature = layer.feature;
         layer.unbindTooltip();
         if (zoomedIn) {
-          layer.bindTooltip(`${feature.properties.name}, ${stateDisplayNameForCode(feature.properties.state)}`, {
+          // "District," on its own line, state name smaller on the line
+          // below — Leaflet renders tooltip string content via innerHTML,
+          // so a literal <br> plus a wrapping <span> (sized down in
+          // style.css) is enough for the line break + size difference.
+          layer.bindTooltip(`${feature.properties.name},<br><span class="district-label-state">${stateDisplayNameForCode(feature.properties.state)}</span>`, {
             permanent: true, direction: 'center', className: DISTRICT_STATE_LABEL_CLASS
           }).openTooltip();
         } else {
@@ -1015,7 +1203,7 @@
               }
               layer.bindTooltip(feature.properties.name, {
                 permanent: true, direction: 'center',
-                className: 'district-label-pill bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-full px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm whitespace-nowrap backdrop-blur-sm'
+                className: 'district-label-pill font-display font-bold text-xs whitespace-nowrap'
               });
             }
           }).addTo(map);
@@ -1342,6 +1530,7 @@
       }
 
       updateSheetHandleText();
+      fitSideColumnToViewport();
     }
 
     // =========================================================
@@ -1382,7 +1571,15 @@
           .sort((a, b) => b.length - a.length).map(escapeRegExp);
         stateNameBoldRe = new RegExp('\\b(' + names.join('|') + ')\\b', 'g');
       }
-      return escapedBody.replace(stateNameBoldRe, '<strong>$1</strong>');
+      // Bold only OUTSIDE parenthetical district lists — a state name can
+      // legitimately reappear inside its own list (e.g. "Kuala Selangor"
+      // inside Selangor's "(Klang, ... dan Kuala Selangor)"), and that
+      // inner occurrence must stay plain, not get bolded as if it were
+      // another state reference. split() with a capturing regex puts the
+      // "(...)" matches at odd indices, the text between them at even ones.
+      return escapedBody.split(/(\([^)]*\))/).map((part, i) =>
+        i % 2 === 0 ? part.replace(stateNameBoldRe, '<strong>$1</strong>') : part
+      ).join('');
     }
 
     // A warning's raw text can also be a marine-only bulletin ("perairan
@@ -1443,7 +1640,7 @@
                 : '—';
               const body = boldStateNames(escapeHtml(extractBulletinBody(part)));
               return `
-                <div class="flex items-baseline gap-2 mt-1">
+                <div class="nationwide-warn-row flex items-baseline gap-2 mt-1">
                   <p class="leading-relaxed">${body}</p>
                   <span class="ml-auto text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">sehingga ${escapeHtml(sehingga)}</span>
                 </div>`;
@@ -1697,6 +1894,7 @@
       // too, so there's no flash of an empty card before this runs.
       if (!focusDistrict) {
         card.hidden = true;
+        fitSideColumnToViewport();
         return;
       }
       card.hidden = false;
@@ -1712,6 +1910,7 @@
           document.getElementById(`slot-icon-${slot}`).textContent = '—';
           document.getElementById(`slot-text-${slot}`).textContent = '—';
         });
+        fitSideColumnToViewport();
         return;
       }
 
@@ -1723,6 +1922,12 @@
           document.getElementById(`slot-icon-${slot}`).innerHTML = forecastIcon(phrase, slot);
           document.getElementById(`slot-text-${slot}`).textContent = phrase || '—';
         });
+      // renderForecast() runs independently of renderCards() — a district
+      // pick or the forecast API landing both change #side-column's height
+      // on their own, so this needs its own re-fit call rather than relying
+      // on whatever renderCards() last measured (that's the bug: content
+      // grew here AFTER renderCards() already fit an earlier, shorter version).
+      fitSideColumnToViewport();
     }
 
     async function refreshForecast() {
@@ -1813,8 +2018,16 @@
       // view first would be a mistake, not just a missed optimization.
 
       initTestModeBanner();
+      updateFullscreenClass();
+      window.addEventListener('resize', updateFullscreenClass);
+      // Order matters: updateFullscreenClass() must apply first so the
+      // fullscreen font-size class (if any) is already in effect by the
+      // time fitSideColumnToViewport() measures clientHeight/scrollHeight.
+      window.addEventListener('resize', fitSideColumnToViewport);
+      initSideColumnFitObserver();
       if (RAW_PARAM) initRawDebugOverlay();
       if (DEBUG_ZOOM_PARAM) initDebugZoomReadout();
+      if (DEBUG_SIZE_PARAM) initDebugSizeReadout();
       if (DEBUG_PARAM) initDebugOverlay();
       loadGeoJSON();
 

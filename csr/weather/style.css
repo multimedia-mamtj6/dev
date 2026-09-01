@@ -47,6 +47,34 @@ html.light #map.leaflet-container {
     display: none;
 }
 
+/* District-name labels — plain outlined text instead of a pill background
+   (class name kept as "district-label-pill" for both JS call sites and the
+   arrow-hiding rule above; this rule just changes what it looks like).
+   White fill + a black stroke halo reads on both the light and dark
+   basemap without needing a separate dark: variant like the pill did. */
+.leaflet-tooltip.district-label-pill {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    color: #fff;
+    text-shadow:
+        -1px -1px 1px #000,
+         1px -1px 1px #000,
+        -1px  1px 1px #000,
+         1px  1px 1px #000,
+         0 0 3px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    line-height: 1.15;
+}
+
+/* State name on the nationwide zoomed-in label's second line — smaller
+   than the district name above it (see applyNationwideLabelMode()'s
+   bindTooltip call in index.html). */
+.district-label-pill .district-label-state {
+    font-size: 0.8em;
+}
+
 /* This class's own layout classes (flex/block) otherwise beat the
    browser's built-in [hidden]{display:none} rule at equal specificity —
    without this, el.hidden = true left an empty, content-less box on
@@ -248,6 +276,40 @@ html.light .forecast-slot .slot-icon .wicon {
 }
 
 /* ------------------------------------------------------------------ */
+/* Fullscreen (F11) scale-up — desktop only. .is-fullscreen is toggled  */
+/* on <html> by updateFullscreenClass() in index.html, using the same   */
+/* window.innerHeight >= screen.height - 1 heuristic as the ?debugsize=1 */
+/* readout (no browser API exists for "is F11 fullscreen" directly).    */
+/* Bumping the root font-size scales every rem-based Tailwind class     */
+/* sitewide (text, padding, gaps, rounded corners, icon dimensions) in  */
+/* one place — #side-column's width and the two raw-px icon rules below */
+/* are the only sizes NOT expressed in rem, so they need explicit       */
+/* overrides to keep pace.                                              */
+/* ------------------------------------------------------------------ */
+@media (min-width: 768px) {
+    html.is-fullscreen {
+        font-size: 140%;
+    }
+
+    /* #side-column is w-[440px] (literal px, not rem) — capped at +10%,
+       deliberately NOT scaled 1:1 with the ~40% text bump above, so text
+       wraps a little more inside a modestly wider box instead. */
+    html.is-fullscreen #side-column {
+        width: 484px;
+    }
+
+    html.is-fullscreen .forecast-slot .slot-icon .wicon {
+        width: 73px;
+        height: 73px;
+    }
+
+    html.is-fullscreen .pulse-dot {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /* Mobile layout (<768px) — desktop above this width is untouched.     */
 /* #map stays the same full-viewport fixed background it already is;  */
 /* #side-column and #nationwide-summary-bar (mutually exclusive by     */
@@ -348,8 +410,29 @@ html.light .forecast-slot .slot-icon .wicon {
     html.mobile-sheet-expanded #side-column,
     html.mobile-sheet-expanded #nationwide-summary-bar {
         max-height: 75vh;
-        overflow-y: auto;
         padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* #nationwide-summary-bar keeps scrolling (its own #nationwide-summary-list
+       already has a separate max-h-[40vh] overflow-y-auto Tailwind class,
+       unrelated to fitSideColumnToViewport()) — only #side-column switches
+       to visible, since fitSideColumnToViewport() in index.html now also
+       runs for mobile's EXPANDED sheet (not just desktop), shrinking its
+       content via transform: scale() to fit within this same 75vh band.
+       Must be visible, NOT hidden — transform: scale() only shrinks
+       whatever survives the PRE-transform clip, so hidden here would clip
+       content to the (still growing/animating) unscaled max-height first
+       and permanently discard everything past it, before the scale ever
+       gets a chance to bring it back into view.
+       THE SHORTHAND, not just overflow-y: the base rule above sets the
+       shorthand `overflow: hidden` (both axes) for the collapsed peek
+       state; overriding only overflow-y here leaves overflow-x stuck at
+       hidden, and per spec, when overflow-x/overflow-y disagree on
+       visible-ness the visible one's COMPUTED value silently becomes
+       'auto' instead — silently reintroducing the exact hidden-before-
+       transform clipping bug this rule exists to fix. */
+    html.mobile-sheet-expanded #side-column {
+        overflow: visible;
     }
 
     #side-column > section {
@@ -359,4 +442,19 @@ html.light .forecast-slot .slot-icon .wicon {
     #side-column > section:last-child {
         margin-bottom: 0.75rem;
     }
+}
+
+/* Nationwide warning rows (renderNationwidePanel() in index.html) —
+   "sehingga <time>" sits beside the body text via ml-auto by default,
+   which reads as floating off to the side of the paragraph rather than
+   part of the row. column-reverse stacks it above the body instead,
+   without touching the DOM order (the span is still the LAST child).
+   Applies at every width — not just the <768px block above. */
+.nationwide-warn-row {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+}
+
+.nationwide-warn-row > span {
+    margin-left: 0;
 }
