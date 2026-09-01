@@ -51,21 +51,21 @@
                     display.innerHTML =
                         '<div class="flex flex-col lg:flex-row items-center gap-[20px] lg:gap-[104px]">' +
                             '<div class="flex-1 min-w-0 text-center">' +
-                                '<span class="inline-block mb-[12px] rounded-full px-[14px] py-[5px] text-[13px] sm:text-[18.2px] font-semibold ' +
+                                '<span class="inline-block mb-[35px] rounded-full px-[14px] py-[5px] text-[13px] sm:text-[28.2px] font-semibold ' +
                                 (isPreview ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') + '">' +
                                 (isPreview ? 'Asma-ul-Husna — Previewing Hari ' + entry.index : 'Asma-ul-Husna Hari Ini:') +
                                 '</span>' +
                                 '<img src="' + ASMA_SVG_BASE + entry.svg + '" alt="' + entry.latin + '" ' +
                                 'class="w-[150px] h-auto sm:w-[374.4px] mx-auto mb-[12px]">' +
-                                '<div class="text-[13px] sm:text-[18.2px] text-zinc-400 mb-[4px]">Nama ke-' + entry.index + ' daripada 99</div>' +
+                                '<div class="text-[13px] sm:text-[28.2px] text-zinc-400 mb-[4px]">Nama ke-' + entry.index + ' daripada 99</div>' +
                                 '<h1 class="text-[28px] sm:text-[62.4px] font-bold text-zinc-900 mb-[6px]">' + entry.latin + '</h1>' +
-                                '<p class="text-[17px] sm:text-[31.2px] font-semibold text-emerald-700">' + entry.shortMeaning + '</p>' +
+                                '<p class="text-[17px] sm:text-[46.2px] font-semibold text-emerald-700">' + entry.shortMeaning + '</p>' +
                             '</div>' +
                             '<div class="hidden lg:block w-px self-stretch bg-zinc-200"></div>' +
                             '<div class="flex-1 min-w-0 text-left bg-zinc-100 rounded-[16px] p-[16px] sm:p-[41.6px] lg:p-[62.4px]">' +
                                 '<h2 class="text-[18px] sm:text-[35.1px] lg:text-[51.3px] font-bold leading-tight text-zinc-900 mb-[12px] sm:mb-[41.6px]">Setiap Hari,<br>Satu Asma-ul-Husna</h2>' +
-                                '<div class="text-[14px] sm:text-[23.4px] font-semibold text-zinc-900 mb-[4px] sm:mb-[10.4px]">' + entry.latin + ' bermaksud:</div>' +
-                                '<p class="text-[13px] sm:text-[23.4px] text-zinc-600 leading-relaxed">' + entry.explanation + '</p>' +
+                                '<div class="text-[16px] sm:text-[27px] lg:text-[45px] font-semibold text-zinc-900 mb-[6px] sm:mb-[14px]">' + entry.latin + ' bermaksud:</div>' +
+                                '<p class="text-[15px] sm:text-[25px] lg:text-[40px] text-zinc-600 leading-relaxed">' + entry.explanation + '</p>' +
                             '</div>' +
                         '</div>';
                 })
