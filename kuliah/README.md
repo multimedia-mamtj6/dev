@@ -21,7 +21,8 @@ Read-only lecture schedule display. Reads from the published JSON.
 
 **Access:**
 ```
-/kuliah/jadual/index.html
+/kuliah/jadual/index.html                 ← Current month
+/kuliah/jadual/index.html?bulan=depan     ← Next month
 ```
 
 **Features:**
