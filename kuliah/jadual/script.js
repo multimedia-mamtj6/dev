@@ -9,6 +9,7 @@ const MONTH_NAMES = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
     'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
 
 let cachedSenaraiHari = null;
+let cachedMonthsData = null; // full jsonData.months, for cross-month "Hari Esok" lookups (last day of month)
 let swapSessionOrder = false; // session-only view mode; resets to false on every hard reload
 let hijriRequestId = 0; // guards against a slow response overwriting a newer day selection
 const hijriMonthCache = {}; // "YYYY-M" → prayers[] from api.waktusolat.app (one fetch covers the whole month)
@@ -421,7 +422,14 @@ async function renderTodayCard(senaraiHari, selectedDate = null) {
 
     const targetDateString = selectedDate || todayString;
     const targetDate = new Date(targetDateString + 'T00:00:00');
-    const targetData = senaraiHari.find(d => d.date === targetDateString);
+    // "Hari Esok" on the last day of the month points at a date outside the
+    // currently-loaded month's senaraiHari — fall back to the full months
+    // object so tomorrow's card still shows real data if it's published.
+    let targetData = senaraiHari.find(d => d.date === targetDateString);
+    if (!targetData && cachedMonthsData) {
+        const targetMonthKey = targetDateString.slice(0, 7);
+        targetData = cachedMonthsData[targetMonthKey]?.senaraiHari?.find(d => d.date === targetDateString);
+    }
 
     const isToday    = targetDateString === todayString;
     const isTomorrow = targetDateString === tomorrowString;
@@ -579,12 +587,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const baseDate = new Date();
     if (urlParams.get('bulan') === 'depan') {
+        baseDate.setDate(1);
         baseDate.setMonth(baseDate.getMonth() + 1);
     }
     const monthKey = `${baseDate.getFullYear()}-${pad2(baseDate.getMonth() + 1)}`;
 
     // 2. Fetch JSON (cache-busted, with embedded fallback)
     const jsonData = await fetchScheduleData();
+    cachedMonthsData = jsonData.months ?? {};
     const monthData = jsonData.months?.[monthKey];
     const senaraiHari = monthData?.senaraiHari ?? [];
 
