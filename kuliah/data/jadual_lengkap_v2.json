@@ -3,7 +3,7 @@
     "2026-09": {
       "infoJadual": {
         "tajukBulan": "BULAN SEPTEMBER 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 1/9/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 4/9/2026"
       },
       "senaraiHari": [
         {
@@ -37,12 +37,7 @@
         {
           "date": "2026-09-04",
           "subuh": null,
-          "maghrib": {
-            "nama_penceramah": "Ustaz Nazir",
-            "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/12_11.-Ustaz-Nazir.jpg",
-            "square_url": null
-          },
+          "maghrib": null,
           "cuti_umum": null
         },
         {
