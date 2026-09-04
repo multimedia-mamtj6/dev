@@ -42,23 +42,13 @@
         },
         {
           "date": "2026-09-05",
-          "subuh": {
-            "nama_penceramah": "Ustaz Badrul Hisham",
-            "tajuk_kuliah": "Fadilat Sedekah",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg",
-            "square_url": null
-          },
+          "subuh": null,
           "maghrib": null,
           "cuti_umum": null
         },
         {
           "date": "2026-09-06",
-          "subuh": {
-            "nama_penceramah": "Ustaz Badrul Hisham",
-            "tajuk_kuliah": "Fadilat Sedekah",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/15_14.-Ustaz-Badrul-Hisham.jpg",
-            "square_url": null
-          },
+          "subuh": null,
           "maghrib": {
             "nama_penceramah": "Ustaz Amir",
             "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
