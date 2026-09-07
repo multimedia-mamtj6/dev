@@ -96,6 +96,16 @@ function computeProjectProgress(project, donationsForProject) {
     return { NamaProjek: project.name, SasaranKutipan: target, JumlahTerkumpul: terkumpul, Peratusan: peratusan };
 }
 
+// Build a filesystem-safe filename stem from a project name: lowercase,
+// collapse any run of non-alphanumeric/underscore/hyphen chars into a single
+// hyphen, strip leading/trailing hyphens. "Projek Baharu" → "projek-baharu".
+function slugifyProjectName(name) {
+    return String(name || 'projek')
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'projek';
+}
+
 // GET-sha-then-PUT against the GitHub Contents API — same pattern as
 // api/publish.js.
 async function pushJsonToGitHub(ghHeaders, githubRepo, filePath, jsonObj, commitMessage) {
@@ -378,9 +388,19 @@ module.exports = async function handler(req, res) {
     };
 
     const { commitMessage, action } = TARGETS[target];
-    const file = target === 'project'
-        ? `admin/infaq/data/${projectId}.json`
-        : TARGETS[target].file;
+    // project target: human-readable name + UUID suffix so the file is both
+    // recognisable at a glance and collision-proof/stable across a rename
+    // (edge: a name with path-hostile chars — UUIDs are safe, names usually
+    // are for this mosque's use, and this is colocated data with no public
+    // consumer yet, so simple concatenation is fine).
+    let file;
+    if (target === 'project' && jsonOut?.projek?.NamaProjek) {
+        file = `admin/infaq/data/${slugifyProjectName(jsonOut.projek.NamaProjek)}_${projectId}.json`;
+    } else if (target === 'project') {
+        file = `admin/infaq/data/${projectId}.json`;
+    } else {
+        file = TARGETS[target].file;
+    }
     let commit;
     try {
         commit = await pushJsonToGitHub(ghHeaders, githubRepo, file, jsonOut, commitMessage);
@@ -445,3 +465,4 @@ module.exports.buildMingguBuckets     = buildMingguBuckets;
 module.exports.buildYearlyGraf        = buildYearlyGraf;
 module.exports.computeCumulative      = computeCumulative;
 module.exports.computeProjectProgress = computeProjectProgress;
+module.exports.slugifyProjectName     = slugifyProjectName;
