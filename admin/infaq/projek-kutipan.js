@@ -47,14 +47,51 @@ async function loadProject() {
         launchInfo.style.display = 'none';
     }
 
-    // daily.json always reflects whichever ONE project is currently active —
-    // only show the publish control here when that's this project, so
-    // Terbitkan is never offered from a completed project's page (it would
-    // silently publish a different project's data, not this one).
-    if (project.is_active) {
-        document.getElementById('publish-daily-btn').style.display = canWriteModule('infaq') ? '' : 'none';
-        await loadLastPublishedInfaqNote('publish_daily', 'last-published-daily');
+    // Per-project publish: each project gets its own JSON file
+    // (admin/infaq/data/<project-id>.json). The Terbitkan button is shown for
+    // EVERY project — active or completed — since it publishes THIS project's
+    // own data, never the active one's (unlike the older daily.json behaviour).
+    if (canWriteModule('infaq')) {
+        document.getElementById('publish-project-btn').style.display = '';
     }
+    await loadLastPublishedProjectNote();
+}
+
+async function handlePublishProject() {
+    if (!projectId || !project) return;
+    await publishInfaqProject(projectId, 'publish-project-btn');
+    await loadLastPublishedProjectNote();
+}
+
+// Per-project "last published" note. Unlike the shared daily/monthly/
+// perbelanjaan notes (filtered only by action), publish_project is logged for
+// EVERY project, so this filters by target_label == this project's name to
+// show the right project's last-published time.
+async function loadLastPublishedProjectNote() {
+    const el = document.getElementById('last-published-project');
+    if (!el || !project) return;
+    const { data, error } = await db
+        .from('infaq_activity_log')
+        .select('created_at, actor_name, actor_email')
+        .eq('action', 'publish_project')
+        .eq('target_label', project.name)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    if (error) { el.style.display = 'none'; return; }
+
+    if (!data || !data.length) {
+        el.textContent = 'Belum pernah diterbitkan.';
+    } else {
+        const row = data[0];
+        let who = row.actor_name;
+        if (!who) {
+            const { data: adminRow } = await db.from('admins').select('name').ilike('email', row.actor_email).single();
+            who = adminRow?.name || row.actor_email;
+        }
+        el.textContent = `Terakhir diterbitkan pada ${formatDateTimeMY(row.created_at)} (${formatRelativeMY(row.created_at)}) oleh ${who}`;
+    }
+    el.style.display = 'block';
 }
 
 // ─── Load and render ──────────────────────────────────────────────────────────

@@ -34,10 +34,10 @@
         <h1 class="section-title">Kutipan: <span id="project-name">—</span></h1>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
           <button class="btn btn-primary" id="add-donation-btn" onclick="openAddModal()">+ Catat Kutipan</button>
-          <button class="btn btn-ghost" id="publish-daily-btn" onclick="publishInfaq('daily', 'publish-daily-btn')" style="display:none">Terbitkan</button>
+          <button class="btn btn-ghost" id="publish-project-btn" onclick="handlePublishProject()" style="display:none">Terbitkan</button>
         </div>
       </div>
-      <p class="schedule-actions-note" id="last-published-daily" style="display:none;font-weight:600;font-size:0.8125rem"></p>
+      <p class="schedule-actions-note" id="last-published-project" style="display:none;font-weight:600;font-size:0.8125rem"></p>
       <p style="color:var(--text-muted);margin-top:-0.75rem">Status: <strong id="project-status">—</strong></p>
       <p id="project-launch-info" style="color:var(--text-muted);font-size:0.875rem;display:none"></p>
 

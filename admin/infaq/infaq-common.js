@@ -32,6 +32,7 @@ const PUBLISH_BUTTON_LABELS = {
     'publish-monthly-btn':      'Terbitkan',
     'publish-perbelanjaan-btn': 'Terbitkan',
     'publish-daily-btn':        'Terbitkan',
+    'publish-project-btn':      'Terbitkan',
 };
 
 const PUBLISH_NOTE_TARGETS = {
@@ -94,6 +95,41 @@ async function publishInfaq(target, btnId) {
             showToast('Berjaya diterbitkan!', 'success', 6000);
             const [action, elId] = PUBLISH_NOTE_TARGETS[target];
             await loadLastPublishedInfaqNote(action, elId);
+        }
+    } catch (err) {
+        showToast('Ralat sambungan: ' + err.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+}
+
+async function publishInfaqProject(projectId, btnId) {
+    const btn = document.getElementById(btnId);
+    const originalLabel = PUBLISH_BUTTON_LABELS[btnId];
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner"></span> Menerbitkan...';
+
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) {
+        showToast('Sesi tamat. Sila log masuk semula.', 'error');
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/publish-infaq?target=project&project=${encodeURIComponent(projectId)}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            const detail = data.details ? ` (${data.status}: ${data.details})` : '';
+            showToast('Gagal menerbitkan: ' + (data.error || res.statusText) + detail, 'error', 8000);
+        } else {
+            showToast('Berjaya diterbitkan!', 'success', 6000);
         }
     } catch (err) {
         showToast('Ralat sambungan: ' + err.message, 'error');

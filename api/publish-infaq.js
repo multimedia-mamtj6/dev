@@ -40,6 +40,7 @@ const TARGETS = {
     monthly:      { file: 'admin/infaq/data/monthly.json',      commitMessage: '[Admin] Terbitkan kutipan mingguan infaq', action: 'publish_monthly' },
     daily:        { file: 'admin/infaq/data/daily.json',        commitMessage: '[Admin] Terbitkan kutipan projek infaq',   action: 'publish_daily' },
     perbelanjaan: { file: 'admin/infaq/data/perbelanjaan.json', commitMessage: '[Admin] Terbitkan perbelanjaan infaq',     action: 'publish_perbelanjaan' },
+    project:      { commitMessage: '[Admin] Terbitkan projek',   action: 'publish_project' },
 };
 
 // ── Pure helpers (kept dependency-free for ad-hoc local testing, same
@@ -136,7 +137,11 @@ module.exports = async function handler(req, res) {
     // ── 0. Validate target ──────────────────────────────────────────────────
     const target = req.query.target;
     if (!TARGETS[target]) {
-        return res.status(400).json({ error: 'Missing or invalid target — expected ?target=monthly|daily|perbelanjaan' });
+        return res.status(400).json({ error: 'Missing or invalid target — expected ?target=monthly|daily|perbelanjaan|project' });
+    }
+    const projectId = target === 'project' ? req.query.project : null;
+    if (target === 'project' && !projectId) {
+        return res.status(400).json({ error: 'Missing project param — expected ?target=project&project=<uuid>' });
     }
 
     // ── 1. Verify Supabase session (identical to api/publish.js) ───────────
@@ -280,6 +285,30 @@ module.exports = async function handler(req, res) {
             };
         }
 
+    } else if (target === 'project') {
+        const projectRes = await fetch(`${supabaseUrl}/rest/v1/infaq_projects?select=*&id=eq.${projectId}`, { headers: sbHeaders });
+        if (!projectRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_projects', details: await projectRes.text() });
+        const projRow = (await projectRes.json())[0] || null;
+        if (!projRow) return res.status(404).json({ error: 'Project not found' });
+
+        const projekDonRes = await fetch(
+            `${supabaseUrl}/rest/v1/infaq_projek_kutipan?select=tarikh,jumlah,keterangan&project_id=eq.${projectId}&order=tarikh.asc`,
+            { headers: sbHeaders }
+        );
+        if (!projekDonRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_projek_kutipan', details: await projekDonRes.text() });
+        const projDonations = await projekDonRes.json();
+
+        const projProgress = computeProjectProgress(projRow, projDonations);
+        jsonOut = {
+            ...(projProgress ? { projek: projProgress } : {}),
+            paparanHarian: projDonations.map(r => ({
+                tarikh: r.tarikh, jumlah: Number(r.jumlah), keterangan: r.keterangan || '',
+            })),
+            tarikhKemaskini: new Date().toISOString(),
+        };
+        activityLabel  = projRow.name;
+        activityDetail = projProgress ? `Terkumpul: RM ${projProgress.JumlahTerkumpul.toFixed(2)}` : null;
+
     } else { // perbelanjaan
         const perbelanjaanRes = await fetch(`${supabaseUrl}/rest/v1/infaq_perbelanjaan_bulanan?select=tahun,bulan,jumlah`, { headers: sbHeaders });
         if (!perbelanjaanRes.ok) return res.status(500).json({ error: 'Failed to fetch infaq_perbelanjaan_bulanan', details: await perbelanjaanRes.text() });
@@ -348,7 +377,10 @@ module.exports = async function handler(req, res) {
         'Content-Type':         'application/json',
     };
 
-    const { file, commitMessage, action } = TARGETS[target];
+    const { commitMessage, action } = TARGETS[target];
+    const file = target === 'project'
+        ? `admin/infaq/data/${projectId}.json`
+        : TARGETS[target].file;
     let commit;
     try {
         commit = await pushJsonToGitHub(ghHeaders, githubRepo, file, jsonOut, commitMessage);
