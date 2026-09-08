@@ -326,14 +326,14 @@ action       TEXT NOT NULL  -- infaq_kutipan_mingguan_create/update/delete |
                              -- infaq_projek_kutipan_create/update/delete |
                              -- infaq_perbelanjaan_create/update/delete |
                              -- infaq_project_create/update/delete/activate |
-                             -- publish_monthly | publish_daily | publish_perbelanjaan
+                             -- publish_monthly | publish_daily | publish_perbelanjaan | publish_project
 target_label TEXT
 detail       TEXT
 ```
 
 - `userlog.html` merges this into the same timeline as `activity_log`/`news_activity_log` (fixed 2026-07-22 for infaq, extended 2026-07-28 for news) — see `userlog.js`'s `LOG_SOURCES` array.
 - Written by `logActivity(action, targetLabel, detail, 'infaq_activity_log')` — `app.js`'s shared `logActivity()` gained an optional 4th param (table name, defaults to kuliah's `activity_log`) specifically so infaq pages could reuse it without duplicating the function.
-- **`publish_monthly`/`publish_daily`/`publish_perbelanjaan` (2026-07-22) are 3 distinct actions, not one shared `publish`** — `api/publish-infaq.js` publishes each of its 3 output files independently (`?target=monthly|daily|perbelanjaan`), each logging its own row so `kutipan.html`/`perbelanjaan.html`/`projek-kutipan.html` can each show their own "last published" note next to their own Terbitkan button (moved off `ringkasan.html` the same day — see `admin/CLAUDE.md`'s Key Patterns).
+- **`publish_monthly`/`publish_daily`/`publish_perbelanjaan`/`publish_project` are distinct actions, not one shared `publish`** — `api/publish-infaq.js` publishes each of its output files independently (`?target=monthly|daily|perbelanjaan`, plus `?target=project&project=<uuid>` for the per-project file added 2026-09-07), each logging its own row so `kutipan.html`/`perbelanjaan.html`/`projek-kutipan.html` can each show their own "last published" note next to their own Terbitkan button (moved off `ringkasan.html` the same day — see `admin/CLAUDE.md`'s Key Patterns). **`publish_project` rows all share the same action but differ by `target_label = <project.name>`** — so `projek-kutipan.html`'s per-project note must query by both `action='publish_project'` AND `target_label = current project's name` (see `loadLastPublishedProjectNote()` in `projek-kutipan.js`), unlike the three fixed-name actions which are each unique by action alone.
 
 ---
 

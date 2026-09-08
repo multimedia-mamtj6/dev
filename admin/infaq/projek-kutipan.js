@@ -48,9 +48,10 @@ async function loadProject() {
     }
 
     // Per-project publish: each project gets its own JSON file
-    // (admin/infaq/data/<project-id>.json). The Terbitkan button is shown for
-    // EVERY project — active or completed — since it publishes THIS project's
-    // own data, never the active one's (unlike the older daily.json behaviour).
+    // (admin/infaq/data/<slugified-name>_<project-uuid>.json). The Terbitkan
+    // button is shown for EVERY project — active or completed — since it
+    // publishes THIS project's own data, never the active one's (unlike the
+    // older daily.json behaviour).
     if (canWriteModule('infaq')) {
         document.getElementById('publish-project-btn').style.display = '';
     }

@@ -44,6 +44,7 @@ const LOG_SOURCES = [
             publish_monthly:               'Terbitkan Kutipan Mingguan',
             publish_daily:                 'Terbitkan Kutipan Projek',
             publish_perbelanjaan:          'Terbitkan Perbelanjaan',
+            publish_project:               'Terbitkan Projek',
         },
     },
     {

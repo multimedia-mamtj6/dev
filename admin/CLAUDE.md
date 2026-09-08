@@ -107,7 +107,8 @@ admin/
 
   infaq/           ← Module: donation/expense tracking (new 2026-07-19, schema redesigned 2026-07-21)
     infaq-common.js    ← Shared across this module: requireInfaqAccess(), formatRM(), BULAN_MY,
-                          publishInfaq()/loadLastPublishedInfaqNote() (Terbitkan, shared by the 3 pages below)
+                          publishInfaq()/loadLastPublishedInfaqNote(), publishInfaqProject()
+                          (Terbitkan, shared by the 4 pages below)
     ringkasan.html/.js ← Module landing page: read-only stat cards + active-project progress only —
                           no Terbitkan here, each data page publishes itself (see below)
     kutipan.html/.js   ← General infaq: one row per week (tahun/bulan/minggu), upsert on save,
@@ -119,10 +120,13 @@ admin/
                           links to projek-kutipan.html for that project's individual donations
     projek-kutipan.html/.js ← ONE project's individual dated donations (?project=<id> in the URL) —
                           paginated/filtered like the old kutipan.js, since this is the only infaq
-                          table that's genuinely per-deposit — owns the `daily` Terbitkan button,
-                          shown only when viewing the currently-active project (daily.json always
-                          reflects whichever one project is active, never a completed one)
-    data/monthly.json, data/daily.json, data/perbelanjaan.json, data/data.json ← Published data
+                          table that's genuinely per-deposit — owns BOTH the `daily` Terbitkan button
+                          (shown only when viewing the currently-active project, since daily.json
+                          always reflects whichever one project is active, never a completed one)
+                          AND the `project` Terbitkan button (shown for EVERY project — active or
+                          completed — which writes THAT project alone to its own
+                          <slug>_<uuid>.json file, see data/ line below)
+    data/monthly.json, data/daily.json, data/perbelanjaan.json, data/data.json ← Fixed-name published data
                           admin/infaq/ writes (api/publish-infaq.js) — no reader yet. Under admin/
                           (not top-level infaq/, unlike kuliah's own data/ convention) since there's
                           no public consumer — colocated with the module that produces it. Field/key
@@ -131,6 +135,12 @@ admin/
                           data.json is written by the `daily` Terbitkan action alongside daily.json
                           (2 files, 1 commit each, same request) rather than getting its own button —
                           see admin/developer.md's Publish endpoint section for why.
+    data/<slugified-name>_<project-uuid>.json ← Per-project published data, ONE file per project,
+                          written by the `project` Terbitkan action on projek-kutipan.html across
+                          ALL projects (active or completed). Filename is
+                          slugifyProjectName(NamaProjek) + '_' + the project's UUID so different
+                          projects can't collide on the same name. Shape mirrors daily.json
+                          ({ projek, paparanHarian, tarikhKemaskini }).
 
   news/            ← Module: Xibo signage CMS (new 2026-07-28) — unlike infaq's admin/infaq/data/
                       convention, this module's published JSON lives under top-level `news/data/`
@@ -263,7 +273,7 @@ action text NOT NULL,       -- infaq_kutipan_mingguan_create/update/delete |
                              -- infaq_projek_kutipan_create/update/delete |
                              -- infaq_perbelanjaan_create/update/delete |
                              -- infaq_project_create/update/delete/activate |
-                             -- publish_monthly | publish_daily | publish_perbelanjaan
+                             -- publish_monthly | publish_daily | publish_perbelanjaan | publish_project
 target_label text, detail text
 
 -- news_announcements → news/data/announcements.json (see admin/news/ above)
@@ -358,12 +368,15 @@ infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
   → click Terbitkan on that same page (kutipan.html / perbelanjaan.html /
     projek-kutipan.html each own their own button, right next to the data
     they publish — no Terbitkan on ringkasan.html, which is read-only)
-  → POST /api/publish-infaq?target=monthly|daily|perbelanjaan (Bearer: session
-    token, no month param — always a full as-of-now snapshot of that ONE file)
+  → POST /api/publish-infaq?target=monthly|daily|perbelanjaan|project
+    (project requires an extra &project=<uuid>; Bearer session token, no month
+    param — always a full as-of-now snapshot of that ONE file)
   → api/publish-infaq.js reads only the Supabase table(s) that target needs
     (service role), COMPUTES weekly/monthly/yearly rollups + active-project
     progress for that file only
-  → pushes exactly ONE of admin/infaq/data/{monthly,daily,perbelanjaan}.json to GitHub
+  → pushes exactly ONE of admin/infaq/data/{monthly,daily,perbelanjaan}.json
+    to GitHub, OR for target=project the per-project file
+    admin/infaq/data/<slugified-name>_<project-uuid>.json
   → no public reader yet — see What This Is
 
 news: Admin edits a row in admin/news/pengumuman.html or teks-berjalan.html
@@ -504,7 +517,7 @@ All sidebar styling (colors, fixed positioning, the off-canvas mobile transform)
 
 **`userlog.html` merges BOTH `activity_log` and `infaq_activity_log` into one timeline (fixed 2026-07-22 — previously infaq's log was write-only, nothing displayed it):** `userlog.js`'s `LOG_SOURCES` array (`[{ module, table, actionLabels }, ...]`) is the single source of truth for which tables feed the page — mirrors `app.js`'s `MODULES` array pattern, so a future third module's own `<module>_activity_log` table is one array entry, not a rewrite. `loadLog()` queries every source in `LOG_SOURCES` in parallel (each capped at `logLimit` — sufficient to guarantee the true merged top-N, since a global top-N can never need more than N rows from any single source), tags each row with its module, then merges and re-sorts by `created_at` so kuliah and infaq events interleave into one real chronological timeline rather than two separate lists a toggle would force apart. A source that errors degrades to an empty list for that source rather than blanking the whole page. The Tindakan filter dropdown groups both modules' actions under `<optgroup>`s built from the same `LOG_SOURCES` array. **Adding a future module's activity log to this page needs zero new grants** — `authenticated` already has `SELECT` on `infaq_activity_log` (proven by `loadLastPublishedInfaqNote()` already reading it from the browser), so this was purely additive to a read-only page; only a genuinely new table (for a genuinely new module) would need the standard new-table `GRANT` treatment below.
 
-**Infaq's 3 publish targets are fully independent, not one combined publish, and each lives on its own data page (2026-07-22):** `api/publish-infaq.js` requires `?target=monthly|daily|perbelanjaan`, fetches only the Supabase table(s) that one target needs, and pushes only that one file — so recording an expense never requires also recomputing/republishing kutipan data or vice versa. The Terbitkan button for each target sits on the page where that data is edited — `kutipan.html` (monthly), `perbelanjaan.html` (perbelanjaan), `projek-kutipan.html` (daily, shown only when viewing the currently-active project, since `daily.json` always reflects that one project) — **not** on `ringkasan.html`, which moved back to a read-only stats overview (2026-07-22, superseding the brief ringkasan-centric design from earlier the same day). The shared plumbing (`publishInfaq(target, btnId)`, `loadLastPublishedInfaqNote(action, elId)`, the `PUBLISH_BUTTON_LABELS`/`PUBLISH_NOTE_TARGETS` lookups) lives in `infaq-common.js` so all 3 pages call the same code. Each target logs its own `infaq_activity_log` action (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`). If you add a 4th infaq output file in the future, follow this same shape — a new `TARGETS` entry in `api/publish-infaq.js`, a new button + note pair on whichever page owns that data, not a return to one combined endpoint or a centralized publish page.
+**Infaq's publish targets are fully independent, not one combined publish, and each lives on its own data page (2026-07-22, plus the `project` target 2026-09-07):** `api/publish-infaq.js` requires `?target=monthly|daily|perbelanjaan|project`, fetches only the Supabase table(s) that one target needs, and pushes only that one file — so recording an expense never requires also recomputing/republishing kutipan data or vice versa. The fixed-name buttons sit on the page where that data is edited — `kutipan.html` (monthly), `perbelanjaan.html` (perbelanjaan), `projek-kutipan.html` (daily, shown only when viewing the currently-active project, since `daily.json` always reflects that one project) — plus, on `projek-kutipan.html`, a per-project `project` target (`?target=project&project=<uuid>`) shown for **every** project, active OR completed, that writes just that one project's snapshot to `admin/infaq/data/<slugified-name>_<project-uuid>.json`. The `daily` buttons are **not** on `ringkasan.html`, which moved back to a read-only stats overview (2026-07-22, superseding the brief ringkasan-centric design from earlier the same day). The shared plumbing (`publishInfaq(target, btnId)`, `publishInfaqProject(projectId, btnId)`, `loadLastPublishedInfaqNote(action, elId)`, the `PUBLISH_BUTTON_LABELS`/`PUBLISH_NOTE_TARGETS` lookups) lives in `infaq-common.js` so all 4 pages call the same code. Each target logs its own `infaq_activity_log` action (`publish_monthly`/`publish_daily`/`publish_perbelanjaan`/`publish_project`). The `publish_project` note MUST be filtered by `target_label = project.name` (every project shares the `publish_project` action — see `loadLastPublishedProjectNote()`), unlike the others which are unique by action. If you add a future infaq output file, follow this same shape — a new `TARGETS` entry in `api/publish-infaq.js`, a new button + note pair on whichever page owns that data, not a return to one combined endpoint or a centralized publish page.
 
 **Cross-module overview (`admin/dashboard.html`/`.js`, added 2026-07-22):** the universal post-login landing page (see `defaultLandingPageFor` above) — gates each section by the same `role === 'super_admin' || permissions?.X` check `renderSidebar()`/`requireInfaqAccess()` already use, so a kuliah-only admin never sees infaq numbers and vice versa. Every figure is a fresh, independent query against the same tables the full pages already read (`schedule`+`ustaz`, `activity_log`, `infaq_kutipan_mingguan`/`infaq_perbelanjaan_bulanan`/`infaq_projects`/`infaq_projek_kutipan`) — nothing is cached or shared across pages, since this is a plain MPA with no client-side state persistence between page loads. `dashboard.js`'s queries deliberately mirror existing patterns rather than reusing their code directly (different page, no shared module system): the kuliah section mirrors `jadual.js`'s month-bounded `schedule` fetch, its `countFilledDays`-style truthy-field check, and its `activity_log` "last publish for this month's label" lookup; the infaq section is a narrower version of `ringkasan.js`'s `loadStats()`/`loadActiveProject()` — bulan-ini only (no bulan-lepas/tahun breakdown), since this is meant as a glance, not a replacement for `ringkasan.html`'s fuller view. The generic stat-card/progress-bar CSS these both use (`.stat-grid`/`.stat-card`/`.stat-label`/`.stat-value`/`.progress-track`/`.progress-fill`/`.section-header-row`/`.subsection-title`/`.goto-link` in `style.css`) was renamed from an `infaq-`-prefixed set (`ringkasan.html` was its only prior consumer) specifically so `dashboard.html` and `ringkasan.html` share one definition instead of two near-duplicate CSS blocks — if you add a 4th module's own glimpse section later, reuse these same classes rather than inventing new ones.
 
