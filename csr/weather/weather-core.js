@@ -247,19 +247,34 @@ function extractRegionGroupDistricts(segment, cfg) {
 }
 
 function extractStateDistricts(warning, cfg) {
-  const text = warning.text_en || warning.text_bm || '';
+  // Check BOTH language fields, not just text_en with a text_bm fallback:
+  // MET's EN/BM wordings differ ("states of Terengganu" vs "negeri
+  // Terengganu"), so a guard matching one language can miss the other.
+  // Confirmed live 2026-09-09: EN "over the states of Terengganu • ..."
+  // matched neither fallback guard below, so Terengganu got no wash while
+  // its BM text would have matched. District/group hits are unioned across
+  // both texts; the vague-state fallback fires if EITHER text supports it.
+  const texts = [warning.text_en, warning.text_bm].filter(t => typeof t === 'string' && t.length);
+  const combined = texts.join('\n');
 
   const bareRe = new RegExp('\\b' + escapeRegExp(cfg.apiName) + '\\b', 'i');
-  if (!bareRe.test(text)) {
+  if (!bareRe.test(combined)) {
     return { scope: null, districts: [], tiers: {}, tier: null };
   }
 
   const re = new RegExp(escapeRegExp(cfg.apiName) + '\\s*\\(([^)]+)\\)', 'i');
-  const match = text.match(re);
-  if (match) {
-    const resolved = splitDistrictList(match[1])
-      .map(raw => resolveDistrictName(raw, cfg))
-      .filter(Boolean);
+  const resolvedUnion = new Set();
+  texts.forEach(text => {
+    const match = text.match(re);
+    if (match) {
+      splitDistrictList(match[1])
+        .map(raw => resolveDistrictName(raw, cfg))
+        .filter(Boolean)
+        .forEach(d => resolvedUnion.add(d));
+    }
+  });
+  if (resolvedUnion.size) {
+    const resolved = Array.from(resolvedUnion);
     const tiers = {};
     resolved.forEach(d => { tiers[d] = 'amaran'; });
     return { scope: 'district', districts: resolved, tiers, tier: null };
@@ -275,7 +290,7 @@ function extractStateDistricts(warning, cfg) {
     escapeRegExp(cfg.apiName) + '\\s*:\\s*([\\s\\S]*?)(?=\\s*•|\\s+until\\b|\\s+sehingga\\b|$)',
     'i'
   );
-  const groupMatch = text.match(groupRe);
+  const groupMatch = combined.match(groupRe);
   if (groupMatch) {
     const resolved = extractRegionGroupDistricts(groupMatch[1], cfg);
     if (resolved.length) {
@@ -291,7 +306,7 @@ function extractStateDistricts(warning, cfg) {
 
   // This last-resort fallback ("MET was vague about which district")
   // must only fire for a genuine hazard bulletin naming the state as its
-  // subject ("... the state of Pahang" / "... negeri Pahang") — not any
+  // subject ("... the state(s) of Pahang" / "... negeri Pahang") — not any
   // document that merely references the state in passing. Confirmed live
   // 2026-08-26: a "Tropical Storm Advisory" bulletin (unrelated hazard
   // type, "Threat to Malaysia: No significant impact") mentioned Sabah
@@ -299,7 +314,13 @@ function extractStateDistricts(warning, cfg) {
   // Kudat, Sabah" — and without this guard the bare \bSabah\b match above
   // fell all the way through to here, incorrectly washing the entire
   // state on the map.
-  const stateAdvisoryRe = new RegExp('(?:state of|negeri)\\s+' + escapeRegExp(cfg.apiName) + '\\b', 'i');
+  // "states of" (plural) is the live EN form for multi-state bulletins
+  // ("... over the states of Terengganu • ...", confirmed 2026-09-09) —
+  // the singular-only form missed it and left Terengganu unwashed.
+  // The optional "W.P. " covers federal territories written as
+  // "W.P. Labuan" (confirmed same bulletin): the bare \bLabuan\b gate
+  // above matches inside "W.P. Labuan", but neither guard below did.
+  const stateAdvisoryRe = new RegExp('(?:states?\\s+of|negeri)\\s+(?:W\\.P\\.\\s+)?' + escapeRegExp(cfg.apiName) + '\\b', 'i');
 
   // Second, independent signal for the same fallback: a multi-state
   // bulletin only says "negeri"/"the state of" once, before the FIRST
@@ -314,11 +335,11 @@ function extractStateDistricts(warning, cfg) {
   // just happens to appear elsewhere in unrelated prose (the Kudat/Sabah
   // case above: preceded by ", ", not "•" or "negeri" — doesn't match).
   const bulletedStateRe = new RegExp(
-    '(?:\\bnegeri\\s+|•\\s*)' + escapeRegExp(cfg.apiName) + '\\s*(?=\\s*•|$|\\s+(?:until|sehingga)\\b)',
+    '(?:\\bnegeri\\s+|•\\s*)(?:W\\.P\\.\\s+)?' + escapeRegExp(cfg.apiName) + '\\s*(?=\\s*•|$|\\s+(?:until|sehingga)\\b)',
     'i'
   );
 
-  if (!stateAdvisoryRe.test(text) && !bulletedStateRe.test(text)) {
+  if (!stateAdvisoryRe.test(combined) && !bulletedStateRe.test(combined)) {
     return { scope: null, districts: [], tiers: {}, tier: null };
   }
   return { scope: 'state', districts: cfg.districts.slice(), tiers: {}, tier: 'amaran' };

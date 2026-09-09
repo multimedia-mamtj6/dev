@@ -1558,7 +1558,10 @@
     }
 
     // Lazily built once STATE_CONFIG is loaded — bolds any real state's
-    // displayName wherever it appears in the (already-escaped) body text.
+    // displayName wherever it appears in the (already-escaped) body text,
+    // including the "W.P. " prefix MET uses for federal territories
+    // ("W.P. Labuan" — without this only "Labuan" would bold, leaving a
+    // plain "W.P. " in front of it, unlike every other state).
     // Best-effort only: text_bm uses each state's own Malay name, which for
     // Penang/Melaka may not exactly equal states.json's `displayName` (see
     // the English-text spelling landmine already documented in
@@ -1569,7 +1572,7 @@
       if (!stateNameBoldRe) {
         const names = Object.values(STATE_CONFIG).map(s => s.displayName).filter(Boolean)
           .sort((a, b) => b.length - a.length).map(escapeRegExp);
-        stateNameBoldRe = new RegExp('\\b(' + names.join('|') + ')\\b', 'g');
+        stateNameBoldRe = new RegExp('\\b((?:W\\.P\\.\\s+)?(?:' + names.join('|') + '))\\b', 'g');
       }
       // Bold only OUTSIDE parenthetical district lists — a state name can
       // legitimately reappear inside its own list (e.g. "Kuala Selangor"
