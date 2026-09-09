@@ -345,6 +345,11 @@
     // mistyped into a different case.
     const RAW_PARAM = new URLSearchParams(window.location.search).has('raw');
 
+    // ?changelog — shows this folder's CHANGELOG.md (user-facing release
+    // history, v1 to now) in the same overlay styling as ?raw.
+    // All-lowercase for the same reason as ?raw — see its own comment.
+    const CHANGELOG_PARAM = new URLSearchParams(window.location.search).has('changelog');
+
     // ?debugzoom=1 — on-screen current-zoom readout, for hand-tuning
     // NATIONWIDE_LABEL_ZOOM_THRESHOLD (same "let them find it, then
     // hardcode it" technique as paparan/'s ?debugMap=1 framing tool).
@@ -802,6 +807,34 @@
     }
 
     // =========================================================
+    // ?changelog — renders csr/weather/CHANGELOG.md as-is in the same
+    // overlay styling as ?raw (no markdown rendering — plain <pre> text,
+    // deliberately, this is a debug-style overlay not a designed page).
+    // Fetched fresh with a cache-buster so a just-updated file shows
+    // immediately, same convention as the JSON fetches elsewhere.
+    // =========================================================
+    function initChangelogOverlay() {
+      const overlay = document.createElement('div');
+      overlay.className = 'raw-debug-overlay';
+      overlay.innerHTML = '<h1>Senarai Perubahan (?changelog)</h1>';
+      document.body.appendChild(overlay);
+
+      const section = document.createElement('section');
+      section.className = 'raw-debug-section';
+      section.innerHTML = '<div class="raw-debug-url">/csr/weather/CHANGELOG.md</div>' +
+        '<pre class="raw-debug-pre">Memuatkan…</pre>';
+      overlay.appendChild(section);
+      const pre = section.querySelector('.raw-debug-pre');
+
+      fetchWithTimeout('/csr/weather/CHANGELOG.md?v=' + Date.now(), 8000)
+        .then(res => res.text().then(text => ({ ok: res.ok, status: res.status, text })))
+        .then(({ ok, status, text }) => {
+          pre.textContent = (ok ? '' : `HTTP ${status}\n\n`) + text;
+        })
+        .catch(err => { pre.textContent = 'Gagal memuatkan: ' + err.message; });
+    }
+
+    // =========================================================
     // ?debug — self-documenting overlay listing every test/debug query
     // param this page supports. Static content only (no fetches, unlike
     // ?raw) — reuses .raw-debug-* overlay styling for visual consistency.
@@ -845,6 +878,11 @@
           name: '?raw',
           desc: 'Papar respons API mentah (belum diproses) bagi amaran/hujan/ramalan.',
           examples: ['?raw', '?state=pahang&district=Temerloh&raw'],
+        },
+        {
+          name: '?changelog',
+          desc: 'Papar senarai perubahan halaman cuaca (CHANGELOG.md) dari versi awal hingga kini.',
+          examples: ['?changelog'],
         },
         {
           name: '?debugzoom=1',
@@ -2029,6 +2067,7 @@
       window.addEventListener('resize', fitSideColumnToViewport);
       initSideColumnFitObserver();
       if (RAW_PARAM) initRawDebugOverlay();
+      if (CHANGELOG_PARAM) initChangelogOverlay();
       if (DEBUG_ZOOM_PARAM) initDebugZoomReadout();
       if (DEBUG_SIZE_PARAM) initDebugSizeReadout();
       if (DEBUG_PARAM) initDebugOverlay();
