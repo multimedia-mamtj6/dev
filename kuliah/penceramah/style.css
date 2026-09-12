@@ -9,7 +9,7 @@ body {
 
 .page-container {
     width: 100%;
-    max-width: 720px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 2rem 1rem;
 }
@@ -45,25 +45,35 @@ body {
 
 .penceramah-list {
     display: grid;
-    gap: 0.75rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+@media screen and (max-width: 768px) {
+    .penceramah-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
 }
 
 .penceramah-card {
     display: flex;
-    gap: 0.875rem;
+    flex-direction: column;
     align-items: center;
+    text-align: center;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 0.75rem;
-    padding: 0.875rem 1rem;
+    padding: 1.25rem 1rem;
 }
 
 .avatar {
-    width: 56px;
-    height: 56px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
+    margin-bottom: 0.75rem;
 }
 
 .avatar-fallback {
@@ -73,7 +83,7 @@ body {
     background: #166534;
     color: #ffffff;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.5rem;
 }
 
 .penceramah-info {

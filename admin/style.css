@@ -356,6 +356,8 @@ body {
   padding: 1.5rem;
   width: 100%;
   max-width: 420px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
   animation: modal-in 0.15s ease;
 }
