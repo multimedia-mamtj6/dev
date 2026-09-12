@@ -93,6 +93,27 @@
             <label for="edit-jawatan">Jawatan</label>
             <input type="text" id="edit-jawatan" placeholder="Cth: Imam, Pengerusi Biro Dakwah">
           </div>
+
+          <div class="form-group" id="profile-current-group" style="display:none">
+            <label>Mugshot Semasa</label>
+            <img id="profile-current-img" src="" alt="Mugshot semasa" class="poster-modal-preview">
+            <p id="profile-current-url"
+              style="font-size:0.7rem;color:var(--text-muted);word-break:break-all;margin-top:0.375rem"></p>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeProfile()" style="margin-top:0.5rem">Buang
+              Mugshot</button>
+          </div>
+
+          <div class="form-group">
+            <label>Muat Naik Mugshot Baru <span
+                style="font-weight:400;color:var(--text-muted)">(potret, sebarang resolusi)</span></label>
+            <input type="file" id="edit-profile" accept="image/jpeg,image/png,image/webp">
+            <div id="profile-preview" style="margin-top:0.5rem"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Atau Gunakan URL Mugshot</label>
+            <input type="url" id="edit-profile-url" placeholder="https://contoh.com/mugshot.jpg">
+          </div>
         </div>
 
         <div class="ustaz-form-col ustaz-form-col-poster">
@@ -136,27 +157,6 @@
           <div class="form-group">
             <label>Atau Gunakan URL Gambar Segi Empat Sama</label>
             <input type="url" id="edit-poster-square-url" placeholder="https://contoh.com/gambar-segi-empat.jpg">
-          </div>
-
-          <div class="form-group" id="profile-current-group" style="display:none">
-            <label>Mugshot Semasa</label>
-            <img id="profile-current-img" src="" alt="Mugshot semasa" class="poster-modal-preview">
-            <p id="profile-current-url"
-              style="font-size:0.7rem;color:var(--text-muted);word-break:break-all;margin-top:0.375rem"></p>
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeProfile()" style="margin-top:0.5rem">Buang
-              Mugshot</button>
-          </div>
-
-          <div class="form-group">
-            <label>Muat Naik Mugshot Baru <span
-                style="font-weight:400;color:var(--text-muted)">(potret, sebarang resolusi)</span></label>
-            <input type="file" id="edit-profile" accept="image/jpeg,image/png,image/webp">
-            <div id="profile-preview" style="margin-top:0.5rem"></div>
-          </div>
-
-          <div class="form-group">
-            <label>Atau Gunakan URL Mugshot</label>
-            <input type="url" id="edit-profile-url" placeholder="https://contoh.com/mugshot.jpg">
           </div>
         </div>
       </div>
