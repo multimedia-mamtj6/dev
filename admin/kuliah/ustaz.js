@@ -80,6 +80,7 @@ function openAddModal() {
     document.getElementById('edit-shortname').value   = '';
     document.getElementById('edit-topic').value       = '';
     document.getElementById('edit-jawatan').value     = '';
+    document.getElementById('edit-is-public').checked = true;
     document.getElementById('edit-poster').value      = '';
     document.getElementById('edit-poster-url').value  = '';
     document.getElementById('poster-preview').innerHTML = '';
@@ -109,6 +110,7 @@ function openEditModal(id) {
     document.getElementById('edit-shortname').value   = u.short_name;
     document.getElementById('edit-topic').value       = u.tajuk_kuliah || '';
     document.getElementById('edit-jawatan').value     = u.jawatan || '';
+    document.getElementById('edit-is-public').checked = u.is_public !== false;
     document.getElementById('edit-poster').value      = '';
     document.getElementById('edit-poster-url').value  = '';
     document.getElementById('poster-preview').innerHTML = '';
@@ -203,6 +205,9 @@ function buildUstazDiffText(before, after) {
     if ((before.jawatan || null) !== (after.jawatan || null)) {
         parts.push(`Jawatan: ${before.jawatan ? `"${before.jawatan}"` : 'Tiada'} → ${after.jawatan ? `"${after.jawatan}"` : 'Tiada'}`);
     }
+    if ((before.is_public !== false) !== after.is_public) {
+        parts.push(after.is_public ? 'Ditunjuk dalam senarai awam' : 'Disembunyi dari senarai awam');
+    }
     if (after.posterChanged) {
         parts.push(after.posterRemoved ? 'Poster dibuang' : 'Poster dikemaskini');
     }
@@ -221,6 +226,7 @@ async function saveUstaz() {
     const shortName      = document.getElementById('edit-shortname').value.trim();
     const topic          = document.getElementById('edit-topic').value.trim();
     const jawatan        = document.getElementById('edit-jawatan').value.trim();
+    const isPublic       = document.getElementById('edit-is-public').checked;
     const posterFile     = document.getElementById('edit-poster').files[0];
     const posterUrlInput = document.getElementById('edit-poster-url').value.trim();
     const squareFile      = document.getElementById('edit-poster-square').files[0];
@@ -339,6 +345,7 @@ async function saveUstaz() {
         short_name:   shortName,
         tajuk_kuliah: topic || null,
         jawatan:      jawatan || null,
+        is_public:    isPublic,
         updated_at:   new Date().toISOString(),
     };
     if (pendingRemovePoster) {
@@ -380,7 +387,7 @@ async function saveUstaz() {
     if (id) {
         const after = {
             full_name: fullName, short_name: shortName, tajuk_kuliah: topic || null,
-            jawatan: jawatan || null,
+            jawatan: jawatan || null, is_public: isPublic,
             posterChanged: pendingRemovePoster || !!newPosterUrl, posterRemoved: pendingRemovePoster,
             squarePosterChanged: pendingRemoveSquarePoster || !!newSquareUrl, squarePosterRemoved: pendingRemoveSquarePoster,
             profileChanged: pendingRemoveProfile || !!newProfileUrl, profileRemoved: pendingRemoveProfile,

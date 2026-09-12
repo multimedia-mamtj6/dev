@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS ustaz (
                          -- no live consumer yet, see admin/DEV_NOTES.MD
     jawatan      TEXT,  -- penceramah role/title, added 2026-09-12
     profile_url  TEXT,  -- mugshot portrait, added 2026-09-12 (kuliah-assets/profiles/)
+    is_public    BOOLEAN NOT NULL DEFAULT true,  -- show in public penceramah list, added 2026-09-12
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS ustaz (
 ALTER TABLE ustaz ADD COLUMN IF NOT EXISTS square_url TEXT;
 ALTER TABLE ustaz ADD COLUMN IF NOT EXISTS jawatan TEXT;
 ALTER TABLE ustaz ADD COLUMN IF NOT EXISTS profile_url TEXT;
+ALTER TABLE ustaz ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT true;
 
 CREATE TABLE IF NOT EXISTS schedule (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),

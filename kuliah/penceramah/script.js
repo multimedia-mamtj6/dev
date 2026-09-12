@@ -34,10 +34,94 @@ function buildCard(p) {
     const tajuk = p.tajuk_kuliah
         ? `<div class="penceramah-tajuk">${escapeHtml(p.tajuk_kuliah)}</div>`
         : '';
-    return `<div class="penceramah-card">${avatar}<div class="penceramah-info">`
+    return `<div class="penceramah-card" data-id="${escapeHtml(p.id || '')}">${avatar}<div class="penceramah-info">`
         + `<div class="penceramah-name">${escapeHtml(p.full_name)}</div>`
         + jawatan + tajuk
         + `</div></div>`;
+}
+
+// ─── Profile popup ──────────────────────────────────────────────────────────
+// Session lookup reads the already-published schedule JSON — no new endpoint.
+// Names match exactly: both files source full_name from the same ustaz table.
+let penceramahById = {};
+let monthsData = null;
+
+function realMonthKey() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function findSessions(fullName) {
+    const month = monthsData && monthsData[realMonthKey()];
+    const days = month && Array.isArray(month.senaraiHari) ? month.senaraiHari : [];
+    const out = [];
+    for (const day of days) {
+        for (const sesi of ['subuh', 'maghrib']) {
+            const s = day && day[sesi];
+            if (s && !s.pending && s.nama_penceramah === fullName) {
+                out.push({
+                    date: day.date,
+                    sesi: sesi === 'subuh' ? 'Subuh' : 'Maghrib',
+                    tajuk: s.tajuk_kuliah || null,
+                });
+            }
+        }
+    }
+    return out;
+}
+
+function formatDateMY(dateStr) {
+    try {
+        return new Date(dateStr + 'T00:00:00')
+            .toLocaleString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long' });
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function buildPopupHtml(p, sessions, scheduleOk) {
+    const photo = p.profile_url
+        ? `<img class="profile-lg" src="${escapeHtml(p.profile_url)}" alt="Mugshot ${escapeHtml(p.full_name)}">`
+        : `<div class="profile-lg profile-lg-fallback" aria-hidden="true">${escapeHtml(initials(p.full_name))}</div>`;
+    const jawatan = p.jawatan
+        ? `<div class="penceramah-jawatan">${escapeHtml(p.jawatan)}</div>`
+        : '';
+    const tajuk = p.tajuk_kuliah
+        ? `<div class="penceramah-tajuk">${escapeHtml(p.tajuk_kuliah)}</div>`
+        : '';
+    const monthLabel = new Date().toLocaleString('ms-MY', { month: 'long', year: 'numeric' });
+
+    let scheduleHtml;
+    if (!scheduleOk) {
+        scheduleHtml = '<div class="session-empty">Jadual tidak tersedia buat masa ini.</div>';
+    } else if (sessions.length === 0) {
+        scheduleHtml = '<div class="session-empty">Tiada kuliah bulan ini.</div>';
+    } else {
+        scheduleHtml = '<div class="session-list">' + sessions.map(s =>
+            `<div class="session-row"><div class="session-date">${escapeHtml(formatDateMY(s.date))}</div>`
+            + `<div class="session-meta">Kuliah ${escapeHtml(s.sesi)}`
+            + (s.tajuk ? ` — ${escapeHtml(s.tajuk)}` : '') + '</div></div>'
+        ).join('') + '</div>';
+    }
+
+    return `<button type="button" class="profile-close" aria-label="Tutup" onclick="closeProfile()">&times;</button>`
+        + photo
+        + `<div class="penceramah-name profile-name">${escapeHtml(p.full_name)}</div>`
+        + jawatan + tajuk
+        + `<div class="session-heading">Kuliah bulan ${escapeHtml(monthLabel)}</div>`
+        + scheduleHtml;
+}
+
+function openProfile(id) {
+    const p = penceramahById[id];
+    if (!p) return;
+    document.getElementById('profile-lightbox-card').innerHTML =
+        buildPopupHtml(p, findSessions(p.full_name), monthsData !== null);
+    document.getElementById('profile-lightbox').hidden = false;
+}
+
+function closeProfile() {
+    document.getElementById('profile-lightbox').hidden = true;
 }
 
 async function initPenceramah() {
@@ -72,9 +156,34 @@ async function initPenceramah() {
 
     statusEl.style.display = 'none';
     listEl.innerHTML = visible.map(buildCard).join('');
+    penceramahById = Object.fromEntries(visible.map(p => [p.id, p]));
     if (updateEl && data.tarikhKemasKini) {
         updateEl.textContent = `Dikemaskini: ${data.tarikhKemasKini} · ${visible.length} penceramah`;
     }
+
+    // Schedule JSON is optional — the popup degrades to photo + details
+    // when it is missing or unreachable.
+    try {
+        const schedRes = await fetch(`/kuliah/data/jadual_lengkap_v2.json?v=${new Date().getTime()}`);
+        if (!schedRes.ok) throw new Error(`HTTP ${schedRes.status}`);
+        const schedData = await schedRes.json();
+        monthsData = schedData && typeof schedData.months === 'object' ? schedData.months : {};
+    } catch (e) {
+        monthsData = null;
+    }
 }
+
+document.getElementById('penceramah-list').addEventListener('click', e => {
+    const card = e.target.closest('.penceramah-card');
+    if (card && card.dataset.id) openProfile(card.dataset.id);
+});
+
+document.getElementById('profile-lightbox').addEventListener('click', e => {
+    if (e.target === document.getElementById('profile-lightbox')) closeProfile();
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeProfile();
+});
 
 initPenceramah();

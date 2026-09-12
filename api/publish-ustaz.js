@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
 
     // ── 2. Fetch ustaz registry ─────────────────────────────────────────
     const ustazRes = await fetch(
-        `${supabaseUrl}/rest/v1/ustaz?select=id,full_name,short_name,jawatan,tajuk_kuliah,profile_url&order=short_name`,
+        `${supabaseUrl}/rest/v1/ustaz?select=id,full_name,short_name,jawatan,tajuk_kuliah,profile_url,is_public&order=short_name`,
         {
             headers: {
                 'apikey':        serviceKey,
@@ -54,9 +54,13 @@ module.exports = async function handler(req, res) {
     const ustazList = await ustazRes.json();
 
     // Numeric-aware sort in JS (Postgres orders lexicographically — "10" < "2").
-    const sorted = (Array.isArray(ustazList) ? ustazList : []).sort((a, b) =>
-        String(a.short_name || '').localeCompare(String(b.short_name || ''), undefined, { numeric: true, sensitivity: 'base' })
-    );
+    // Rows with is_public === false are excluded here, so they never reach
+    // the public JSON at all (NULL counts as public — pre-flag rows stay visible).
+    const sorted = (Array.isArray(ustazList) ? ustazList : [])
+        .filter(u => u.is_public !== false)
+        .sort((a, b) =>
+            String(a.short_name || '').localeCompare(String(b.short_name || ''), undefined, { numeric: true, sensitivity: 'base' })
+        );
 
     const penceramah = sorted.map(u => ({
         id:           u.id,
