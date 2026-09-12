@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info Kuliah — Masjid Al-Mukhlisin</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+        .page { width: 100%; max-width: 560px; text-align: center; }
+        .logo-container img { max-width: 120px; height: auto; }
+        h1 { font-size: 1.25rem; margin: 1rem 0 0.25rem; }
+        .subtitle { color: #64748b; font-size: 0.95rem; margin-bottom: 2rem; }
+        .menu { display: grid; gap: 0.75rem; }
+        .menu a {
+            display: block;
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #1e293b;
+        }
+        .menu a.primary {
+            background: #166534;
+            border-color: #166534;
+            color: #ffffff;
+        }
+        .menu a:hover { filter: brightness(0.96); }
+        .menu small { display: block; font-weight: 400; font-size: 0.8rem; opacity: 0.75; margin-top: 0.25rem; }
+        .section-label {
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin: 1.5rem 0 0.5rem;
+        }
+        footer { margin-top: 2.5rem; font-size: 0.8rem; color: #94a3b8; }
+        footer a { color: #94a3b8; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="logo-container">
+            <img src="https://multimedia.mamtj6.com/media/logo/mamtj6-black.webp" alt="Logo Masjid Al-Mukhlisin">
+        </div>
+        <h1>Info Kuliah Maghrib &amp; Subuh</h1>
+        <p class="subtitle">Masjid Al-Mukhlisin Taman Jaya 6</p>
+
+        <p class="section-label">Bulan Ini</p>
+        <div class="menu">
+            <a class="primary" href="/kuliah/jadual/" id="view-current">Lihat Jadual Bulan Ini</a>
+            <a href="/kuliah/jadual/?file=pdf" target="_blank" rel="noopener">Cetak / PDF<small>Buka paparan cetakan</small></a>
+        </div>
+
+        <p class="section-label">Bulan Depan</p>
+        <div class="menu">
+            <a class="primary" href="/kuliah/jadual/?bulan=depan" id="view-next">Lihat Jadual Bulan Depan</a>
+            <a href="/kuliah/jadual/?file=pdf&amp;bulan=depan" target="_blank" rel="noopener">Cetak / PDF<small>Buka paparan cetakan</small></a>
+        </div>
+
+        <footer>
+            <a href="/admin/">AJK</a>
+        </footer>
+    </div>
+    <script>
+        (function () {
+            var BULAN = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
+                         'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+            var now = new Date();
+            var next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            var cur = document.getElementById('view-current');
+            var nxt = document.getElementById('view-next');
+            if (cur) cur.textContent = 'Lihat Jadual (' + BULAN[now.getMonth()] + ' ' + now.getFullYear() + ')';
+            if (nxt) nxt.textContent = 'Lihat Jadual (' + BULAN[next.getMonth()] + ' ' + next.getFullYear() + ')';
+        })();
+    </script>
+</body>
+</html>
