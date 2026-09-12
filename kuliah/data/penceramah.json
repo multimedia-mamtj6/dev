@@ -1,0 +1,174 @@
+{
+  "tarikhKemasKini": "12/9/2026",
+  "count": 24,
+  "penceramah": [
+    {
+      "id": "c55681d6-b27d-4eeb-be36-2a0961499a8a",
+      "full_name": "Bacaan Yasiin & Tahlil",
+      "jawatan": null,
+      "tajuk_kuliah": null,
+      "profile_url": null
+    },
+    {
+      "id": "63d854a4-ca0e-400d-b6ab-dbe1d2d7d5f7",
+      "full_name": "Bacaan Yasin",
+      "jawatan": null,
+      "tajuk_kuliah": "Bacaan Yasin dan Doa Selamat sempena Hari Kebangsaan ke-69",
+      "profile_url": null
+    },
+    {
+      "id": "4e9e65fa-e1fb-4096-964f-9f45d7c6f1ca",
+      "full_name": "Ustaz Ahmad Termizi",
+      "jawatan": null,
+      "tajuk_kuliah": "Sesi Tajwid & Talaqqi Al-Quran",
+      "profile_url": null
+    },
+    {
+      "id": "923dc5c1-cfec-4462-b5a2-81c66a29b729",
+      "full_name": "Ustaz Hisyamuddin",
+      "jawatan": null,
+      "tajuk_kuliah": "Nasihat Agama dan Wasiat Iman",
+      "profile_url": null
+    },
+    {
+      "id": "8ba9960c-dcfb-4fcf-98e3-8256767a719f",
+      "full_name": "Ustaz Shahruwardi",
+      "jawatan": null,
+      "tajuk_kuliah": "Tuhfah Ar-Raghibin",
+      "profile_url": null
+    },
+    {
+      "id": "a7a93e2b-d99f-4598-8e80-2b097f673128",
+      "full_name": "Ustaz Abdul Aziz",
+      "jawatan": null,
+      "tajuk_kuliah": "Terjemahan Al-Azkar Imam An-Nawawi",
+      "profile_url": null
+    },
+    {
+      "id": "e6ba434f-0aef-4dc6-969d-cd828ad259e5",
+      "full_name": "Ustaz Anuar Suhaimi",
+      "jawatan": null,
+      "tajuk_kuliah": "132 Langkah Penyucian Jiwa",
+      "profile_url": null
+    },
+    {
+      "id": "f0adc05e-b60b-43ba-9663-e5d9293cffd5",
+      "full_name": "Ustaz Hairul Azam",
+      "jawatan": null,
+      "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Baqarah",
+      "profile_url": null
+    },
+    {
+      "id": "2fbaf769-6753-4422-90f2-1a762266929f",
+      "full_name": "Ustaz Mohd Fikri",
+      "jawatan": null,
+      "tajuk_kuliah": "Pedoman Sembahyang Berjemaah",
+      "profile_url": null
+    },
+    {
+      "id": "69e8acfa-49ad-4963-aa70-8b6dbc9edc51",
+      "full_name": "Ustaz Mohd Firdaus Azmy",
+      "jawatan": null,
+      "tajuk_kuliah": "Tadabbur ayat-ayat Surah Al-Anfal",
+      "profile_url": null
+    },
+    {
+      "id": "88942395-2070-4c8c-bce9-bd87e66a9bdf",
+      "full_name": "Ustaz Muhammad Nazri",
+      "jawatan": null,
+      "tajuk_kuliah": "Penghayatan Al-Quran",
+      "profile_url": null
+    },
+    {
+      "id": "8d00f282-16b1-462e-b18b-f695c2722198",
+      "full_name": "Ustaz Muhammad Fathmi",
+      "jawatan": null,
+      "tajuk_kuliah": "Syarah Hadis 40 Imam Nawawi",
+      "profile_url": null
+    },
+    {
+      "id": "77cf48fb-0933-45dc-8af0-cecdbcadb319",
+      "full_name": "Ustaz Nazir",
+      "jawatan": null,
+      "tajuk_kuliah": "Mukhtasar Tanbih Al-Ghafilin",
+      "profile_url": null
+    },
+    {
+      "id": "6d7b09bb-6b6b-46b2-a344-1399f60e36af",
+      "full_name": "Ustaz Wahid",
+      "jawatan": null,
+      "tajuk_kuliah": "Umum & Semasa",
+      "profile_url": null
+    },
+    {
+      "id": "409cdbfc-dd79-42e9-bf1c-8280e56e4a9c",
+      "full_name": "Ustaz Abd Maarof",
+      "jawatan": null,
+      "tajuk_kuliah": "Penawar Hati",
+      "profile_url": null
+    },
+    {
+      "id": "7ff4649a-ed32-4105-bab3-1311a2d5d418",
+      "full_name": "Ustaz Badrul Hisham",
+      "jawatan": null,
+      "tajuk_kuliah": "Ziarah Ke Alam Barzakh",
+      "profile_url": null
+    },
+    {
+      "id": "402e8ec6-1642-43cf-8e4a-b2cb8f6f9f98",
+      "full_name": "Ustaz Nawawi",
+      "jawatan": null,
+      "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
+      "profile_url": null
+    },
+    {
+      "id": "5e9b76b7-db85-4efb-89cd-d6417d4b8b6c",
+      "full_name": "Ustaz Amir",
+      "jawatan": null,
+      "tajuk_kuliah": "a. Kitab Fekah : Syarah Safinah An-Naja; b. Kitab Tasawuf",
+      "profile_url": null
+    },
+    {
+      "id": "6f84c3b5-fc42-4745-a7e5-1ca9592a0bd1",
+      "full_name": "YAA Dato' Sri Haji Abdul Rahman",
+      "jawatan": null,
+      "tajuk_kuliah": "Fekah Kesihatan Dalam Ibadah Dan Sunnah Nabi",
+      "profile_url": null
+    },
+    {
+      "id": "a123268c-a6e8-4cb7-a0c7-7c5af09c4534",
+      "full_name": "Tuan Haji Hazarudin",
+      "jawatan": null,
+      "tajuk_kuliah": "Terjemahan Inti Sari Matan Al-Zubad",
+      "profile_url": null
+    },
+    {
+      "id": "9c32354e-caee-461a-91d6-7209addcb636",
+      "full_name": "Sdr Ahmad Syafiq Muhaimin",
+      "jawatan": null,
+      "tajuk_kuliah": "Syamail Muhammadiah",
+      "profile_url": null
+    },
+    {
+      "id": "a3446d8d-95a7-4cd5-87b2-9f89444174bb",
+      "full_name": "Pegawai Pusat Zakat Pahang",
+      "jawatan": null,
+      "tajuk_kuliah": "Kuliah Sempena Majlis Penangguhan Bulan Zakat dan Wakaf Negeri Pahang",
+      "profile_url": null
+    },
+    {
+      "id": "30f0e869-7eee-4b05-96d5-3d8485b2aeac",
+      "full_name": "Ustaz Wahid Ghaffar",
+      "jawatan": null,
+      "tajuk_kuliah": "Kuliah Khas Maulidur Rasul",
+      "profile_url": null
+    },
+    {
+      "id": "3c791a3d-f25c-484e-af3c-811791faa4dc",
+      "full_name": "Pegawai masjid",
+      "jawatan": null,
+      "tajuk_kuliah": "Tazkirah Terawih",
+      "profile_url": null
+    }
+  ]
+}
