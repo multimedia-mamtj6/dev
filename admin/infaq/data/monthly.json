@@ -3,7 +3,7 @@
     "kutipan": {
       "bulanIni": {
         "bulan": "SEP",
-        "jumlah": 1679
+        "jumlah": 3049
       },
       "bulanLepas": {
         "bulan": "OGO",
@@ -11,7 +11,7 @@
       },
       "tahunIni": {
         "tahun": 2026,
-        "jumlah": 80689.8
+        "jumlah": 82059.8
       },
       "tahunLepas": {
         "tahun": 2025,
@@ -23,11 +23,11 @@
     "Tahun": 2026,
     "Bulan": "SEP",
     "Minggu1": 1679,
-    "Minggu2": 0,
+    "Minggu2": 1370,
     "Minggu3": 0,
     "Minggu4": 0,
     "Minggu5": 0,
-    "JumlahBulanan": 1679
+    "JumlahBulanan": 3049
   },
   "paparanBulanLepas": {
     "Tahun": 2026,
@@ -127,12 +127,12 @@
         7452,
         8763,
         6986,
-        1679,
+        3049,
         0,
         0,
         0
       ]
     }
   },
-  "tarikhKemaskini": "2026-09-07T04:00:52.954Z"
+  "tarikhKemaskini": "2026-09-12T04:18:28.026Z"
 }
