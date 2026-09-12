@@ -48,6 +48,23 @@ Drives a physical screen at the mosque. Reads the same published JSON as `jadual
 ```
 The old per-page URLs (`today_subuh.html` etc.) still work — they're zero-JS redirect stubs to the query form above, kept for any screen already configured with the old URL.
 
+### `penceramah/` — Public Penceramah Directory
+
+Card-grid directory of the ustaz registry (photo, name, jawatan, topic per card), built 2026-09-12 for embedding in Google Sites. Reads `kuliah/data/penceramah.json` (published by `POST /api/publish-ustaz`, separate file — never merged into the schedule JSON).
+
+**Access:**
+```
+/kuliah/penceramah/                 ← Full list view
+/kuliah/penceramah/?embed=1         ← Chromeless embed mode (no header/footer,
+                                      transparent background) for Sites iframe
+```
+
+**Features:**
+- 3-per-row grid on desktop, 2-per-row on mobile (≤768px)
+- Card click opens a profile popup: big photo, details, and that ustaz's sessions this month (resolved live from `jadual_lengkap_v2.json` by exact name match)
+- Yasin entries excluded; alphabetical by name; `is_public = false` rows never published (filtered server-side)
+- Linked from the `kuliah/index.html` hub ("Senarai Penceramah")
+
 ---
 
 ## Tech stack
@@ -66,7 +83,9 @@ See `admin/developer.md` for the admin dashboard's setup/file map/architecture.
 ```bash
 python -m http.server
 # Open http://localhost:8000/kuliah/jadual/index.html
+# Open http://localhost:8000/kuliah/penceramah/ (reads the committed penceramah.json)
 ```
+Note: `/api/*` publish endpoints don't exist under this local method — Terbitkan buttons will 404 locally (expected).
 
 ---
 
@@ -79,4 +98,11 @@ Admin dashboard → Supabase (live edit)
                → Terbitkan → api/publish.js
                → kuliah/data/jadual_lengkap_v2.json on GitHub
                → served by Vercel
+
+Admin ustaz edits → Supabase `ustaz` table
+               → Terbitkan Penceramah → api/publish-ustaz.js (drops
+                 is_public = false rows server-side; Yasin rows ship in
+                 the file but are excluded client-side by the page)
+               → kuliah/data/penceramah.json on GitHub
+               → read by kuliah/penceramah/
 ```

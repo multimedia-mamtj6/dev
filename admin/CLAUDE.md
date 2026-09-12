@@ -212,6 +212,10 @@ id uuid PK, full_name text NOT NULL, short_name text NOT NULL,
 tajuk_kuliah text, poster_url text,
 square_url text,  -- square-ratio poster variant, any resolution (added 2026-07-29,
                    -- no live consumer yet — see Key Patterns below)
+jawatan text, profile_url text,  -- public-directory fields (added 2026-09-12 —
+                   -- mugshot portrait, kuliah-assets/profiles/; read by kuliah/penceramah/)
+is_public boolean DEFAULT true,  -- false rows dropped server-side by api/publish-ustaz.js
+                   -- (added 2026-09-12; NULL counts as public)
 created_at timestamptz, updated_at timestamptz
 
 -- schedule: one row per date
@@ -357,6 +361,18 @@ kuliah: Admin edits day in admin/kuliah/jadual.html
   → builds jadual_lengkap_v2.json
   → pushes to GitHub via API (GITHUB_TOKEN env var)
   → Vercel serves updated JSON
+
+penceramah: Admin edits a row in admin/kuliah/ustaz.html (added 2026-09-12 —
+  jawatan/profile_url/is_public alongside the existing poster fields)
+  → insert/update directly on Supabase `ustaz`
+  → click Terbitkan Penceramah
+  → POST /api/publish-ustaz (Bearer: session token, no params — whole registry)
+  → api/publish-ustaz.js reads ustaz (service role), drops is_public = false
+    rows (NULL counts as public), sorts short_name numeric-aware in JS
+  → pushes kuliah/data/penceramah.json (skips the commit if byte-identical)
+  → read by kuliah/penceramah/ (list + ?embed=1 + profile popup, which ALSO
+    reads jadual_lengkap_v2.json itself for this-month sessions — the popup's
+    schedule lookup is client-side, not part of this publish)
 
 infaq: Admin logs a week's total in admin/infaq/kutipan.html, a month's
   total in perbelanjaan.html, or an individual project donation in

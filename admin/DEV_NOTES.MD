@@ -188,6 +188,15 @@ Admin edits schedule in admin/kuliah/jadual.html
 
 ## SESSION HISTORY
 
+### Session 20 (2026-09-12 — penceramah public pipeline: `jawatan`+mugshot ustaz fields, `api/publish-ustaz` → `penceramah.json`, shared modal-scroll fix, `is_public` exclusion; public page itself lives under `kuliah/`)
+
+The user opened wanting two new ustaz fields (mugshot + jawatan), having already run the `ALTER TABLE` themselves first — same standing convention as every schema change here (session 16's `square_url` went exactly this way). Built in the established parallel-3-way pattern: `ustaz.html` modal groups + `ustaz.js` (`pendingRemoveProfile`, `profiles/` Storage prefix, own diff line, deliberately not refactored into a shared helper — same reasoning as `square_url`'s entry in CRITICAL PATTERNS), `setup.sql` migration lines. Mid-build the mugshot groups moved from the poster column to under the Jawatan field on a one-line user ask — pure markup move, IDs unchanged, zero JS impact (a good reminder that `getElementById`-wired modals tolerate layout reshuffles for free). Then, new this session rather than inherited: a **separate publish chain** — `api/publish-ustaz.js` (POST + Supabase-JWT auth, same shape as `api/publish.js`) writing `kuliah/data/penceramah.json` (`{ tarikhKemasKini, count, penceramah: [{ id, full_name, jawatan, tajuk_kuliah, profile_url }] }`), with its own Terbitkan button + last-published note on `ustaz.html` (`activity_log` action `publish_ustaz`). Deliberately NOT folded into the month publish — the directory is month-independent, and merging it into `jadual_lengkap_v2.json` would couple two lifecycles with nothing in common. The public consumer (`kuliah/penceramah/`, embed mode, profile popup) is documented in `kuliah/DEV_NOTES.MD` Session 4, not here. Two smaller items same session: (1) **shared modal-scroll fix** — base `.modal` in `admin/style.css` gained `max-height: calc(100vh - 2rem)` + `overflow-y: auto` (previously only the ≤640px phone query scrolled, so the lengthened ustaz form pushed its footer off-screen on desktop) — global by user choice over a ustaz-scoped fix, so every module's popup scrolls now; (2) **`is_public` exclusion flag** (`BOOLEAN NOT NULL DEFAULT true`, checkbox "Papar dalam senarai awam", filtered server-side at publish with NULL counting as public so pre-flag rows stay visible) after a yes/no feasibility round. User ran both `ALTER TABLE`s live ("ok done").
+
+**Bugs found & lessons for the next self:**
+- **`if (-not $?)` after `Test-Path` doesn't guard anything** — `$?` is command-success, not the boolean output, so the `New-Item` fallback never ran. Capture to a variable first.
+- **Keep PowerShell and `node -e` in separate calls** — PS syntax inside a `-e` string made Node throw on `Get-Content`; JSON validation belongs to `ConvertFrom-Json`.
+- **This box has no `rg`** — use the file-search tooling, and remember its regex has no lookahead (negated classes instead).
+
 ### Session 19 (2026-09-07 — per-project infaq publishing: a `project` publish target that writes each project's own sanitized, human-readable JSON, replacing the old "daily publish only for the active project" model — with an inherited-data gotcha and an orphaned-manual-file discovery along the way)
 
 The user asked why `admin/infaq/data/projek-baharu.json` wasn't updating when they clicked Terbitkan on a project's `projek-kutipan.html` page. What should have been a small moment turned into the day's whole feature, because the honest answer to the opening question surfaced two genuine facts about the existing system: **(1) `projek-baharu.json` doesn't exist anywhere in the code** — it's a lone orphaned manual file in `admin/infaq/data/`, not a publish target, never written by `api/publish-infaq.js` (I grepped the whole repo to confirm; it was likely hand-created by the user at some earlier point as a draft), and **(2) the Terbitkan button on a project's page wasn't actually publishing THAT project at all** — it was the `daily` target, and `daily.json` always reflects **whichever ONE project is currently active**, so clicking it from any non-active project's page silently publishes a *different* project's data. That's the actual bug the user was bumping into. Three `AskUserQuestion` rounds settled scope: a desired filename convention changed from just-project-UUID to **name-slug + UUID suffix** (option 1) plus a request for **sanitization** of the name, and the button should show for **ALL** projects, active or completed, not just the active one. The old `daily.target` semantic was kept intact (session's note: `daily`/`monthly`/`perbelanjaan` all still publish as before — the active-project-only `daily` behaviour was deliberately NOT removed, I asked and the user chose "keep the daily target working (Recommended)").
@@ -431,7 +440,9 @@ permissions jsonb ({kuliah: bool}), created_at timestamptz
 
 -- ustaz
 id uuid PK, full_name text, short_name text, tajuk_kuliah text,
-poster_url text, created_at timestamptz, updated_at timestamptz
+poster_url text, square_url text (session 16), jawatan text,
+profile_url text, is_public boolean DEFAULT true (all three session 20),
+created_at timestamptz, updated_at timestamptz
 
 -- schedule
 id uuid PK, date date UNIQUE, subuh_ustaz_id uuid FK→ustaz,

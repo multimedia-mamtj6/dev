@@ -18,10 +18,16 @@ file gets written).
 
 ```
 kuliah/
+  index.html         ← Hub/landing menu (month links + Senarai Penceramah link)
   jadual/
     index.html       ← Public schedule view
     script.js        ← Schedule rendering
     style.css        ← Public view styles
+  penceramah/        ← Public penceramah directory (added 2026-09-12, see
+                        "Penceramah directory" Key Pattern below)
+    index.html       ← Card-grid list view
+    script.js        ← List rendering + profile-popup logic
+    style.css        ← Grid/card/popup styles
   paparan/
     index.html       ← Digital signage entry point, routed by ?subuh/?maghrib/?subuh-esok/?maghrib-esok
     script.js        ← Shared display logic + bootstrapPaparan() query router
@@ -31,6 +37,8 @@ kuliah/
                      ← Zero-JS meta-refresh redirect stubs → index.html?<query> (old URLs, kept for already-configured screens)
   admin/             ← 5 zero-JS meta-refresh redirect stubs → /admin/... (old URLs, see admin/CLAUDE.md)
   data/jadual_lengkap_v2.json ← Published schedule data (read-only from here — see admin/CLAUDE.md's Data Flow)
+  data/penceramah.json ← Published penceramah directory (read-only from here —
+                        written by POST /api/publish-ustaz, read by penceramah/)
   DEV_NOTES.MD       ← Session memo for kuliah/jadual/ and kuliah/paparan/ specifically (added 2026-07-26;
                         admin/DEV_NOTES.MD remains the memo for the admin CMS side, sessions 8-10 there
                         also touched this folder before this file existed — see this file's own notes for the pointer)
@@ -45,7 +53,7 @@ kuliah/
 - `≤768px` — tablet compact
 - `≤640px` — phone: hamburger nav, card-per-row tables, day list calendar
 
-**Cache-busting:** `vercel.json` serves `Cache-Control: no-store` for `/kuliah/jadual/(.*)` (and `/admin/(.*)`, see `admin/CLAUDE.md`). `no-store` (not `max-age=0, must-revalidate`) is required — `must-revalidate` still lets mobile Chrome serve the page from bfcache with zero network request, so a stale copy with old JS can resurface after backgrounding the app. `no-store` disables bfcache for these routes.
+**Cache-busting:** `vercel.json` serves `Cache-Control: no-store` for `/kuliah/jadual/(.*)` and `/kuliah/penceramah/(.*)` (and `/admin/(.*)`, see `admin/CLAUDE.md`). `no-store` (not `max-age=0, must-revalidate`) is required — `must-revalidate` still lets mobile Chrome serve the page from bfcache with zero network request, so a stale copy with old JS can resurface after backgrounding the app. `no-store` disables bfcache for these routes.
 
 ## Print/PDF Export (kuliah/jadual/)
 
@@ -96,6 +104,18 @@ The bottom legend (`index.html`'s static `.legend` block) gained a 4th box, `#kh
 
 **Admin calendar also highlights Khas days (added later, `admin/kuliah/jadual.js`):** `renderCalendar()`/`renderMobileDayList()` append a `khas`/`mdc-khas` class onto the existing session-tag classes (`session-tag subuh khas`, `mdc-s mdc-khas`, etc. — stacks with pending/yasin, doesn't replace them) whenever `row.subuh_khas`/`row.maghrib_khas` is true, styled purple (`#f3e8ff`/`#6b21a8`, matching the public page's palette) in `admin/style.css`. `kuliah/paparan/` (digital signage) still doesn't read the `khas` flag at all — its pending message is still the original "Ceramah Khas — Akan Diumumkan" wording, untouched.
 
+## Penceramah directory (added 2026-09-12)
+
+`kuliah/penceramah/` is a public card-grid directory of the ustaz registry — photo, name, jawatan, topic per card — built to be embedded in Google Sites. It reads `kuliah/data/penceramah.json` (`{ tarikhKemasKini, count, penceramah: [{ id, full_name, jawatan, tajuk_kuliah, profile_url }] }`, written by POST `/api/publish-ustaz`, never merged into `jadual_lengkap_v2.json`), with `?v=` cache-busting and a Malay empty-state when the file is missing (the file has to be published at least once — a fresh checkout 404s the fetch, not the page).
+
+Three deliberate divergences from the admin side: (1) **Yasin is excluded here, not special-cased** — the same `/yasi+n/i` rule as `admin/app.js`'s `isYasinEntry()`, copied locally since this page must never load admin JS; note the live table holds TWO such rows ("Bacaan Yasin" and "Bacaan Yasiin & Tahlil"), the regex covers both. (2) **Sort is alphabetical by `full_name`**, not the admin's numeric `short_name` order — visitors expect A–Z, admins expect roster numbers; don't "unify" them. (3) **`is_public === false` rows never arrive at all** — exclusion is filtered server-side in `api/publish-ustaz.js` (`NULL` counts as public), so there is nothing to hide client-side and nothing in the raw JSON to leak.
+
+**Embed mode (`?embed=1`)** adds a `body.embed` class hiding header/footer with a transparent background (same precedent as `calendar/hijri/widgets/`), for Sites' fixed-height iframe — suggested height 800–1000px, the list scrolls internally beyond that. Canonical param is `embed`; an earlier `?penceramah=embeded` idea was rejected (typo'd name, flag-vs-value inconsistency).
+
+**Profile popup:** card click (delegated listener on `#penceramah-list`, cards carry `data-id`) opens `#profile-lightbox` — big photo + details + "Kuliah bulan {Month YYYY}" resolved live from `jadual_lengkap_v2.json`'s real-current-month `senaraiHari` by exact `nama_penceramah === full_name` match (both files source the name from the same `ustaz` table, so exact equality holds; pending slots carry no name and match nobody). The schedule fetch is optional — failure degrades to photo + details with a "jadual tidak tersedia" note, never a broken popup. Closes on ×/backdrop/Esc. Includes the mandatory `.profile-lightbox[hidden] { display: none; }` rule (author-origin `display: flex` would otherwise beat the UA `[hidden]` rule — same trap as `kuliah/jadual/`'s poster lightbox).
+
+**Grid:** 3 columns desktop, 2 at `≤768px` (`@media screen and`, per the print-safety rule above) — shape came from a user wireframe, keep it.
+
 ## Sensitive Files
 
-No secrets live under `kuliah/jadual/` or `kuliah/paparan/` — see `admin/CLAUDE.md`'s Sensitive Files section for the admin/API credentials model.
+No secrets live under `kuliah/jadual/`, `kuliah/penceramah/`, or `kuliah/paparan/` — see `admin/CLAUDE.md`'s Sensitive Files section for the admin/API credentials model.

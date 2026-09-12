@@ -160,9 +160,15 @@ id           UUID PK
 short_name   TEXT UNIQUE NOT NULL   -- shown everywhere in the UI (dropdowns, pills, log)
 full_name    TEXT NOT NULL          -- used in published JSON, formal contexts
 tajuk_kuliah TEXT                   -- lecture topic, optional
+jawatan      TEXT                   -- role/title shown on the public directory, optional (added 2026-09-12)
 poster_url   TEXT                   -- Supabase Storage public URL, optional (landscape, ~1920x1080 convention)
 square_url   TEXT                   -- square-ratio poster variant, any resolution, optional (added
                                      -- 2026-07-29 — no live consumer yet, same upload-or-URL pattern)
+profile_url  TEXT                   -- mugshot portrait, optional (added 2026-09-12, `profiles/` prefix,
+                                     -- shown on kuliah/penceramah/)
+is_public    BOOLEAN NOT NULL DEFAULT true  -- show in the public directory (added 2026-09-12;
+                                     -- false rows are dropped server-side by api/publish-ustaz.js,
+                                     -- NULL (pre-flag rows) counts as public)
 created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
@@ -170,8 +176,8 @@ updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 - `short_name` is `UNIQUE` — this is what breaks if you try to add two ustaz with the same short name (see [Troubleshooting](#4-troubleshooting)).
 - Sort order is **never** done via Supabase `.order('short_name')` — Postgres sorts that lexicographically (`"Ustaz 10"` before `"Ustaz 2"`), not numerically. Every page that lists ustaz sorts client-side with `localeCompare({ numeric: true })` instead. Don't add `.order()` back.
 - Deleting a row is blocked in the UI (`ustaz.js`'s `confirmDelete()`) if the ustaz is still referenced in any `schedule` row — but nothing stops that check being bypassed by direct SQL, so the FK's `ON DELETE SET NULL` (below) is the real safety net.
-- Poster files uploaded to Storage are **not** cleaned up when a poster is replaced or removed — old files are simply orphaned in the `kuliah-assets` bucket. Known gap, see [Maintenance](#3-maintenance). Applies equally to `square_url` files (`posters-square/` prefix, same bucket).
-- `square_url` is independent of `poster_url` — either, both, or neither can be set. `ustaz.js`'s save logic for it is a parallel copy of `poster_url`'s 3-way (remove/new-value/unchanged), not shared code — see `admin/CLAUDE.md` Key Patterns.
+- Poster files uploaded to Storage are **not** cleaned up when a poster is replaced or removed — old files are simply orphaned in the `kuliah-assets` bucket. Known gap, see [Maintenance](#3-maintenance). Applies equally to `square_url` files (`posters-square/` prefix, same bucket) and `profile_url` mugshots (`profiles/` prefix, same bucket).
+- `square_url` is independent of `poster_url` — either, both, or neither can be set. `ustaz.js`'s save logic for it is a parallel copy of `poster_url`'s 3-way (remove/new-value/unchanged), not shared code — see `admin/CLAUDE.md` Key Patterns. `profile_url` (mugshot, added 2026-09-12) follows the exact same parallel-3-way pattern for the same reason.
 
 ### `schedule`
 
