@@ -1,21 +1,7 @@
 {
   "tarikhKemasKini": "12/9/2026",
-  "count": 24,
+  "count": 19,
   "penceramah": [
-    {
-      "id": "c55681d6-b27d-4eeb-be36-2a0961499a8a",
-      "full_name": "Bacaan Yasiin & Tahlil",
-      "jawatan": null,
-      "tajuk_kuliah": null,
-      "profile_url": null
-    },
-    {
-      "id": "63d854a4-ca0e-400d-b6ab-dbe1d2d7d5f7",
-      "full_name": "Bacaan Yasin",
-      "jawatan": null,
-      "tajuk_kuliah": "Bacaan Yasin dan Doa Selamat sempena Hari Kebangsaan ke-69",
-      "profile_url": null
-    },
     {
       "id": "4e9e65fa-e1fb-4096-964f-9f45d7c6f1ca",
       "full_name": "Ustaz Ahmad Termizi",
@@ -147,27 +133,6 @@
       "full_name": "Sdr Ahmad Syafiq Muhaimin",
       "jawatan": null,
       "tajuk_kuliah": "Syamail Muhammadiah",
-      "profile_url": null
-    },
-    {
-      "id": "a3446d8d-95a7-4cd5-87b2-9f89444174bb",
-      "full_name": "Pegawai Pusat Zakat Pahang",
-      "jawatan": null,
-      "tajuk_kuliah": "Kuliah Sempena Majlis Penangguhan Bulan Zakat dan Wakaf Negeri Pahang",
-      "profile_url": null
-    },
-    {
-      "id": "30f0e869-7eee-4b05-96d5-3d8485b2aeac",
-      "full_name": "Ustaz Wahid Ghaffar",
-      "jawatan": null,
-      "tajuk_kuliah": "Kuliah Khas Maulidur Rasul",
-      "profile_url": null
-    },
-    {
-      "id": "3c791a3d-f25c-484e-af3c-811791faa4dc",
-      "full_name": "Pegawai masjid",
-      "jawatan": null,
-      "tajuk_kuliah": "Tazkirah Terawih",
       "profile_url": null
     }
   ]
