@@ -30,8 +30,12 @@
   <div class="page">
     <div class="section-header">
       <h1 class="section-title">Senarai Penceramah</h1>
-      <button class="btn btn-primary" id="add-ustaz-btn" onclick="openAddModal()">+ Tambah Penceramah</button>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-ghost" id="publish-ustaz-btn" onclick="publishUstaz()">Terbitkan Penceramah</button>
+        <button class="btn btn-primary" id="add-ustaz-btn" onclick="openAddModal()">+ Tambah Penceramah</button>
+      </div>
     </div>
+    <p id="last-published-ustaz-note" style="font-size:0.8125rem;color:var(--text-muted);margin:-0.5rem 0 1rem"></p>
 
     <div class="card">
       <table class="data-table">
@@ -39,15 +43,17 @@
           <tr>
             <th style="width:36px">#</th>
             <th style="width:60px">Poster</th>
+            <th style="width:60px">Mugshot</th>
             <th>Nama Penuh</th>
             <th>Nama Ringkas</th>
+            <th>Jawatan</th>
             <th>Tajuk Kuliah</th>
             <th style="width:120px">Tindakan</th>
           </tr>
         </thead>
         <tbody id="ustaz-tbody">
           <tr>
-            <td colspan="6" class="state-cell">Memuatkan...</td>
+            <td colspan="8" class="state-cell">Memuatkan...</td>
           </tr>
         </tbody>
       </table>
@@ -82,6 +88,10 @@
             <label for="edit-topic">Tajuk Kuliah <span style="font-weight:400;color:var(--text-muted)">(digunakan
                 dalam jadual, boleh diubah kemudian)</span></label>
             <input type="text" id="edit-topic" placeholder="Cth: Tadabbur Surah Al-Baqarah">
+          </div>
+          <div class="form-group">
+            <label for="edit-jawatan">Jawatan</label>
+            <input type="text" id="edit-jawatan" placeholder="Cth: Imam, Pengerusi Biro Dakwah">
           </div>
         </div>
 
@@ -126,6 +136,27 @@
           <div class="form-group">
             <label>Atau Gunakan URL Gambar Segi Empat Sama</label>
             <input type="url" id="edit-poster-square-url" placeholder="https://contoh.com/gambar-segi-empat.jpg">
+          </div>
+
+          <div class="form-group" id="profile-current-group" style="display:none">
+            <label>Mugshot Semasa</label>
+            <img id="profile-current-img" src="" alt="Mugshot semasa" class="poster-modal-preview">
+            <p id="profile-current-url"
+              style="font-size:0.7rem;color:var(--text-muted);word-break:break-all;margin-top:0.375rem"></p>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeProfile()" style="margin-top:0.5rem">Buang
+              Mugshot</button>
+          </div>
+
+          <div class="form-group">
+            <label>Muat Naik Mugshot Baru <span
+                style="font-weight:400;color:var(--text-muted)">(potret, sebarang resolusi)</span></label>
+            <input type="file" id="edit-profile" accept="image/jpeg,image/png,image/webp">
+            <div id="profile-preview" style="margin-top:0.5rem"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Atau Gunakan URL Mugshot</label>
+            <input type="url" id="edit-profile-url" placeholder="https://contoh.com/mugshot.jpg">
           </div>
         </div>
       </div>
