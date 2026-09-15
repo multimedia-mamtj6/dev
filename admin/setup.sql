@@ -891,3 +891,132 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON staff_activity_log TO authenticated;
 -- (a missing "staff" key reads false everywhere it's checked), same
 -- migration shape as every prior module addition.
 ALTER TABLE admins ALTER COLUMN permissions SET DEFAULT '{"kuliah": true, "infaq": false, "news": false, "staff": false}'::jsonb;
+
+
+-- ── 12. Khutbah module ────────────────────────────────────────────────────
+-- Mimbar Jumaat weekly sermon display (khutbah/paparan-tajuk.html), retiring
+-- the Google Sheet → Apps Script → CSV pipeline
+-- (khutbah/google_app_script/*.gs). That pipeline's bridge was a live Sheet
+-- formula (tajuk khutbah!A2 ='link extractor'!A2) — any hand-correction of
+-- the URL replaced the formula with a plain value and silently broke
+-- automation until re-entered, and formula recalc never fires onEdit, so the
+-- cascade had to be a direct call. See khutbah/DEV_NOTES.md + khutbah/upgrade-plan.md.
+-- Not run automatically — run manually in the Supabase SQL editor, same as
+-- every section above. Written directly against the §9 write-gated model
+-- (admin_can_write()/RLS already exist by this point): a brand-new module
+-- starts gated from its first CREATE POLICY.
+--
+-- khutbah_weeks: one row per Friday (friday_date is the conflict key).
+-- Automation-first: the Mon-9am cron (api/publish-khutbah.js) upserts the
+-- row for getNextFriday(); manual_override=true locks the row — the cron
+-- writes skipped_locked and leaves values untouched until unlocked. This
+-- explicit flag replaces the old implicit formula/value distinction.
+-- scrape_status: ok | fetch_failed | parse_failed | skipped_locked.
+-- On ANY failure the published JSON keeps last-good values — an error string
+-- is recorded in scrape_error only, never published (same fail-safe rule as
+-- api/publish-news.js's khutbah resolution).
+CREATE TABLE IF NOT EXISTS khutbah_weeks (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    friday_date      DATE UNIQUE NOT NULL,
+    source_url       TEXT NOT NULL,
+    siri_text        TEXT NOT NULL,   -- MIMBAR JUMAAT SIRI {M} | {YYYY}, from the Friday's own date
+    title            TEXT,            -- scraped; null until first successful scrape
+    date_text        TEXT,            -- scraped date string from mufti page
+    main_text        TEXT,            -- sermon theme/text (manual or future scrape)
+    hijri_part       TEXT,            -- audit/debug: hijri slug segment used in the built URL
+    gregorian_part   TEXT,            -- audit/debug: gregorian slug segment used in the built URL
+    manual_override  BOOLEAN NOT NULL DEFAULT false,
+    scrape_status    TEXT,
+    scrape_error     TEXT,
+    fetched_at       TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- khutbah_settings: key/value store so alert recipients/sender aren't
+-- hardcoded into api/publish-khutbah.js. Seeded below — admin/khutbah/'s
+-- Tetapan card UPDATEs these rows in normal use, it doesn't insert new keys.
+-- alert_emails: comma-separated list ("" = no mail); last_alert_at/reason
+-- are the spam guard (transition-only + 24h throttle), written back by the
+-- publish endpoint on every alert decision.
+CREATE TABLE IF NOT EXISTS khutbah_settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO khutbah_settings (key, value) VALUES
+    ('alert_emails',      ''),
+    ('alert_from',        'noreply@mamtj6.com'),
+    ('last_alert_at',     ''),
+    ('last_alert_reason', '')
+ON CONFLICT (key) DO NOTHING;
+
+CREATE INDEX IF NOT EXISTS idx_khutbah_weeks_friday_date ON khutbah_weeks(friday_date DESC);
+
+ALTER TABLE khutbah_weeks   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE khutbah_settings ENABLE ROW LEVEL SECURITY;
+
+-- SELECT open (any authenticated admin can see khutbah data regardless of
+-- permissions.khutbah, same as every other module's data tables — see §9),
+-- writes gated on admin_can_write('khutbah').
+CREATE POLICY "auth_select_khutbah_weeks" ON khutbah_weeks FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_khutbah_weeks" ON khutbah_weeks FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('khutbah'));
+CREATE POLICY "auth_update_khutbah_weeks" ON khutbah_weeks FOR UPDATE TO authenticated
+    USING (public.admin_can_write('khutbah')) WITH CHECK (public.admin_can_write('khutbah'));
+CREATE POLICY "auth_delete_khutbah_weeks" ON khutbah_weeks FOR DELETE TO authenticated
+    USING (public.admin_can_write('khutbah'));
+
+CREATE POLICY "auth_select_khutbah_settings" ON khutbah_settings FOR SELECT TO authenticated USING (true);
+CREATE POLICY "auth_insert_khutbah_settings" ON khutbah_settings FOR INSERT TO authenticated
+    WITH CHECK (public.admin_can_write('khutbah'));
+CREATE POLICY "auth_update_khutbah_settings" ON khutbah_settings FOR UPDATE TO authenticated
+    USING (public.admin_can_write('khutbah')) WITH CHECK (public.admin_can_write('khutbah'));
+CREATE POLICY "auth_delete_khutbah_settings" ON khutbah_settings FOR DELETE TO authenticated
+    USING (public.admin_can_write('khutbah'));
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON khutbah_weeks TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON khutbah_settings TO authenticated;
+
+-- api/publish-khutbah.js reads khutbah_weeks but ALSO writes it (cron upsert
+-- of the week's row) and writes khutbah_settings.last_alert_at/reason back
+-- as the alert spam-guard cache — so service_role needs INSERT/UPDATE on
+-- both, not the SELECT-only grant a pure-read publish gets. Same documented
+-- divergence as news_settings (§10); do NOT narrow these to SELECT-only by
+-- pattern-matching against publish.js/publish-infaq.js.
+GRANT SELECT, INSERT, UPDATE ON khutbah_weeks TO service_role;
+GRANT SELECT, INSERT, UPDATE ON khutbah_settings TO service_role;
+
+-- khutbah_activity_log: verbatim copy of news_activity_log's template — its
+-- own table (independent auditability, same reasoning as infaq/news), open
+-- FOR ALL policy (logActivity() is fire-and-forget from many call
+-- sites/roles — see database.md §3 for why activity-log tables are
+-- deliberately left ungated even after §9's write-gating pass).
+CREATE TABLE IF NOT EXISTS khutbah_activity_log (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_email  TEXT NOT NULL,
+    actor_name   TEXT,
+    action       TEXT NOT NULL,   -- khutbah_auto_generate | khutbah_scrape_ok |
+                                 -- khutbah_scrape_failed | khutbah_manual_update |
+                                 -- khutbah_lock | khutbah_unlock | publish_khutbah
+    target_label TEXT,            -- friday_date (YYYY-MM-DD), plain-text snapshot, never a FK
+    detail       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_khutbah_activity_log_created_at ON khutbah_activity_log(created_at DESC);
+
+ALTER TABLE khutbah_activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all_khutbah_activity_log" ON khutbah_activity_log
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON khutbah_activity_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON khutbah_activity_log TO service_role;
+
+-- Extend admins.permissions default so a fresh admin row includes the
+-- khutbah flag — existing rows keep whatever permissions they already have
+-- (a missing "khutbah" key reads false everywhere it's checked), same
+-- migration shape as every prior module addition.
+ALTER TABLE admins ALTER COLUMN permissions SET DEFAULT '{"kuliah": true, "infaq": false, "news": false, "staff": false, "khutbah": false}'::jsonb;

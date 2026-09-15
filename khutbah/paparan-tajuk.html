@@ -124,31 +124,35 @@
     </div>
 
     <script>
-        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDFOdEOVKqjeS1mErtCrV-Z1-dvArp3wteWAEyRM6KKzXN90yggh0Bc7Nq3yhYKdAEo1NkAiV3lZGd/pub?gid=0&single=true&output=csv";
+        // Upgraded 2026-09-15 (khutbah/upgrade-plan.md): reads the published JSON
+        // written by api/publish-khutbah.js (via admin/khutbah/) instead of the
+        // Google Sheet CSV. The CSV pipeline (Sheet → Apps Script) is retired —
+        // JSON has no quoting/column-shift failure mode by construction.
+        const dataURL = "/khutbah/data/khutbah.json";
         let lastFetchedData = "";
 
         async function fetchSheetData() {
             document.getElementById("spinner").style.display = "block";
             try {
-                const response = await fetch(sheetURL, { cache: "no-store" });
+                const response = await fetch(dataURL, { cache: "no-store" });
                 if (!response.ok) throw new Error("Network response was not ok");
-                const text = await response.text();
+                const json = await response.json();
+                const current = json.current;
+                if (!current) return showError("TIADA DATA");
 
-                const rows = text.split("\n").map(row => row.split(","));
-                if (rows.length <= 1) return showError("TIADA DATA");
-
-                const newData = rows[1].map(cell => cell.trim()).join("|");
+                const newData = [current.siri_text, current.title, current.date_text, current.main_text]
+                    .map(cell => (cell || "").trim()).join("|");
                 if (newData === lastFetchedData) return;
                 lastFetchedData = newData;
 
-                document.getElementById("title").innerText = rows[1][1] || "TIADA DATA";
-                document.getElementById("date").innerText = rows[1][2] || "TIADA DATA";
-                document.getElementById("main-text").innerText = rows[1][3] || "TIADA DATA";
+                document.getElementById("title").innerText = current.siri_text || "TIADA DATA";
+                document.getElementById("date").innerText = current.date_text || "TIADA DATA";
+                document.getElementById("main-text").innerText = current.title || current.main_text || "TIADA DATA";
 
                 adjustFontSize();
                 scaleToFit();
             } catch (error) {
-                console.error("Error fetching Google Sheets data:", error);
+                console.error("Error fetching khutbah JSON data:", error);
                 showError("ERROR");
             } finally {
                 document.getElementById("spinner").style.display = "none";

@@ -27,6 +27,12 @@
       ]
     },
     {
+      "source": "/khutbah/data/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
       "source": "/admin/infaq/data/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" },
@@ -50,6 +56,10 @@
     {
       "path": "/api/publish-news",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/publish-khutbah",
+      "schedule": "0 1 * * 1"
     }
   ]
 }

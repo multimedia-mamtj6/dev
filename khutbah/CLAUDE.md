@@ -10,16 +10,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Same as the parent project: pure static HTML, no build tools. Each page is fully self-contained (inline `<style>` and `<script>`).
 
-- Data source: a Google Sheet published as CSV (`output=csv`), polled every 60 seconds via `fetch`
+- Data source: `khutbah/data/khutbah.json` (published by `api/publish-khutbah.js`), polled every 60 seconds via `fetch`
 - Font: Google Fonts "Poppins"
 - Background/logo images served from `multimedia.mamtj6.com`
 
 ## Files
 
-- `index.html` — **Current/primary display page.** Copy of `paparan-tajuk.html` with a CSV-quoting fix (see Key Patterns below); this is the one actively maintained going forward.
-- `paparan-tajuk.html` — Legacy standalone full-screen display (centered card layout, spinner shown while loading, "Loading..."/"TIADA DATA"/"ERROR" states). Kept as-is; superseded by `index.html`. Still has the unfixed CSV-quoting bug.
-- `beta-paparan-tajuk.html` — Variant tuned for embedding inside a Google Sites iframe (`height: 100vh`/`100vw`, `overflow: hidden`, no scrollbars, no loading/error text states). Likely has the same unfixed CSV-quoting bug (not yet verified).
-- `google_app_script/` — Working Apps Script automation (`gettajukkhutbah.gs`, `KhutbahLinkGenerator.gs`, `refresh.gs`) that populates the Google Sheet this page reads from. **Not auto-synced**: this folder is a local copy only — changes here must be manually pasted into the live project at script.google.com to take effect. See "Apps Script Automation" below and `DEV_NOTES.md` for the full architecture/gotchas.
+- `paparan-tajuk.html` — **Current/primary display page** (as of 2026-09-15, see `upgrade-plan.md`). Reads the published JSON at `khutbah/data/khutbah.json` (written by `api/publish-khutbah.js` via `admin/khutbah/`), polled every 60s. JSON has no CSV-quoting failure mode by construction.
+- `index.html` — Legacy: copy of `paparan-tajuk.html` with a quote-aware `parseCSVRow()` CSV fix; frozen as-is since the 2026-09-15 upgrade, no longer maintained. See Key Patterns below for the fix reference.
+- `beta-paparan-tajuk.html` — Variant tuned for embedding inside a Google Sites iframe (`height: 100vh`/`100vw`, `overflow: hidden`, no scrollbars, no loading/error text states). Still on the old CSV feed; likely has the same unfixed CSV-quoting bug (not yet verified).
+- `data/khutbah.json` — Published data (`{ current, history, updated_at }`), written by `api/publish-khutbah.js`. **Never hand-edit** — overwritten on every publish, same rule as kuliah's `jadual_lengkap_v2.json`.
+- `google_app_script/` — RETIRED Apps Script automation (`gettajukkhutbah.gs`, `KhutbahLinkGenerator.gs`, `refresh.gs`). Replaced 2026-09-15 by `admin/khutbah/` + `api/publish-khutbah.js` (pure logic ported to `admin/khutbah/publish-khutbah-pure.js`). Kept in repo as history only — do not paste back into script.google.com. See "Apps Script Automation" below and `DEV_NOTES.md` for the old architecture/gotchas.
 
 ## Data Format
 

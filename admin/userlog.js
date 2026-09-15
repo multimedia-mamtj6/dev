@@ -72,6 +72,19 @@ const LOG_SOURCES = [
             staff_lockout_cleared: 'Buka Kunci Akaun',
         },
     },
+    {
+        module: 'Khutbah', table: 'khutbah_activity_log',
+        actionLabels: {
+            khutbah_auto_generate:  'Janaan Automatik',
+            khutbah_scrape_ok:      'Scrape Berjaya',
+            khutbah_scrape_failed:  'Scrape Gagal',
+            khutbah_manual_update:  'Kemaskini Manual',
+            khutbah_lock:           'Kunci Minggu',
+            khutbah_unlock:         'Buka Kunci Minggu',
+            khutbah_settings_update:'Kemaskini Tetapan Khutbah',
+            publish_khutbah:        'Terbitkan Khutbah',
+        },
+    },
 ];
 
 (async () => {
