@@ -6,7 +6,7 @@
     "title": "Kepentingan Menuntut Ilmu",
     "date_text": "18 SEPTEMBER 2026M | 06 RABIULAKHIR 1448H",
     "main_text": null,
-    "manual_override": false
+    "manual_override": true
   },
   "history": [
     {
@@ -16,8 +16,8 @@
       "title": "Kepentingan Menuntut Ilmu",
       "date_text": "18 SEPTEMBER 2026M | 06 RABIULAKHIR 1448H",
       "main_text": null,
-      "manual_override": false
+      "manual_override": true
     }
   ],
-  "updated_at": "2026-09-15T13:34:16.862Z"
+  "updated_at": "2026-09-15T13:40:16.850Z"
 }
