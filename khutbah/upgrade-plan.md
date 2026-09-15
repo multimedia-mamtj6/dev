@@ -1,6 +1,8 @@
 # Upgrade Plan — `admin/khutbah/` automation-first → target `khutbah/paparan-tajuk.html` + shared-sender alerts
 
-_Status: PLANNED, not yet executed. Written 2026-09-15._
+_Status: BUILT 2026-09-15 (code complete, schema §12 run by user, Resend verified, test mail delivered)._
+_Not yet proven: first live Jana & Terbitkan round-trip + two Monday crons before retiring the GAS trigger/Sheet._
+_Written 2026-09-15._
 
 Locked decisions (don't re-litigate):
 1. Scraper is primary, manual key-in is secondary (automation-first).

@@ -46,6 +46,10 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/news/teks-berjalan.html`/`.js` | Ticker lines CRUD (↑/↓ reorder, khutbah row's auto-sourced title), owns `moving-text` Terbitkan + the ticker preview panel |
 | `admin/staff/roster.html`/`.js` | Staff CRUD (name/phone/email, PIN generation via "Jana PIN Baharu", lockout clear) — mirrors `ustaz.js`'s shape |
 | `admin/staff/staff-pin-pure.js` | PBKDF2 PIN hash/generate/verify/lockout pure functions — loaded here via `<script>` AND `require()`d server-side by `api/staff-login.js`, same file both places (see its own header) |
+| `admin/alert-send-pure.js` | Shared email sender for ALL modules (khutbah first consumer) — `sendAlert()`/`shouldAlert()`/`parseRecipients()`, Resend via fetch, no npm, never throws; `require()`d by any `api/*.js` |
+| `admin/khutbah/publish-khutbah-pure.js` | Ported `.gs` scraper logic (Friday/SIRI/slugs/link/regex extract + `buildKhutbahJson`) — same shared-pure-file convention, `require()`d by `api/publish-khutbah.js` |
+| `admin/khutbah/khutbah-common.js` | Shared across khutbah pages: `requireKhutbahAccess()`, `publishKhutbah()`/`loadLastPublishedKhutbahNote()`, `get/saveKhutbahSetting()` |
+| `admin/khutbah/senarai.html`/`.js` | Weekly history table + manual-override editor modal + Tetapan card (`alert_emails`/`alert_from`) + Jana & Terbitkan — owns the single `publish_khutbah` target |
 
 ---
 

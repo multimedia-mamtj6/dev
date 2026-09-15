@@ -24,13 +24,17 @@ Same as the parent project: pure static HTML, no build tools. Each page is fully
 
 ## Data Format
 
-Both pages fetch the same published CSV and read row index `1` (second row, i.e. the first data row after the header):
+`paparan-tajuk.html` (primary) fetches `khutbah/data/khutbah.json` (`{ current, history, updated_at }`,
+written by `api/publish-khutbah.js`) and renders `current`:
 
-- `rows[1][1]` → sermon title (`.title`)
-- `rows[1][2]` → date (`.date`)
-- `rows[1][3]` → sermon theme/text (`.main-text`)
+- `current.siri_text` → sermon heading (`.title`)
+- `current.date_text` → date (`.date`)
+- `current.title || current.main_text` → big sermon text (`.main-text`)
 
-The CSV URL is hardcoded as `sheetURL` in each file's `<script>`. To change the data source, update `sheetURL` in **both** HTML files.
+`index.html` / `beta-paparan-tajuk.html` are frozen on the old feed: same published CSV, row index `1`
+(second row after the header) — `rows[1][1]` → title, `rows[1][2]` → date, `rows[1][3]` → theme/text —
+via the hardcoded `sheetURL` in each file's `<script>`. To change the legacy source, update `sheetURL`
+in those files; `paparan-tajuk.html` has no sheet reference anymore.
 
 ## Apps Script Automation (`google_app_script/`)
 

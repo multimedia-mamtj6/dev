@@ -1,14 +1,20 @@
 # developer.md — handoff notes for next-window me
 
-> **Update**: newer sessions happened after everything below — see
-> `khutbah/DEV_NOTES.md` for those. Short version: `index.html` now exists
-> (copy of `paparan-tajuk.html`, made by the user) and is the new
-> live/primary page, with a CSV-quoting bug that truncated sermon titles at
-> embedded commas found and fixed there only; separately, a full pass over
-> `google_app_script/` mapped its two-sheet architecture, fixed a duplicate
-> function and an orphaned trigger, and added a SIRI/year auto-update plus a
-> "Link Log" history sheet. Everything below is still valid history/context,
-> just predates all of that.
+> **Update 2026-09-15**: the Sheet→Apps Script pipeline below is RETIRED —
+> replaced by `admin/khutbah/` + `api/publish-khutbah.js` publishing
+> `khutbah/data/khutbah.json`, read by `paparan-tajuk.html` (now the primary
+> page; `index.html` frozen legacy). Full build note + pending items (first
+> publish unclicked, URL-tester reminder, two-Monday-cron watch) at the top of
+> `khutbah/DEV_NOTES.md`; plan in `khutbah/upgrade-plan.md`. Everything below
+> is still valid history/context (CSS sizing lessons, regex fixes), just
+> predates the upgrade.
+>
+> Previous update: `index.html` now exists (copy of `paparan-tajuk.html`, made
+> by the user) and was briefly the live/primary page, with a CSV-quoting bug
+> that truncated sermon titles at embedded commas found and fixed there only;
+> separately, a full pass over `google_app_script/` mapped its two-sheet
+> architecture, fixed a duplicate function and an orphaned trigger, and added
+> a SIRI/year auto-update plus a "Link Log" history sheet.
 
 ## Where we are right now
 

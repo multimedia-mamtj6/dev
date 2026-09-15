@@ -5,6 +5,86 @@ Check the Project Knowledge and the current chat for context. This conversation 
 
 also update the related file like khutbah/CLAUDE.md, khutbah/developer.md, khutbah/developer.md and khutbah/README.md if necessary
 
+## 2026-09-15 — the upgrade build (Sheet→Apps Script pipeline RETIRED, `admin/khutbah/` is live)
+
+This session retired the entire automation documented below and replaced it with a Supabase-backed
+5th admin module. Full build plan lived in `khutbah/upgrade-plan.md` (now marked built). What shipped,
+all in one session, user driving scope at every step:
+
+- `admin/setup.sql` §12 — `khutbah_weeks` (one row per Friday, `friday_date` UNIQUE), `khutbah_settings`
+  (`alert_emails`/`alert_from`/`last_alert_at`/`last_alert_reason`), `khutbah_activity_log`. Same
+  4-policy `admin_can_write('khutbah')` RLS shape as news §10; `service_role` gets INSERT+UPDATE on
+  weeks+settings (cron upserts + alert-cache writeback — the documented `news_settings` divergence,
+  don't narrow it). User ran §12 themselves; first attempt failed with `policy
+  "public_read_kuliah_assets" already exists` because they pasted from an earlier section, not §12 —
+  re-ran §12-only and confirmed 3 tables + 4 settings rows. **Lesson re-learned: always tell the user
+  the exact paste range (start line → end of file), never "run setup.sql".**
+- `admin/alert-send-pure.js` — the **shared sender** (one Resend key, one `sendAlert({to,subject,text})`,
+  fetch-only, no npm, UMD so browser + `require()` both work). Khutbah is consumer #1; every future
+  module reuses it with 3 lines. Never throws — mail failure returns `{sent:false}`, can't fail a publish.
+- `admin/khutbah/publish-khutbah-pure.js` — `.gs` logic ported verbatim (Friday calc, SIRI from Friday
+  date, Malay month slugs, Hijri `parseHijriSlug`, mufti link builder, BOTH regex pairs + `dateMatched`/
+  `titleMatched` flags so the next markup drift is visible instead of silent). Smoke-tested in node:
+  Friday/SIRI/slugs/link/primary+fallback+miss extraction all correct.
+- `api/publish-khutbah.js` — dual-auth exactly like `publish-news.js` (POST+session / GET+`CRON_SECRET`
+  fail-closed), Mon-9am cron (`0 1 * * 1` in vercel.json), GitHub push with byte-identical skip,
+  transition-only + 24h-throttle email alerts to comma-separated `alert_emails`. `manual_override=true`
+  locks a row (`skipped_locked`, no scrape, no mail) — this explicit flag replaces the old Sheet
+  formula/value distinction that silently broke automation.
+- `admin/khutbah/senarai.html/.js` + `khutbah-common.js` — history table, override editor modal,
+  Tetapan card, Jana & Terbitkan. Wired: `app.js` MODULES + landing, `users.html/.js` perm-khutbah,
+  `userlog.js` Khutbah source, `vercel.json` cron + `/khutbah/data` no-store.
+- **Display target flipped mid-plan: `paparan-tajuk.html`, NOT `index.html`.** The user chose the legacy
+  page as the upgrade target (their live screen/Sites embed points there). So `paparan-tajuk.html` now
+  reads `khutbah/data/khutbah.json` (CSV bug dead by construction — JSON has no quoting), and `index.html`
+  is frozen legacy. `khutbah/CLAUDE.md` roles swapped accordingly. If anyone ever asks "which page is
+  live" — it's paparan-tajuk, confirmed this session, don't re-derive.
+- Email saga: user picked Resend over Gmail API (1 key + 1 fetch vs OAuth dance — documented comparison
+  in chat). Domain `mamtj6.com` verified via Cloudflare TXT. **Gotcha caught before it bit:** user filled
+  Tetapan Pengirim with a gmail.com address — Resend can't send from free providers, only the verified
+  domain. Fixed to `noreply@mamtj6.com`. Recipients (the two gmails) are fine — restriction is sender-only.
+  Delivery proven with a live test mail to both addresses.
+- Terminal quirk worth knowing: the user's PowerShell has an opencode Todo side-panel, and multi-line
+  pastes sweep its text (`█ ▼ [√]...`) into the command → ParserError. Fix used twice this session:
+  paste one line at a time, or put the lines in a repo `.md` file (`khutbah/testemail.md` — created for
+  exactly this, delete it whenever, it holds no secrets). If the user ever pastes garbage-looking
+  terminal output with `█`/`▼` in it, that's what happened — don't debug the command, fix the paste.
+
+### Pending as of session end (user-side unless noted)
+
+- **First Jana & Terbitkan DONE 2026-09-15 — full success.** Toast "Berjaya diterbitkan", 1 row with the
+  correct title, TWO `[Admin] Terbitkan khutbah` commits on remote (`614e9cd`, `e39f3fe` — user clicked
+  twice), published JSON verified from `origin/main`: Friday 2026-09-18, `MIMBAR JUMAAT SIRI 9 | 2026`,
+  title "Kepentingan Menuntut Ilmu", real Hijri slug `06-rabiulakhir-1448` from live waktusolat data.
+  NOTE: the published row has `manual_override: true` — user locked it (or ticked Kunci while exploring).
+  Monday cron will SKIP this week until unlocked; confirm that's deliberate. `main_text: null` is
+  expected (mufti page carries no theme text — manual-only field). Still to confirm: paparan rendering
+  (no longer TIADA DATA) on the live URL.
+- **URL tester (user's own words, reminded as requested):** put a "uji URL" affordance in the admin —
+  paste the correct mufti URL into a field and it auto-fetches/fills tajuk+tarikh WITHOUT the user
+  keying in details manually. Currently a manual edit means typing title/date by hand. Design note for
+  whoever builds it: fetch must happen server-side (new `api/` action or `?dryrun=1` on publish-khutbah —
+  mufti CORS will likely block a direct browser fetch), reuse `extractDateTitle()` verbatim, fill the
+  modal fields without saving, and set `manual_override=true` on save (a tested URL is still a manual
+  correction). Do NOT build unprompted — user said "remind me", not "build it".
+- Two Monday crons to observe before retiring the live GAS trigger + Sheet (repo `.gs` copies stay).
+- Deferred debt: dashboard glimpse section, news ticker `kind='khutbah'` → JSON instead of CSV,
+  `dev.mamtj6.com/admin/` login round-trip re-confirmation with the new module.
+
+### Vibe / dynamic this session
+
+Deliberate-gear-heavy session with an opinionated user who knew exactly what they wanted at every fork:
+scraper-primary (not manual), Mon-9am-only (not daily), lock-on-manual-edit, full history, Resend,
+alert-on-all-failures, recipients-in-settings-table, paparan-tajuk-as-target. Every `AskUserQuestion`
+got a real pick within minutes — schedule/lock/history in one batch, email provider/scope/recipients
+in another. They read ELI5 explanations carefully (the Vercel-env one landed well — reuse that register
+for infra steps) and execute manual steps themselves fast (SQL §12, DNS TXT, Resend test mail all done
+same-session). Short confirmations ("ok email arrived", "OK RESEND VERIFIED THE DNS") mean done, move on.
+New pattern: this user pastes terminal output WITH UI chrome in it — read past the `█▼[√]` noise to the
+actual content. Mood: steady build energy, zero dead ends; the session ended on docs, not a bug.
+
+---
+
 ## What just happened (long forensic session on google_app_script/)
 
 Completely different corner of `khutbah/` than the last two sessions below (index.html CSV bug, paparan-tajuk CSS saga) — this time we went deep into `google_app_script/*.gs`, the automation side nobody had actually mapped out before. `CLAUDE.md` used to call these files "placeholder... currently empty," which was already wrong before this session and way wrong by the end of it — I've since corrected that file, verify it still matches reality if more changes land here.

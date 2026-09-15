@@ -115,11 +115,22 @@ No new Supabase-side Vercel environment variables beyond `CRON_SECRET` — `api/
 
 No new Supabase-side Vercel environment variables beyond `GOOGLE_CLIENT_ID` — `api/staff-login.js` reuses the same `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` from [1.5](#15-configure-vercel-environment-variables). Unlike every other module, this one has **no GitHub token / Terbitkan step at all** — there's nothing to publish, `staff` is a live table read directly by `api/staff-login.js`, not a source for a static JSON snapshot.
 
+### 1.11 Set up the khutbah module (optional — separate from every module above)
+
+`admin/khutbah/` (Mimbar Jumaat weekly-sermon automation, retiring the Google Sheet → Apps Script → CSV pipeline — see `khutbah/upgrade-plan.md`) is a fifth, independent module. Skip this section if you don't need it. Its schema lives in `setup.sql` §12, written directly against the write-gated §9 model like §10/§11.
+
+1. In the Supabase SQL Editor, select and run `setup.sql` §12 in full (the `-- ── 12. Khutbah module ──` header through the end of the file), **as one paste — §12 only, not the whole file.** Re-running earlier sections fails on `CREATE POLICY ... already exists` (Postgres has no `IF NOT EXISTS` for policies) and rolls the whole paste back — that error means wrong paste range, not a real problem.
+2. Verify: `SELECT tablename FROM pg_tables WHERE tablename LIKE 'khutbah%';` → 3 rows (`khutbah_weeks`, `khutbah_settings`, `khutbah_activity_log`); `SELECT key, value FROM khutbah_settings;` → 4 seeded rows.
+3. In `users.html`, grant `permissions.khutbah` to whichever admins need it (defaults to `false` on new rows, same opt-in shape as infaq/news/staff).
+4. **Set the `RESEND_API_KEY` Vercel environment variable** (Resend → API Keys → copy `re_...`). Without it, publishes still succeed but failure alerts are logged as `alert_skipped_no_key` instead of mailed. No new Supabase/GitHub vars — `api/publish-khutbah.js` reuses `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`GITHUB_TOKEN`/`GITHUB_REPO` from [1.5](#15-configure-vercel-environment-variables), and the Mon-9am cron reuses the same `CRON_SECRET` as the news cron ([1.9](#19-configure-the-news-module-cron)).
+5. **Verify the sender domain in Resend** (Domains → Add `mamtj6.com` → paste the TXT records into your DNS → Verify). The alert sender (`khutbah_settings.alert_from`, seeded `noreply@mamtj6.com`) **must** be on this verified domain — Resend cannot send from free providers, so a gmail.com sender fails. Recipients (`alert_emails`, comma-separated) have no such restriction.
+6. Verify: open `admin/khutbah/senarai.html`, fill the Tetapan card (`alert_emails`, confirm `alert_from`), click **Jana & Terbitkan**, confirm a `[Admin] Terbitkan khutbah` commit lands on `khutbah/data/khutbah.json` and `khutbah/paparan-tajuk.html` renders it instead of TIADA DATA.
+
 ---
 
 ## 2. Database structure
 
-Four kuliah tables + four infaq tables (§2.1 below) + four news tables (§2.2 below), one storage bucket per module (`kuliah-assets`, `news-assets`). No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and the activity-log tables also from their respective `api/publish*.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs (and the `admin_can_write()`/`admin_is_super_admin()` `SECURITY DEFINER` helper functions, §3); all business logic lives in the client JS.
+Four kuliah tables + four infaq tables (§2.1 below) + four news tables (§2.2 below) + three khutbah tables (`khutbah_weeks`, `khutbah_settings`, `khutbah_activity_log` — full column reference lives in `admin/CLAUDE.md`'s Supabase Schema, not yet duplicated into a §2.x section here), one storage bucket per module (`kuliah-assets`, `news-assets`; khutbah has no bucket). No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and the activity-log tables also from their respective `api/publish*.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs (and the `admin_can_write()`/`admin_is_super_admin()` `SECURITY DEFINER` helper functions, §3); all business logic lives in the client JS.
 
 ```
 admins ──────────────┐

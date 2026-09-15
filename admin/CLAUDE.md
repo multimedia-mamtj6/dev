@@ -9,7 +9,7 @@ architecture reference; the plan file is a one-time historical record.
 ## What this is
 
 `admin/` is a full CMS admin dashboard for MAMTJ6 mosque management, hosting
-four independent modules as of 2026-07-29:
+five independent modules as of 2026-09-15:
 
 - **`admin/kuliah/`** — lecture schedule management. Committee members log in
   with Google OAuth and manage: monthly lecture schedules (subuh + maghrib
@@ -55,6 +55,20 @@ four independent modules as of 2026-07-29:
   "Staff login never becomes a Supabase Auth principal" in Key Patterns
   below before touching anything in this module, since getting that
   wrong is a real confidentiality hole, not a style preference.
+- **`admin/khutbah/`** — Mimbar Jumaat weekly-sermon automation, added
+  2026-09-15, retiring the Google Sheet → Apps Script → CSV pipeline
+  (`khutbah/google_app_script/`). **Automation-first by explicit user choice:**
+  a Mon-9am Vercel cron computes next Friday, builds the mufti.pahang.gov.my
+  link (Gregorian slug + Hijri via `api.waktusolat.app/PHG03`), scrapes
+  date/title, and publishes `khutbah/data/khutbah.json` read by
+  `khutbah/paparan-tajuk.html`. Manual edits are secondary and lock their row
+  (`manual_override=true` → cron skips with `skipped_locked`, no mail) — this
+  explicit flag replaces the old Sheet formula/value distinction that silently
+  broke automation. One page, `senarai.html` (weekly history + override editor
+  + Tetapan card for `alert_emails`/`alert_from` + Jana & Terbitkan). Any
+  scrape failure keeps last-good values (never publishes `ERROR:`) and emails
+  all `alert_emails` via the shared sender (`admin/alert-send-pure.js`,
+  Resend) — transition-only + 24h throttle. See `khutbah/upgrade-plan.md`.
 
 Shared/cross-module concerns (login, nav shell, admin-user management,
 activity-log viewer) stay flat at `admin/` root — see File Structure below.
@@ -181,6 +195,22 @@ admin/
                           NEVER drift apart — same source file both places
     roster.html/.js   ← Staff CRUD (name/phone/email, PIN generation, lockout clear) —
                           mirrors admin/kuliah/ustaz.js's shape exactly
+
+  alert-send-pure.js ← Shared email sender for ALL modules (new 2026-09-15, khutbah
+                         is consumer #1) — sendAlert({to,subject,text}) + shouldAlert() +
+                         parseRecipients(), Resend via fetch, no npm, never throws.
+                         Same static-file-require()d-server-side convention as the
+                         two pure files above; recipients live per-module in each
+                         module's own *_settings table, never here
+  khutbah/         ← Module: Mimbar Jumaat automation (new 2026-09-15)
+    publish-khutbah-pure.js ← Ported .gs logic (Friday/SIRI/slugs/link/regex extract +
+                         buildKhutbahJson) — same shared-pure-file convention
+    khutbah-common.js ← Shared: requireKhutbahAccess(), publishKhutbah() (single
+                         target, POST /api/publish-khutbah), get/saveKhutbahSetting(),
+                         loadLastPublishedKhutbahNote()
+    senarai.html/.js ← Weekly history table (Friday-desc) + override editor modal
+                         (manual edit sets manual_override=lock) + Tetapan card
+                         (alert_emails/alert_from) + Jana & Terbitkan button
 
 admin/ustaz.html  ← zero-JS redirect stub → admin/kuliah/ustaz.html (old bare /admin/ URL,
                      pre-module-restructure, kept working). admin/dashboard.html used to be a
@@ -346,9 +376,39 @@ actor_email text NOT NULL, actor_name text,
 action text NOT NULL,       -- staff_create | staff_update | staff_delete |
                              -- staff_pin_reset | staff_lockout_cleared
 target_label text, detail text
+
+-- khutbah_weeks → khutbah/data/khutbah.json (added 2026-09-15) — one row per
+-- Friday (friday_date UNIQUE, the conflict key). Automation-first: the cron
+-- upserts the getNextFriday() row; manual_override=true locks it (cron
+-- writes skipped_locked, leaves values untouched). scrape_status:
+-- ok | fetch_failed | parse_failed | skipped_locked. main_text is
+-- manual-only (the mufti page has no theme-text field).
+id uuid PK, friday_date date UNIQUE NOT NULL,
+source_url text NOT NULL, siri_text text NOT NULL,  -- MIMBAR JUMAAT SIRI {M} | {YYYY}
+title text, date_text text, main_text text,
+hijri_part text, gregorian_part text,  -- audit/debug slug segments
+manual_override boolean DEFAULT false,
+scrape_status text, scrape_error text, fetched_at timestamptz,
+created_at timestamptz, updated_at timestamptz
+
+-- khutbah_settings: key/value store (alert_emails comma-separated, "" = no
+-- mail; alert_from must be @mamtj6.com — Resend can't send from free
+-- providers; last_alert_at/last_alert_reason = spam-guard cache, written
+-- back by api/publish-khutbah.js)
+key text PK, value text, updated_at timestamptz
+
+-- khutbah_activity_log: SEPARATE by the same deliberate-independence
+-- reasoning as infaq/news — otherwise identical shape
+id uuid PK, created_at timestamptz,
+actor_email text NOT NULL, actor_name text,
+action text NOT NULL,       -- khutbah_auto_generate | khutbah_scrape_ok |
+                             -- khutbah_scrape_failed | khutbah_manual_update |
+                             -- khutbah_lock | khutbah_unlock |
+                             -- khutbah_settings_update | publish_khutbah
+target_label text, detail text  -- target_label = friday_date, plain text, never a FK
 ```
 
-RLS is ON on all tables. `news_announcements`/`news_ticker`/`news_settings` follow the same 4-policy write-gated shape as every table added since §9 (`admin_can_write('news')`) — the one divergence from every other module's publish grants is `news_settings`, where `service_role` gets `SELECT, INSERT, UPDATE` (not SELECT-only), because `api/publish-news.js` writes the khutbah fail-safe cache back into it. See `admin/setup.sql` §10 and `database.md` §2.2 for the full detail. `staff` is a SECOND divergence from that same convention — `service_role` gets `SELECT, UPDATE` there too (`api/staff-login.js`'s entire job is writing lockout counters and the session token), while `staff_activity_log` gets no `service_role` grant at all (nothing server-side ever writes to it — see `admin/setup.sql` §11). Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`. `admins` also grants `service_role` SELECT-only (added 2026-07-22 — `api/publish.js`/`api/publish-infaq.js` both look up the publishing admin's name from it; this table predates that lookup, so the grant was missing for a long time and failed silently rather than erroring, see Key Patterns).
+RLS is ON on all tables. `news_announcements`/`news_ticker`/`news_settings` follow the same 4-policy write-gated shape as every table added since §9 (`admin_can_write('news')`) — the one divergence from every other module's publish grants is `news_settings`, where `service_role` gets `SELECT, INSERT, UPDATE` (not SELECT-only), because `api/publish-news.js` writes the khutbah fail-safe cache back into it. `khutbah_weeks`/`khutbah_settings` (added 2026-09-15) repeat that same divergence deliberately — `api/publish-khutbah.js` upserts the week's row AND writes the alert spam-guard cache — don't narrow either to SELECT-only. See `admin/setup.sql` §10 and `database.md` §2.2 for the full detail. `staff` is a SECOND divergence from that same convention — `service_role` gets `SELECT, UPDATE` there too (`api/staff-login.js`'s entire job is writing lockout counters and the session token), while `staff_activity_log` gets no `service_role` grant at all (nothing server-side ever writes to it — see `admin/setup.sql` §11). Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`. `admins` also grants `service_role` SELECT-only (added 2026-07-22 — `api/publish.js`/`api/publish-infaq.js` both look up the publishing admin's name from it; this table predates that lookup, so the grant was missing for a long time and failed silently rather than erroring, see Key Patterns).
 
 ## Data Flow
 
@@ -426,6 +486,23 @@ staff: Admin manages the roster in admin/staff/roster.html
     publish/service-role pattern above)
   → no Terbitkan/publish step — nothing here writes a file to GitHub, this
     module has no public JSON output at all
+
+khutbah (automation-first, manual secondary — explicit user choice 2026-09-15):
+  Vercel cron Mon 9am MYT GET /api/publish-khutbah (Bearer CRON_SECRET)
+  OR admin clicks Jana & Terbitkan POST /api/publish-khutbah (Bearer session)
+  → compute getNextFriday (today if Friday) → Hijri via api.waktusolat.app/PHG03
+  → build mufti link + SIRI text
+  → locked? (manual_override) → skip scrape AND alert, publish current JSON as-is
+  → fetch mufti URL (!ok incl. 404 → fetch_failed) → extractDateTitle
+    (miss → parse_failed) — EITHER failure keeps last-good values (never
+    publishes ERROR:) and emails khutbah_settings.alert_emails via the shared
+    sender (transition-only + 24h throttle), logging alert_sent/suppressed
+  → upsert khutbah_weeks (friday_date conflict key) → rebuild
+    khutbah/data/khutbah.json ({current, history}) → push to GitHub
+    (skip if byte-identical) → khutbah_activity_log row
+  → read by khutbah/paparan-tajuk.html (60s poll)
+  Separately, admin edits a row in senarai.html → manual_override lock +
+  khutbah_manual_update/khutbah_lock log rows (browser+RLS, no publish involved)
 
   Separately, staff themselves log in at staff/index.html (served at
   /staff, NOT part of the flow above, and NOT triggered from admin/ at all):
