@@ -46,9 +46,19 @@ all in one session, user driving scope at every step:
   Delivery proven with a live test mail to both addresses.
 - Terminal quirk worth knowing: the user's PowerShell has an opencode Todo side-panel, and multi-line
   pastes sweep its text (`█ ▼ [√]...`) into the command → ParserError. Fix used twice this session:
-  paste one line at a time, or put the lines in a repo `.md` file (`khutbah/testemail.md` — created for
-  exactly this, delete it whenever, it holds no secrets). If the user ever pastes garbage-looking
+  paste one line at a time, or stage the lines in a repo `.md` file and delete it after (that's what
+  `khutbah/testemail.md` was — DELETED same session, see below). If the user ever pastes garbage-looking
   terminal output with `█`/`▼` in it, that's what happened — don't debug the command, fix the paste.
+- **2026-09-15 postscript — push-protection incident, resolved clean.** User committed `khutbah/testemail.md`
+  WITH their real `re_...` key edited into it ("update the key" commit) → `git push` blocked by GH013 push
+  protection (`khutbah/testemail.md:10`, Resend API Key). Nothing leaked — the push was declined, the key
+  never reached GitHub, so no rotation needed. Fix: `git reset --soft e39f3fe` (= origin/main tip), unstaged
+  + deleted `testemail.md`, scanned staged diff for `re_…`, recommitted as `9f13535`, pushed clean, then
+  `git gc --prune=now` to purge the abandoned key-bearing objects locally. **Standing rule from this: never
+  stage a file the user was told to paste a secret into — testemail-style helpers get deleted BEFORE any
+  commit, and scan the diff for key patterns pre-push.** Related: this repo already has a live-PAT exposure
+  in `kuliah3/kuliah(beta)/.../config.json` (see root CLAUDE.md Sensitive Files) — different incident, still
+  open, don't conflate the two.
 
 ### Pending as of session end (user-side unless noted)
 
