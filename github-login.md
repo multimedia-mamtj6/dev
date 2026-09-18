@@ -16,6 +16,19 @@ git-credential-manager --version
 ```
 If that fails, install it via the table above, then run `git-credential-manager configure` once to register it with Git.
 
+> **Windows PowerShell note:** GCM lives in `mingw64\bin`, which Git Bash has on
+> PATH but PowerShell/CMD often don't — so the bare `git-credential-manager`
+> name may say "not recognized". Any of these work around it (same commands,
+> same result):
+> ```
+> & "C:\Program Files\Git\mingw64\bin\git-credential-manager.exe" --version
+> ```
+> or run the tutorial lines in **Git Bash** (`C:\Program Files\Git\bin\bash.exe`)
+> instead, or add it for the session:
+> ```
+> $env:Path += ";C:\Program Files\Git\mingw64\bin"
+> ```
+
 ## One-time setup (per device)
 
 ```
@@ -29,8 +42,23 @@ git config --global credential.helper manager
 git-credential-manager github login --browser
 ```
 - Opens your default browser to GitHub's login/authorize page
+- **Approve in the browser profile logged into the account you want to add.**
+  GCM registers whichever account clicks approve — so switch users / profiles
+  first if it opens the wrong one.
 - After you approve, GitHub redirects to a local `http://127.0.0.1:<port>/?code=...&state=...` URL — this is just GCM's temporary localhost listener catching the OAuth callback; it never leaves your machine
 - GCM exchanges that code for a token and stores it securely (Windows Credential Manager / macOS Keychain / Linux Secret Service, depending on OS)
+
+> **Picker ≠ commit author.** The account picker chooses the **push/pull**
+> identity only. The name/email stamped on the commits themselves comes from
+> git config. If the new account's email differs, set it per-repo before
+> committing (affects future commits only, not past ones):
+> ```
+> git config --local user.name "YourName"
+> git config --local user.email "new@email.com"
+> ```
+> Then commit → push → picker → choose the account. (GitHub Desktop's
+> `File → Options → Accounts` screen is separate and holds only one
+> github.com login — the multi-account picker lives in GCM at push time.)
 
 ## Adding more accounts
 
