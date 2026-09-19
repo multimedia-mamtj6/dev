@@ -3,7 +3,7 @@
     "2026-09": {
       "infoJadual": {
         "tajukBulan": "BULAN SEPTEMBER 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 18/9/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 19/9/2026"
       },
       "senaraiHari": [
         {
@@ -207,12 +207,7 @@
         },
         {
           "date": "2026-09-20",
-          "subuh": {
-            "nama_penceramah": "Ustaz Badrul Hisham",
-            "tajuk_kuliah": "Ziarah Ke Alam Barzakh",
-            "poster_url": "https://qeantrmluevgybkwgvbq.supabase.co/storage/v1/object/public/kuliah-assets/posters/14-ust-badrul-1789184625268.jpg",
-            "square_url": null
-          },
+          "subuh": null,
           "maghrib": {
             "nama_penceramah": "Sdr Ahmad Syafiq Muhaimin",
             "tajuk_kuliah": "Syamail Muhammadiah",
@@ -284,12 +279,7 @@
             "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/14_13.-Ustaz-Abd-Maarof.jpg",
             "square_url": null
           },
-          "maghrib": {
-            "nama_penceramah": "Ustaz Nawawi",
-            "tajuk_kuliah": "Ringkasan Riyadhus Solihin",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/16_15.-Ustaz-Nawawi.jpg",
-            "square_url": null
-          },
+          "maghrib": null,
           "cuti_umum": null
         },
         {
