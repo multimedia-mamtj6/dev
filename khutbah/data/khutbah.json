@@ -1,14 +1,23 @@
 {
   "current": {
-    "friday_date": "2026-09-18",
-    "source_url": "https://mufti.pahang.gov.my/khutbah/2026/18-september-2026m-06-rabiulakhir-1448h",
+    "friday_date": "2026-09-25",
+    "source_url": "https://mufti.pahang.gov.my/khutbah/2026/25-september-2026m-13-rabiulakhir-1448h",
     "siri_text": "MIMBAR JUMAAT SIRI 9 | 2026",
-    "title": "Kepentingan Menuntut Ilmu",
-    "date_text": "18 SEPTEMBER 2026M | 06 RABIULAKHIR 1448H",
+    "title": "Akhlak Mulia Asas Kehidupan Masyarakat",
+    "date_text": "25 SEPTEMBER 2026M | 13 RABIULAKHIR 1448H",
     "main_text": null,
-    "manual_override": true
+    "manual_override": false
   },
   "history": [
+    {
+      "friday_date": "2026-09-25",
+      "source_url": "https://mufti.pahang.gov.my/khutbah/2026/25-september-2026m-13-rabiulakhir-1448h",
+      "siri_text": "MIMBAR JUMAAT SIRI 9 | 2026",
+      "title": "Akhlak Mulia Asas Kehidupan Masyarakat",
+      "date_text": "25 SEPTEMBER 2026M | 13 RABIULAKHIR 1448H",
+      "main_text": null,
+      "manual_override": false
+    },
     {
       "friday_date": "2026-09-18",
       "source_url": "https://mufti.pahang.gov.my/khutbah/2026/18-september-2026m-06-rabiulakhir-1448h",
@@ -19,5 +28,5 @@
       "manual_override": true
     }
   ],
-  "updated_at": "2026-09-15T13:40:16.850Z"
+  "updated_at": "2026-09-21T01:26:55.897Z"
 }
