@@ -3,7 +3,7 @@
     "2026-09": {
       "infoJadual": {
         "tajukBulan": "BULAN SEPTEMBER 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 22/9/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 23/9/2026"
       },
       "senaraiHari": [
         {
@@ -236,12 +236,7 @@
         {
           "date": "2026-09-23",
           "subuh": null,
-          "maghrib": {
-            "nama_penceramah": "Ustaz Mohd Fikri",
-            "tajuk_kuliah": "Pedoman Sembahyang Berjemaah",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/08_7.-Ustaz-Fikri.jpg",
-            "square_url": null
-          },
+          "maghrib": null,
           "cuti_umum": null
         },
         {
