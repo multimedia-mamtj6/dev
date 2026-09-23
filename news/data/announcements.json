@@ -2,11 +2,12 @@
   "default_image": "/news/default.svg",
   "announcements": [
     {
-      "title": "Tahlil",
-      "heading": "Pengumuman 1",
-      "text": "Majlis Tahlil Arwah dan Doa buat Allahyarham Pakteh Omar akan diadakan selepas Solat Isyak pada 28, 29 & 30 Julai 2026 di MAMTJ6.\n\nSemua Jemaah Dijemput Hadir.",
+      "title": "Kuliah Khas",
+      "heading": "Pengumuman Kuliah Khas",
+      "text": "Kuliah maghrib (khas) akan disampaikan oleh Ustaz Anas dari Institut Ilmu Darul Makmur MUIP di MAMTJ6 pada tarikh: 16/10/2026 (Jumaat).",
+      "image_url": "https://qeantrmluevgybkwgvbq.supabase.co/storage/v1/object/public/news-assets/announcements/kuliah-khas-1790144866680.jpeg",
       "start_at": "2026-07-28T16:15:00",
-      "end_at": "2026-07-30T23:30:00",
+      "end_at": "2026-10-16T23:30:00",
       "enabled": true
     }
   ]
