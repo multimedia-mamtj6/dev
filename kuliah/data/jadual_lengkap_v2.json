@@ -321,7 +321,7 @@
     "2026-10": {
       "infoJadual": {
         "tajukBulan": "BULAN OKTOBER 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 19/9/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 23/9/2026"
       },
       "senaraiHari": [
         {
@@ -507,7 +507,13 @@
         {
           "date": "2026-10-16",
           "subuh": null,
-          "maghrib": null,
+          "maghrib": {
+            "nama_penceramah": "Ustaz Anas Amri Bin Shahir",
+            "tajuk_kuliah": "Sesi Pencerahan Fiqh Al-Watan",
+            "poster_url": "https://qeantrmluevgybkwgvbq.supabase.co/storage/v1/object/public/kuliah-assets/posters/100-ceramah-khas-1790144604569.jpeg",
+            "square_url": null,
+            "khas": true
+          },
           "cuti_umum": null
         },
         {
