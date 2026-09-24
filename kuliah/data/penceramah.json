@@ -1,6 +1,6 @@
 {
   "tarikhKemasKini": "24/9/2026",
-  "count": 19,
+  "count": 20,
   "penceramah": [
     {
       "id": "4e9e65fa-e1fb-4096-964f-9f45d7c6f1ca",
@@ -133,6 +133,13 @@
       "full_name": "Sdr Ahmad Syafiq Muhaimin",
       "jawatan": null,
       "tajuk_kuliah": "Syamail Muhammadiah",
+      "profile_url": null
+    },
+    {
+      "id": "a3446d8d-95a7-4cd5-87b2-9f89444174bb",
+      "full_name": "Ustaz Anas Amri Bin Shahir",
+      "jawatan": "Felo Muda Fiqh Al-Watan Institut Ilmu Darul Makmur- Majlis Ugama Islam Dan Adat Resam Melayu Pahang",
+      "tajuk_kuliah": "Sesi Pencerahan Fiqh Al-Watan",
       "profile_url": null
     }
   ]
