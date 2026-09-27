@@ -44,12 +44,20 @@ Plain classes only (no :has() etc.): signage players may run old WebView2.
     justify-content: center;
     text-align: center;
     padding: 0 5vw;
-    font-size: clamp(2rem, 10vw, 5rem);
+    font-size: clamp(3rem, 16vw, 8rem);
+    line-height: 1.15;
     font-weight: 800;
     color: #fff;
     background: rgba(0, 0, 0, 0.35);
     text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
     pointer-events: none;
+}
+
+/* Tilted stamp look — only the text rotates, the dim backdrop stays square
+   so no undimmed corners peek through. Negative = counter-clockwise. */
+.ditangguhkan-overlay span {
+    display: inline-block;
+    transform: rotate(-15deg);
 }
 
 /* 
@@ -70,7 +78,17 @@ This targets the text itself inside the message box.
 */
 .message-box h1 {
     margin: 0;
-    font-size: clamp(1.1rem, 6vw, 2.5rem);
+    font-size: clamp(1.5rem, 8vw, 4rem);
+}
+
+/* Second line of the empty-slot message — the date, deliberately smaller
+   than the reason line above it. */
+.message-box h1 .empty-date {
+    display: block;
+    font-size: 0.55em;
+    font-weight: 600;
+    color: #555;
+    margin-top: 0.4em;
 }
 
 /*

@@ -52,13 +52,16 @@ async function fetchScheduleData() {
 function createLectureBlock(type, sessionData) {
     const khasLabel = type === 'subuh' ? 'Kuliah Subuh Khas' : 'Kuliah Maghrib Khas';
     const posterAttr = sessionData.poster_url ? ` data-poster-url="${escapeHtml(sessionData.poster_url)}"` : '';
+    // Carries the flag into the lightbox (see initPosterLightbox) so the
+    // enlarged desktop poster gets the same dim + overlay treatment.
+    const ditangguhkanAttr = (sessionData.poster_url && sessionData.ditangguhkan) ? ' data-ditangguhkan="true"' : '';
     const posterClass = sessionData.poster_url ? ' has-poster' : '';
 
     // Special case — slot reserved but ustaz/topic not decided yet
     if (sessionData.pending) {
         const label = sessionData.khas ? khasLabel : (type === 'subuh' ? 'Subuh' : 'Maghrib');
         const khasClass = sessionData.khas ? ' is-khas' : '';
-        return `<div class="lecture-block is-pending${khasClass}${posterClass}"${posterAttr}>
+        return `<div class="lecture-block is-pending${khasClass}${posterClass}"${posterAttr}${ditangguhkanAttr}>
                     <div class="lecture-time ${type}">${label}</div>
                     <div class="pending-label">Akan Diumumkan</div>
                 </div>`;
@@ -75,7 +78,7 @@ function createLectureBlock(type, sessionData) {
     const label = sessionData.khas ? khasLabel : (type === 'subuh' ? 'Subuh' : 'Maghrib');
     const khasClass = sessionData.khas ? ' is-khas' : '';
     const ditangguhkanClass = sessionData.ditangguhkan ? ' is-ditangguhkan' : '';
-    return `<div class="lecture-block${khasClass}${ditangguhkanClass}${posterClass}"${posterAttr}>
+    return `<div class="lecture-block${khasClass}${ditangguhkanClass}${posterClass}"${posterAttr}${ditangguhkanAttr}>
                 <div class="lecture-time ${type}">${label}</div>
                 <div class="ustaz-name">${escapeHtml(sessionData.nama_penceramah)}</div>
                 <div class="lecture-title">${escapeHtml(sessionData.tajuk_kuliah)}</div>
@@ -365,10 +368,15 @@ function buildDaySelectOptions(today, selectedDateString) {
 }
 
 // Every day (including today/tomorrow) renders its own poster_url directly.
+// A ditangguhkan poster renders dimmed under a scaled-down tilted stamp
+// (same visual language as kuliah/paparan/, sized for a phone screen).
 function buildPosterHtml(type, session) {
     if (!session.poster_url) return '';
     const label = type === 'subuh' ? 'Subuh' : 'Maghrib';
-    return `<div class="poster-section"><div class="poster-wrapper"><img class="poster-img" src="${escapeHtml(session.poster_url)}" alt="Poster Kuliah ${label}" loading="lazy"></div></div>`;
+    if (!session.ditangguhkan) {
+        return `<div class="poster-section"><div class="poster-wrapper"><img class="poster-img" src="${escapeHtml(session.poster_url)}" alt="Poster Kuliah ${label}" loading="lazy"></div></div>`;
+    }
+    return `<div class="poster-section"><div class="poster-wrapper has-ditangguhkan"><img class="poster-img" src="${escapeHtml(session.poster_url)}" alt="Poster Kuliah ${label} (Ditangguhkan)" loading="lazy" data-ditangguhkan="true"><div class="poster-ditangguhkan-overlay" aria-hidden="true"><span>KULIAH<br>DITANGGUHKAN</span></div></div></div>`;
 }
 
 // Tap-to-enlarge lightbox for poster images — the mobile today-card's
@@ -382,29 +390,36 @@ function buildPosterHtml(type, session) {
 function initPosterLightbox() {
     const overlay = document.getElementById('poster-lightbox');
     const lightboxImg = document.getElementById('poster-lightbox-img');
+    const lightboxNotice = document.getElementById('poster-lightbox-ditangguhkan');
     if (!overlay || !lightboxImg) return;
 
-    function open(src, alt) {
+    function open(src, alt, ditangguhkan) {
         lightboxImg.src = src;
         lightboxImg.alt = alt || '';
+        // Same dim + tilted-stamp treatment as paparan, at full scale — the
+        // enlarged poster fills the screen, same viewing situation as signage.
+        lightboxImg.classList.toggle('is-dimmed', !!ditangguhkan);
+        if (lightboxNotice) lightboxNotice.hidden = !ditangguhkan;
         overlay.hidden = false;
         document.body.classList.add('no-scroll');
     }
     function close() {
         overlay.hidden = true;
         lightboxImg.src = '';
+        lightboxImg.classList.remove('is-dimmed');
+        if (lightboxNotice) lightboxNotice.hidden = true;
         document.body.classList.remove('no-scroll');
     }
 
     document.addEventListener('click', (e) => {
         const posterImg = e.target.closest('.poster-img');
         if (posterImg) {
-            open(posterImg.src, posterImg.alt);
+            open(posterImg.src, posterImg.alt, posterImg.dataset.ditangguhkan === 'true');
             return;
         }
         const posterCell = e.target.closest('.lecture-block[data-poster-url]');
         if (posterCell) {
-            open(posterCell.dataset.posterUrl, posterCell.querySelector('.ustaz-name')?.textContent || '');
+            open(posterCell.dataset.posterUrl, posterCell.querySelector('.ustaz-name')?.textContent || '', posterCell.dataset.ditangguhkan === 'true');
         }
     });
     overlay.addEventListener('click', close); // backdrop or the enlarged image itself

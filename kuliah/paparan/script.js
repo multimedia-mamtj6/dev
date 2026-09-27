@@ -6,14 +6,44 @@
 const JSON_URL = 'https://dev.mamtj6.com/kuliah/data/jadual_lengkap_v2.json';
 
 const MESSAGES = {
-    today_subuh: 'Tiada Kuliah Subuh Hari Ini',
-    today_maghrib: 'Tiada Kuliah Maghrib Hari Ini',
-    tomorrow_subuh: 'Tiada Kuliah Subuh pada Hari Esok',
-    tomorrow_maghrib: 'Tiada Kuliah Maghrib pada Hari Esok',
     pending: 'Ceramah Khas — Akan Diumumkan',
     ditangguhkan: 'KULIAH DITANGGUHKAN',
     error: 'Error: Could not load schedule data'
 };
+
+// Local Malay date parts — paparan must never load admin JS (same reason
+// kuliah/penceramah/ copies its helper locally instead of importing app.js).
+const HARI_MALAY = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+const BULAN_MALAY = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
+    'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+
+function formatTargetDate(dateString) {
+    const d = new Date(dateString + 'T00:00:00');
+    return `${d.getDate()} ${BULAN_MALAY[d.getMonth()]} ${d.getFullYear()} (${HARI_MALAY[d.getDay()]})`;
+}
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// Empty-slot message — two lines: the reason at full size, the date smaller
+// below. Returns HTML (rendered via innerHTML), so the admin-controlled
+// cuti_umum value is escaped — it is the first admin string this page
+// ever puts into HTML rather than textContent.
+function buildEmptyMessage(day, lectureType, targetDate, entry) {
+    const sesi = lectureType === 'subuh' ? 'Subuh' : 'Maghrib';
+    const tarikh = `<br><span class="empty-date">${formatTargetDate(targetDate)}</span>`;
+    if (entry?.cuti_umum) {
+        return `Cuti Umum: ${escapeHtml(entry.cuti_umum)} — Tiada Kuliah${tarikh}`;
+    }
+    const bila = day === 'today' ? 'Hari Ini' : 'Hari Esok';
+    return `Tiada Kuliah ${sesi} dijadualkan pada ${bila}${tarikh}`;
+}
 
 function getTargetDate(target) {
     const date = new Date();
@@ -44,17 +74,19 @@ function setDisplay(imageUrl, message, opts = {}) {
         if (opts.overlay) {
             const overlay = document.createElement('div');
             overlay.className = 'ditangguhkan-overlay';
-            overlay.textContent = opts.overlay;
+            overlay.innerHTML = '<span>KULIAH<br>DITANGGUHKAN</span>';
             container.appendChild(overlay);
         }
     } else {
+        // innerHTML (not textContent): the empty-slot message carries its own
+        // two-line markup. Every other caller passes plain text, and the one
+        // admin-controlled value (cuti_umum) is escaped at build time.
         messageBox.style.display = 'flex';
-        messageBox.querySelector('h1').textContent = message;
+        messageBox.querySelector('h1').innerHTML = message;
     }
 }
 
 async function initializeDisplay(day, lectureType) {
-    const messageKey = `${day}_${lectureType}`;
     const { dateString: targetDate, monthKey } = getTargetDate(day);
 
     // Log tarikh yang sedang dicari
@@ -89,7 +121,7 @@ async function initializeDisplay(day, lectureType) {
             setDisplay(session.poster_url, '');
         } else {
             console.log("Tiada URL imej ditemui. Memaparkan mesej.");
-            setDisplay(null, MESSAGES[messageKey]);
+            setDisplay(null, buildEmptyMessage(day, lectureType, targetDate, entry));
         }
         // --- AKHIR TAMBAHAN ---
 

@@ -595,6 +595,40 @@ main {
     cursor: pointer;
 }
 
+/* Ditangguhkan in the lightbox — same dim + tilted-stamp language as
+   kuliah/paparan/, at full scale (enlarge fills the screen there too).
+   The [hidden] rule is required for the same author-vs-UA specificity
+   reason as .poster-lightbox[hidden] above. */
+.poster-lightbox-img.is-dimmed {
+    filter: brightness(0.5);
+}
+
+.poster-lightbox-ditangguhkan[hidden] {
+    display: none;
+}
+
+.poster-lightbox-ditangguhkan {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 5vw;
+    font-size: clamp(3rem, 16vw, 8rem);
+    line-height: 1.15;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+}
+
+.poster-lightbox-ditangguhkan span {
+    display: inline-block;
+    transform: rotate(-15deg);
+}
+
 body.no-scroll {
     overflow: hidden;
 }
@@ -841,12 +875,8 @@ body.no-scroll {
         color: #6b21a8;
     }
 
-    .lecture-block-v2.is-ditangguhkan {
-        background-color: #fee2e2;
-        border: 1px solid #dc2626;
-        border-radius: 6px;
-    }
-
+    /* is-ditangguhkan has NO container styling on mobile — plain block, red
+       status text only (user call, 2026-09-27: the red box was too heavy). */
     .lecture-block-v2.is-ditangguhkan .ditangguhkan-label {
         font-size: 0.85rem;
         font-weight: 700;
@@ -866,9 +896,6 @@ body.no-scroll {
     #today-kuliah-card .lecture-block-v2.is-khas {
         border-bottom: 1px solid #9333ea;
     }
-    #today-kuliah-card .lecture-block-v2.is-ditangguhkan {
-        border-bottom: 1px solid #dc2626;
-    }
     #today-kuliah-card .lecture-block-v2.is-pending.is-khas {
         border-bottom-style: dashed;
     }
@@ -881,8 +908,7 @@ body.no-scroll {
        for is-pending alone (a pending session usually has no poster yet), but
        always visible for is-khas, which normally does. */
     #today-kuliah-card .lecture-block-v2.is-pending,
-    #today-kuliah-card .lecture-block-v2.is-khas,
-    #today-kuliah-card .lecture-block-v2.is-ditangguhkan {
+    #today-kuliah-card .lecture-block-v2.is-khas {
         padding: 0.35rem 1rem;
         margin-bottom: 0.6rem;
     }
@@ -909,6 +935,39 @@ body.no-scroll {
         object-fit: contain;
         display: block;
         background: #fff;
+    }
+
+    /* Inline ditangguhkan poster (today-card) — scaled-down tilted stamp:
+       same language as paparan/lightbox, sized so the poster stays
+       recognizable behind the notice at phone viewing distance. */
+    .poster-wrapper.has-ditangguhkan {
+        position: relative;
+    }
+
+    .poster-wrapper.has-ditangguhkan .poster-img {
+        filter: brightness(0.5);
+    }
+
+    .poster-ditangguhkan-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 0 5%;
+        font-size: clamp(1.25rem, 9vw, 2.5rem);
+        line-height: 1.15;
+        font-weight: 800;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.35);
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+        pointer-events: none;
+    }
+
+    .poster-ditangguhkan-overlay span {
+        display: inline-block;
+        transform: rotate(-15deg);
     }
 
     .no-kuliah-today {

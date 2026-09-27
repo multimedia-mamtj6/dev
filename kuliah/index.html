@@ -21,6 +21,7 @@
         h1 { font-size: 1.25rem; margin: 1rem 0 0.25rem; }
         .subtitle { color: #64748b; font-size: 0.95rem; margin-bottom: 2rem; }
         .menu { display: grid; gap: 0.75rem; }
+        .menu.two-col { grid-template-columns: 1fr 1fr; }
         .menu a {
             display: block;
             padding: 1rem 1.25rem;
@@ -60,16 +61,26 @@
         <h1>Info Kuliah Maghrib &amp; Subuh</h1>
         <p class="subtitle">Masjid Al-Mukhlisin Taman Jaya 6</p>
 
-        <p class="section-label">Bulan Ini</p>
-        <div class="menu">
-            <a class="primary" href="/kuliah/jadual/" id="view-current">Lihat Jadual Bulan Ini</a>
-            <a href="/kuliah/jadual/?file=pdf" target="_blank" rel="noopener">Cetak / PDF<small>Buka paparan cetakan</small></a>
+        <p class="section-label" id="label-current">Bulan Ini</p>
+        <div class="menu two-col">
+            <a class="primary" href="/kuliah/jadual/">Lihat Jadual</a>
+            <a href="/kuliah/jadual/?file=pdf" target="_blank" rel="noopener">Cetak / PDF</a>
         </div>
 
-        <p class="section-label">Bulan Depan</p>
-        <div class="menu">
-            <a class="primary" href="/kuliah/jadual/?bulan=depan" id="view-next">Lihat Jadual Bulan Depan</a>
-            <a href="/kuliah/jadual/?file=pdf&amp;bulan=depan" target="_blank" rel="noopener">Cetak / PDF<small>Buka paparan cetakan</small></a>
+        <p class="section-label" id="label-next">Bulan Depan</p>
+        <div class="menu two-col">
+            <a class="primary" href="/kuliah/jadual/?bulan=depan">Lihat Jadual</a>
+            <a href="/kuliah/jadual/?file=pdf&amp;bulan=depan" target="_blank" rel="noopener">Cetak / PDF</a>
+        </div>
+
+        <p class="section-label">Paparan Semasa</p>
+        <div class="menu two-col">
+            <a href="/kuliah/paparan/?subuh">Subuh Hari Ini</a>
+            <a href="/kuliah/paparan/?maghrib">Maghrib Hari Ini</a>
+        </div>
+        <div class="menu two-col" style="margin-top:0.75rem">
+            <a href="/kuliah/paparan/?subuh-esok">Subuh Esok</a>
+            <a href="/kuliah/paparan/?maghrib-esok">Maghrib Esok</a>
         </div>
 
         <p class="section-label">Penceramah</p>
@@ -87,10 +98,10 @@
                          'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
             var now = new Date();
             var next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-            var cur = document.getElementById('view-current');
-            var nxt = document.getElementById('view-next');
-            if (cur) cur.textContent = 'Lihat Jadual (' + BULAN[now.getMonth()] + ' ' + now.getFullYear() + ')';
-            if (nxt) nxt.textContent = 'Lihat Jadual (' + BULAN[next.getMonth()] + ' ' + next.getFullYear() + ')';
+            var cur = document.getElementById('label-current');
+            var nxt = document.getElementById('label-next');
+            if (cur) cur.textContent = 'Bulan Ini (' + BULAN[now.getMonth()] + ' ' + now.getFullYear() + ')';
+            if (nxt) nxt.textContent = 'Bulan Depan (' + BULAN[next.getMonth()] + ' ' + next.getFullYear() + ')';
         })();
     </script>
 </body>

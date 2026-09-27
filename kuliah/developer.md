@@ -40,6 +40,13 @@ with a Node `vm` harness against stubbed DOM/fetch, same convention as
   in this folder): every `href`/`src` absolute root-relative; `vercel.json`
   `no-store` header for the new path; `?v=` cache-buster on every JSON fetch.
   Local servers keep `index.html` in the URL, so only production exposes a miss.
+- **Stale static assets mimic a missing feature with zero errors (2026-09-27):**
+  paparan shipped correct code + correct flagged data, yet showed a plain
+  poster — visitors' browsers were running a cached pre-flag `script.js`
+  (`/kuliah/paparan/` had no `no-store` header and no `?v=` on the script
+  tag). When a new feature "doesn't appear" on a previously-visited page,
+  check headers + busting before reading render code. Signage screens get the
+  header fix, never a "please hard-refresh" instruction.
 - **Live-data reality checks:** the committed JSONs are the fixtures — the
   `ustaz` table currently holds TWO Yasin spellings (`/yasi+n/i` covers both),
   and most `profile_url`/`jawatan` values may be null (fallbacks must render).
