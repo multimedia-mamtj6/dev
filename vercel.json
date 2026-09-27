@@ -21,6 +21,12 @@
       ]
     },
     {
+      "source": "/kuliah/paparan/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
       "source": "/news/data/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
