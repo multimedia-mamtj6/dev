@@ -18,6 +18,7 @@ This container holds the background image.
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
 }
 
 #display-container img {
@@ -25,6 +26,30 @@ This container holds the background image.
     max-height: 100%;
     object-fit: contain;
     display: block;
+}
+
+#display-container img.is-dimmed {
+    filter: brightness(0.5);
+}
+
+/*
+Ditangguhkan overlay — dimmed poster plus a full-cover status notice.
+Plain classes only (no :has() etc.): signage players may run old WebView2.
+*/
+.ditangguhkan-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 5vw;
+    font-size: clamp(2rem, 10vw, 5rem);
+    font-weight: 800;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
 }
 
 /* 

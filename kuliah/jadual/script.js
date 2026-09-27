@@ -74,10 +74,12 @@ function createLectureBlock(type, sessionData) {
 
     const label = sessionData.khas ? khasLabel : (type === 'subuh' ? 'Subuh' : 'Maghrib');
     const khasClass = sessionData.khas ? ' is-khas' : '';
-    return `<div class="lecture-block${khasClass}${posterClass}"${posterAttr}>
+    const ditangguhkanClass = sessionData.ditangguhkan ? ' is-ditangguhkan' : '';
+    return `<div class="lecture-block${khasClass}${ditangguhkanClass}${posterClass}"${posterAttr}>
                 <div class="lecture-time ${type}">${label}</div>
                 <div class="ustaz-name">${escapeHtml(sessionData.nama_penceramah)}</div>
                 <div class="lecture-title">${escapeHtml(sessionData.tajuk_kuliah)}</div>
+                ${sessionData.ditangguhkan ? '<div class="ditangguhkan-label">DITANGGUHKAN</div>' : ''}
             </div>`;
 }
 
@@ -165,10 +167,12 @@ function buildDayCell(dayNumber, year, month, dataByDate, todayString) {
     const blockCount = (blocks.match(/class="lecture-block\b/g) || []).length;
     const isShared   = blockCount > 1;
     const hasKhas    = /\bis-khas\b/.test(blocks);
+    const hasDitangguhkan = /\bis-ditangguhkan\b/.test(blocks);
     const hasYasin   = /\byasin-block\b/.test(blocks);
 
     let contentClass = 'lecture-content';
     if (hasKhas) contentClass += ' has-khas';
+    if (hasDitangguhkan) contentClass += ' has-ditangguhkan';
     if (hasYasin) contentClass += isShared ? ' has-yasin-shared' : ' has-yasin-solo';
 
     inner += `<div class="${contentClass}">${blocks}</div>`;
@@ -224,6 +228,7 @@ function renderCalendarDesktop(senaraiHari, targetDate) {
 function createMobileLectureBlock(time, lecture) {
     const badgeClass = time.toLowerCase();
     const khasClass = lecture.khas ? ' is-khas' : '';
+    const ditangguhkanClass = lecture.ditangguhkan ? ' is-ditangguhkan' : '';
     const badgeLabel = lecture.khas
         ? (time === 'Subuh' ? 'Kuliah Subuh Khas' : 'Kuliah Maghrib Khas')
         : time;
@@ -240,10 +245,11 @@ function createMobileLectureBlock(time, lecture) {
                     <div class="lecture-tajuk">BACAAN YASIIN &amp; TAHLIL</div>
                 </div>`;
     }
-    return `<div class="lecture-block-v2${khasClass}">
+    return `<div class="lecture-block-v2${khasClass}${ditangguhkanClass}">
                 <span class="session-badge ${badgeClass}${khasClass}">${badgeLabel}</span>
                 <div class="lecture-ustaz">${escapeHtml(lecture.nama_penceramah)}</div>
                 <div class="lecture-tajuk">${escapeHtml(lecture.tajuk_kuliah)}</div>
+                ${lecture.ditangguhkan ? '<div class="ditangguhkan-label">DITANGGUHKAN</div>' : ''}
             </div>`;
 }
 
@@ -619,6 +625,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (khasLegendEl) {
         const hasKhas = senaraiHari.some(d => d.subuh?.khas || d.maghrib?.khas);
         khasLegendEl.style.display = hasKhas ? '' : 'none';
+    }
+
+    // 5c. Ditangguhkan legend entry — same conditional pattern as khas above
+    const ditangguhkanLegendEl = document.getElementById('ditangguhkan-legend');
+    if (ditangguhkanLegendEl) {
+        const hasDitangguhkan = senaraiHari.some(d => d.subuh?.ditangguhkan || d.maghrib?.ditangguhkan);
+        ditangguhkanLegendEl.style.display = hasDitangguhkan ? '' : 'none';
     }
 
     // 6. Auto-print for PDF context

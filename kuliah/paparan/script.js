@@ -11,6 +11,7 @@ const MESSAGES = {
     tomorrow_subuh: 'Tiada Kuliah Subuh pada Hari Esok',
     tomorrow_maghrib: 'Tiada Kuliah Maghrib pada Hari Esok',
     pending: 'Ceramah Khas — Akan Diumumkan',
+    ditangguhkan: 'KULIAH DITANGGUHKAN',
     error: 'Error: Could not load schedule data'
 };
 
@@ -25,18 +26,27 @@ function getTargetDate(target) {
     return { dateString: `${year}-${month}-${day}`, monthKey: `${year}-${month}` };
 }
 
-function setDisplay(imageUrl, message) {
+function setDisplay(imageUrl, message, opts = {}) {
     const container = document.getElementById('display-container');
     const messageBox = document.getElementById('message');
     const existingImg = container.querySelector('img');
     if (existingImg) existingImg.remove();
+    const existingOverlay = container.querySelector('.ditangguhkan-overlay');
+    if (existingOverlay) existingOverlay.remove();
 
     if (imageUrl) {
         messageBox.style.display = 'none';
         const img = document.createElement('img');
         img.src = imageUrl;
         img.alt = 'Poster Kuliah';
+        if (opts.dim) img.classList.add('is-dimmed');
         container.appendChild(img);
+        if (opts.overlay) {
+            const overlay = document.createElement('div');
+            overlay.className = 'ditangguhkan-overlay';
+            overlay.textContent = opts.overlay;
+            container.appendChild(overlay);
+        }
     } else {
         messageBox.style.display = 'flex';
         messageBox.querySelector('h1').textContent = message;
@@ -67,6 +77,13 @@ async function initializeDisplay(day, lectureType) {
         if (session?.pending) {
             console.log("Slot ditandakan Belum Ditetapkan — memaparkan mesej sementara.");
             setDisplay(null, MESSAGES.pending);
+        } else if (session?.ditangguhkan) {
+            console.log("Slot ditandakan Ditangguhkan — memaparkan poster malap + notis.");
+            if (session?.poster_url) {
+                setDisplay(session.poster_url, '', { dim: true, overlay: MESSAGES.ditangguhkan });
+            } else {
+                setDisplay(null, MESSAGES.ditangguhkan);
+            }
         } else if (session?.poster_url) {
             console.log("URL Imej untuk dipaparkan:", session.poster_url);
             setDisplay(session.poster_url, '');

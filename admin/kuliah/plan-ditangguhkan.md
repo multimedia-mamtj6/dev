@@ -1,6 +1,6 @@
 # Plan — Slot "Ditangguhkan" (admin/kuliah scope)
 
-_Status: CODE DONE 2026-09-27 (admin/kuliah scope), needs Step 0 SQL run + browser verify. Written 2026-09-25._
+_Status: FOLLOW-UP DONE 2026-09-27 (publish + jadual + paparan built, harness-verified). Written 2026-09-25._
 
 ## Context
 
