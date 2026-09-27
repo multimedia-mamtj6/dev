@@ -1,6 +1,6 @@
 // ─── State ────────────────────────────────────────────────────────────────────
 let currentYear, currentMonth;
-let scheduleMap = {};   // dateStr → { date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id, subuh, maghrib }
+let scheduleMap = {};   // dateStr → { date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id, subuh, maghrib, subuh_pending, maghrib_pending, subuh_khas, maghrib_khas, subuh_ditangguhkan, maghrib_ditangguhkan }
 let ustazList   = [];   // full list from DB
 let ustazMap    = {};   // id → ustaz object
 let editingDate = null; // date string currently open in modal
@@ -63,7 +63,7 @@ async function loadMonth() {
 
     const { data: rows, error: schedErr } = await db
         .from('schedule')
-        .select('date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id, subuh_pending, maghrib_pending, subuh_khas, maghrib_khas')
+        .select('date, cuti_umum, subuh_ustaz_id, maghrib_ustaz_id, subuh_pending, maghrib_pending, subuh_khas, maghrib_khas, subuh_ditangguhkan, maghrib_ditangguhkan')
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date');
@@ -122,21 +122,29 @@ function renderCalendar() {
                 }
                 const subuhKhasCls   = row?.subuh_khas   ? ' khas' : '';
                 const maghribKhasCls = row?.maghrib_khas ? ' khas' : '';
+                const subuhTangguhCls   = row?.subuh_ditangguhkan   ? ' ditangguhkan' : '';
+                const maghribTangguhCls = row?.maghrib_ditangguhkan ? ' ditangguhkan' : '';
                 if (row?.subuh_pending) {
-                    html += `<span class="session-tag pending${subuhKhasCls}">S: Belum Ditetapkan</span>`;
+                    html += `<span class="session-tag pending${subuhKhasCls}${subuhTangguhCls}">S: Belum Ditetapkan</span>`;
                 } else if (row?.subuh) {
-                    const subuhClass = (isYasinEntry(row.subuh) ? 'session-tag yasin' : 'session-tag subuh') + subuhKhasCls;
-                    html += `<span class="${subuhClass}">S: ${escapeHtml(row.subuh.short_name || row.subuh.full_name)}</span>`;
+                    const subuhClass = (isYasinEntry(row.subuh) ? 'session-tag yasin' : 'session-tag subuh') + subuhKhasCls + subuhTangguhCls;
+                    const subuhLabel = row?.subuh_ditangguhkan ? `S: ${escapeHtml(row.subuh.short_name || row.subuh.full_name)} (Ditangguhkan)` : `S: ${escapeHtml(row.subuh.short_name || row.subuh.full_name)}`;
+                    html += `<span class="${subuhClass}">${subuhLabel}</span>`;
                 } else if (row) {
-                    html += `<span class="session-tag empty">S: Tiada</span>`;
+                    html += row?.subuh_ditangguhkan
+                        ? `<span class="session-tag ditangguhkan">S: Ditangguhkan</span>`
+                        : `<span class="session-tag empty">S: Tiada</span>`;
                 }
                 if (row?.maghrib_pending) {
-                    html += `<span class="session-tag pending${maghribKhasCls}">M: Belum Ditetapkan</span>`;
+                    html += `<span class="session-tag pending${maghribKhasCls}${maghribTangguhCls}">M: Belum Ditetapkan</span>`;
                 } else if (row?.maghrib) {
-                    const maghribClass = (isYasinEntry(row.maghrib) ? 'session-tag yasin' : 'session-tag maghrib') + maghribKhasCls;
-                    html += `<span class="${maghribClass}">M: ${escapeHtml(row.maghrib.short_name || row.maghrib.full_name)}</span>`;
+                    const maghribClass = (isYasinEntry(row.maghrib) ? 'session-tag yasin' : 'session-tag maghrib') + maghribKhasCls + maghribTangguhCls;
+                    const maghribLabel = row?.maghrib_ditangguhkan ? `M: ${escapeHtml(row.maghrib.short_name || row.maghrib.full_name)} (Ditangguhkan)` : `M: ${escapeHtml(row.maghrib.short_name || row.maghrib.full_name)}`;
+                    html += `<span class="${maghribClass}">${maghribLabel}</span>`;
                 } else if (row) {
-                    html += `<span class="session-tag empty">M: Tiada</span>`;
+                    html += row?.maghrib_ditangguhkan
+                        ? `<span class="session-tag ditangguhkan">M: Ditangguhkan</span>`
+                        : `<span class="session-tag empty">M: Tiada</span>`;
                 }
 
                 html += '</div></td>';
@@ -171,20 +179,26 @@ function renderMobileDayList() {
 
         const subuhPending   = !!row?.subuh_pending;
         const maghribPending = !!row?.maghrib_pending;
+        const subuhDitangguhkan   = !!row?.subuh_ditangguhkan;
+        const maghribDitangguhkan = !!row?.maghrib_ditangguhkan;
         const subuhName   = row?.subuh   ? escapeHtml(row.subuh.short_name   || row.subuh.full_name)   : null;
         const maghribName = row?.maghrib ? escapeHtml(row.maghrib.short_name || row.maghrib.full_name) : null;
-        let subuhClass   = subuhPending   ? 'mdc-s mdc-pending' : (subuhName   ? (isYasinEntry(row.subuh)   ? 'mdc-s mdc-yasin' : 'mdc-s')   : 'mdc-empty');
-        let maghribClass = maghribPending ? 'mdc-m mdc-pending' : (maghribName ? (isYasinEntry(row.maghrib) ? 'mdc-m mdc-yasin' : 'mdc-m')   : 'mdc-empty');
+        let subuhClass   = subuhPending   ? 'mdc-s mdc-pending' : (subuhName   ? (isYasinEntry(row.subuh)   ? 'mdc-s mdc-yasin' : 'mdc-s')   : (subuhDitangguhkan ? 'mdc-s mdc-ditangguhkan' : 'mdc-empty'));
+        let maghribClass = maghribPending ? 'mdc-m mdc-pending' : (maghribName ? (isYasinEntry(row.maghrib) ? 'mdc-m mdc-yasin' : 'mdc-m')   : (maghribDitangguhkan ? 'mdc-m mdc-ditangguhkan' : 'mdc-empty'));
         if (row?.subuh_khas   && subuhClass.startsWith('mdc-s'))   subuhClass   += ' mdc-khas';
         if (row?.maghrib_khas && maghribClass.startsWith('mdc-m')) maghribClass += ' mdc-khas';
+        if (subuhDitangguhkan   && subuhClass.startsWith('mdc-s'))   subuhClass   += ' mdc-ditangguhkan';
+        if (maghribDitangguhkan && maghribClass.startsWith('mdc-m')) maghribClass += ' mdc-ditangguhkan';
 
+        const subuhText   = subuhPending ? 'Belum Ditetapkan' : (subuhName ? (subuhDitangguhkan ? `${subuhName} (Ditangguhkan)` : subuhName) : (subuhDitangguhkan ? 'Ditangguhkan' : 'Tiada'));
+        const maghribText = maghribPending ? 'Belum Ditetapkan' : (maghribName ? (maghribDitangguhkan ? `${maghribName} (Ditangguhkan)` : maghribName) : (maghribDitangguhkan ? 'Ditangguhkan' : 'Tiada'));
         html += `<div class="${cls}" onclick="openModal('${dateStr}')">
             <div class="mdc-date">${d}</div>
             <div class="mdc-day">${HARI_MALAY[dow]}</div>
             <div class="mdc-sessions">
                 ${row?.cuti_umum ? `<span class="mdc-holiday">${escapeHtml(row.cuti_umum)}</span>` : ''}
-                <span class="${subuhClass}">S: ${subuhPending ? 'Belum Ditetapkan' : (subuhName || 'Tiada')}</span>
-                <span class="${maghribClass}">M: ${maghribPending ? 'Belum Ditetapkan' : (maghribName || 'Tiada')}</span>
+                <span class="${subuhClass}">S: ${subuhText}</span>
+                <span class="${maghribClass}">M: ${maghribText}</span>
             </div>
             <div class="mdc-arrow">›</div>
         </div>`;
@@ -297,7 +311,7 @@ function getPrevMonthOf(year, month) {
 
 function countFilledDays(map) {
     return Object.values(map).filter(row =>
-        row.subuh_ustaz_id || row.maghrib_ustaz_id || row.subuh_pending || row.maghrib_pending || row.cuti_umum
+        row.subuh_ustaz_id || row.maghrib_ustaz_id || row.subuh_pending || row.maghrib_pending || row.subuh_ditangguhkan || row.maghrib_ditangguhkan || row.cuti_umum
     ).length;
 }
 
@@ -338,6 +352,9 @@ async function confirmDuplicate() {
     const srcLastDay  = lastDayOfMonth(src.year, src.month);
     const srcEnd      = `${src.year}-${padSrcMonth}-${String(srcLastDay).padStart(2, '0')}`;
 
+    // Salin Data copies ustaz assignments only — pending/khas/cuti_umum/
+    // ditangguhkan are date-specific and intentionally NOT carried forward
+    // (ditangguhkan is a per-date incident, same rationale as cuti_umum).
     const { data: srcRows, error: srcErr } = await db
         .from('schedule')
         .select('date, subuh_ustaz_id, maghrib_ustaz_id')
@@ -494,8 +511,18 @@ function openModal(dateStr) {
     // Belum Ditetapkan — mutually exclusive with picking an ustaz for that slot
     const subuhPendingCheck   = document.getElementById('subuh-pending-check');
     const maghribPendingCheck = document.getElementById('maghrib-pending-check');
+    const subuhDitangguhkanCheck   = document.getElementById('subuh-ditangguhkan-check');
+    const maghribDitangguhkanCheck = document.getElementById('maghrib-ditangguhkan-check');
     subuhPendingCheck.checked   = !!row?.subuh_pending;
     maghribPendingCheck.checked = !!row?.maghrib_pending;
+    subuhDitangguhkanCheck.checked   = !!row?.subuh_ditangguhkan;
+    maghribDitangguhkanCheck.checked = !!row?.maghrib_ditangguhkan;
+    // Ditangguhkan MUST NOT combine with Pending (a pending slot has no
+    // speaker to postpone) — enforce exclusion both directions, Khas untouched.
+    subuhDitangguhkanCheck.disabled   = subuhPendingCheck.checked;
+    maghribDitangguhkanCheck.disabled = maghribPendingCheck.checked;
+    subuhPendingCheck.disabled   = subuhDitangguhkanCheck.checked;
+    maghribPendingCheck.disabled = maghribDitangguhkanCheck.checked;
     subuhSel.disabled   = subuhPendingCheck.checked;
     maghribSel.disabled = maghribPendingCheck.checked;
 
@@ -513,10 +540,16 @@ function openModal(dateStr) {
     const readOnly = !canWriteModule('kuliah');
     document.getElementById('cuti-check').disabled           = readOnly;
     document.getElementById('cuti-text').disabled             = readOnly;
-    document.getElementById('subuh-pending-check').disabled   = readOnly;
-    document.getElementById('maghrib-pending-check').disabled = readOnly;
     document.getElementById('subuh-khas-check').disabled      = readOnly;
     document.getElementById('maghrib-khas-check').disabled    = readOnly;
+    if (readOnly) {
+        document.getElementById('subuh-pending-check').disabled   = true;
+        document.getElementById('maghrib-pending-check').disabled = true;
+        document.getElementById('subuh-ditangguhkan-check').disabled   = true;
+        document.getElementById('maghrib-ditangguhkan-check').disabled = true;
+    }
+    // (when NOT read-only, the pending/ditangguhkan disabled states set above
+    // are kept as-is — they encode the mutual exclusion, not permissions.)
     if (readOnly) { subuhSel.disabled = true; maghribSel.disabled = true; }
     document.getElementById('save-btn').style.display = readOnly ? 'none' : '';
 
@@ -544,6 +577,10 @@ function toggleSubuhPending() {
     const sel      = document.getElementById('subuh-select');
     sel.disabled = checked;
     if (checked) sel.value = '';
+    // Ditangguhkan MUST NOT combine with Pending — uncheck+disable it.
+    const dt = document.getElementById('subuh-ditangguhkan-check');
+    if (checked) dt.checked = false;
+    dt.disabled = checked;
 }
 
 function toggleMaghribPending() {
@@ -551,12 +588,37 @@ function toggleMaghribPending() {
     const sel      = document.getElementById('maghrib-select');
     sel.disabled = checked;
     if (checked) sel.value = '';
+    const dt = document.getElementById('maghrib-ditangguhkan-check');
+    if (checked) dt.checked = false;
+    dt.disabled = checked;
+}
+
+function toggleSubuhDitangguhkan() {
+    const checked = document.getElementById('subuh-ditangguhkan-check').checked;
+    // Ditangguhkan keeps the assigned ustaz (same pattern as khas) — only
+    // Pending is excluded, in both directions. Khas untouched.
+    const pc = document.getElementById('subuh-pending-check');
+    if (checked) {
+        pc.checked = false;
+        document.getElementById('subuh-select').disabled = false;
+    }
+    pc.disabled = checked;
+}
+
+function toggleMaghribDitangguhkan() {
+    const checked = document.getElementById('maghrib-ditangguhkan-check').checked;
+    const pc = document.getElementById('maghrib-pending-check');
+    if (checked) {
+        pc.checked = false;
+        document.getElementById('maghrib-select').disabled = false;
+    }
+    pc.disabled = checked;
 }
 
 // ─── Save day ─────────────────────────────────────────────────────────────────
 // Compares the pre-write scheduleMap row against the values about to be saved and
 // returns a human-readable diff string, or null if nothing actually changed.
-function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti, afterSubuhPending, afterMaghribPending, afterSubuhKhas, afterMaghribKhas) {
+function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti, afterSubuhPending, afterMaghribPending, afterSubuhKhas, afterMaghribKhas, afterSubuhDitangguhkan, afterMaghribDitangguhkan) {
     const parts = [];
     const nameOf = u => u ? (u.short_name || u.full_name) : null;
 
@@ -581,6 +643,14 @@ function buildDayDiffText(before, afterSubuhId, afterMaghribId, afterCuti, after
         parts.push(`Kuliah Khas (Maghrib): ${before?.maghrib_khas ? 'Ya' : 'Tidak'} → ${afterMaghribKhas ? 'Ya' : 'Tidak'}`);
     }
 
+    // Ditangguhkan is independent of ustaz/pending/khas above, own diff lines.
+    if (!!before?.subuh_ditangguhkan !== !!afterSubuhDitangguhkan) {
+        parts.push(`Ditangguhkan (Subuh): ${before?.subuh_ditangguhkan ? 'Ya' : 'Tidak'} → ${afterSubuhDitangguhkan ? 'Ya' : 'Tidak'}`);
+    }
+    if (!!before?.maghrib_ditangguhkan !== !!afterMaghribDitangguhkan) {
+        parts.push(`Ditangguhkan (Maghrib): ${before?.maghrib_ditangguhkan ? 'Ya' : 'Tidak'} → ${afterMaghribDitangguhkan ? 'Ya' : 'Tidak'}`);
+    }
+
     const beforeCuti = before?.cuti_umum || null;
     if ((beforeCuti || null) !== (afterCuti || null)) {
         parts.push(`Cuti Umum: ${beforeCuti ? `"${beforeCuti}"` : 'Tiada'} → ${afterCuti ? `"${afterCuti}"` : 'Tiada'}`);
@@ -600,6 +670,8 @@ async function saveDay() {
     const maghribPending = document.getElementById('maghrib-pending-check').checked;
     const subuhKhas      = document.getElementById('subuh-khas-check').checked;
     const maghribKhas    = document.getElementById('maghrib-khas-check').checked;
+    const subuhDitangguhkan   = document.getElementById('subuh-ditangguhkan-check').checked;
+    const maghribDitangguhkan = document.getElementById('maghrib-ditangguhkan-check').checked;
     const subuhId   = subuhPending   ? null : (document.getElementById('subuh-select').value   || null);
     const maghribId = maghribPending ? null : (document.getElementById('maghrib-select').value || null);
     const hasCuti   = document.getElementById('cuti-check').checked;
@@ -615,6 +687,8 @@ async function saveDay() {
             maghrib_pending:  maghribPending,
             subuh_khas:       subuhKhas,
             maghrib_khas:     maghribKhas,
+            subuh_ditangguhkan:   subuhDitangguhkan,
+            maghrib_ditangguhkan: maghribDitangguhkan,
             cuti_umum:        cutiText,
             updated_at:       new Date().toISOString(),
         },
@@ -630,7 +704,7 @@ async function saveDay() {
     }
 
     showToast('Berjaya disimpan', 'success');
-    const diff = buildDayDiffText(before, subuhId, maghribId, cutiText, subuhPending, maghribPending, subuhKhas, maghribKhas);
+    const diff = buildDayDiffText(before, subuhId, maghribId, cutiText, subuhPending, maghribPending, subuhKhas, maghribKhas, subuhDitangguhkan, maghribDitangguhkan);
     if (diff) await logActivity('schedule_day_edit', formatDateMY(editingDate), diff);
     closeModal();
     await loadMonth();
@@ -657,9 +731,21 @@ async function publishMonth() {
             method:  'POST',
             headers: { 'Authorization': `Bearer ${session.access_token}` }
         });
-        const data = await res.json();
+        // Local dev servers (python http.server / Live Server) have no
+        // /api/* serverless route — they answer with an HTML error page, not
+        // JSON. Parse defensively so that shows a clear message instead of
+        // the raw "Unexpected end of JSON input" from res.json().
+        const text = await res.text();
+        let data = null;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = null;
+        }
 
-        if (!res.ok) {
+        if (!data) {
+            showToast('Tidak dapat menerbitkan dari local — sila uji Terbitkan di Vercel (preview/production) sahaja.', 'error', 8000);
+        } else if (!res.ok) {
             const detail = data.details ? ` (${data.status}: ${data.details})` : '';
             showToast('Gagal menerbitkan: ' + (data.error || res.statusText) + detail, 'error', 8000);
         } else {

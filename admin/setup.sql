@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS schedule (
     maghrib_pending  BOOLEAN NOT NULL DEFAULT false,
     subuh_khas       BOOLEAN NOT NULL DEFAULT false,  -- this session is a special "Kuliah Khas" lecture — independent of
     maghrib_khas     BOOLEAN NOT NULL DEFAULT false,  -- *_pending (a Khas day can have a confirmed ustaz or be pending)
+    subuh_ditangguhkan   BOOLEAN NOT NULL DEFAULT false,  -- this session is postponed ("Ditangguhkan") — keeps ustaz, like khas
+    maghrib_ditangguhkan BOOLEAN NOT NULL DEFAULT false,  -- MUST NOT combine with *_pending, MAY combine with *_khas
     cuti_umum        TEXT,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -69,6 +71,8 @@ ALTER TABLE schedule ADD COLUMN IF NOT EXISTS subuh_pending   BOOLEAN NOT NULL D
 ALTER TABLE schedule ADD COLUMN IF NOT EXISTS maghrib_pending BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE schedule ADD COLUMN IF NOT EXISTS subuh_khas      BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE schedule ADD COLUMN IF NOT EXISTS maghrib_khas    BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE schedule ADD COLUMN IF NOT EXISTS subuh_ditangguhkan   BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE schedule ADD COLUMN IF NOT EXISTS maghrib_ditangguhkan BOOLEAN NOT NULL DEFAULT false;
 
 
 -- ── 2. Indexes ────────────────────────────────────────────────────────────────
