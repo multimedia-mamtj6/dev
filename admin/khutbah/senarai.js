@@ -71,6 +71,7 @@ function openEditModal(id) {
     document.getElementById('edit-main-text').value = r.main_text || '';
     document.getElementById('edit-url').value = r.source_url || '';
     document.getElementById('edit-override').checked = !!r.manual_override;
+    document.getElementById('test-url-note').textContent = '';
     document.getElementById('khutbah-modal-title').textContent = `Kemaskini — ${r.friday_date || ''}`;
     document.getElementById('khutbah-modal').classList.add('open');
 }
@@ -81,6 +82,48 @@ function closeKhutbahModal() {
 
 function handleKhutbahOverlay(e) {
     if (e.target.id === 'khutbah-modal') closeKhutbahModal();
+}
+
+// ─── URL tester (preview-only) ───────────────────────────────────────────
+// Paste a corrected mufti URL → server-side fetch via api/khutbah-test-url.js
+// (mufti CORS blocks direct browser fetch) → fill tajuk/tarikh WITHOUT
+// saving. The admin reviews, then Simpan sets manual_override=true.
+// Nothing here writes DB or publishes JSON.
+async function testKhutbahUrl() {
+    const url = document.getElementById('edit-url').value.trim();
+    const note = document.getElementById('test-url-note');
+    const btn = document.getElementById('test-url-btn');
+    if (!url) { note.textContent = 'Tampal pautan mufti dahulu.'; return; }
+    const session = (await db.auth.getSession()).data.session;
+    if (!session) { note.textContent = 'Sesi tamat. Sila log masuk semula.'; return; }
+    btn.disabled = true;
+    note.textContent = 'Menguji pautan...';
+    try {
+        const res = await fetch('/api/khutbah-test-url', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ url }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+            note.textContent = json.error || `Gagal menguji pautan (HTTP ${res.status}).`;
+            return;
+        }
+        document.getElementById('edit-title').value = json.title || '';
+        document.getElementById('edit-date-text').value = json.date_text || '';
+        document.getElementById('edit-override').checked = true;
+        const flag = (json.dateMatched !== 'primary' || json.titleMatched !== 'primary')
+            ? ` (tarikh:${json.dateMatched} tajuk:${json.titleMatched})` : '';
+        note.textContent = `Diambil dari halaman${flag} — semak, kemudian Simpan.`;
+    } catch (e) {
+        console.error('testKhutbahUrl failed:', e);
+        note.textContent = `Gagal menguji pautan: ${e.message}`;
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 async function saveKhutbah() {
