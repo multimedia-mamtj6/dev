@@ -2,8 +2,8 @@
   "projek": {
     "NamaProjek": "Projek Perolehan Tanah Perkuburan Kariah Masjid Al-Mukhlisin, Taman Jaya 6",
     "SasaranKutipan": 200000,
-    "JumlahTerkumpul": 32127,
-    "Peratusan": 16
+    "JumlahTerkumpul": 33166,
+    "Peratusan": 17
   },
   "paparanHarian": [
     {
@@ -25,7 +25,12 @@
       "tarikh": "2026-09-18",
       "jumlah": 869,
       "keterangan": "Kutipan Tabung Fizikal di premis masjid pada 18/9/2026"
+    },
+    {
+      "tarikh": "2026-09-28",
+      "jumlah": 1039,
+      "keterangan": "Kutipan Tabung Fizikal di premis masjid pada 25/9/2026"
     }
   ],
-  "tarikhKemaskini": "2026-09-21T04:21:33.015Z"
+  "tarikhKemaskini": "2026-09-28T05:07:21.056Z"
 }
