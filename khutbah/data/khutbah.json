@@ -10,6 +10,15 @@
   },
   "history": [
     {
+      "friday_date": "2026-10-02",
+      "source_url": "https://mufti.pahang.gov.my/khutbah/2026/02-oktober-2026m-20-rabiulawal-1448h",
+      "siri_text": "MIMBAR JUMAAT SIRI 10 | 2026",
+      "title": null,
+      "date_text": null,
+      "main_text": null,
+      "manual_override": false
+    },
+    {
       "friday_date": "2026-09-25",
       "source_url": "https://mufti.pahang.gov.my/khutbah/2026/25-september-2026m-13-rabiulakhir-1448h",
       "siri_text": "MIMBAR JUMAAT SIRI 9 | 2026",
@@ -28,5 +37,5 @@
       "manual_override": true
     }
   ],
-  "updated_at": "2026-09-23T03:35:27.712Z"
+  "updated_at": "2026-09-28T01:26:56.115Z"
 }
