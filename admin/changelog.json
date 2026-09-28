@@ -1,6 +1,24 @@
 [
   {
     "date": "2026-09-28",
+    "module": "Pengumuman",
+    "ringkasan": "Butang Duplicate baharu di Pengumuman dan Teks Berjalan — wujudkan mesej kedua dengan jadual masa yang sama tanpa menaip semula tarikh.",
+    "detail": "duplicateAnnouncement() (pengumuman.js) pra-isi modal tambah (edit-id kekal kosong → laluan insert; Tajuk + \" (salinan)\"; image_url diguna semula melalui medan URL, tiada muat naik semula) dan duplicateTicker() (teks-berjalan.js) pra-isi jenis/mesej/awalan/tempoh; kedua-duanya dilog sebagai create (news_announcement_create/news_ticker_create)."
+  },
+  {
+    "date": "2026-09-28",
+    "module": "Pengumuman",
+    "ringkasan": "Susunan baris Teks Berjalan kini boleh diseret dengan tetikus — pratonton mengikut susunan baharu serta-merta, fail terbitan dikemas kini selepas Terbitkan.",
+    "detail": "Grip ⠿ setiap baris (HTML5 drag-and-drop, desktop sahaja; butang ↑/↓ dikekalkan sebagai fallback); persistNewTickerOrder() menulis semula sort_order 0..n-1 dengan hanya baris yang berubah ditulis + satu log news_ticker_reorder; pratonton render semula serta-merta, moving-text.json hanya berubah melalui Terbitkan/cron."
+  },
+  {
+    "date": "2026-09-28",
+    "module": "Pengumuman",
+    "ringkasan": "Butang Edit/Padam/Duplicate kini ikon bergambar (pensel/salin/tong sampah) dengan petua hover.",
+    "detail": "NEWS_ACTION_ICONS dalam news-common.js (SVG sebaris, currentColor, dikongsi kedua-dua halaman berita); title + aria-label dikekalkan (Edit/Duplicate/Padam)."
+  },
+  {
+    "date": "2026-09-28",
     "module": "Umum",
     "ringkasan": "Halaman “Sejarah Perubahan” baharu di admin — semua kemas kini sistem tercatat di sini dalam Bahasa Melayu.",
     "detail": "admin/changelog.html+.js+.json (sumber tunggal: ringkasan ms + detail teknikal, boleh tapis ikut modul); pautan di sidebar Utama; Log Aktiviti kekal sebagai jejak audit penuh; cangkuk penyelenggaraan dalam CLAUDE.md Key Patterns (tambah entri SEBELUM commit); CHANGELOG.md akar dibekukan sebagai sejarah."

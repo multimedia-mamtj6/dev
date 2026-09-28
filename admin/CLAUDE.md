@@ -163,7 +163,9 @@ admin/
     news-common.js     ← Shared: requireNewsAccess(), publishNews()/loadLastPublishedNewsNote()
                           (Terbitkan, shared by both pages below), getSetting()/getSettings()/
                           saveSetting() (news_settings key/value table), computeStatus(row, now)
-                          (Aktif/Akan Datang/Tamat/Dimatikan — used by both pages' tables)
+                          (Aktif/Akan Datang/Tamat/Dimatikan — used by both pages' tables),
+                          NEWS_ACTION_ICONS (pencil/copy/trash inline SVGs for both pages'
+                          Edit/Duplicate/Padam buttons — one definition, title+aria-label kept)
     publish-news-pure.js ← THE SAME pure scheduling/CSV functions api/publish-news.js runs
                           (parseCSVRow, isActiveNow, buildAnnouncementsJson, buildMovingTextJson,
                           ...) — deliberately duplicated-by-reference (api/publish-news.js
@@ -176,15 +178,20 @@ admin/
     pengumuman.html/.js ← Announcement slides CRUD — title/heading/text/image (upload to
                           news-assets bucket OR URL, mutually exclusive — reuses ustaz.js's 3-way
                           poster-save logic verbatim), start/end date, enabled, sort order. Owns
-                          the `announcements` Terbitkan button. Tetapan card edits `default_image`
-    teks-berjalan.html/.js ← Ticker lines CRUD — ↑/↓ buttons swap `sort_order` (no drag-drop
-                          library). A `kind='khutbah'` row edits its `prefix` instead of free text
-                          and shows the cached last-fetched khutbah title. Owns the `moving-text`
-                          Terbitkan button. Includes a "what will actually be published" preview
-                          panel (see publish-news-pure.js above) — necessary because, unlike
-                          pengumuman's client-filtered display, the ticker's scheduling is resolved
-                          server-side, so an admin otherwise has no way to see what Xibo will
-                          actually receive. Tetapan card edits `default_ticker_line`
+                          the `announcements` Terbitkan button. duplicateAnnouncement() prefills
+                          the add-modal from an existing row (same timeframe, title + " (salinan)",
+                          image reused via URL) so a second message never retypes the schedule.
+                          Tetapan card edits `default_image`
+    teks-berjalan.html/.js ← Ticker lines CRUD — ⠿-grip drag-and-drop reorders `sort_order`
+                          (native HTML5 DnD, no library; ↑/↓ buttons kept as fallback). A `kind='khutbah'` row edits its `prefix` instead of free text
+                          and shows the cached last-fetched khutbah title. duplicateTicker()
+                          prefills the add-modal the same way pengumuman does. Owns the
+                          `moving-text` Terbitkan button. Includes a "what will actually be
+                          published" preview panel (see publish-news-pure.js above) — necessary
+                          because, unlike pengumuman's client-filtered display, the ticker's
+                          scheduling is resolved server-side, so an admin otherwise has no way
+                          to see what Xibo will actually receive. Tetapan card edits
+                          `default_ticker_line`
 
   staff/           ← Module: staff identity/login layer (new 2026-07-29) — login only,
                       no clock-in/attendance yet

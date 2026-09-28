@@ -408,7 +408,7 @@ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
 
 - A `kind = 'khutbah'` row has no `message` — its published line is `prefix + <the resolved khutbah title>`, fetched from the same published CSV `khutbah/index.html` reads (`news_settings.khutbah_csv_url`). If that fetch fails for any reason, `api/publish-news.js` falls back to `news_settings.khutbah_last_title` (a cache it writes on every successful fetch); if that's empty too, the row is omitted entirely — it is never replaced with a placeholder or error text.
-- `sort_order` is changed only via `teks-berjalan.html`'s ↑/↓ buttons (two plain `UPDATE`s swapping adjacent rows' `sort_order`), not a manually-typed number — deliberately no drag-drop library, matching this repo's no-framework rule.
+- `sort_order` is changed via `teks-berjalan.html`'s ⠿-grip drag-and-drop (re-pins 0..n-1, only changed rows written) or its ↑/↓ buttons (two plain `UPDATE`s swapping adjacent rows' `sort_order`), never a manually-typed number — still no drag-drop library (native HTML5 DnD), matching this repo's no-framework rule.
 - **Same `TIMESTAMP` change as `news_announcements`, but with a real practical caveat this table doesn't share:** `isActiveNow()` compares down to the minute now (`mytDateTimeString()`/`normalizeBoundary()` in `admin/news/publish-news-pure.js`), but that comparison only ever runs **at publish time** — a ticker line scheduled to start at, say, 3pm won't actually appear on the physical screen until the next Terbitkan click or the next cron run (once/day on Vercel's Hobby plan). The schema/UI support minute precision either way; whether it's genuinely live on the ticker depends on cron frequency, a hosting-plan question — see `database.md` §1.9.
 
 ### `news_settings`

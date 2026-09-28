@@ -82,8 +82,9 @@ function renderTable() {
             <td data-label="">
                 ${canWrite ? `
                 <div class="actions">
-                    <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(r.id)}')">Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(r.id)}', '${escapeHtml(r.title)}')">Padam</button>
+                    <button class="btn btn-ghost btn-sm" title="Edit" aria-label="Edit" onclick="openEditModal('${escapeHtml(r.id)}')">${NEWS_ACTION_ICONS.edit}</button>
+                    <button class="btn btn-ghost btn-sm" title="Duplicate" aria-label="Duplicate" onclick="duplicateAnnouncement('${escapeHtml(r.id)}')">${NEWS_ACTION_ICONS.duplicate}</button>
+                    <button class="btn btn-danger btn-sm" title="Padam" aria-label="Padam" onclick="openDeleteModal('${escapeHtml(r.id)}', '${escapeHtml(r.title)}')">${NEWS_ACTION_ICONS.delete}</button>
                 </div>
                 ` : ''}
             </td>
@@ -141,6 +142,32 @@ function openEditModal(id) {
 
     updateTextCounter();
     document.getElementById('ann-modal').classList.add('open');
+}
+
+// ─── Duplicate: same timeframe, new message ───────────────────────────────────
+// Prefills the add-modal from an existing row so a second message sharing the
+// same schedule only needs its text/image tweaked. edit-id stays empty so
+// saveAnnouncement() takes the insert + news_announcement_create path. The
+// existing image_url (if any) is reused via the URL field — no re-upload.
+function duplicateAnnouncement(id) {
+    const r = allAnnouncements.find(x => x.id === id);
+    if (!r) return;
+
+    openAddModal();
+    document.getElementById('ann-modal-title').textContent = 'Duplikat Pengumuman';
+    document.getElementById('edit-title').value      = `${r.title || ''} (salinan)`;
+    document.getElementById('edit-heading').value    = r.heading || '';
+    document.getElementById('edit-text').value       = r.body_text || '';
+    document.getElementById('edit-start').value      = (r.start_at || '').slice(0, 16);
+    document.getElementById('edit-end').value        = (r.end_at || '').slice(0, 16);
+    document.getElementById('edit-enabled').checked  = r.enabled !== false;
+    if (r.image_url) {
+        document.getElementById('edit-image-url').value = r.image_url;
+        document.getElementById('ann-image-preview').innerHTML =
+            `<img src="${escapeHtml(r.image_url)}" class="preview-img" alt="Preview">`;
+    }
+
+    updateTextCounter();
 }
 
 function closeModal() {

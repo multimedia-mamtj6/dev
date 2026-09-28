@@ -1,6 +1,7 @@
 // ─── State ────────────────────────────────────────────────────────────────────
 let allTicker      = [];
 let deletingTickerId = null;
+let dragTickerId     = null;
 let cachedSettings = {};
 let updateMessageCounter = () => {};
 let updatePrefixCounter  = () => {};
@@ -58,10 +59,11 @@ function renderTable() {
     }
 
     tbody.innerHTML = allTicker.map((r, i) => `
-        <tr>
+        <tr ondragover="tickerDragOver(event)" ondragleave="tickerDragLeave(event)" ondrop="tickerDrop(event, '${escapeHtml(r.id)}')">
             <td data-label="Susun">
                 ${canWrite ? `
-                <div style="display:flex;gap:0.25rem">
+                <div style="display:flex;gap:0.25rem;align-items:center">
+                    <span class="ticker-grip" draggable="true" ondragstart="tickerDragStart(event, '${escapeHtml(r.id)}')" ondragend="tickerDragEnd(event)" title="Seret untuk susun">&#10022;</span>
                     <button class="btn btn-ghost btn-sm" title="Naik" onclick="moveTicker('${escapeHtml(r.id)}', -1)" ${i === 0 ? 'disabled' : ''}>&uarr;</button>
                     <button class="btn btn-ghost btn-sm" title="Turun" onclick="moveTicker('${escapeHtml(r.id)}', 1)" ${i === allTicker.length - 1 ? 'disabled' : ''}>&darr;</button>
                 </div>
@@ -74,8 +76,9 @@ function renderTable() {
             <td data-label="">
                 ${canWrite ? `
                 <div class="actions">
-                    <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(r.id)}')">Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(r.id)}', '${escapeHtml(r.kind === 'khutbah' ? (r.prefix || 'Khutbah') : (r.message || ''))}')">Padam</button>
+                    <button class="btn btn-ghost btn-sm" title="Edit" aria-label="Edit" onclick="openEditModal('${escapeHtml(r.id)}')">${NEWS_ACTION_ICONS.edit}</button>
+                    <button class="btn btn-ghost btn-sm" title="Duplicate" aria-label="Duplicate" onclick="duplicateTicker('${escapeHtml(r.id)}')">${NEWS_ACTION_ICONS.duplicate}</button>
+                    <button class="btn btn-danger btn-sm" title="Padam" aria-label="Padam" onclick="openDeleteModal('${escapeHtml(r.id)}', '${escapeHtml(r.kind === 'khutbah' ? (r.prefix || 'Khutbah') : (r.message || ''))}')">${NEWS_ACTION_ICONS.delete}</button>
                 </div>
                 ` : ''}
             </td>
@@ -120,6 +123,95 @@ async function moveTicker(id, direction) {
         return;
     }
     await logActivity('news_ticker_reorder', tickerLabelPlain(a), 'Susunan baris diubah.', 'news_activity_log');
+    await loadTicker();
+    renderPreview();
+}
+
+// ─── Reorder via drag-and-drop (desktop) ──────────────────────────────────────
+// Grip-only drag source so text selection and button clicks still work. Drop
+// position (before/after) comes from pointer Y vs the target row's midpoint.
+// After a drop the new order is re-pinned 0..n-1 and only rows whose
+// sort_order actually changed are written — same "numbers must match the
+// line" idea, minimal saves. Preview re-renders immediately; the published
+// moving-text.json still follows only via Terbitkan (or cron).
+function tickerDragStart(e, id) {
+    dragTickerId = id;
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', id); } catch (_) {}
+    const tr = e.target.closest('tr');
+    if (tr) tr.classList.add('ticker-dragging');
+}
+
+function clearTickerDropIndicators() {
+    document.querySelectorAll('#ticker-tbody tr.ticker-drop-before, #ticker-tbody tr.ticker-drop-after')
+        .forEach(tr => tr.classList.remove('ticker-drop-before', 'ticker-drop-after'));
+}
+
+function tickerDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const tr = e.currentTarget;
+    const rect = tr.getBoundingClientRect();
+    const after = (e.clientY - rect.top) > rect.height / 2;
+    clearTickerDropIndicators();
+    tr.classList.add(after ? 'ticker-drop-after' : 'ticker-drop-before');
+}
+
+function tickerDragLeave(e) {
+    e.currentTarget.classList.remove('ticker-drop-before', 'ticker-drop-after');
+}
+
+function tickerDragEnd() {
+    dragTickerId = null;
+    clearTickerDropIndicators();
+    document.querySelectorAll('#ticker-tbody tr.ticker-dragging')
+        .forEach(tr => tr.classList.remove('ticker-dragging'));
+}
+
+async function tickerDrop(e, targetId) {
+    e.preventDefault();
+    const tr = e.currentTarget;
+    const rect = tr.getBoundingClientRect();
+    const after = (e.clientY - rect.top) > rect.height / 2;
+    clearTickerDropIndicators();
+    document.querySelectorAll('#ticker-tbody tr.ticker-dragging')
+        .forEach(r => r.classList.remove('ticker-dragging'));
+
+    const fromId = dragTickerId || (() => { try { return e.dataTransfer.getData('text/plain'); } catch (_) { return null; } })();
+    dragTickerId = null;
+    if (!fromId || fromId === targetId) return;
+
+    const fromIndex = allTicker.findIndex(r => r.id === fromId);
+    let toIndex = allTicker.findIndex(r => r.id === targetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+    if (after) toIndex += 1;
+
+    const [moved] = allTicker.splice(fromIndex, 1);
+    // splice() target shifts down after removal when moving downwards
+    const insertAt = fromIndex < toIndex ? toIndex - 1 : toIndex;
+    allTicker.splice(insertAt, 0, moved);
+    renderTable();
+    await persistNewTickerOrder(moved);
+}
+
+async function persistNewTickerOrder(movedRow) {
+    const changed = [];
+    allTicker.forEach((r, i) => {
+        if ((r.sort_order || 0) !== i) changed.push({ id: r.id, sort_order: i });
+    });
+    if (!changed.length) { renderPreview(); return; }
+
+    const results = await Promise.all(
+        changed.map(c => db.from('news_ticker').update({ sort_order: c.sort_order }).eq('id', c.id))
+    );
+    const failed = results.find(r => r.error);
+    if (failed) {
+        showToast('Gagal menyusun semula: ' + failed.error.message, 'error');
+        await loadTicker();
+        renderPreview();
+        return;
+    }
+    await logActivity('news_ticker_reorder', tickerLabelPlain(movedRow), 'Susunan baris diubah (seret).', 'news_activity_log');
     await loadTicker();
     renderPreview();
 }
@@ -175,6 +267,28 @@ function openEditModal(id) {
     updateMessageCounter();
     updatePrefixCounter();
     document.getElementById('ticker-modal').classList.add('open');
+}
+
+// ─── Duplicate: same timeframe, new message ───────────────────────────────────
+// Prefills the add-modal from an existing row so a second line sharing the
+// same schedule only needs its text tweaked. edit-id stays empty so
+// saveTickerRow() takes the insert + news_ticker_create path (sort_order
+// auto-assigned as max+1 there).
+function duplicateTicker(id) {
+    const r = allTicker.find(x => x.id === id);
+    if (!r) return;
+
+    openAddModal();
+    document.getElementById('ticker-modal-title').textContent = 'Duplikat Baris';
+    document.getElementById('edit-kind').value      = r.kind || 'static';
+    document.getElementById('edit-message').value   = r.message || '';
+    document.getElementById('edit-prefix').value    = r.prefix || '';
+    document.getElementById('edit-start').value     = (r.start_at || '').slice(0, 16);
+    document.getElementById('edit-end').value       = (r.end_at || '').slice(0, 16);
+    document.getElementById('edit-enabled').checked = r.enabled !== false;
+    toggleKindFields();
+    updateMessageCounter();
+    updatePrefixCounter();
 }
 
 function closeModal() {
