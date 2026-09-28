@@ -1,22 +1,22 @@
 {
   "current": {
-    "friday_date": "2026-09-25",
-    "source_url": "https://mufti.pahang.gov.my/khutbah/2026/25-september-2026m-13-rabiulakhir-1448h",
-    "siri_text": "MIMBAR JUMAAT SIRI 9 | 2026",
-    "title": "Akhlak Mulia Asas Kehidupan Masyarakat",
-    "date_text": "25 SEPTEMBER 2026M | 13 RABIULAKHIR 1448H",
+    "friday_date": "2026-10-02",
+    "source_url": "https://mufti.pahang.gov.my/khutbah/2026/02-oktober-2026m-20-rabiulakhir-1448h",
+    "siri_text": "MIMBAR JUMAAT SIRI 10 | 2026",
+    "title": "Menghadapi Jenayah Kewangan dan Scammer",
+    "date_text": "02 OKTOBER 2026M | 20 RABIULAKHIR 1448H",
     "main_text": null,
     "manual_override": true
   },
   "history": [
     {
       "friday_date": "2026-10-02",
-      "source_url": "https://mufti.pahang.gov.my/khutbah/2026/02-oktober-2026m-20-rabiulawal-1448h",
+      "source_url": "https://mufti.pahang.gov.my/khutbah/2026/02-oktober-2026m-20-rabiulakhir-1448h",
       "siri_text": "MIMBAR JUMAAT SIRI 10 | 2026",
-      "title": null,
-      "date_text": null,
+      "title": "Menghadapi Jenayah Kewangan dan Scammer",
+      "date_text": "02 OKTOBER 2026M | 20 RABIULAKHIR 1448H",
       "main_text": null,
-      "manual_override": false
+      "manual_override": true
     },
     {
       "friday_date": "2026-09-25",
@@ -37,5 +37,5 @@
       "manual_override": true
     }
   ],
-  "updated_at": "2026-09-28T01:26:56.115Z"
+  "updated_at": "2026-09-28T06:39:22.535Z"
 }
