@@ -61,7 +61,7 @@ five independent modules as of 2026-09-15:
   a Mon-9am Vercel cron computes next Friday, builds the mufti.pahang.gov.my
   link (Gregorian slug + Hijri via `api.waktusolat.app/PHG03`), scrapes
   date/title, and publishes `khutbah/data/khutbah.json` read by
-  `khutbah/paparan-tajuk.html`. Manual edits are secondary and lock their row
+  `khutbah/index.html` (served at `/khutbah/`). Manual edits are secondary and lock their row
   (`manual_override=true` → cron skips with `skipped_locked`, no mail) — this
   explicit flag replaces the old Sheet formula/value distinction that silently
   broke automation. One page, `senarai.html` (weekly history + override editor
@@ -502,7 +502,7 @@ khutbah (automation-first, manual secondary — explicit user choice 2026-09-15)
   → upsert khutbah_weeks (friday_date conflict key) → rebuild
     khutbah/data/khutbah.json ({current, history}) → push to GitHub
     (skip if byte-identical) → khutbah_activity_log row
-  → read by khutbah/paparan-tajuk.html (60s poll)
+  → read by khutbah/index.html (60s poll)
   Separately, admin edits a row in senarai.html → manual_override lock +
   khutbah_manual_update/khutbah_lock log rows (browser+RLS, no publish involved)
 

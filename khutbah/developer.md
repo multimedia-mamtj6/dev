@@ -1,5 +1,10 @@
 # developer.md — handoff notes for next-window me
 
+> **Update 2026-09-28**: `index.html` is now the primary page (promoted from
+> `paparan-tajuk.html`, which is a thin redirect to `/khutbah/`) —
+> official URL is the clean `/khutbah/`. The Sheet CSV feed now feeds
+> nothing live (only frozen `beta-paparan-tajuk.html` still reads it).
+>
 > **Update 2026-09-15**: the Sheet→Apps Script pipeline below is RETIRED —
 > replaced by `admin/khutbah/` + `api/publish-khutbah.js` publishing
 > `khutbah/data/khutbah.json`, read by `paparan-tajuk.html` (now the primary

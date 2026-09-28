@@ -5,6 +5,17 @@ Check the Project Knowledge and the current chat for context. This conversation 
 
 also update the related file like khutbah/CLAUDE.md, khutbah/developer.md, khutbah/developer.md and khutbah/README.md if necessary
 
+## 2026-09-28 — `index.html` promoted to official display URL
+
+`khutbah/paparan-tajuk.html` (JSON code, proven live) copied byte-for-byte over
+`khutbah/index.html`, so the official link is now the clean `/khutbah/`.
+`paparan-tajuk.html` is a thin redirect shim (`location.replace` + meta-refresh
++ manual link) keeping the mosque screen / Sites embed / bookmarks working
+until repointed. The Sheet CSV feed now feeds nothing live (only frozen
+`beta-paparan-tajuk.html` still reads it). Docs updated: `khutbah/CLAUDE.md`
+roles, `khutbah/developer.md` header, `admin/CLAUDE.md`, `admin/database.md`
+verify step, `senarai.html` hint link. Historical sections below left as-is.
+
 ## 2026-09-28 — URL tester, month-boundary hijri fix, 404 fallback chain
 
 Four khutbah changes built post-upgrade (commits `56c0cbe` + `5d5ec86` pushed; fallback chain below NOT yet committed as of this writing):

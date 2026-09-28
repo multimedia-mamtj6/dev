@@ -16,25 +16,32 @@ Same as the parent project: pure static HTML, no build tools. Each page is fully
 
 ## Files
 
-- `paparan-tajuk.html` — **Current/primary display page** (as of 2026-09-15, see `upgrade-plan.md`). Reads the published JSON at `khutbah/data/khutbah.json` (written by `api/publish-khutbah.js` via `admin/khutbah/`), polled every 60s. JSON has no CSV-quoting failure mode by construction.
-- `index.html` — Legacy: copy of `paparan-tajuk.html` with a quote-aware `parseCSVRow()` CSV fix; frozen as-is since the 2026-09-15 upgrade, no longer maintained. See Key Patterns below for the fix reference.
+- `index.html` — **Current/primary display page** (as of 2026-09-28; promoted from
+  `paparan-tajuk.html` so the official URL is the clean `/khutbah/`). Reads the
+  published JSON at `khutbah/data/khutbah.json` (written by
+  `api/publish-khutbah.js` via `admin/khutbah/`), polled every 60s. JSON has no
+  CSV-quoting failure mode by construction.
+- `paparan-tajuk.html` — Thin redirect shim to `/khutbah/` (JS
+  `location.replace` + meta-refresh fallback). Kept only so existing bookmarks,
+  the mosque screen, and the Google Sites embed keep working — repoint those to
+  `/khutbah/` when convenient. No display code left in this file.
 - `beta-paparan-tajuk.html` — Variant tuned for embedding inside a Google Sites iframe (`height: 100vh`/`100vw`, `overflow: hidden`, no scrollbars, no loading/error text states). Still on the old CSV feed; likely has the same unfixed CSV-quoting bug (not yet verified).
 - `data/khutbah.json` — Published data (`{ current, history, updated_at }`), written by `api/publish-khutbah.js`. **Never hand-edit** — overwritten on every publish, same rule as kuliah's `jadual_lengkap_v2.json`.
 - `google_app_script/` — RETIRED Apps Script automation (`gettajukkhutbah.gs`, `KhutbahLinkGenerator.gs`, `refresh.gs`). Replaced 2026-09-15 by `admin/khutbah/` + `api/publish-khutbah.js` (pure logic ported to `admin/khutbah/publish-khutbah-pure.js`). Kept in repo as history only — do not paste back into script.google.com. See "Apps Script Automation" below and `DEV_NOTES.md` for the old architecture/gotchas.
 
 ## Data Format
 
-`paparan-tajuk.html` (primary) fetches `khutbah/data/khutbah.json` (`{ current, history, updated_at }`,
+`index.html` (primary) fetches `khutbah/data/khutbah.json` (`{ current, history, updated_at }`,
 written by `api/publish-khutbah.js`) and renders `current`:
 
 - `current.siri_text` → sermon heading (`.title`)
 - `current.date_text` → date (`.date`)
 - `current.title || current.main_text` → big sermon text (`.main-text`)
 
-`index.html` / `beta-paparan-tajuk.html` are frozen on the old feed: same published CSV, row index `1`
+`beta-paparan-tajuk.html` is frozen on the old feed: same published CSV, row index `1`
 (second row after the header) — `rows[1][1]` → title, `rows[1][2]` → date, `rows[1][3]` → theme/text —
-via the hardcoded `sheetURL` in each file's `<script>`. To change the legacy source, update `sheetURL`
-in those files; `paparan-tajuk.html` has no sheet reference anymore.
+via the hardcoded `sheetURL` in the file's `<script>`. `index.html` has no sheet reference anymore
+(switched to JSON 2026-09-15 on `paparan-tajuk.html`, promoted to `index.html` 2026-09-28).
 
 ## Apps Script Automation (`google_app_script/`)
 
@@ -52,6 +59,6 @@ See `DEV_NOTES.md` for the fuller narrative (bugs found/fixed, why the code is s
 ## Key Patterns
 
 - **Auto font-sizing**: `.main-text` font size is adjusted based on text length (and, in the beta version, by shrinking the font in a loop until it fits its container) so long sermon titles don't overflow.
-- **CSV parsing**: `index.html` uses a quote-aware `parseCSVRow(line)` helper instead of a plain `row.split(",")`. Google Sheets' CSV export wraps any field containing a comma in double quotes — a naive `split(",")` truncates those fields at the embedded comma (e.g. a title like `Ibadah Zakat, Wakaf dan Sedekah...` would render as just `Ibadah Zakat`). `paparan-tajuk.html`/`beta-paparan-tajuk.html` still use the naive split and have this bug; if porting fixes, copy `parseCSVRow()` verbatim from `index.html`.
+- **CSV parsing**: the legacy `index.html` once carried a quote-aware `parseCSVRow(line)` helper instead of a plain `row.split(",")` (Google Sheets' CSV export wraps any field containing a comma in double quotes — a naive `split(",")` truncates those fields at the embedded comma). That pre-promotion copy survives only in git history now; `beta-paparan-tajuk.html` still uses the naive split and has this bug.
 - **Polling**: data is re-fetched every 60s; if the fetched row is identical to the last one (`lastFetchedData`), the DOM is left unchanged to avoid unnecessary re-renders/flicker.
-- **Responsive**: `paparan-tajuk.html` has a `@media (max-width: 768px)` block for mobile sizing; `beta-paparan-tajuk.html` instead uses viewport-relative units (`vh`/`vw`/`clamp()`) throughout, so no separate mobile breakpoint is needed.
+- **Responsive**: `index.html` uses a fixed 1000px `.container` + JS `scaleToFit()` (see `developer.md` "The vh lesson"); `beta-paparan-tajuk.html` instead uses viewport-relative units (`vh`/`vw`/`clamp()`) throughout, so no separate mobile breakpoint is needed.

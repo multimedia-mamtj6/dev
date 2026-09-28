@@ -30,14 +30,17 @@
   <div class="page">
     <div class="section-header">
       <h1 class="section-title">Khutbah Jumaat</h1>
-      <button class="btn btn-primary" id="publish-khutbah-btn" onclick="onPublishClick()">Jana &amp; Terbitkan</button>
+      <div style="display:flex;gap:0.5rem">
+        <a class="btn btn-ghost" href="/khutbah/" target="_blank" rel="noopener">Lihat Paparan</a>
+        <button class="btn btn-primary" id="publish-khutbah-btn" onclick="onPublishClick()">Jana &amp; Terbitkan</button>
+      </div>
     </div>
 
     <p class="page-hint" id="last-published-note">Belum pernah diterbitkan.</p>
     <p class="page-hint">
       Automasi utama: cron Isnin 9 pagi menjana pautan mufti bagi Jumaat berikutnya,
       mengekstrak tajuk/tarikh, dan menerbitkan <code>khutbah/data/khutbah.json</code>
-      yang dibaca oleh <a href="/khutbah/paparan-tajuk.html" target="_blank" rel="noopener">paparan-tajuk</a>.
+      yang dibaca oleh <a href="/khutbah/" target="_blank" rel="noopener">paparan khutbah</a>.
       Kunci manual (<code>manual_override</code>) menghentikan cron daripada menimpa minggu tersebut.
     </p>
 

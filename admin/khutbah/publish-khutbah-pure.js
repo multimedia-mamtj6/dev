@@ -271,7 +271,7 @@
         return { dateText: dateText, titleText: titleText, dateMatched: dateMatched, titleMatched: titleMatched };
     }
 
-    // --- Published JSON shape (read by khutbah/paparan-tajuk.html) ---
+    // --- Published JSON shape (read by khutbah/index.html) ---
     function buildKhutbahJson(rows) {
         // rows: khutbah_weeks rows, Friday-desc. current = latest ok row.
         var sorted = (rows || []).slice().sort(function (a, b) {

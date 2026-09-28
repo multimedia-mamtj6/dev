@@ -124,7 +124,7 @@ No new Supabase-side Vercel environment variables beyond `GOOGLE_CLIENT_ID` — 
 3. In `users.html`, grant `permissions.khutbah` to whichever admins need it (defaults to `false` on new rows, same opt-in shape as infaq/news/staff).
 4. **Set the `RESEND_API_KEY` Vercel environment variable** (Resend → API Keys → copy `re_...`). Without it, publishes still succeed but failure alerts are logged as `alert_skipped_no_key` instead of mailed. No new Supabase/GitHub vars — `api/publish-khutbah.js` reuses `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`GITHUB_TOKEN`/`GITHUB_REPO` from [1.5](#15-configure-vercel-environment-variables), and the Mon-9am cron reuses the same `CRON_SECRET` as the news cron ([1.9](#19-configure-the-news-module-cron)).
 5. **Verify the sender domain in Resend** (Domains → Add `mamtj6.com` → paste the TXT records into your DNS → Verify). The alert sender (`khutbah_settings.alert_from`, seeded `noreply@mamtj6.com`) **must** be on this verified domain — Resend cannot send from free providers, so a gmail.com sender fails. Recipients (`alert_emails`, comma-separated) have no such restriction.
-6. Verify: open `admin/khutbah/senarai.html`, fill the Tetapan card (`alert_emails`, confirm `alert_from`), click **Jana & Terbitkan**, confirm a `[Admin] Terbitkan khutbah` commit lands on `khutbah/data/khutbah.json` and `khutbah/paparan-tajuk.html` renders it instead of TIADA DATA.
+6. Verify: open `admin/khutbah/senarai.html`, fill the Tetapan card (`alert_emails`, confirm `alert_from`), click **Jana & Terbitkan**, confirm a `[Admin] Terbitkan khutbah` commit lands on `khutbah/data/khutbah.json` and `khutbah/index.html` (served at `/khutbah/`) renders it instead of TIADA DATA.
 
 ---
 
