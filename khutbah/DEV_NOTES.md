@@ -5,6 +5,16 @@ Check the Project Knowledge and the current chat for context. This conversation 
 
 also update the related file like khutbah/CLAUDE.md, khutbah/developer.md, khutbah/developer.md and khutbah/README.md if necessary
 
+## 2026-09-28 — URL tester, month-boundary hijri fix, 404 fallback chain
+
+Four khutbah changes built post-upgrade (commits `56c0cbe` + `5d5ec86` pushed; fallback chain below NOT yet committed as of this writing):
+
+- **URL tester "Uji & Ambil Tajuk"** (`api/khutbah-test-url.js` NEW, POST-only + session auth): pastes a corrected mufti URL in the senarai Edit modal, server-side fetch (mufti CORS blocks browser), fills tajuk/tarikh WITHOUT saving; Simpan still sets `manual_override=true`. User-tested live same day — works.
+- **Stale `fetch_failed` fix** (`senarai.js:saveKhutbah`): saving with a title now writes `scrape_status='ok'` + clears `scrape_error` — neither the save nor the locked publish path touched status before, so old failure badges stuck forever. Display was never affected (`buildKhutbahJson` picks any row with a title).
+- **Tetapan card CSS** (`senarai.html`): was title-inside-card + zero `.card` padding; restructured to the news `teks-berjalan.html` Tetapan pattern (title outside, `padding:1rem 1.25rem`, inline muted note instead of misused `.page-hint`, `btn-sm`).
+- **Month-aware Hijri** (`buildWaktusolatUrl`, `?year=&month=` from the FRIDAY — path form `/YYYY/MM` 404s): the bare endpoint serves the current month only, so the 2026-09-28 run day-matched Sep-2's hijri for the Oct-2 Friday → `...20-rabiulawal-1448h` → the morning's HTTP_404. Now builds `...20-rabiulakhir-1448h` (verified 200 live).
+- **404 fallback chain** (`buildMuftiLinkVariants` + `buildParentListings` + `extractFridayLink` in pure, ladder in `api/publish-khutbah.js` Step 2): primary → ≤2 alias retries (`GREG_ALIASES`/`HIJRI_ALIASES`, 404-only, 5s) → parent walk `.../khutbah/YYYY/` then `.../khutbah` (6s each, 200-verified live; year page lists every week as plain anchors) → scrape discovered URL (10s). Provenance in `khutbah_scrape_ok` detail as `via: primary|alias-…|discovery:…`; total-failure message carries the chain summary. 13-check node suite passes (fixtures + live year page: exact, renamed-token recovery, hijri tiebreak, /en/ skip, same-origin enforcement — external mirrors never followed). Live token harvest 2026-09-28: mufti greg {julai,ogos,september,oktober}, hijri {safar,rabiulawal,rabiulakhir} — matches our maps, no drift. Next Monday cron is the live proof.
+
 ## 2026-09-15 — the upgrade build (Sheet→Apps Script pipeline RETIRED, `admin/khutbah/` is live)
 
 This session retired the entire automation documented below and replaced it with a Supabase-backed

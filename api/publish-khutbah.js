@@ -30,12 +30,16 @@
 //   RESEND_API_KEY (shared sender), CRON_SECRET (GET path only)
 
 const {
+    MALAY_MONTHS,
     getNextFriday,
     toISODate,
     formatGregorianDate,
     parseHijriSlug,
     buildMuftiLink,
     buildWaktusolatUrl,
+    buildMuftiLinkVariants,
+    buildParentListings,
+    extractFridayLink,
     buildSiriText,
     extractDateTitle,
     buildKhutbahJson,
@@ -258,15 +262,72 @@ async function handler(req, res) {
         return res.status(500).json({ success: false, friday_date: fridayISO, error: msg, alert: alert.reason });
     }
 
-    // Step 2: build link, fetch mufti page.
+    // Step 2: fetch mufti page — primary, then alias variants (404-only),
+    // then parent-listing walk (discovery). First 200 wins; non-404 errors
+    // break the ladder immediately (network issue — retrying is pointless).
+    // Extra budget applies ONLY in the rare 404 path: 2×5s aliases +
+    // 2×6s listings + 10s discovered page (no maxDuration set in vercel.json,
+    // defaults apply — typical runs that hit primary/alias stay far under).
     buildMuftiLinkAttempt = buildMuftiLink(friday, hijriSlug);
     let html = null;
+    let via = 'primary';
+    async function fetchOk(url, ms) {
+        const r = await fetchWithTimeout(url, ms);
+        if (!r.ok) {
+            const err = new Error(`HTTP ${r.status}`);
+            err.status = r.status;
+            throw err;
+        }
+        return r.text();
+    }
     try {
-        const muftiRes = await fetchWithTimeout(buildMuftiLinkAttempt, 12000);
-        if (!muftiRes.ok) throw new Error(`HTTP ${muftiRes.status}`);
-        html = await muftiRes.text();
+        try {
+            html = await fetchOk(buildMuftiLinkAttempt, 12000);
+        } catch (e) {
+            if (e.status !== 404) throw e;
+            const chain = ['primary 404'];
+            let recovered = false;
+            // Layer 1: alias variants (one alternate spelling per axis).
+            for (const v of buildMuftiLinkVariants(friday, hijriSlug).slice(1)) {
+                try {
+                    html = await fetchOk(v.url, 5000);
+                    buildMuftiLinkAttempt = v.url;
+                    via = v.label;
+                    recovered = true;
+                    break;
+                } catch (e2) {
+                    if (e2.status !== 404) throw e2;
+                    chain.push(`${v.label} 404`);
+                }
+            }
+            // Layer 2: parent-listing walk (discovery).
+            if (!recovered) {
+                const gregTok = formatGregorianDate(friday).split('-')[1];
+                for (const parent of buildParentListings(buildMuftiLink(friday, hijriSlug))) {
+                    let listHtml;
+                    try {
+                        listHtml = await fetchOk(parent.url, 6000);
+                    } catch (e3) {
+                        chain.push(`${parent.label} ${e3.status ? 'HTTP_' + e3.status : 'fail'}`);
+                        continue;
+                    }
+                    const found = extractFridayLink(listHtml, friday, gregTok, hijriSlug);
+                    if (!found) { chain.push(`${parent.label} tiada`); continue; }
+                    try {
+                        html = await fetchOk(found.url, 10000);
+                        buildMuftiLinkAttempt = found.url;
+                        via = `discovery:${parent.label}:${found.matchHow}`;
+                        recovered = true;
+                        break;
+                    } catch (e4) {
+                        chain.push(`discovery ${e4.status ? 'HTTP_' + e4.status : 'fail'}`);
+                    }
+                }
+            }
+            if (!recovered) throw new Error(`HTTP 404 (${chain.join('; ')})`);
+        }
     } catch (e) {
-        const code = /HTTP (\d+)/.test(e.message) ? `HTTP_${e.message.match(/HTTP (\d+)/)[1]}` : 'FETCH_FAIL';
+        const code = /HTTP 404/.test(e.message) ? 'HTTP_404' : (/HTTP (\d+)/.test(e.message) ? `HTTP_${e.message.match(/HTTP (\d+)/)[1]}` : 'FETCH_FAIL');
         const msg = `Mufti gagal: ${e.message} — ${buildMuftiLinkAttempt}`;
         await upsertWeek(sbHeaders, supabaseUrl, existing, {
             friday_date: fridayISO, source_url: buildMuftiLinkAttempt, siri_text: siriText,
@@ -304,15 +365,15 @@ async function handler(req, res) {
         gregorian_part: formatGregorianDate(friday), hijri_part: hijriSlug,
         scrape_status: 'ok', scrape_error: null, fetched_at: new Date().toISOString(),
     });
-    const { commit } = await publishCurrentJson(`"${titleText}" (date:${dateMatched} title:${titleMatched})`);
+    const { commit } = await publishCurrentJson(`"${titleText}" (via ${via} date:${dateMatched} title:${titleMatched})`);
     await logActivity(sbHeaders, supabaseUrl, {
         actor_email: actorEmail || 'unknown', actor_name: actorName,
         action: 'khutbah_scrape_ok', target_label: fridayISO,
-        detail: `"${titleText}" — ${buildMuftiLinkAttempt}`,
+        detail: `"${titleText}" (via ${via}) — ${buildMuftiLinkAttempt}`,
     });
     return res.status(200).json({
         success: true, friday_date: fridayISO, title: titleText, date_text: dateText,
-        siri_text: siriText, source_url: buildMuftiLinkAttempt,
+        siri_text: siriText, source_url: buildMuftiLinkAttempt, via,
         dateMatched, titleMatched, unchanged: !!commit.unchanged,
     });
 }
@@ -339,3 +400,13 @@ async function upsertWeek(sbHeaders, supabaseUrl, existing, row) {
 }
 
 module.exports = handler;
+// Pure builders re-exported for ad-hoc node testing (same convention as
+// api/publish-news.js) — api/publish-khutbah.test.js imports them from here.
+module.exports.MALAY_MONTHS = MALAY_MONTHS;
+module.exports.parseHijriSlug = parseHijriSlug;
+module.exports.buildMuftiLink = buildMuftiLink;
+module.exports.buildWaktusolatUrl = buildWaktusolatUrl;
+module.exports.buildMuftiLinkVariants = buildMuftiLinkVariants;
+module.exports.buildParentListings = buildParentListings;
+module.exports.extractFridayLink = extractFridayLink;
+module.exports.extractDateTitle = extractDateTitle;
