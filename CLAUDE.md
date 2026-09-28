@@ -112,6 +112,8 @@ Each major sub-project has its own CLAUDE.md with detailed architecture:
 
 ## Key Patterns
 
+- **Changelog (enforced pre-commit):** `admin/changelog.json` is the single maintained changelog — one entry per user-visible change, Malay `ringkasan` first plus technical `detail`, rendered at `/admin/changelog.html` for all authenticated admins. Append the entry BEFORE committing, in the same commit as the change; never batch it "later". Root `CHANGELOG.md` is frozen history (see its header).
+
 - **Cache-busting** on JSON fetches: `?v=${new Date().getTime()}`
 - **Dark mode**: Tailwind `class` strategy, anti-flash `<script>` in `<head>`, localStorage with OS fallback
 - **Responsive**: 768px breakpoint for desktop/mobile view switching

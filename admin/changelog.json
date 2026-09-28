@@ -1,0 +1,38 @@
+[
+  {
+    "date": "2026-09-28",
+    "module": "Umum",
+    "ringkasan": "Halaman “Sejarah Perubahan” baharu di admin — semua kemas kini sistem tercatat di sini dalam Bahasa Melayu.",
+    "detail": "admin/changelog.html+.js+.json (sumber tunggal: ringkasan ms + detail teknikal, boleh tapis ikut modul); pautan di sidebar Utama; Log Aktiviti kekal sebagai jejak audit penuh; cangkuk penyelenggaraan dalam CLAUDE.md Key Patterns (tambah entri SEBELUM commit); CHANGELOG.md akar dibekukan sebagai sejarah."
+  },
+  {
+    "date": "2026-09-28",
+    "module": "Khutbah",
+    "ringkasan": "Alamat paparan khutbah kini /khutbah/ yang kemas — alamat lama masih berfungsi dan membawa ke sini secara automatik.",
+    "detail": "khutbah/paparan-tajuk.html disalin byte-ke-byte ke khutbah/index.html; paparan-tajuk.html menjadi shim redirect (location.replace + meta-refresh). Suapan CSV Sheet tidak lagi memberi mana-mana paparan live."
+  },
+  {
+    "date": "2026-09-28",
+    "module": "Khutbah",
+    "ringkasan": "Jika pautan mufti berubah format pada masa depan, sistem kini cuba sendiri pautan ganti sebelum mengisytiharkan gagal.",
+    "detail": "Rantaian fallback 404: pautan utama → ≤2 varian alias ejaan bulan (GREG_ALIASES/HIJRI_ALIASES, 404-sahaja) → carian direktori induk .../khutbah/YYYY/ kemudian .../khutbah (extractFridayLink, slug-agnostik). Provenance dalam log sebagai via: primary|alias-…|discovery:…. Suite ujian: api/publish-khutbah.test.js (LIVE=1 untuk drill live baca-sahaja)."
+  },
+  {
+    "date": "2026-09-28",
+    "module": "Khutbah",
+    "ringkasan": "Dibaiki: pautan Jumaat yang jatuh pada bulan berikutnya kini menggunakan kalendar Hijri bulan yang betul.",
+    "detail": "buildWaktusolatUrl(friday) meminta ?year=&month= mengikut bulan Jumaat (endpoint asas hanya menghantar bulan semasa, menyebabkan padanan hari-bulan-salah cth 20-rabiulawal untuk 2 Okt). Disahkan 200 live."
+  },
+  {
+    "date": "2026-09-28",
+    "module": "Khutbah",
+    "ringkasan": "Butang “Uji & Ambil Tajuk” — tampal pautan mufti yang betul dan tajuk/tarikh diisi automatik tanpa menaip manual.",
+    "detail": "api/khutbah-test-url.js (POST + sesi sahaja): fetch sebelah-server (CORS menyekat browser), extractDateTitle() verbatim, isi tanpa simpan; Simpan menetapkan manual_override=true. Pratonton sahaja — tiada tulis DB/JSON."
+  },
+  {
+    "date": "2026-09-15",
+    "module": "Khutbah",
+    "ringkasan": "Modul Khutbah Jumaat baharu: pautan, tajuk dan tarikh dijana automatik setiap Isnin 9 pagi; suntingan manual mengunci minggu tersebut.",
+    "detail": "admin/khutbah/ + api/publish-khutbah.js menggantikan paip Sheet→Apps Script→CSV. Jadual khutbah_weeks/khutbah_settings/khutbah_activity_log (setup.sql §12); amaran emel Resend bila scrape gagal (transition-only + throttle 24j); paparan membaca khutbah/data/khutbah.json."
+  }
+]

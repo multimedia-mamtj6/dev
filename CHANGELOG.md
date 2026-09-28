@@ -1,5 +1,10 @@
 # Changelog
 
+> Frozen history as of 2026-09-28 — the maintained changelog is now
+> [`admin/changelog.json`](admin/changelog.json) (Malay summary + technical
+> detail per change, rendered at `/admin/changelog.html`). Entries below are
+> kept as-is for the record; add new entries to the JSON, not here.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).

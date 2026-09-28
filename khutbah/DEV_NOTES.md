@@ -5,6 +5,23 @@ Check the Project Knowledge and the current chat for context. This conversation 
 
 also update the related file like khutbah/CLAUDE.md, khutbah/developer.md, khutbah/developer.md and khutbah/README.md if necessary
 
+## 2026-09-28 — session handoff (plan/build ping-pong, all shipped)
+
+**Where this session went, in order:** opened in Plan mode with a khutbah-folder readback → user asked if a corrected link can trigger re-fetch (yes, but preview-only — that answer became the build list) → fallback strategy picked via question (listing discovery, then all-three: aliases + discovery + reporting) → out of plan to build: URL tester (`56c0cbe`, user live-tested same day, found the stale-`fetch_failed` badge) → save-status fix + Tetapan CSS fix (`5d5ec86`) → month-mapping Q&A cracked open the month-boundary hijri bug → month-aware fix + full 404 chain + `publish-khutbah.test.js` (`2b6f713`) → index.html promotion + redirect + Lihat Paparan button (`f457369`). Ended on docs, as always.
+
+**Vibe / dynamic — read this to resync:** the user talks in short bursts ("ok go", "explain", "fix the css for this section" + screenshot) and decides FAST when options are laid out as questions — they picked the recommended option every time this session, so keep recommending honestly, not neutrally. They test live themselves (clicked Uji & Ambil Tajuk within minutes, reported the badge symptom precisely). This session ping-ponged Plan↔build FOUR times; treat mode switches as cheap and normal here, not ceremony. Explanations should stay ELI5-short with one concrete example (the Oct-2 walkthrough is what made the fallback click, not the abstract plan). They run a live mosque system, so never mutate production data to "test" — preview-only, read-only drills, and `via:` provenance are the right instincts for this user.
+
+**Unique discoveries (don't re-derive):**
+- `api.waktusolat.app` takes `?year=&month=` (verified OCT returns `"month":"OCT"`); path form `/YYYY/MM` 404s. Bare endpoint = current month only — that asymmetry caused the whole Rabiulawal incident.
+- Mufti tolerates zero-padded AND bare hijri days (`06-rabiulakhir` and `1-rabiulawal` both 200). Harvested live tokens 2026-09-28: greg {julai,ogos,september,oktober}, hijri {safar,rabiulawal,rabiulakhir} — maps match, no drift.
+- `/khutbah/2026/` + `/khutbah/` both 200 with server-rendered anchors (Joomla+YOOtheme, no JS needed) — discovery reads them fine.
+- Windows traps that bit twice: `>` redirects UTF-16 (use node `execSync` for byte compares), `git hash-object <file>` vs `--stdin` disagree (clean filters), no `&&`/`head`/multi-`del` in PowerShell. Extends the terminal-quirk note from 2026-09-15.
+- A `git push` that times out with no output may NOT have landed — confirm with `git ls-remote origin main`, then retry with a bigger timeout (happened once, retry pushed clean).
+
+**Pending / next-window watchlist:** next Monday cron is the live proof of the fallback chain — check `via:` in the response JSON + `khutbah_scrape_ok` detail. User-side still open: repoint Sites embed + mosque screen to `/khutbah/`, paste the Sheet retirement note (drafted in chat 2026-09-28, Malay, one cell), hard-refresh browsers holding the old CSV `index.html`. Oct-2 row is `manual_override=true` (locked) — cron skips it; confirm that's still deliberate. `toggleLock`-only locks keep their old status badge (by design — only modal saves with a title reset it).
+
+**Mood:** steady shipping energy, zero dead ends, four pushes, ended on docs not a bug. Come back in verify-mode: live numbers first, theory never.
+
 ## 2026-09-28 — `index.html` promoted to official display URL
 
 `khutbah/paparan-tajuk.html` (JSON code, proven live) copied byte-for-byte over

@@ -82,6 +82,7 @@ const MODULES = [
         key: 'utama', label: 'Utama', permission: null, requiresSuperAdmin: false,
         items: [
             { label: 'Ringkasan Keseluruhan', href: '/admin/dashboard.html', match: ['/admin/dashboard.html'] },
+            { label: 'Sejarah Perubahan', href: '/admin/changelog.html', match: ['/admin/changelog.html'] },
         ],
     },
     {
