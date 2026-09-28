@@ -130,8 +130,9 @@ async function saveKhutbah() {
     const id = document.getElementById('edit-id').value;
     const friday = document.getElementById('edit-friday').value;
     const before = allWeeks.find(w => w.id === id);
+    const titleVal = document.getElementById('edit-title').value.trim() || null;
     const payload = {
-        title: document.getElementById('edit-title').value.trim() || null,
+        title: titleVal,
         date_text: document.getElementById('edit-date-text').value.trim() || null,
         main_text: document.getElementById('edit-main-text').value.trim() || null,
         source_url: document.getElementById('edit-url').value.trim(),
@@ -139,6 +140,14 @@ async function saveKhutbah() {
         updated_at: new Date().toISOString(),
     };
     if (!payload.source_url) { showToast('Pautan sumber diperlukan.', 'error'); return; }
+    // Admin-verified (via Uji & Ambil Tajuk or typed by hand): a row with a
+    // title is good to display, so clear any stale auto-scrape failure —
+    // otherwise a previous fetch_failed badge sticks forever, since neither
+    // this save nor the locked publish path touches scrape_status.
+    if (titleVal) {
+        payload.scrape_status = 'ok';
+        payload.scrape_error = null;
+    }
     const { error } = await db.from('khutbah_weeks').update(payload).eq('id', id);
     if (error) { showToast(`Gagal menyimpan: ${error.message}`, 'error'); return; }
     const wasLocked = !!before?.manual_override;

@@ -81,6 +81,17 @@
         return 'https://mufti.pahang.gov.my/khutbah/' + year + '/' + greg + 'm-' + hijriSlug + 'h';
     }
 
+    // Waktusolat month-archive URL for the FRIDAY's own month — NOT today's.
+    // The bare endpoint serves the current month only, so a Friday landing in
+    // the next month day-matched the wrong month's Hijri (2026-09-28 run built
+    // 02-oktober-2026m-20-rabiulawal-1448h from September's day-2 instead of
+    // October's 20-rabiulakhir-1448h → 404). Query form verified live
+    // (?year=2026&month=10 → "month":"OCT"); the /YYYY/MM path form 404s.
+    var WAKTUSOLAT_BASE = 'https://api.waktusolat.app/v2/solat/PHG03';
+    function buildWaktusolatUrl(fridayDate) {
+        return WAKTUSOLAT_BASE + '?year=' + fridayDate.getFullYear() + '&month=' + (fridayDate.getMonth() + 1);
+    }
+
     function buildSiriText(fridayDate) {
         return 'MIMBAR JUMAAT SIRI ' + (fridayDate.getMonth() + 1) + ' | ' + fridayDate.getFullYear();
     }
@@ -172,6 +183,7 @@
         formatGregorianDate: formatGregorianDate,
         parseHijriSlug: parseHijriSlug,
         buildMuftiLink: buildMuftiLink,
+        buildWaktusolatUrl: buildWaktusolatUrl,
         buildSiriText: buildSiriText,
         cleanTitleHtml: cleanTitleHtml,
         looksLikeErrorText: looksLikeErrorText,

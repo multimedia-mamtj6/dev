@@ -35,6 +35,7 @@ const {
     formatGregorianDate,
     parseHijriSlug,
     buildMuftiLink,
+    buildWaktusolatUrl,
     buildSiriText,
     extractDateTitle,
     buildKhutbahJson,
@@ -44,7 +45,6 @@ const { parseRecipients, shouldAlert, sendAlert } = require('../admin/alert-send
 
 const MYT_OFFSET_MS = 8 * 60 * 60 * 1000;
 const KHUTBAH_JSON_FILE = 'khutbah/data/khutbah.json';
-const WAKTUSOLAT_URL = 'https://api.waktusolat.app/v2/solat/PHG03';
 
 async function fetchWithTimeout(url, ms, opts) {
     const controller = new AbortController();
@@ -235,10 +235,12 @@ async function handler(req, res) {
 
     let buildMuftiLinkAttempt = null;
 
-    // Step 1: Hijri via waktusolat (PHG03, day-match like GAS getHijriDate).
+    // Step 1: Hijri via waktusolat (PHG03, Friday's own month + day-match).
+    // Month-aware: the bare endpoint serves the current month only, so a
+    // Friday in the next month used to day-match the wrong month's Hijri.
     let hijriSlug = null;
     try {
-        const hijriRes = await fetchWithTimeout(WAKTUSOLAT_URL, 8000);
+        const hijriRes = await fetchWithTimeout(buildWaktusolatUrl(friday), 8000);
         if (!hijriRes.ok) throw new Error(`waktusolat status ${hijriRes.status}`);
         const data = await hijriRes.json();
         const match = (data.prayers || []).find(p => p.day === friday.getDate());
