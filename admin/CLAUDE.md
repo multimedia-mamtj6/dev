@@ -164,7 +164,7 @@ admin/
                           (Terbitkan, shared by both pages below), getSetting()/getSettings()/
                           saveSetting() (news_settings key/value table), computeStatus(row, now)
                           (Aktif/Akan Datang/Tamat/Dimatikan — used by both pages' tables),
-                          NEWS_ACTION_ICONS (pencil/copy/trash inline SVGs for both pages'
+                          NEWS_ACTION_ICONS (alias of global ACTION_ICONS + news-only duplicate
                           Edit/Duplicate/Padam buttons — one definition, title+aria-label kept)
     publish-news-pure.js ← THE SAME pure scheduling/CSV functions api/publish-news.js runs
                           (parseCSVRow, isActiveNow, buildAnnouncementsJson, buildMovingTextJson,

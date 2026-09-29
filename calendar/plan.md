@@ -33,9 +33,9 @@ calendar/hijri/data/index.html    ← RETIRE after cutover (keep as backup until
    `calendar-common.js` created. Syntax-checked with `node --check`.
 4. [x] Milestone 4 — Wiring: `MODULES` + `defaultLandingPageFor()` in
    `admin/app.js`, `perm-kalendar` in `admin/users.html/.js`.
-5. [ ] Milestone 5 — Verify (manual): login as viewer/editor/super_admin →
-   publish → GitHub commit → Vercel live → retire old
-   `calendar/hijri/data/index.html` PIN page.
+5. [x] Milestone 5 — Verified live by user (2026-09-29). Old PIN page retired
+   (redirect stub → /admin/calendar/senarai.html). Row icons standardized
+   (ACTION_ICONS global), changelog + docs synced.
 
 ## Risks / notes
 - `cleanUrls: true` — use absolute root-relative paths only, never `./events.json`.

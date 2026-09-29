@@ -1,5 +1,17 @@
 [
   {
+    "date": "2026-09-29",
+    "module": "Kalendar",
+    "ringkasan": "Modul Kalendar baharu di admin — sunting Tarikh Penting Islam terus dengan log masuk Google, tiada PIN berasingan.",
+    "detail": "admin/calendar/senarai.html+.js+calendar-common.js (kebenaran kalendar, Terbitkan ke events.json via api/publish-events.js dengan sesi Supabase + log calendar_activity_log); halaman PIN lama calendar/hijri/data/index.html kini redirect ke modul baharu."
+  },
+  {
+    "date": "2026-09-29",
+    "module": "Umum",
+    "ringkasan": "Butang Edit/Padam semua modul kini ikon seragam seperti Pengumuman.",
+    "detail": "ACTION_ICONS global dalam admin/app.js (pensel/tong sampah, title + aria-label); kalendar/kuliah/staf/infaq(4)/khutbah/pengguna diganti; NEWS_ACTION_ICONS kini alias + ikon duplicate sahaja."
+  },
+  {
     "date": "2026-09-28",
     "module": "Pengumuman",
     "ringkasan": "Butang Duplicate baharu di Pengumuman dan Teks Berjalan — wujudkan mesej kedua dengan jadual masa yang sama tanpa menaip semula tarikh.",
