@@ -335,6 +335,16 @@ async function logActivity(action, targetLabel, detail, table = 'activity_log') 
     }
 }
 
+// ─── Shared row-action icons ──────────────────────────────────────────────────
+// Inline SVGs (pencil/trash), no emoji/font dependency. Buttons keep title +
+// aria-label for a11y/tooltips. Same icons as admin/news/news-common.js's
+// NEWS_ACTION_ICONS — defined here so every module can use them (news-common.js
+// is only loaded on news pages).
+const ACTION_ICONS = {
+    edit: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+    delete: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+};
+
 // ─── XSS utility ─────────────────────────────────────────────────────────────
 
 function escapeHtml(str) {

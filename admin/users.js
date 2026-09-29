@@ -56,9 +56,9 @@ function renderUsers() {
             <td data-label="Kebenaran" style="font-size:0.85rem">${permLabel}</td>
             <td data-label="">
                 <div class="actions">
-                    <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(u.email)}')">Edit</button>
+                    <button class="btn btn-ghost btn-sm" title="Edit" aria-label="Edit" onclick="openEditModal('${escapeHtml(u.email)}')">${ACTION_ICONS.edit}</button>
                     ${!isSelf
-                        ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(u.email)}')">Buang</button>`
+                        ? `<button class="btn btn-danger btn-sm" title="Buang" aria-label="Buang" onclick="openDeleteModal('${escapeHtml(u.email)}')">${ACTION_ICONS.delete}</button>`
                         : ''}
                 </div>
             </td>

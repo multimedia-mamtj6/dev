@@ -61,8 +61,8 @@ function renderTable() {
                     <a class="btn btn-ghost btn-sm" href="projek-kutipan.html?project=${encodeURIComponent(p.id)}">Lihat Kutipan</a>
                     ${canWriteModule('infaq') ? `
                         ${p.is_active ? '' : `<button class="btn btn-ghost btn-sm" onclick="openActivateModal('${escapeHtml(p.id)}')">Jadikan Aktif</button>`}
-                        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(p.id)}')">Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(p.id)}')">Padam</button>
+                        <button class="btn btn-ghost btn-sm" title="Edit" aria-label="Edit" onclick="openEditModal('${escapeHtml(p.id)}')">${ACTION_ICONS.edit}</button>
+                        <button class="btn btn-danger btn-sm" title="Padam" aria-label="Padam" onclick="openDeleteModal('${escapeHtml(p.id)}')">${ACTION_ICONS.delete}</button>
                     ` : ''}
                 </div>
             </td>

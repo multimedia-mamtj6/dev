@@ -44,7 +44,7 @@ async function loadWeeks() {
             <td data-label="Status">${statusBadge(r.scrape_status)}</td>
             <td data-label="Kunci">${r.manual_override ? '🔒' : ''}</td>
             <td data-label="Tindakan">
-                <button class="btn btn-ghost btn-sm" onclick="openEditModal('${r.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" title="Edit" aria-label="Edit" onclick="openEditModal('${r.id}')">${ACTION_ICONS.edit}</button>
                 ${r.manual_override
                     ? `<button class="btn btn-ghost btn-sm" onclick="toggleLock('${r.id}', false)">Buka Kunci</button>`
                     : `<button class="btn btn-ghost btn-sm" onclick="toggleLock('${r.id}', true)">Kunci</button>`}

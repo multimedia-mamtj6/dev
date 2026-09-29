@@ -52,8 +52,8 @@ function renderTable() {
             <td data-label="">
                 ${canWriteModule('staff') ? `
                 <div class="actions">
-                    <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escapeHtml(s.id)}')">Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${escapeHtml(s.id)}', '${escapeHtml(s.full_name)}')">Padam</button>
+                    <button class="btn btn-ghost btn-sm" title="Edit" aria-label="Edit" onclick="openEditModal('${escapeHtml(s.id)}')">${ACTION_ICONS.edit}</button>
+                    <button class="btn btn-danger btn-sm" title="Padam" aria-label="Padam" onclick="openDeleteModal('${escapeHtml(s.id)}', '${escapeHtml(s.full_name)}')">${ACTION_ICONS.delete}</button>
                 </div>
                 ` : ''}
             </td>

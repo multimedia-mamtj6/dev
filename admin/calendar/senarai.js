@@ -52,8 +52,8 @@ function renderRows() {
         <td data-label="Tarikh Masihi">${escapeHtml(e.eventDate || '')}</td>
         <td data-label="">${canWrite
             ? `<div class="actions">
-                <button class="btn btn-ghost btn-sm" onclick="openEditModal(${i})">Edit</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteRow(${i})">Padam</button>
+                <button class="btn btn-ghost btn-sm" title="Edit" aria-label="Edit" onclick="openEditModal(${i})">${ACTION_ICONS.edit}</button>
+                <button class="btn btn-danger btn-sm" title="Padam" aria-label="Padam" onclick="deleteRow(${i})">${ACTION_ICONS.delete}</button>
                </div>`
             : '<span class="page-hint">—</span>'}</td>
     </tr>`).join('');
