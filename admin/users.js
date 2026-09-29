@@ -80,6 +80,7 @@ function openAddModal() {
     document.getElementById('perm-news').checked = false;
     document.getElementById('perm-staff').checked = false;
     document.getElementById('perm-khutbah').checked = false;
+    document.getElementById('perm-kalendar').checked = false;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -98,6 +99,7 @@ function openEditModal(email) {
     document.getElementById('perm-news').checked = u.permissions?.news === true;
     document.getElementById('perm-staff').checked = u.permissions?.staff === true;
     document.getElementById('perm-khutbah').checked = u.permissions?.khutbah === true;
+    document.getElementById('perm-kalendar').checked = u.permissions?.kalendar === true;
     togglePermFields();
     document.getElementById('user-modal').classList.add('open');
 }
@@ -163,6 +165,7 @@ async function saveUser() {
         news:   document.getElementById('perm-news').checked,
         staff:  document.getElementById('perm-staff').checked,
         khutbah: document.getElementById('perm-khutbah').checked,
+        kalendar: document.getElementById('perm-kalendar').checked,
     };
     const before = originalEmail ? allUsers.find(u => u.email === originalEmail) : null;
 

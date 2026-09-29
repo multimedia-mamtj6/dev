@@ -1024,3 +1024,32 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON khutbah_activity_log TO service_role;
 -- (a missing "khutbah" key reads false everywhere it's checked), same
 -- migration shape as every prior module addition.
 ALTER TABLE admins ALTER COLUMN permissions SET DEFAULT '{"kuliah": true, "infaq": false, "news": false, "staff": false, "khutbah": false}'::jsonb;
+
+
+-- ── 13. Kalendar module (calendar/hijri) ────────────────────────────────────
+-- Permission-gated editor for calendar/hijri/data/events.json, replacing the
+-- standalone PIN page (calendar/hijri/data/index.html + EVENTS_ADMIN_PIN).
+-- No Supabase data table — events.json on GitHub stays the single source of
+-- truth; this section only adds the audit log + permissions default.
+-- Run manually in the Supabase SQL editor, same as every section above.
+CREATE TABLE IF NOT EXISTS calendar_activity_log (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_email  TEXT NOT NULL,
+    actor_name   TEXT,
+    action       TEXT NOT NULL,   -- calendar_update | publish_calendar
+    target_label TEXT,
+    detail       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_calendar_activity_log_created_at ON calendar_activity_log(created_at DESC);
+
+ALTER TABLE calendar_activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all_calendar_activity_log" ON calendar_activity_log
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON calendar_activity_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON calendar_activity_log TO service_role;
+
+ALTER TABLE admins ALTER COLUMN permissions SET DEFAULT '{"kuliah": true, "infaq": false, "news": false, "staff": false, "khutbah": false, "kalendar": false}'::jsonb;

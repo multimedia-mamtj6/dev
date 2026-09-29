@@ -1,32 +1,14 @@
 // Vercel serverless function: POST /api/publish-events
-// Publishes calendar/hijri/data/events.json to GitHub. Replaces the old
-// Google Apps Script backend (calendar/hijri/data/code.gs) — the admin
-// panel (calendar/hijri/data/index.html) now calls this directly via
-// fetch() instead of google.script.run, so it's a normal static page
-// again instead of requiring a separate Apps Script deployment.
-//
-// Auth: a single shared PIN (EVENTS_ADMIN_PIN), same trust model as the
-// old Code.gs's Script Properties PIN — this is a single-admin page, not
-// per-user like admin/'s Supabase-authenticated modules, so there's no
-// user identity to check beyond the PIN.
+// Publishes calendar/hijri/data/events.json to GitHub.
+// Migrated from shared PIN (EVENTS_ADMIN_PIN) to Supabase Auth (Bearer JWT),
+// same shape as api/publish.js — admin/calendar/senarai.html calls this with
+// the admin's session token. Permission enforced server-side on
+// admins.role/permissions.kalendar (viewer always denied).
 //
 // Required Vercel environment variables:
-//   GITHUB_TOKEN, GITHUB_REPO (same ones every other api/ endpoint in
-//     this repo already uses)
-//   EVENTS_ADMIN_PIN (new — replaces Code.gs's Script Properties PIN)
-
-const crypto = require('crypto');
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GITHUB_TOKEN, GITHUB_REPO
 
 const FILE_PATH = 'calendar/hijri/data/events.json';
-
-// Constant-time compare so response timing can't leak how much of the PIN
-// was guessed correctly — the old Code.gs used a plain !==.
-function pinMatches(submitted, expected) {
-    const a = Buffer.from(String(submitted));
-    const b = Buffer.from(String(expected));
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
-}
 
 async function pushJsonToGitHub(ghHeaders, githubRepo, filePath, jsonObj, commitMessage) {
     const contentsRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${filePath}`, { headers: ghHeaders });
@@ -59,22 +41,56 @@ module.exports = async function handler(req, res) {
     // ── CORS ────────────────────────────────────────────────────────────────
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const expectedPin = process.env.EVENTS_ADMIN_PIN;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const githubToken = process.env.GITHUB_TOKEN;
-    const githubRepo  = process.env.GITHUB_REPO;
-    if (!expectedPin || !githubToken || !githubRepo) {
-        return res.status(500).json({ error: 'Server misconfiguration: missing environment variables' });
+    const githubRepo = process.env.GITHUB_REPO;
+    if (!supabaseUrl || !serviceKey) {
+        return res.status(500).json({ error: 'Server misconfiguration: missing Supabase env vars' });
+    }
+    if (!githubToken || !githubRepo) {
+        return res.status(500).json({ error: 'Server misconfiguration: missing GitHub env vars' });
     }
 
-    const { events, pin } = req.body || {};
-    if (!pin || !pinMatches(pin, expectedPin)) {
-        return res.status(401).json({ success: false, message: 'PIN tidak sah. Data tidak disimpan.' });
+    // ── 1. Verify Supabase session ──────────────────────────────────────────
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: 'Missing Authorization header' });
     }
+    const authCheck = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${authHeader.slice(7)}` },
+    });
+    if (!authCheck.ok) {
+        return res.status(401).json({ success: false, message: 'Invalid or expired session' });
+    }
+    const actorEmail = (await authCheck.json())?.email || null;
+
+    const sbHeaders = { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}`, 'Accept': 'application/json' };
+
+    // ── 2. Permission check: super_admin or editor with permissions.kalendar ─
+    let actorName = null;
+    try {
+        const adminRes = await fetch(
+            `${supabaseUrl}/rest/v1/admins?select=name,role,permissions&email=ilike.${encodeURIComponent(actorEmail)}`,
+            { headers: sbHeaders }
+        );
+        if (!adminRes.ok) return res.status(403).json({ success: false, message: 'Akses ditolak.' });
+        const admin = (await adminRes.json())[0];
+        actorName = admin?.name || null;
+        const allowed = admin?.role === 'super_admin'
+            || (admin?.role === 'editor' && admin?.permissions?.kalendar === true);
+        if (!allowed) return res.status(403).json({ success: false, message: 'Akses ditolak. Anda tiada kebenaran modul kalendar.' });
+    } catch (e) {
+        return res.status(500).json({ success: false, message: 'Semakan kebenaran gagal.' });
+    }
+
+    // ── 3. Validate payload ─────────────────────────────────────────────────
+    const { events } = req.body || {};
     if (!Array.isArray(events)) {
         return res.status(400).json({ success: false, message: 'Data acara tidak sah.' });
     }
@@ -96,14 +112,27 @@ module.exports = async function handler(req, res) {
     const jsonOut = { lastUpdated, events: sorted };
 
     const ghHeaders = {
-        'Authorization':        `Bearer ${githubToken}`,
-        'Accept':               'application/vnd.github+json',
+        'Authorization': `Bearer ${githubToken}`,
+        'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
-        'Content-Type':         'application/json',
+        'Content-Type': 'application/json',
     };
 
     try {
         const commit = await pushJsonToGitHub(ghHeaders, githubRepo, FILE_PATH, jsonOut, `[Admin] Kemas kini tarikh penting - ${now.toISOString()}`);
+        try {
+            await fetch(`${supabaseUrl}/rest/v1/calendar_activity_log`, {
+                method: 'POST',
+                headers: { ...sbHeaders, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify({
+                    actor_email: actorEmail || 'unknown',
+                    actor_name: actorName,
+                    action: 'publish_calendar',
+                    target_label: `${sorted.length} acara`,
+                    detail: `Diterbitkan ${sorted.length} acara. lastUpdated: ${lastUpdated}`,
+                }),
+            });
+        } catch (e) { console.error('calendar_activity_log insert failed:', e); }
         return res.status(200).json({
             success: true,
             message: 'Data berjaya disimpan ke GitHub!',
