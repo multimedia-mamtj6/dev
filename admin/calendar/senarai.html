@@ -41,6 +41,13 @@
       Data ditulis ke <code>calendar/hijri/data/events.json</code>.
     </p>
 
+    <div class="card" id="calendar-next-card" style="padding:1.25rem;margin-bottom:0.75rem;display:none">
+      <span class="news-status-badge news-status-active" style="margin-bottom:0.5rem">Peristiwa Terdekat</span>
+      <h3 style="margin:0 0 0.25rem;font-size:1.125rem" id="calendar-next-name">—</h3>
+      <p style="margin:0 0 0.5rem;font-size:0.875rem;color:var(--text-muted)" id="calendar-next-date"></p>
+      <span id="calendar-next-countdown"></span>
+    </div>
+
     <div class="card">
       <table class="data-table">
         <thead>
@@ -49,11 +56,12 @@
             <th>Nama Peristiwa</th>
             <th>Tarikh Hijrah</th>
             <th>Tarikh Masihi</th>
+            <th>Kira Detik</th>
             <th style="width:110px">Tindakan</th>
           </tr>
         </thead>
         <tbody id="calendar-tbody">
-          <tr><td colspan="5" class="state-cell">Memuatkan...</td></tr>
+          <tr><td colspan="6" class="state-cell">Memuatkan...</td></tr>
         </tbody>
       </table>
     </div>

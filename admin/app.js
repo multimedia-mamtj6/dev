@@ -124,7 +124,7 @@ const MODULES = [
     {
         key: 'kalendar', label: 'Kalendar', permission: 'kalendar', requiresSuperAdmin: false,
         items: [
-            { label: 'Tarikh Penting', href: '/admin/calendar/senarai.html', match: ['/admin/calendar/senarai.html'] },
+            { label: 'Takwim Islam', href: '/admin/calendar/senarai.html', match: ['/admin/calendar/senarai.html'] },
         ],
     },
     {
@@ -296,7 +296,9 @@ function daysSince(dateStr) {
 
 function formatDateTimeMY(iso) {
     const d = new Date(iso);
-    return d.toLocaleString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    // ms-MY emits PG/PTG day-periods — normalize to AM/PM admin-wide.
+    return d.toLocaleString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        .replace(/\bPTG\b/g, 'PM').replace(/\bPG\b/g, 'AM');
 }
 
 function formatRelativeMY(iso) {

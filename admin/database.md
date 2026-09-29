@@ -126,11 +126,21 @@ No new Supabase-side Vercel environment variables beyond `GOOGLE_CLIENT_ID` — 
 5. **Verify the sender domain in Resend** (Domains → Add `mamtj6.com` → paste the TXT records into your DNS → Verify). The alert sender (`khutbah_settings.alert_from`, seeded `noreply@mamtj6.com`) **must** be on this verified domain — Resend cannot send from free providers, so a gmail.com sender fails. Recipients (`alert_emails`, comma-separated) have no such restriction.
 6. Verify: open `admin/khutbah/senarai.html`, fill the Tetapan card (`alert_emails`, confirm `alert_from`), click **Jana & Terbitkan**, confirm a `[Admin] Terbitkan khutbah` commit lands on `khutbah/data/khutbah.json` and `khutbah/index.html` (served at `/khutbah/`) renders it instead of TIADA DATA.
 
+### 1.12 Set up the kalendar module (optional — separate from every module above)
+
+`admin/calendar/` (Takwim Islam dates → `calendar/hijri/data/events.json`, retiring the standalone PIN page) is a sixth, independent module. Skip this section if you don't need it. Its schema lives in `setup.sql` §13: one table only (`calendar_activity_log`, open FOR ALL like every other log table — no data table, `events.json` on GitHub stays the single source of truth).
+
+1. In the Supabase SQL Editor, select and run `setup.sql` §13 in full (`── 13. Kalendar module ──` through the end of the file), **as one paste — §13 only, not the whole file** (same `CREATE POLICY ... already exists` rollback risk as §12, see [1.11](#111-set-up-the-khutbah-module-optional--separate-from-every-module-above)).
+2. Verify: `SELECT tablename FROM pg_tables WHERE tablename LIKE 'calendar%';` → 1 row (`calendar_activity_log`).
+3. In `users.html`, grant `permissions.kalendar` to whichever admins need it (defaults to `false` on new rows, same opt-in shape as every other module).
+4. No new Vercel env vars — `api/publish-events.js` reuses `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`GITHUB_TOKEN`/`GITHUB_REPO` from [1.5](#15-configure-vercel-environment-variables). Delete the now-dead `EVENTS_ADMIN_PIN` var left over from the retired PIN page.
+5. Verify: open `admin/calendar/senarai.html`, edit a row, click **Simpan & Terbitkan**, confirm a `[Admin] Kemas kini tarikh penting` commit lands on `calendar/hijri/data/events.json`.
+
 ---
 
 ## 2. Database structure
 
-Four kuliah tables + four infaq tables (§2.1 below) + four news tables (§2.2 below) + three khutbah tables (`khutbah_weeks`, `khutbah_settings`, `khutbah_activity_log` — full column reference lives in `admin/CLAUDE.md`'s Supabase Schema, not yet duplicated into a §2.x section here), one storage bucket per module (`kuliah-assets`, `news-assets`; khutbah has no bucket). No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and the activity-log tables also from their respective `api/publish*.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs (and the `admin_can_write()`/`admin_is_super_admin()` `SECURITY DEFINER` helper functions, §3); all business logic lives in the client JS.
+Four kuliah tables + four infaq tables (§2.1 below) + four news tables (§2.2 below) + three khutbah tables (`khutbah_weeks`, `khutbah_settings`, `khutbah_activity_log` — full column reference lives in `admin/CLAUDE.md`'s Supabase Schema, not yet duplicated into a §2.x section here) + one kalendar log table (`calendar_activity_log`, same shape, `setup.sql` §13), one storage bucket per module (`kuliah-assets`, `news-assets`; khutbah and kalendar have no bucket). No triggers, no stored procedures, no views — every table is written to directly from `admin/*.js` (and the activity-log tables also from their respective `api/publish*.js` server-side). This repo has **zero** database-side logic beyond RLS/GRANTs (and the `admin_can_write()`/`admin_is_super_admin()` `SECURITY DEFINER` helper functions, §3); all business logic lives in the client JS.
 
 ```
 admins ──────────────┐

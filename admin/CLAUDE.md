@@ -9,7 +9,7 @@ architecture reference; the plan file is a one-time historical record.
 ## What this is
 
 `admin/` is a full CMS admin dashboard for MAMTJ6 mosque management, hosting
-five independent modules as of 2026-09-15:
+six independent modules as of 2026-09-29:
 
 - **`admin/kuliah/`** — lecture schedule management. Committee members log in
   with Google OAuth and manage: monthly lecture schedules (subuh + maghrib
@@ -69,6 +69,7 @@ five independent modules as of 2026-09-15:
   scrape failure keeps last-good values (never publishes `ERROR:`) and emails
   all `alert_emails` via the shared sender (`admin/alert-send-pure.js`,
   Resend) — transition-only + 24h throttle. See `khutbah/upgrade-plan.md`.
+- **`admin/calendar/`** — Takwim Islam date management, added 2026-09-29, retiring the standalone PIN page (`calendar/hijri/data/index.html`, now a redirect stub). One page, `senarai.html` (events table + Add/Edit modal + Peristiwa Terdekat preview + per-row countdown, mirroring the public `tarikh-penting/` card/buckets from in-memory edits) — publishes `calendar/hijri/data/events.json` (kept as single source of truth, no Supabase data table) via `POST /api/publish-events` (Bearer JWT, server-side `kalendar` perm check). Guards: Hijri spelling check (both Muharam/Ramadan and Muharram/Ramadhan accepted), <30-day staleness toast + publish confirm. Own `calendar_activity_log` (not yet in `userlog.html`). Dashboard has a Kalendar glimpse (next event + staleness).
 
 Shared/cross-module concerns (login, nav shell, admin-user management,
 activity-log viewer) stay flat at `admin/` root — see File Structure below.
@@ -106,8 +107,8 @@ admin/
                       defaultLandingPageFor(), logActivity(action, label, detail, table)
   style.css        ← All admin styles (desktop + mobile ≤640px), incl. infaq stat cards/progress bar
   users.html/.js   ← Admin user management (super_admin only) — perm-kuliah + perm-infaq checkboxes
-  userlog.html/.js ← Activity log viewer for `activity_log` (super_admin only) — kuliah only, does
-                      NOT yet show infaq_activity_log rows (flagged, not built — see DEV_NOTES)
+  userlog.html/.js ← Activity log viewer (super_admin only) — merges activity_log + infaq/news/khutbah logs via LOG_SOURCES; does NOT yet show calendar_activity_log rows (open, see DEV_NOTES session 22)
+                      
   setup.sql        ← Supabase schema reference for ALL tables, both modules (do not run blindly)
   database.md      ← Full database docs: setup from scratch, schema, RLS/GRANT model, troubleshooting
   DEV_NOTES.MD     ← Session-to-session context memo (read before touching anything)
@@ -218,6 +219,13 @@ admin/
     senarai.html/.js ← Weekly history table (Friday-desc) + override editor modal
                          (manual edit sets manual_override=lock) + Tetapan card
                          (alert_emails/alert_from) + Jana & Terbitkan button
+   calendar/        ← Module: Takwim Islam dates (new 2026-09-29)
+     calendar-common.js ← Shared: requireCalendarAccess(), publishCalendarEvents()
+                          (POST /api/publish-events with session JWT + events array),
+                          loadLastPublishedCalendarNote()
+     senarai.html/.js ← Events table (Peristiwa Terdekat preview + per-row countdown,
+                          Hijri spelling + <30-day staleness guards) + Add/Edit modal
+                          + Simpan & Terbitkan button
 
 admin/ustaz.html  ← zero-JS redirect stub → admin/kuliah/ustaz.html (old bare /admin/ URL,
                      pre-module-restructure, kept working). admin/dashboard.html used to be a
@@ -415,6 +423,14 @@ action text NOT NULL,       -- khutbah_auto_generate | khutbah_scrape_ok |
                              -- khutbah_lock | khutbah_unlock |
                              -- khutbah_settings_update | publish_khutbah
 target_label text, detail text  -- target_label = friday_date, plain text, never a FK
+
+-- calendar_activity_log (added 2026-09-29, setup.sql §13): SEPARATE by the
+-- same deliberate-independence reasoning — otherwise identical shape.
+-- No data table in this module: events.json on GitHub is the source of truth.
+id uuid PK, created_at timestamptz,
+actor_email text NOT NULL, actor_name text,
+action text NOT NULL,       -- calendar_update | publish_calendar
+target_label text, detail text
 ```
 
 RLS is ON on all tables. `news_announcements`/`news_ticker`/`news_settings` follow the same 4-policy write-gated shape as every table added since §9 (`admin_can_write('news')`) — the one divergence from every other module's publish grants is `news_settings`, where `service_role` gets `SELECT, INSERT, UPDATE` (not SELECT-only), because `api/publish-news.js` writes the khutbah fail-safe cache back into it. `khutbah_weeks`/`khutbah_settings` (added 2026-09-15) repeat that same divergence deliberately — `api/publish-khutbah.js` upserts the week's row AND writes the alert spam-guard cache — don't narrow either to SELECT-only. See `admin/setup.sql` §10 and `database.md` §2.2 for the full detail. `staff` is a SECOND divergence from that same convention — `service_role` gets `SELECT, UPDATE` there too (`api/staff-login.js`'s entire job is writing lockout counters and the session token), while `staff_activity_log` gets no `service_role` grant at all (nothing server-side ever writes to it — see `admin/setup.sql` §11). Anon key used in browser (read/write with RLS). Service role key server-side only (Vercel env var). **New tables never inherit grants automatically** (see Key Patterns) — `infaq_projects`/`infaq_kutipan_mingguan`/`infaq_projek_kutipan`/`infaq_perbelanjaan_bulanan` grant `service_role` SELECT-only (publish reads, never writes them); `infaq_activity_log` grants `service_role` full CRUD (publish also writes to it), same as `activity_log`. `admins` also grants `service_role` SELECT-only (added 2026-07-22 — `api/publish.js`/`api/publish-infaq.js` both look up the publishing admin's name from it; this table predates that lookup, so the grant was missing for a long time and failed silently rather than erroring, see Key Patterns).

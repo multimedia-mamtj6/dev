@@ -106,8 +106,10 @@ module.exports = async function handler(req, res) {
     });
 
     const now = new Date();
+    // ms-MY emits PG/PTG day-periods — normalize to AM/PM admin-wide.
     const lastUpdated = `${now.toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' })}, ` +
-        `${now.toLocaleTimeString('ms-MY', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kuala_Lumpur' })}`;
+        `${now.toLocaleTimeString('ms-MY', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kuala_Lumpur' })
+            .replace(/\bPTG\b/g, 'PM').replace(/\bPG\b/g, 'AM')}`;
 
     const jsonOut = { lastUpdated, events: sorted };
 

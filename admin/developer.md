@@ -19,7 +19,7 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | File | Purpose |
 |------|---------|
 | `admin/index.html` | Login page — Google OAuth via Supabase |
-| `admin/app.js` | Shared: Supabase client (`db`), `requireAuth()`, `signOut()`, `showToast()`, `escapeHtml()`, `MODULES` config + `renderSidebar()`, `toggleNav()`/`closeNav()` |
+| `admin/app.js` | Shared: Supabase client (`db`), `requireAuth()`, `signOut()`, `showToast()`, `escapeHtml()`, `MODULES` config + `renderSidebar()`, `toggleNav()`/`closeNav()`, `ACTION_ICONS` (global Edit/Padam inline SVGs, title+aria-label kept), `formatDateTimeMY()` (AM/PM normalized, never PG/PTG) |
 | `admin/dashboard.html`/`.js` | Cross-module overview (2026-07-22) — universal post-login landing page, kuliah + infaq glimpse sections, links onward to `jadual.html`/`ringkasan.html` |
 | `admin/style.css` | All admin styles: desktop, ≤768px tablet, ≤640px mobile |
 | `admin/kuliah/jadual.html` | Monthly calendar grid + day editor modal + "Lihat Terbitan" and "Tindakan Bulan" dropdowns (renamed from `admin/kuliah/dashboard.html` 2026-07-22 — old path is now a redirect stub) |
@@ -44,6 +44,8 @@ Admin pages fetch from Supabase — they work on `file://` for layout but auth a
 | `admin/news/publish-news-pure.js` | The exact scheduling/CSV pure functions `api/publish-news.js` runs (`isActiveNow`, `buildMovingTextJson`, ...) — lives outside `api/` so a browser `<script>` can load it directly; see its own file header |
 | `admin/news/pengumuman.html`/`.js` | Announcement slides CRUD (image upload-or-URL, start/end date, enabled, sort order; `duplicateAnnouncement()` prefills the add-modal from an existing row), owns `announcements` Terbitkan |
 | `admin/news/teks-berjalan.html`/`.js` | Ticker lines CRUD (⠿-grip drag-and-drop reorder + ↑/↓ fallback, khutbah row's auto-sourced title; `duplicateTicker()` prefills the add-modal), owns `moving-text` Terbitkan + the ticker preview panel |
+| `admin/calendar/calendar-common.js` | Shared across the kalendar page: `requireCalendarAccess()`, `publishCalendarEvents(events, btnId)` (POST `/api/publish-events` with session JWT + full array), `loadLastPublishedCalendarNote()` |
+| `admin/calendar/senarai.html`/`.js` | Takwim Islam events CRUD (in-memory rows, Add/Edit modal, Hijri spelling + <30-day staleness guards), Peristiwa Terdekat preview + per-row countdown mirroring `tarikh-penting/`, owns Simpan & Terbitkan |
 | `admin/staff/roster.html`/`.js` | Staff CRUD (name/phone/email, PIN generation via "Jana PIN Baharu", lockout clear) — mirrors `ustaz.js`'s shape |
 | `admin/staff/staff-pin-pure.js` | PBKDF2 PIN hash/generate/verify/lockout pure functions — loaded here via `<script>` AND `require()`d server-side by `api/staff-login.js`, same file both places (see its own header) |
 | `admin/alert-send-pure.js` | Shared email sender for ALL modules (khutbah first consumer) — `sendAlert()`/`shouldAlert()`/`parseRecipients()`, Resend via fetch, no npm, never throws; `require()`d by any `api/*.js` |
@@ -140,7 +142,7 @@ Toggle function calls `e.stopPropagation()`; a single shared `document.addEventL
 - `toggleNav()` / `closeNav()` — off-canvas sidebar open/close below the 768px breakpoint (toggles `.sidebar.open`/`.sidebar-backdrop.open`); no-ops visually above it since the sidebar is pinned open there regardless of the class
 - `isYasinEntry(ustaz)` — matches `/yasi+n/i` against `short_name + full_name` combined; detects the "Bacaan Yasiin & Tahlil" special ustaz entry regardless of spelling, used by `jadual.js` to color its calendar pills green
 - `logActivity(action, targetLabel, detail)` — fire-and-forget insert into `activity_log`, called right after a mutating Supabase write already succeeded. Never throws or toasts — a logging failure must not make the admin think their actual save/delete failed. Called from `jadual.js`, `ustaz.js`, `users.js` (and separately, server-side, from `api/publish.js`)
-- `formatDateTimeMY(iso)` — `toLocaleString('ms-MY', {...})` date+time formatter; shared by `jadual.js` (last-published note) and `userlog.js` (log table)
+- `formatDateTimeMY(iso)` — `toLocaleString('ms-MY', {...})` date+time formatter; shared by `jadual.js` (last-published note) and `userlog.js` (log table). Normalizes `ms-MY`'s native PG/PTG day-periods to AM/PM (admin-wide rule as of 2026-09-30 — no PG/PTG anywhere in admin output)
 - `formatRelativeMY(iso)` — Malay relative-time string (baru sahaja → minit → jam → hari → minggu → bulan lalu); used by `jadual.js`'s last-published note
 
 ### dashboard.js (cross-module overview, added 2026-07-22 — not to be confused with the old `kuliah/jadual.js`, itself renamed from `dashboard.js` the same day)
