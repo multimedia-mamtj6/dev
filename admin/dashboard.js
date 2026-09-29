@@ -5,8 +5,9 @@
 
     const hasKuliah = currentAdmin.role === 'super_admin' || !!currentAdmin.permissions?.kuliah;
     const hasInfaq  = currentAdmin.role === 'super_admin' || !!currentAdmin.permissions?.infaq;
+    const hasKalendar = currentAdmin.role === 'super_admin' || !!currentAdmin.permissions?.kalendar;
 
-    if (!hasKuliah && !hasInfaq) {
+    if (!hasKuliah && !hasInfaq && !hasKalendar) {
         document.getElementById('no-access-message').style.display = '';
         return;
     }
@@ -19,6 +20,10 @@
     if (hasInfaq) {
         document.getElementById('infaq-overview').style.display = '';
         tasks.push(loadInfaqOverview());
+    }
+    if (hasKalendar) {
+        document.getElementById('kalendar-overview').style.display = '';
+        tasks.push(loadKalendarOverview());
     }
     await Promise.all(tasks);
 })();
@@ -167,4 +172,50 @@ async function loadInfaqOverview() {
     document.getElementById('infaq-project-progress-fill').style.width = `${Math.min(100, peratusan)}%`;
     document.getElementById('infaq-project-progress-text').textContent =
         `${formatRM(terkumpul)} daripada ${formatRM(project.target_amount)} (${peratusan}%)`;
+}
+
+// ─── Kalendar glimpse ─────────────────────────────────────────────────────────
+// Next upcoming event from the public events.json + staleness warning when the
+// last event is <30 days out (annual rollover due). Read-only glance —
+// senarai.html stays the full editor.
+async function loadKalendarOverview() {
+    const labelEl = document.getElementById('kalendar-next-label');
+    const subEl = document.getElementById('kalendar-next-sub');
+    const staleEl = document.getElementById('kalendar-stale-note');
+    try {
+        const res = await fetch(`/calendar/hijri/data/events.json?v=${Date.now()}`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const data = await res.json();
+        const today = todayString();
+        const upcoming = (data.events || [])
+            .filter(e => e.eventDate && e.eventDate >= today)
+            .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+        if (!upcoming.length) {
+            labelEl.textContent = 'Tiada acara akan datang.';
+            subEl.textContent = 'Semua tarikh telah lepas — kemas kini tahunan diperlukan.';
+        } else {
+            const next = upcoming[0];
+            const diffDays = Math.ceil((new Date(next.eventDate + 'T00:00:00') - Date.now()) / 86400000);
+            labelEl.textContent = `${next.eventName} — ${formatDateMY(next.eventDate)}`;
+            subEl.textContent = `${next.hijriDate || ''} · ${diffDays <= 0 ? 'Hari ini' : diffDays + ' hari lagi'}`;
+        }
+        const all = (data.events || []).filter(e => e.eventDate)
+            .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+        const lastDate = all.length ? all[all.length - 1].eventDate : null;
+        const daysLeft = lastDate
+            ? Math.ceil((new Date(lastDate + 'T00:00:00') - Date.now()) / 86400000) : null;
+        if (daysLeft === null) {
+            staleEl.textContent = 'Tiada data acara.';
+        } else if (daysLeft < 0) {
+            staleEl.innerHTML = `<strong style="color:var(--danger)">Data tamat — acara terakhir telah lepas (${escapeHtml(lastDate)}).</strong> Sila kemas kini tahunan.`;
+        } else if (daysLeft < 30) {
+            staleEl.innerHTML = `<strong style="color:var(--danger)">Kemas kini tahunan diperlukan — tinggal ${daysLeft} hari sehingga acara terakhir (${escapeHtml(lastDate)}).</strong>`;
+        } else {
+            staleEl.textContent = `Data sah sehingga ${formatDateMY(lastDate)} (${daysLeft} hari lagi). Kemas kini: ${data.lastUpdated || '—'}`;
+        }
+    } catch (e) {
+        labelEl.textContent = 'Gagal memuatkan data kalendar.';
+        subEl.textContent = '';
+        staleEl.textContent = `Ralat: ${e.message}`;
+    }
 }

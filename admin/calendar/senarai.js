@@ -4,6 +4,24 @@
 
 let calEvents = [];
 
+// Canonical Hijri month names (web pages use Muharam/Ramadan spelling —
+// generate_ics.py uses Muharram/Ramadhan; accept both, warn on neither-match).
+const HIJRI_MONTHS_KNOWN = ['muharam', 'muharram', 'safar', 'rabiulawal', 'rabiulakhir',
+    'jamadilawal', 'jamadilakhir', 'rejab', 'syaaban', 'ramadan', 'ramadhan',
+    'syawal', 'zulkaedah', 'zulhijah', 'zulhijjah'];
+
+function hijriMonthOk(hijriDate) {
+    const lower = String(hijriDate || '').toLowerCase();
+    return HIJRI_MONTHS_KNOWN.some(m => lower.includes(m));
+}
+
+function lastEventDaysLeft() {
+    const dated = calEvents.filter(e => e.eventDate);
+    if (!dated.length) return null;
+    const last = dated.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate)).pop();
+    return Math.ceil((new Date(last.eventDate + 'T00:00:00') - Date.now()) / 86400000);
+}
+
 (async () => {
     const session = await requireAuth();
     if (!session) return;
@@ -33,6 +51,12 @@ async function loadEvents() {
         calEvents = (data.events || []).slice().sort((a, b) =>
             new Date(a.eventDate) - new Date(b.eventDate));
         renderRows();
+        const daysLeft = lastEventDaysLeft();
+        if (daysLeft !== null && daysLeft < 30) {
+            showToast(daysLeft < 0
+                ? 'Data tamat — kemas kini tahunan diperlukan.'
+                : `Tinggal ${daysLeft} hari sehingga acara terakhir — sediakan kemas kini tahunan.`, 'error', 8000);
+        }
     } catch (e) {
         tbody.innerHTML = `<tr><td colspan="5" class="state-cell">Ralat: ${escapeHtml(e.message)}</td></tr>`;
     }
@@ -98,6 +122,10 @@ function saveRow() {
         showToast('Lengkapkan ketiga-tiga medan.', 'error');
         return;
     }
+    if (!hijriMonthOk(row.hijriDate)) {
+        showToast('Ejaan bulan Hijrah tidak dikenali — semak (cth: Muharam, Ramadan, Syawal).', 'error');
+        return;
+    }
     if (idx === '') calEvents.push(row);
     else calEvents[Number(idx)] = row;
     calEvents.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
@@ -112,6 +140,10 @@ function deleteRow(i) {
 }
 
 async function onSavePublish() {
+    const daysLeft = lastEventDaysLeft();
+    if (daysLeft !== null && daysLeft < 30 && !confirm(
+        daysLeft < 0 ? 'Data semasa sudah tamat. Terbitkan juga?'
+            : `Tinggal ${daysLeft} hari sehingga acara terakhir. Terbitkan juga?`)) return;
     const json = await publishCalendarEvents(calEvents, 'publish-calendar-btn');
     if (json) await loadLastPublishedCalendarNote('last-published-note');
 }

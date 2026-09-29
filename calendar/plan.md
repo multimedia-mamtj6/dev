@@ -37,6 +37,11 @@ calendar/hijri/data/index.html    ← RETIRE after cutover (keep as backup until
    (redirect stub → /admin/calendar/senarai.html). Row icons standardized
    (ACTION_ICONS global), changelog + docs synced.
 
+## To-do (later, hygiene — zero code risk)
+- [ ] Vercel: delete dead `EVENTS_ADMIN_PIN` env var (unused since Bearer migration).
+  Grep repo for remaining references first.
+- [ ] Archive/remove `calendar/hijri/data/code.gs` (superseded Apps Script backend).
+
 ## Risks / notes
 - `cleanUrls: true` — use absolute root-relative paths only, never `./events.json`.
 - Keep `FILE_PATH = 'calendar/hijri/data/events.json'` unchanged.
