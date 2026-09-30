@@ -316,7 +316,7 @@
     "2026-10": {
       "infoJadual": {
         "tajukBulan": "BULAN OKTOBER 2026",
-        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 23/9/2026"
+        "tarikhKemasKini": "*Dikemaskini oleh Biro Dakwah pada 30/9/2026"
       },
       "senaraiHari": [
         {
@@ -617,12 +617,7 @@
         {
           "date": "2026-10-25",
           "subuh": null,
-          "maghrib": {
-            "nama_penceramah": "Sdr Ahmad Syafiq Muhaimin",
-            "tajuk_kuliah": "Syamail Muhammadiah",
-            "poster_url": "https://dev.mamtj6.com/kuliah/assets/poster-kuliah/1920X1080/20_19.-Sdr.-Syafiq.jpg",
-            "square_url": null
-          },
+          "maghrib": null,
           "cuti_umum": null
         },
         {
